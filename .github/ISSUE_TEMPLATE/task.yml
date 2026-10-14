@@ -1,0 +1,30 @@
+name: Task
+description: A unit of work for a lane agent
+labels: []
+body:
+  - type: input
+    id: plan_id
+    attributes: {label: Plan ID, description: "e.g. D3 (see docs/PLAN.md section 8)"}
+    validations: {required: true}
+  - type: dropdown
+    id: phase
+    attributes: {label: Phase, options: [P0, P1, P2, P3]}
+  - type: dropdown
+    id: lane
+    attributes: {label: Lane, options: [foundation, design, data-sim, agents, api, ui, qa, eval, security, infra, integration, docs, deck, rehearsal]}
+  - type: input
+    id: agent
+    attributes: {label: Agent, description: "GB-F, GB-D, GB-1..GB-5, Bob, Bryan"}
+  - type: textarea
+    id: scope
+    attributes: {label: Scope}
+  - type: input
+    id: deps
+    attributes: {label: Depends on}
+  - type: textarea
+    id: acceptance
+    attributes: {label: Acceptance criteria}
+    validations: {required: true}
+  - type: input
+    id: estimate
+    attributes: {label: Estimate (agent hours)}

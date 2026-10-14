@@ -1,0 +1,17 @@
+name: Design question
+description: Ambiguity an agent needs resolved (Bob decides; recorded as an ADR)
+labels: [design-question]
+body:
+  - type: textarea
+    id: context
+    attributes: {label: Context}
+    validations: {required: true}
+  - type: textarea
+    id: options
+    attributes: {label: Options considered}
+  - type: textarea
+    id: recommendation
+    attributes: {label: Recommendation}
+  - type: dropdown
+    id: blocking
+    attributes: {label: Blocking?, options: ["No - continuing on other work", "Yes - lane blocked"]}
