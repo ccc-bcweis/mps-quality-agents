@@ -5,6 +5,9 @@
 **Review:** 60 min, date not yet set (POV 10 / Architecture 10 / Demo 15 / Code-Tests-Eval 10 / Q&A 15)
 
 ---
+## Ownership and IP
+All intellectual property in this build (design, specification, plan, code, data, documents and presentation materials) is owned by **Bryan C. Weis / Common Consulting Company**. It is a fictional demonstration built with AI assistance. All companies, equipment and data in it are fictional and synthetic. It is released under the MIT License (see LICENSE). The license grants usage rights but doesn't transfer ownership.
+
 ## 0. Summary
 A polished, highly instrumented demo for a fictional semiconductor process-equipment company, **Meridian Precision Systems** (deposition, etch, strip, clean). A **simulated tool fleet** streams sensor telemetry; **SPC rules (Western Electric)** raise alerts that auto-create tickets; tickets also arrive from operators, QMS NCRs, supplier notices, or a live **Fault Injector**. An **Investigation Agent** gathers evidence from mock MES/QMS/PLM/ERP/CMMS and a document store (RAG). A **Resolution Agent** must tell apart four root-cause categories (engineering change, equipment calibration/alignment, supply-chain material, process drift) despite confounders, or escalate when evidence is missing or contradictory. A **human approves** before any CAPA is created. The full Alert → Ticket → Investigation → Approval → CAPA lifecycle is traced, scored and costed.
 

@@ -22,5 +22,8 @@ cp .env.example .env      # REPLAY mode by default; add a model key for LIVE mod
 docker compose up         # or open in VS Code and press F5
 ```
 
+## Ownership
+All intellectual property in this build (design, specification, plan, code, data, documents and presentation materials) is owned by **Bryan C. Weis / Common Consulting Company**. It is a fictional demonstration built with AI assistance. All companies, equipment and data in it are fictional and synthetic. It is released under the MIT License (see LICENSE). The license grants usage rights but doesn't transfer ownership.
+
 ## License
 MIT

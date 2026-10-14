@@ -3,6 +3,9 @@
 **Framing:** a StatusNeo proposal to a fictional customer, **Meridian Precision Systems (MPS)**, a semiconductor process-equipment maker (deposition, etch, strip, clean). This repo is built openly by AI coding agents under human architecture, review and CI gates.
 **Target:** done in 2-3 working days after the plan is approved. **AI budget:** ~$2/day hosted for ~1 week, plus $5-10 of dev/eval calls.
 
+## Ownership and IP
+All intellectual property in this build (design, specification, plan, code, data, documents and presentation materials) is owned by **Bryan C. Weis / Common Consulting Company**. It is a fictional demonstration built with AI assistance. All companies, equipment and data in it are fictional and synthetic. It is released under the MIT License (see LICENSE). The license grants usage rights but doesn't transfer ownership.
+
 ---
 ## 1. Modules and separation of concerns
 | Module | Responsibility | Depends on | May NOT |
@@ -89,7 +92,8 @@ Projection levers (conservative / expected): investigation hours −30/−45%; t
 
 ## 7. Deck plan (PowerPoint, StatusNeo-branded, "Prepared for Meridian Precision Systems")
 Draft outline now; finish after the demo with real screenshots and measured metrics.
-1. Title + MPS context (fleet, plants, pain) · 2. The problem in numbers (ROI baseline) · 3. Thesis: engineers decide, AI assembles evidence, rules enforce · 4. Opportunity landscape (5, prioritized) · 5. Deep dive: current vs future state + Rules/AI/Human table · 6. Business case: KPIs, baselines, projected savings, payback · 7. Architecture (logical + physical; MAF ↔ LangGraph) · 8. 90-day roadmap + production gates · 9. How we built it: AI agents in parallel lanes, Project board, CI/test/eval evidence, open statement that it's AI-built · 10. Risks, controls and ask.
+1. Title + MPS context (fleet, plants, pain) · 2. The problem in numbers (ROI baseline) · 3. Thesis: engineers decide, AI assembles evidence, rules enforce · 4. Opportunity landscape (5, prioritized) · 5. Deep dive: current vs future state + Rules/AI/Human table · 6. Business case: KPIs, baselines, projected savings, payback · 7. Architecture (logical + physical; MAF ↔ LangGraph) · 8. 90-day roadmap + production gates · 9. How we built it: AI agents in parallel lanes, Project board, CI/test/eval evidence, open statement that it's AI-built · 10. Risks, controls and ask (closing slide carries the IP notice).
+**IP notice (footer on every slide + closing slide):** "© 2026 Bryan C. Weis and Common Consulting Company. All intellectual property owned by Bryan C. Weis / Common Consulting Company. Fictional demonstration, AI-assisted; all companies and data are synthetic."
 (Core exec story = slides 1-6 + 8, per the 6-8 recommendation; 7 and 9 support the architecture and code segments.)
 
 ## 8. Issue breakdown
