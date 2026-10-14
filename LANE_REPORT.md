@@ -1,51 +1,38 @@
-# Lane report: GB-F foundation
+# Lane report: GB-5 QA, eval, and security
 
-Branch `lane/f-foundation`. Local commits only. Nothing was pushed. `contracts-v1` was not tagged.
+Branch `lane/5-qa`. Commits are local. Nothing was pushed.
 
 | Issue | Commit | What landed |
 |---|---|---|
-| F1 (#1) | `22ca3ba` | `MPS.sln`, layered projects, `Directory.Build.props`, `Directory.Packages.props`, `.editorconfig`, `global.json` (SDK 8.0.426), NetArchTest layering |
-| F2 (#2) | `e8560a1` | Domain entities and invariants, read tools, write ports, `IInvestigationWorkflow`, OpenAPI, mock-enterprise OpenAPI, MSW handlers, 12 event schemas, `docs/adr/ADR-001-contracts.md` |
-| F3 (#3) | `00c9a2f` | `.github/workflows/ci.yml`, `codeql.yml`, `deploy.yml` stub, `coverlet.runsettings` |
-| F4 (#4) | `c34b737` | `docker-compose.yml`, API and placeholder web Dockerfiles, `.env.example`, `.env` gitignore |
-| F5 (#5) | `8d3b3af` | `.vscode` launch/tasks/extensions, `.devcontainer/devcontainer.json`, README Clone and run |
-| F6 (#6) | `a436641` | `infra/main.bicep`, `infra/modules/*.bicep`, `infra/main.bicepparam`, `infra/BUDGET.md` |
+| T1 (#29) | `b6ea086` | `tests/Contract.Tests` written from `contracts/openapi.yaml`, `contracts/mock-enterprise.openapi.yaml`, `contracts/events/`, `contracts/msw/handlers.ts`, and the spec's enum and tool names. `src/Mps.Api/ApiHostMarker.cs` lets `WebApplicationFactory` host the console. |
+| T2 (#30) | `a44ec98` | `tests/Api.IntegrationTests` for approval, bad and contradictory evidence, prompt injection, fleet, metrics, fault injection, and mock tool failures (500, timeout, 409). Every fact is `Category=PendingLane` and listed in `tests/PENDING.md`. `PendingLaneCatalogTests` guards the list and the filter. `src/Mps.MockEnterprise/MockHostMarker.cs` is the factory marker for when GB-1 D4 adds a web entry point. |
+| T3 (#31) | `706f297` | `stryker-config.json` (Domain, break 60), `stryker-application.json` (Application, break 0), `.config/dotnet-tools.json` pins `dotnet-stryker` 4.16.0, and `.github/workflows/quality.yml` (nightly 06:00 UTC and `workflow_dispatch`). `eval/README.md` is the E1 plan for promptfoo and Microsoft.Extensions.AI.Evaluation. `ci.yml` was not edited. |
+
+The GB-F foundation report that used to sit in this file is still in commit `765f364`.
 
 ## How it was verified
 
-- After F2: `dotnet format MPS.sln --verify-no-changes` exited 0. `dotnet test MPS.sln --configuration Release` passed 19 domain tests and 10 architecture tests. The 12 event schemas parse as JSON.
-- F5: `dotnet run --project src/Mps.Api --configuration Release` answered `GET http://localhost:8080/health` with `{"status":"ok","service":"Mps.Api"}`. The process was stopped after that check.
-- F6: Bicep CLI 0.47.16 (`%USERPROFILE%\.azure\bin\bicep.exe`) compiled `infra/main.bicep` and `infra/main.bicepparam` with exit 0. The compiled JSON was written under the temp directory and deleted. It is not in git.
-- VS Code and devcontainer JSON files parse.
-- Docker Compose was not started. The dev container was not built. Azure CLI was not used. GitHub Actions were not executed from this machine.
+- Before the T2 and T3 commits, `dotnet format MPS.sln --verify-no-changes` exited 0, and `dotnet build` was warnings-as-errors clean.
+- `dotnet test MPS.sln --configuration Release` passed Domain.Tests 19, Architecture.Tests 10, and Contract.Tests 39. Api.IntegrationTests reported no match for `Category!=PendingLane`, and the solution run stayed green.
+- `dotnet test tests/Api.IntegrationTests --configuration Release --filter Category=PendingLane` executed 25 cases and failed them for the current tree. The mock-enterprise cases throw because `Mps.MockEnterprise` has no entry point. The console cases receive HTTP 404 because those routes are not hosted yet.
+- Stryker 4.16.0 against Domain (`FullyQualifiedName~Mps.Domain.Tests`, 19 tests) created 455 mutants and tested 146. The score was **27.68%**: 98 killed, 48 survived, 208 with no coverage. The process exited 1 because the break is 60. The HTML report is under `StrykerOutput/domain/reports/` and is gitignored.
+- Stryker against Application (`FullyQualifiedName~Mps.Architecture.Tests`, 10 tests) tested 0 mutants. The only mutant was `LayerAnchor.cs`, which the config excludes. The score was N/A and the process exited 0.
+- Docker, the Azure CLI, and GitHub were not used. `quality.yml` has not been run.
 
-## F3 behavior Bob should expect
+## What Bob should expect from CI
 
-`ci.yml` runs on pull requests and on push to `main`: restore, Release build, `dotnet format --verify-no-changes`, Coverlet plus a ReportGenerator HTML artifact. The 70% coverage gate is not turned on. The web job skips lint and test when `web/package.json` is absent. Gitleaks uses `gitleaks/gitleaks-action` v3.0.0. Dependency review runs on pull requests only. The Bicep job downloads Bicep CLI v0.48.1 and builds `infra/main.bicep`. It does not call `az`.
+`ci.yml` is unchanged. Pending integration tests stay out of that run because `tests/Api.IntegrationTests/Api.IntegrationTests.csproj` sets `VSTestTestCaseFilter` to `Category!=PendingLane`. A command-line `--filter` overrides the property, which is how the held tests are run on purpose. `PendingLaneCatalogTests` fails if a new integration fact lacks the trait, has a `Skip`, or is missing from `tests/PENDING.md`.
 
-`codeql.yml` analyzes C# with `build-mode: manual` and `dotnet build`. JavaScript is omitted until `web/` exists.
+Running Stryker from the repo root uses solution mode, so the configs set `test-case-filter` to the domain or architecture test namespace. That keeps the pending suite out of the mutation run. A `Category!=PendingLane` filter was not used there, because a not-equal category filter can drop tests that do not carry the trait.
 
-`deploy.yml` is `workflow_dispatch` only, environment `azure-demo`, `azure/login` with OIDC (`id-token: write`). Build, push, what-if, and deploy are comments marked `TODO Z1`.
+`quality.yml` publishes `quality-coverage-report` and `mutation-reports`. The mutation HTML is uploaded even when the score step fails. The workflow does not run on pull requests. Leave it off the required checks until the Domain score is at least 60%. The score is 27.68% today, mostly from types the domain tests do not cover (`EnterpriseRecords`, `EvidenceItem`, `TelemetryWindow`, `ImpactScope`).
 
-Action SHAs are pinned in the workflow files. Required checks and the `azure-demo` reviewer are GitHub settings for Bob.
+## Open questions
 
-## F6 shape
-
-The deployment is resource-group scoped. It does not create `rg-mps-demo`. It defines a user-assigned identity, Log Analytics, workspace-based Application Insights, Key Vault (RBAC), Azure SQL General Purpose serverless, Azure OpenAI with local auth disabled, a Container Apps environment and app (min replicas 0, max 3, target port 8080), and a Standard Static Web App in `eastus2`. SQL has no password. The managed identity is the Entra-only administrator. The monthly budget module is included only when `budgetContactEmail` is non-empty. The parameters file leaves that value empty. Spend notes are in `infra/BUDGET.md`.
-
-## Open questions for Bob
-
-1. ADR-001 is at `docs/adr/ADR-001-contracts.md` because this brief asked for that path. PLAN section 4 records later decisions under `docs/decisions/`. Say if you want one directory.
-2. Please review and tag `contracts-v1`. ADR-001 status is Proposed. This lane did not create the tag.
-3. SPEC puts compose and IaC under `deploy/`. This lane followed the brief: `docker-compose.yml` at the repo root, Dockerfiles under `deploy/`, Bicep under `infra/`.
-4. PLAN names the GitHub environment `demo`. This brief names `azure-demo`. `deploy.yml` uses `azure-demo`.
-5. PLAN F6 acceptance mentions `az bicep build` and what-if. CI builds with the Bicep CLI and does not run what-if. What-if stays in the Z1 comments on `deploy.yml`.
-6. FluentAssertions is 7.2.2 (Apache-2.0). 8.x is commercially licensed, so it is not referenced from this MIT repo.
-7. `contracts/msw/handlers.ts` is hand-written for MSW 2 and is not executed here. `msw` is not installed, and `web/` was not created, so the web CI job stays skipped.
-8. Gitleaks organization scans need a `GITLEAKS_LICENSE` secret. `ccc-bcweis/mps-quality-agents` is a user-owned repo, so the license is not required unless the repo moves under an organization.
-9. Azure budgets cannot be weekly. The template uses a $40 monthly amount as the stand-in for $10/week. The $2/day model cap remains application code.
-10. After a future deploy, a narrower SQL contained user is still a manual step. The template makes the managed identity the Entra admin and does not run a deployment script.
-11. The Container Apps image is `mcr.microsoft.com/dotnet/aspnet:8.0` until Z1. The Aspire image tag is `mcr.microsoft.com/dotnet/aspire-dashboard:9.5` and was not pulled.
-12. Derived Azure names use prefix `mpsdemo`. Key Vault, SQL, and the Azure OpenAI subdomain must be unique at deploy time. Change `namePrefix` if a name is taken.
-13. A failed CAPA verification does not move the stage backward in this contract. JSON wire enums are camelCase. C# enums stay PascalCase. Mapping is documented in ADR-001 and is not implemented in the API yet.
-14. F5 debugs the API. The web target in Compose is a static placeholder page.
+1. An approve with no `approverId` accepts 400 or 403 in the integration tests, and must store no CAPA. SPEC 7.4 says a missing token is 403. Say if you want the test to require 403 only.
+2. Two contract wordings are in `DESIGN_QUESTIONS.md`. Both are non-blocking, and the contract files were left as tagged. `DecisionResult.capa` should wrap its `$ref` in `allOf` if generators need to see null. The decision description should say a client signature is rejected, matching `additionalProperties: false`.
+3. `E-02`, `D-01`, `S-01`, and `C-01` are scenario tool ids from the spec. The console schema types `toolId` as a string, so they need no contract change.
+4. The console OpenAPI has no operation that arms `X-Mock-Fault` on a connector call. The mock-host tests cover 500, timeout, and 409 directly. The spec path "QMS 500, then retry, then Failed" starts working when the investigation calls that host. The lane that arms the fault for the live demo is yours to assign.
+5. Expired, reused, tampered, and wrong-action tokens are already covered in `tests/Domain.Tests/InvariantTests.cs` (`AnExpiredTokenCannotOpenACapa`, `ATokenCannotOpenTwoCapas`, `ATamperedSignatureCannotOpenACapa`, `ATokenBoundToAnotherActionCannotOpenACapa`). The HTTP tests add a second approve and an illegal CAPA stage move once P4 exists.
+6. `ApiHostMarker` and `MockHostMarker` are the only product files this lane added. `WebApplicationFactory` cannot take the static `LayerAnchor` type.
+7. Application mutation stays at break 0 until that project has behavior beyond interfaces. A zero-mutant run exits 0 with Stryker 4.16.0.
