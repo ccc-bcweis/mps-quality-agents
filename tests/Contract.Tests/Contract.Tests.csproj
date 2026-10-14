@@ -14,6 +14,7 @@
     <ProjectReference Include="..\..\src\Mps.Api\Mps.Api.csproj" />
     <ProjectReference Include="..\..\src\Mps.Application\Mps.Application.csproj" />
     <ProjectReference Include="..\..\src\Mps.Domain\Mps.Domain.csproj" />
+    <ProjectReference Include="..\Api.IntegrationTests\Api.IntegrationTests.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="FluentAssertions" />
