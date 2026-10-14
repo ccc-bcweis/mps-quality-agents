@@ -10,7 +10,7 @@ using Mps.ModelGateway.Adapters;
 namespace Mps.Agents.Reasoning;
 
 /// <summary>
-/// Deterministic investigation tool plan and resolution JSON. The gateway stays free of root-cause rules.
+/// Deterministic investigation tool plan and resolution JSON. The resolution object includes whyItMatters for every cited evidence id, signalId on sensor signals, and an evidence matrix for all four root-cause classes. The gateway stays free of root-cause rules.
 /// </summary>
 public sealed class QualityMockReasoner : IMockReasoner
 {

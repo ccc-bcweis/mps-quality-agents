@@ -5,6 +5,7 @@ toolFamily: Deposition
 revision: C
 kind: decoy
 untrusted: false
+whyItMatters: "This note disagrees with the controlled procedure, so it is not the limit to trust."
 ---
 # Showerhead qualification note for D-01
 

@@ -4,6 +4,7 @@ using Microsoft.Agents.AI.Workflows;
 using Microsoft.Agents.AI.Workflows.InProc;
 
 using Mps.Agents.Evidence;
+using Mps.Agents.Explain;
 using Mps.Agents.Grounding;
 using Mps.Agents.Incidents;
 using Mps.Agents.Investigation;
@@ -182,6 +183,8 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
         }
 
         session.ReplaceEvidence(gathered.Pack.Items);
+        session.ReplaceExplanations(gathered.Pack.Explanations);
+        session.ReplaceMatrix(EvidenceMatrixBuilder.FromPack(gathered.Pack, null, WhyItMattersCatalog.Shared));
         var gate = EvidenceGate.Evaluate(gathered.Pack);
         if (gate.Outcome != GateOutcome.Sufficient)
         {
@@ -208,7 +211,8 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
 
         var claim = resolution.Claim;
         var grounding = GroundingValidator.Validate(claim, gathered.Pack.Items);
-        if (!grounding.Accepted || claim.Category is null || claim.Cause is null || claim.Confidence is null)
+        var accepted = grounding.Claim;
+        if (!grounding.Accepted || accepted is null || accepted.Category is null || accepted.Cause is null || accepted.Confidence is null)
         {
             var detail = grounding.Failures.Count == 0
                 ? "category-without-evidence"
@@ -219,17 +223,19 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
             return false;
         }
 
+        session.ReplaceExplanations(MergeExplanations(gathered.Pack.Explanations, accepted.Explanations));
+        session.ReplaceMatrix(accepted.EvidenceMatrix);
         var hypothesis = new Hypothesis(
-            new HypothesisId(Uuid5.Create(EvidenceIds.Namespace, incident.Id + "|" + claim.Category.Value)),
-            claim.Category.Value,
-            claim.Cause,
-            claim.Confidence.Value,
-            claim.EvidenceIds,
-            claim.CounterEvidence,
-            claim.Actions);
+            new HypothesisId(Uuid5.Create(EvidenceIds.Namespace, incident.Id + "|" + accepted.Category.Value)),
+            accepted.Category.Value,
+            accepted.Cause,
+            accepted.Confidence.Value,
+            accepted.EvidenceIds,
+            accepted.CounterEvidence,
+            accepted.Actions);
         session.ClearHypotheses();
         session.AddHypothesis(hypothesis);
-        session.ProposedSummary = ProposedSummary(claim);
+        session.ProposedSummary = ProposedSummary(accepted);
         session.Stage = InvestigationStage.AwaitingApproval;
         return true;
     }
@@ -282,6 +288,24 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
             .AddEdge(port, approval)
             .WithOutputFrom(gate, approval)
             .Build(validateOrphans: true);
+    }
+
+    private static CitedEvidence[] MergeExplanations(
+        IReadOnlyList<CitedEvidence> pack,
+        IReadOnlyList<CitedEvidence> claim)
+    {
+        var merged = new Dictionary<EvidenceId, CitedEvidence>();
+        foreach (var item in pack)
+        {
+            merged[item.EvidenceId] = item;
+        }
+
+        foreach (var item in claim)
+        {
+            merged[item.EvidenceId] = item;
+        }
+
+        return merged.Values.ToArray();
     }
 
     private static (IncidentId IncidentId, InvestigationId InvestigationId) ParseInput(string message)

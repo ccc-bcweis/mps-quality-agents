@@ -178,18 +178,84 @@ public sealed class ApprovalDecisionTests
         var harness = await HarnessAsync(writer: writer);
 
         var outcome = await harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.Approve, "Hold the lot.", "eng-17", CancellationToken.None);
-        var again = await harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.Approve, "Hold the lot.", "eng-17", CancellationToken.None);
 
         writer.Calls.Should().Be(3);
         outcome.Capa.Should().BeNull();
         outcome.Investigation.Stage.Should().Be(InvestigationStage.Failed);
         harness.Incident.Stage.Should().Be(IncidentStage.RecommendationReady);
-        harness.Approvals.Approvals.Single().Outcome.Should().Be(ApprovalOutcomes.Failed);
-        harness.Approvals.Approvals.Single().Attempts.Should().Be(3);
-        harness.Approvals.Approvals.Single().FailureDetail.Should().Be("QMS unavailable.");
+        var failed = harness.Approvals.Approvals.Single();
+        failed.Outcome.Should().Be(ApprovalOutcomes.Failed);
+        failed.Attempts.Should().Be(3);
+        failed.FailureDetail.Should().Be("QMS unavailable.");
+        failed.Token.IsConsumed.Should().BeTrue();
         harness.Metrics.Observations.Sum(item => item.ToolFailures).Should().Be(3);
-        again.Investigation.Stage.Should().Be(InvestigationStage.Failed);
-        again.Capa.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task AStoredFailureThenALaterApproveIssuesANewTokenAndSucceeds()
+    {
+        var writer = new ScriptedCapaWriter();
+        writer.ThenThrow(500, message: "QMS unavailable.");
+        writer.ThenThrow(500, message: "QMS unavailable.");
+        writer.ThenThrow(500, message: "QMS unavailable.");
+        writer.ThenReturn("CAPA-910");
+        var harness = await HarnessAsync(writer: writer);
+
+        var failed = await harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.Approve, "Hold the lot.", "eng-17", CancellationToken.None);
+        var retried = await harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.Approve, "Hold the lot.", "eng-17", CancellationToken.None);
+        var clickedAgain = await harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.Approve, "Hold the lot.", "eng-17", CancellationToken.None);
+        var audit = await harness.Approvals.ListByInvestigationAsync(harness.InvestigationId, CancellationToken.None);
+
+        writer.Calls.Should().Be(4);
+        failed.Capa.Should().BeNull();
+        failed.Investigation.Stage.Should().Be(InvestigationStage.Failed);
+        retried.Capa.Should().NotBeNull();
+        retried.Capa!.ExternalId.Should().Be("CAPA-910");
+        retried.Investigation.Stage.Should().Be(InvestigationStage.Approved);
+        harness.Incident.Stage.Should().Be(IncidentStage.Approved);
+        clickedAgain.Capa!.Capa.Id.Should().Be(retried.Capa.Capa.Id);
+        clickedAgain.Capa.Capa.ApprovalTokenId.Should().Be(retried.Capa.Capa.ApprovalTokenId);
+        audit.Should().HaveCount(2);
+        audit[0].Outcome.Should().Be(ApprovalOutcomes.Failed);
+        audit[0].Attempts.Should().Be(3);
+        audit[0].Token.IsConsumed.Should().BeTrue();
+        audit[1].Outcome.Should().Be(ApprovalOutcomes.Succeeded);
+        audit[1].Attempts.Should().Be(1);
+        audit[1].Token.IsConsumed.Should().BeTrue();
+        audit[1].Token.Id.Should().NotBe(audit[0].Token.Id);
+        audit[1].ExternalCapaId.Should().Be("CAPA-910");
+        var reused = () => CapaAction.Open(
+            CapaId.New(),
+            harness.Incident.Id,
+            "Hold the lot.",
+            audit[0].Token,
+            Now,
+            Key);
+        reused.Should().Throw<DomainRuleException>().WithMessage("*single-use*");
+        (await harness.Capas.ListAsync(CancellationToken.None)).Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task ADoubleClickApproveIsIdempotentForTheSameToken()
+    {
+        var writer = new ScriptedCapaWriter { Delay = TimeSpan.FromMilliseconds(40) };
+        var harness = await HarnessAsync(writer: writer);
+
+        var first = harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.Approve, "Hold the lot.", "eng-17", CancellationToken.None);
+        var second = harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.Approve, "Hold the lot.", "eng-17", CancellationToken.None);
+        var outcomes = await Task.WhenAll(first, second);
+
+        writer.Calls.Should().Be(1);
+        var firstCapa = outcomes[0].Capa;
+        var secondCapa = outcomes[1].Capa;
+        firstCapa.Should().NotBeNull();
+        secondCapa.Should().NotBeNull();
+        firstCapa!.Capa.Id.Should().Be(secondCapa!.Capa.Id);
+        firstCapa.Capa.ApprovalTokenId.Should().Be(secondCapa.Capa.ApprovalTokenId);
+        outcomes.Should().OnlyContain(outcome => outcome.Investigation.Stage == InvestigationStage.Approved);
+        harness.Approvals.Approvals.Should().ContainSingle();
+        harness.Approvals.Approvals[0].Token.IsConsumed.Should().BeTrue();
+        harness.Approvals.Approvals[0].Outcome.Should().Be(ApprovalOutcomes.Succeeded);
     }
 
     [Fact]
@@ -339,6 +405,8 @@ public sealed class ApprovalDecisionTests
 
         public int Calls { get; private set; }
 
+        public TimeSpan Delay { get; set; }
+
         public void ThenReturn(string externalId) => _steps.Enqueue(_ => externalId);
 
         public void ThenThrow(int statusCode, string? existingExternalId = null, string? message = null) =>
@@ -347,17 +415,21 @@ public sealed class ApprovalDecisionTests
                 existingExternalId,
                 message ?? "QMS write failed with status " + statusCode.ToString(CultureInfo.InvariantCulture) + "."));
 
-        public Task<string> CreateAsync(CapaAction capa, CancellationToken cancellationToken)
+        public async Task<string> CreateAsync(CapaAction capa, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(capa);
-            _ = cancellationToken;
             Calls++;
-            if (_steps.Count == 0)
+            if (Delay > TimeSpan.Zero)
             {
-                return Task.FromResult("CAPA-900");
+                await Task.Delay(Delay, cancellationToken).ConfigureAwait(false);
             }
 
-            return Task.FromResult(_steps.Dequeue().Invoke(capa));
+            if (_steps.Count == 0)
+            {
+                return "CAPA-900";
+            }
+
+            return _steps.Dequeue().Invoke(capa);
         }
     }
 

@@ -5,6 +5,7 @@ toolFamily: Strip
 revision: B
 kind: bulletin
 untrusted: false
+whyItMatters: "An overdue oxygen controller on one chamber can step the gas flow."
 ---
 # Service bulletin for an overdue O2 mass flow controller
 

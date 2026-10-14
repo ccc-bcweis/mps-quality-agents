@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 using Mps.Domain.Equipment;
 
@@ -9,7 +10,7 @@ namespace Mps.Simulator.Fleet;
 /// <summary>
 /// Schema rules for fleet YAML. <see cref="FleetCatalogLoader"/> runs them on every file before a catalog is returned.
 /// </summary>
-public static class FleetSchema
+public static partial class FleetSchema
 {
     public static IReadOnlyList<string> Evaluate(FleetCatalog catalog)
     {
@@ -65,6 +66,7 @@ public static class FleetSchema
 
         var toolIds = new HashSet<string>(StringComparer.Ordinal);
         var chamberIds = new HashSet<string>(StringComparer.Ordinal);
+        var sensorIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var tool in catalog.Tools)
         {
             var path = tool.Id;
@@ -79,6 +81,14 @@ public static class FleetSchema
                 if (!chamberIds.Add(chamber.Id))
                 {
                     errors.Add($"{path}: duplicate chamber id {chamber.Id}.");
+                }
+            }
+
+            foreach (var sensor in tool.Sensors)
+            {
+                if (!sensorIds.Add(sensor.Id))
+                {
+                    errors.Add($"{path}: duplicate sensor id {sensor.Id}.");
                 }
             }
         }
@@ -177,5 +187,239 @@ public static class FleetSchema
                 }
             }
         }
+
+        foreach (var error in EvaluateSensors(tool, path))
+        {
+            yield return error;
+        }
     }
+
+    private static IEnumerable<string> EvaluateSensors(ToolSpec tool, string path)
+    {
+        if (tool.Sensors.Count == 0)
+        {
+            yield return $"{path}: sensors are required.";
+            yield break;
+        }
+
+        var anchors = new HashSet<string>(StringComparer.Ordinal);
+        var seenIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var sensor in tool.Sensors)
+        {
+            foreach (var error in EvaluateSensor(tool, sensor, path))
+            {
+                yield return error;
+            }
+
+            if (!seenIds.Add(sensor.Id))
+            {
+                yield return $"{path}: duplicate sensor id {sensor.Id}.";
+            }
+
+            if (!anchors.Add(sensor.SchematicAnchor))
+            {
+                yield return $"{path}: duplicate schematic anchor {sensor.SchematicAnchor}.";
+            }
+        }
+
+        foreach (var chamber in tool.Chambers)
+        {
+            foreach (var parameter in RecipeParameters(tool))
+            {
+                var count = tool.Sensors.Count(sensor =>
+                    string.Equals(sensor.ChamberId, chamber.Id, StringComparison.Ordinal)
+                    && string.Equals(sensor.Parameter, parameter, StringComparison.Ordinal));
+                if (count != 1)
+                {
+                    yield return $"{path}: chamber {chamber.Id} needs exactly one sensor for {parameter}. Found {count}.";
+                }
+            }
+        }
+
+        var present = tool.Sensors.Select(sensor => sensor.Type).ToHashSet(StringComparer.Ordinal);
+        foreach (var required in SensorCatalog.RequiredTypes(tool.Family))
+        {
+            if (!present.Contains(required))
+            {
+                yield return $"{path}: missing a {required} sensor.";
+            }
+        }
+
+        if (tool.Family == ToolFamily.Clean && present.Contains(SensorCatalog.RfForwardPower))
+        {
+            yield return $"{path}: a clean tool has megasonic power, not an RF generator.";
+        }
+    }
+
+    private static IEnumerable<string> EvaluateSensor(ToolSpec tool, SensorSpec sensor, string path)
+    {
+        var where = $"{path}/{sensor.Id}";
+        if (!SensorIdPattern().IsMatch(sensor.Id) || !sensor.Id.StartsWith(tool.Id + "-", StringComparison.Ordinal))
+        {
+            yield return $"{where}: sensor id must start with {tool.Id}-.";
+        }
+
+        if (!AnchorPattern().IsMatch(sensor.SchematicAnchor))
+        {
+            yield return $"{where}: schematic anchor must look like a.chamber.pressure or tool.runRate.";
+        }
+
+        if (!SensorCatalog.IsType(sensor.Type))
+        {
+            yield return $"{where}: type {sensor.Type} is not in the sensor catalog.";
+        }
+
+        if (!SensorCatalog.IsSubsystem(sensor.Subsystem))
+        {
+            yield return $"{where}: subsystem {sensor.Subsystem} is not in the sensor catalog.";
+        }
+
+        if (SensorCatalog.IsType(sensor.Type) && !SensorCatalog.AllowsUnit(sensor.Type, sensor.Unit))
+        {
+            yield return $"{where}: unit {sensor.Unit} is not valid for {sensor.Type}.";
+        }
+
+        var toolScoped = sensor.Type is SensorCatalog.RunRate or SensorCatalog.Throughput or SensorCatalog.Yield
+            || (sensor.Type == SensorCatalog.Output && sensor.Parameter is null);
+        if (toolScoped)
+        {
+            if (!sensor.IsToolScope || sensor.Parameter is not null || sensor.TracksSensorId is not null)
+            {
+                yield return $"{where}: a {sensor.Type} point is tool-scoped and has no chamber, parameter, or tracked sensor.";
+            }
+
+            if (!sensor.SchematicAnchor.StartsWith("tool.", StringComparison.Ordinal))
+            {
+                yield return $"{where}: a tool-scoped anchor starts with tool.";
+            }
+
+            yield break;
+        }
+
+        if (sensor.Type == SensorCatalog.RfReflectedPower)
+        {
+            foreach (var error in EvaluateReflected(tool, sensor, where))
+            {
+                yield return error;
+            }
+
+            yield break;
+        }
+
+        if (sensor.ChamberId is null || sensor.Parameter is null || sensor.TracksSensorId is not null)
+        {
+            yield return $"{where}: a {sensor.Type} point names a chamber and a parameter and does not track another sensor.";
+            yield break;
+        }
+
+        if (!tool.Chambers.Any(chamber => string.Equals(chamber.Id, sensor.ChamberId, StringComparison.Ordinal)))
+        {
+            yield return $"{where}: chamber {sensor.ChamberId} is not on this tool.";
+        }
+
+        var slot = sensor.ChamberId[^1] == 'A' ? "a." : sensor.ChamberId[^1] == 'B' ? "b." : null;
+        if (slot is null || !sensor.SchematicAnchor.StartsWith(slot, StringComparison.Ordinal))
+        {
+            yield return $"{where}: schematic anchor must start with the chamber slot.";
+        }
+
+        var limits = FamilyParameterCatalog.For(tool.Family);
+        if (!limits.TryGetValue(sensor.Parameter, out var envelope))
+        {
+            yield return $"{where}: {sensor.Parameter} is not a {tool.Family} parameter.";
+            yield break;
+        }
+
+        if (!string.Equals(sensor.Unit, envelope.Unit, StringComparison.Ordinal))
+        {
+            yield return $"{where}: unit {sensor.Unit} does not match the family unit {envelope.Unit}.";
+        }
+
+        if (!Nearly(sensor.Limits.Minimum, envelope.Minimum) || !Nearly(sensor.Limits.Maximum, envelope.Maximum))
+        {
+            yield return string.Create(
+                CultureInfo.InvariantCulture,
+                $"{where}: spec limits must be the family envelope {envelope.Minimum}-{envelope.Maximum} {envelope.Unit}.");
+        }
+
+        if (!RecipeNominals(tool, sensor.Parameter).Any(nominal => Nearly(nominal, sensor.Limits.Nominal)))
+        {
+            yield return $"{where}: nominal must match a recipe window for {sensor.Parameter}.";
+        }
+    }
+
+    private static IEnumerable<string> EvaluateReflected(ToolSpec tool, SensorSpec sensor, string where)
+    {
+        if (sensor.ChamberId is null || sensor.Parameter is not null || sensor.TracksSensorId is null)
+        {
+            yield return $"{where}: reflected power names a chamber and the forward sensor it tracks.";
+            yield break;
+        }
+
+        var reflectedSlot = sensor.ChamberId[^1] == 'A' ? "a." : sensor.ChamberId[^1] == 'B' ? "b." : null;
+        if (reflectedSlot is null || !sensor.SchematicAnchor.StartsWith(reflectedSlot, StringComparison.Ordinal))
+        {
+            yield return $"{where}: schematic anchor must start with the chamber slot.";
+        }
+
+        if (!tool.Chambers.Any(chamber => string.Equals(chamber.Id, sensor.ChamberId, StringComparison.Ordinal)))
+        {
+            yield return $"{where}: chamber {sensor.ChamberId} is not on this tool.";
+        }
+
+        var forward = tool.Sensors.FirstOrDefault(candidate => string.Equals(candidate.Id, sensor.TracksSensorId, StringComparison.Ordinal));
+        if (forward is null || forward.Type != SensorCatalog.RfForwardPower || !string.Equals(forward.ChamberId, sensor.ChamberId, StringComparison.Ordinal))
+        {
+            yield return $"{where}: tracksSensorId must be an RF forward sensor on the same chamber.";
+            yield break;
+        }
+
+        if (!Nearly(sensor.Limits.Minimum, 0d)
+            || !Nearly(sensor.Limits.Maximum, forward.Limits.Maximum * 0.15d)
+            || !Nearly(sensor.Limits.Nominal, forward.Limits.Nominal * 0.03d))
+        {
+            yield return $"{where}: reflected spec is 0 to 15 percent of the forward maximum, with nominal at 3 percent of the forward nominal.";
+        }
+    }
+
+    private static IEnumerable<string> RecipeParameters(ToolSpec tool)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var recipe in tool.Recipes)
+        {
+            foreach (var step in recipe.Steps)
+            {
+                foreach (var window in step.Windows)
+                {
+                    if (seen.Add(window.Parameter))
+                    {
+                        yield return window.Parameter;
+                    }
+                }
+            }
+        }
+    }
+
+    private static IEnumerable<double> RecipeNominals(ToolSpec tool, string parameter)
+    {
+        foreach (var recipe in tool.Recipes)
+        {
+            foreach (var step in recipe.Steps)
+            {
+                var window = step.WindowFor(parameter);
+                if (window is not null)
+                {
+                    yield return window.Nominal;
+                }
+            }
+        }
+    }
+
+    private static bool Nearly(double left, double right) => Math.Abs(left - right) <= 1e-6d;
+
+    [GeneratedRegex("^[A-Z]-[0-9]{2}(-[A-Z0-9]+)+$")]
+    private static partial Regex SensorIdPattern();
+
+    [GeneratedRegex("^(a|b|tool)(\\.[a-z][A-Za-z0-9]*)+$")]
+    private static partial Regex AnchorPattern();
 }

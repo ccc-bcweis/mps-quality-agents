@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Agents.Explain;
 using Mps.Domain.Hypotheses;
 using Mps.Domain.Identity;
 
@@ -17,7 +18,9 @@ public sealed class ResolutionClaim
         IReadOnlyList<EvidenceId> evidenceIds,
         IReadOnlyList<string> counterEvidence,
         IReadOnlyList<string> actions,
-        IReadOnlyList<GroundedStatement> claims)
+        IReadOnlyList<GroundedStatement> claims,
+        IReadOnlyList<CitedEvidence>? explanations = null,
+        IReadOnlyList<EvidenceMatrixEntry>? evidenceMatrix = null)
     {
         ArgumentNullException.ThrowIfNull(evidenceIds);
         ArgumentNullException.ThrowIfNull(counterEvidence);
@@ -31,6 +34,8 @@ public sealed class ResolutionClaim
         CounterEvidence = counterEvidence.ToArray();
         Actions = actions.ToArray();
         Claims = claims.ToArray();
+        Explanations = explanations?.ToArray() ?? [];
+        EvidenceMatrix = evidenceMatrix?.ToArray() ?? [];
     }
 
     public RootCauseCategory? Category { get; }
@@ -46,4 +51,8 @@ public sealed class ResolutionClaim
     public IReadOnlyList<string> Actions { get; }
 
     public IReadOnlyList<GroundedStatement> Claims { get; }
+
+    public IReadOnlyList<CitedEvidence> Explanations { get; }
+
+    public IReadOnlyList<EvidenceMatrixEntry> EvidenceMatrix { get; }
 }

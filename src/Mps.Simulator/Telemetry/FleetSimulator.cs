@@ -107,33 +107,55 @@ public sealed class FleetSimulator : ITelemetrySource
                     var schedule = RecipeSchedule.Locate(tool, elapsed);
                     var runId = RecipeSchedule.RunId(tool.Id, elapsed);
                     var lotId = RecipeSchedule.LotId(tool.Id, elapsed);
+                    var values = new Dictionary<string, double>(StringComparer.Ordinal);
                     foreach (var chamber in tool.Chambers)
                     {
                         foreach (var parameter in RecipeSchedule.Parameters(schedule.Recipe))
                         {
                             var window = RecipeSchedule.Resolve(schedule, parameter);
-                            var key = TelemetryMath.SeriesKey(tool.Id, chamber.Id, parameter);
-                            if (!_series.TryGetValue(key, out var cursor))
+                            var sensor = tool.RequireParameterSensor(chamber.Id, parameter);
+                            if (!string.Equals(sensor.Unit, window.Unit, StringComparison.Ordinal))
                             {
-                                cursor = new SeriesCursor(Seed, key);
-                                _series.Add(key, cursor);
+                                throw new InvalidOperationException($"Sensor {sensor.Id} unit {sensor.Unit} does not match {window.Unit}.");
                             }
 
-                            var value = cursor.Next(window, at, _faults, tool.Id, chamber.Id, parameter);
-                            var frame = new TelemetryFrame(
-                                tool.Id,
-                                chamber.Id,
-                                parameter,
-                                window.Unit,
-                                at,
-                                value,
-                                schedule.Recipe.Id,
-                                schedule.Step.Id,
-                                runId,
-                                lotId);
-                            frames.Add(frame);
-                            _channel.Writer.TryWrite(frame);
+                            var key = TelemetryMath.SeriesKey(tool.Id, chamber.Id, parameter);
+                            var value = Cursor(key).Next(window, at, _faults, tool.Id, chamber.Id, parameter);
+                            values[sensor.Id] = value;
+                            AddFrame(frames, tool.Id, chamber.Id, parameter, sensor.Unit, sensor.Id, at, value, schedule, runId, lotId);
                         }
+
+                        foreach (var reflected in tool.Sensors.Where(sensor => sensor.TracksSensorId is not null && string.Equals(sensor.ChamberId, chamber.Id, StringComparison.Ordinal)).OrderBy(sensor => sensor.Id, StringComparer.Ordinal))
+                        {
+                            if (!values.TryGetValue(reflected.TracksSensorId!, out var forward))
+                            {
+                                continue;
+                            }
+
+                            var tracked = tool.Sensors.First(sensor => string.Equals(sensor.Id, reflected.TracksSensorId, StringComparison.Ordinal));
+                            var key = TelemetryMath.SeriesKey(tool.Id, chamber.Id, reflected.Id);
+                            var noise = Cursor(key).NextDeviation(reflected.Limits.Sigma);
+                            var value = (forward * (reflected.Limits.Nominal / tracked.Limits.Nominal)) + noise;
+                            AddFrame(frames, tool.Id, chamber.Id, reflected.Id, reflected.Unit, reflected.Id, at, value, schedule, runId, lotId);
+                        }
+                    }
+
+                    foreach (var sensor in tool.Sensors.Where(sensor => sensor.IsToolScope).OrderBy(sensor => sensor.Id, StringComparer.Ordinal))
+                    {
+                        var chamberId = sensor.FrameChamberId(tool.Id);
+                        var key = TelemetryMath.SeriesKey(tool.Id, chamberId, sensor.Id);
+                        double value;
+                        if (sensor.Type == SensorCatalog.Output)
+                        {
+                            value = (elapsed % 3600) / (double)RecipeSchedule.WaferSeconds;
+                        }
+                        else
+                        {
+                            var window = new OperatingWindow(sensor.Id, sensor.Unit, sensor.Limits.Minimum, sensor.Limits.Maximum, sensor.Limits.Nominal);
+                            value = Cursor(key).Next(window, at, _faults, tool.Id, chamberId, sensor.Id);
+                        }
+
+                        AddFrame(frames, tool.Id, chamberId, sensor.Id, sensor.Unit, sensor.Id, at, value, schedule, runId, lotId);
                     }
                 }
 
@@ -142,5 +164,45 @@ public sealed class FleetSimulator : ITelemetrySource
 
             return frames;
         }
+    }
+
+    private SeriesCursor Cursor(string key)
+    {
+        if (!_series.TryGetValue(key, out var cursor))
+        {
+            cursor = new SeriesCursor(Seed, key);
+            _series.Add(key, cursor);
+        }
+
+        return cursor;
+    }
+
+    private void AddFrame(
+        List<TelemetryFrame> frames,
+        string toolId,
+        string chamberId,
+        string parameter,
+        string unit,
+        string sensorId,
+        DateTimeOffset at,
+        double value,
+        RecipeCursor schedule,
+        string runId,
+        string lotId)
+    {
+        var frame = new TelemetryFrame(
+            toolId,
+            chamberId,
+            parameter,
+            unit,
+            sensorId,
+            at,
+            value,
+            schedule.Recipe.Id,
+            schedule.Step.Id,
+            runId,
+            lotId);
+        frames.Add(frame);
+        _channel.Writer.TryWrite(frame);
     }
 }

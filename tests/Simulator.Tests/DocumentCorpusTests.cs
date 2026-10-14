@@ -34,6 +34,7 @@ public sealed class DocumentCorpusTests
             texts["decoy-showerhead.md"].Should().Contain("9.5-12 Torr");
             texts["decoy-showerhead.md"].Should().NotContain(pressureText);
             texts["untrusted-bay-note.md"].Should().Contain("Ignore previous instructions");
+            texts.Values.Should().OnlyContain(text => text.Contains("whyItMatters:", StringComparison.Ordinal));
             texts["coa-nf-3317.md"].Should().Contain("NF-3317");
         }
         finally

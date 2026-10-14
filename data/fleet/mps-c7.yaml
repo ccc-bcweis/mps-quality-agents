@@ -53,8 +53,38 @@ tools:
     bay: Bay-1
     chambers:
       - { id: C-01-A, name: Chamber A }
+    sensors:
+      - { id: C-01-A-TC-BATH, type: thermocouple, unit: C, subsystem: chuckHeater, schematicAnchor: a.chuck.bath, minimum: 60, maximum: 70, nominal: 65, warningMinimum: 61, warningMaximum: 69, chamberId: C-01-A, parameter: bathTemperature }
+      - { id: C-01-A-PT-AMBIENT, type: chamberPressure, unit: atm, subsystem: chamber, schematicAnchor: a.chamber.pressure, minimum: 0.97, maximum: 1.03, nominal: 1, warningMinimum: 0.976, warningMaximum: 1.024, chamberId: C-01-A, parameter: ambientPressure }
+      - { id: C-01-A-MEG-PWR, type: megasonicPower, unit: W, subsystem: chuckHeater, schematicAnchor: a.chuck.megasonic, minimum: 500, maximum: 900, nominal: 700, warningMinimum: 540, warningMaximum: 860, chamberId: C-01-A, parameter: megasonicPower }
+      - { id: C-01-A-MFC-SC1, type: gasFlow, unit: L/min, subsystem: gasBox, schematicAnchor: a.gas.sc1, minimum: 0.4, maximum: 2.5, nominal: 1.1, warningMinimum: 0.61, warningMaximum: 2.29, chamberId: C-01-A, parameter: sc1Flow }
+      - { id: C-01-A-MFC-SC2, type: gasFlow, unit: L/min, subsystem: gasBox, schematicAnchor: a.gas.sc2, minimum: 0.4, maximum: 2.5, nominal: 1.1, warningMinimum: 0.61, warningMaximum: 2.29, chamberId: C-01-A, parameter: sc2Flow }
+      - { id: C-01-A-MFC-DIW, type: gasFlow, unit: L/min, subsystem: gasBox, schematicAnchor: a.gas.diw, minimum: 0.5, maximum: 3, nominal: 1.6, warningMinimum: 0.75, warningMaximum: 2.75, chamberId: C-01-A, parameter: diwFlow }
+      - { id: C-01-A-VIB-PUMP, type: vibration, unit: mm/s, subsystem: vacuum, schematicAnchor: a.vacuum.vibration, minimum: 0, maximum: 3, nominal: 0.9, warningMinimum: 0.3, warningMaximum: 2.7, chamberId: C-01-A, parameter: vibrationRms }
+      - { id: C-01-A-ALN-CHUCK, type: alignment, unit: mm, subsystem: waferHandler, schematicAnchor: a.handler.runout, minimum: 0, maximum: 0.2, nominal: 0.02, warningMinimum: 0.02, warningMaximum: 0.18, chamberId: C-01-A, parameter: spinChuckRunout }
+      - { id: C-01-A-OUT-PARTICLES, type: output, unit: count, subsystem: chamber, schematicAnchor: a.chamber.particles, minimum: 0, maximum: 5, nominal: 1, warningMinimum: 0.5, warningMaximum: 4.5, chamberId: C-01-A, parameter: particlesAdders }
+      - { id: C-01-A-OUT-RESIDUE, type: output, unit: count, subsystem: chamber, schematicAnchor: a.chamber.residue, minimum: 0, maximum: 20, nominal: 0, warningMinimum: 0, warningMaximum: 18, chamberId: C-01-A, parameter: residueCount }
+      - { id: C-01-RUN-RATE, type: runRate, unit: wafers/hour, subsystem: waferHandler, schematicAnchor: tool.runRate, minimum: 8, maximum: 14, nominal: 12, warningMinimum: 8.6, warningMaximum: 13.4 }
+      - { id: C-01-THROUGHPUT, type: throughput, unit: wafers/hour, subsystem: waferHandler, schematicAnchor: tool.throughput, minimum: 7, maximum: 14, nominal: 11.4, warningMinimum: 7.7, warningMaximum: 13.3 }
+      - { id: C-01-OUTPUT, type: output, unit: wafers, subsystem: waferHandler, schematicAnchor: tool.output, minimum: 0, maximum: 14, nominal: 12, warningMinimum: 1.4, warningMaximum: 12.6 }
+      - { id: C-01-YIELD, type: yield, unit: percent, subsystem: waferHandler, schematicAnchor: tool.yield, minimum: 90, maximum: 100, nominal: 97, warningMinimum: 91, warningMaximum: 99 }
   - id: C-02
     name: Clean C-02
     bay: Bay-2
     chambers:
       - { id: C-02-A, name: Chamber A }
+    sensors:
+      - { id: C-02-A-TC-BATH, type: thermocouple, unit: C, subsystem: chuckHeater, schematicAnchor: a.chuck.bath, minimum: 60, maximum: 70, nominal: 65, warningMinimum: 61, warningMaximum: 69, chamberId: C-02-A, parameter: bathTemperature }
+      - { id: C-02-A-PT-AMBIENT, type: chamberPressure, unit: atm, subsystem: chamber, schematicAnchor: a.chamber.pressure, minimum: 0.97, maximum: 1.03, nominal: 1, warningMinimum: 0.976, warningMaximum: 1.024, chamberId: C-02-A, parameter: ambientPressure }
+      - { id: C-02-A-MEG-PWR, type: megasonicPower, unit: W, subsystem: chuckHeater, schematicAnchor: a.chuck.megasonic, minimum: 500, maximum: 900, nominal: 700, warningMinimum: 540, warningMaximum: 860, chamberId: C-02-A, parameter: megasonicPower }
+      - { id: C-02-A-MFC-SC1, type: gasFlow, unit: L/min, subsystem: gasBox, schematicAnchor: a.gas.sc1, minimum: 0.4, maximum: 2.5, nominal: 1.1, warningMinimum: 0.61, warningMaximum: 2.29, chamberId: C-02-A, parameter: sc1Flow }
+      - { id: C-02-A-MFC-SC2, type: gasFlow, unit: L/min, subsystem: gasBox, schematicAnchor: a.gas.sc2, minimum: 0.4, maximum: 2.5, nominal: 1.1, warningMinimum: 0.61, warningMaximum: 2.29, chamberId: C-02-A, parameter: sc2Flow }
+      - { id: C-02-A-MFC-DIW, type: gasFlow, unit: L/min, subsystem: gasBox, schematicAnchor: a.gas.diw, minimum: 0.5, maximum: 3, nominal: 1.6, warningMinimum: 0.75, warningMaximum: 2.75, chamberId: C-02-A, parameter: diwFlow }
+      - { id: C-02-A-VIB-PUMP, type: vibration, unit: mm/s, subsystem: vacuum, schematicAnchor: a.vacuum.vibration, minimum: 0, maximum: 3, nominal: 0.9, warningMinimum: 0.3, warningMaximum: 2.7, chamberId: C-02-A, parameter: vibrationRms }
+      - { id: C-02-A-ALN-CHUCK, type: alignment, unit: mm, subsystem: waferHandler, schematicAnchor: a.handler.runout, minimum: 0, maximum: 0.2, nominal: 0.02, warningMinimum: 0.02, warningMaximum: 0.18, chamberId: C-02-A, parameter: spinChuckRunout }
+      - { id: C-02-A-OUT-PARTICLES, type: output, unit: count, subsystem: chamber, schematicAnchor: a.chamber.particles, minimum: 0, maximum: 5, nominal: 1, warningMinimum: 0.5, warningMaximum: 4.5, chamberId: C-02-A, parameter: particlesAdders }
+      - { id: C-02-A-OUT-RESIDUE, type: output, unit: count, subsystem: chamber, schematicAnchor: a.chamber.residue, minimum: 0, maximum: 20, nominal: 0, warningMinimum: 0, warningMaximum: 18, chamberId: C-02-A, parameter: residueCount }
+      - { id: C-02-RUN-RATE, type: runRate, unit: wafers/hour, subsystem: waferHandler, schematicAnchor: tool.runRate, minimum: 8, maximum: 14, nominal: 12, warningMinimum: 8.6, warningMaximum: 13.4 }
+      - { id: C-02-THROUGHPUT, type: throughput, unit: wafers/hour, subsystem: waferHandler, schematicAnchor: tool.throughput, minimum: 7, maximum: 14, nominal: 11.4, warningMinimum: 7.7, warningMaximum: 13.3 }
+      - { id: C-02-OUTPUT, type: output, unit: wafers, subsystem: waferHandler, schematicAnchor: tool.output, minimum: 0, maximum: 14, nominal: 12, warningMinimum: 1.4, warningMaximum: 12.6 }
+      - { id: C-02-YIELD, type: yield, unit: percent, subsystem: waferHandler, schematicAnchor: tool.yield, minimum: 90, maximum: 100, nominal: 97, warningMinimum: 91, warningMaximum: 99 }
