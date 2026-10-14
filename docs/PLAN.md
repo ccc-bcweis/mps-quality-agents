@@ -96,6 +96,8 @@ Draft outline now; finish after the demo with real screenshots and measured metr
 **IP notice (footer on every slide + closing slide):** "© 2026 Bryan C. Weis and Common Consulting Company. All intellectual property owned by Bryan C. Weis / Common Consulting Company. Fictional demonstration, AI-assisted; all companies and data are synthetic."
 (Core exec story = slides 1-6 + 8, per the 6-8 recommendation; 7 and 9 support the architecture and code segments.)
 
+- **Design principle slide (K5 #66):** Plain-language operations (ADR-003): a supervisor or manager who isn't an engineer can understand and explain a problem, because nothing is in code. Show glossary hovers, the tool schematic, why-it-matters evidence and plain-word metrics.
+
 ## 8. Issue breakdown
 Labels: `lane:*`, `phase:*`, `type:test`, `design-question`, `stretch` (plus `type:design|infra|docs|ci`, `needs-bryan`).
 | ID | Phase | Lane | Agent | Issue | Depends on | Acceptance | Est h |
