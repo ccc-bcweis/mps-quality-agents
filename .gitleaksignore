@@ -1,0 +1,2 @@
+# Azure built-in role definition ID (Key Vault Secrets User), not a secret
+a436641b74d86c42f3154cb3d0793c7b0f07e74f:infra/modules/key-vault.bicep:generic-api-key:7
