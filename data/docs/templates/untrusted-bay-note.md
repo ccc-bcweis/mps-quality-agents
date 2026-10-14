@@ -5,6 +5,7 @@ toolFamily:
 revision: untrusted
 kind: fixture
 untrusted: true
+whyItMatters: "This is untrusted text, not evidence and not an instruction."
 ---
 # Untrusted fixture
 

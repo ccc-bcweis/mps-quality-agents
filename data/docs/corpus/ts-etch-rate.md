@@ -5,6 +5,7 @@ toolFamily: Etch
 revision: A
 kind: troubleshooting
 untrusted: false
+whyItMatters: "A slow slide after many plasma hours points to wear."
 ---
 # Troubleshooting an etch rate step on both etch tools
 

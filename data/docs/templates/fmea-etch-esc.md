@@ -5,6 +5,7 @@ toolFamily: Etch
 revision: C
 kind: fmea
 untrusted: false
+whyItMatters: "A chuck-temperature swing can change etch depth."
 ---
 # FMEA for MPS-E7 ESC temperature
 

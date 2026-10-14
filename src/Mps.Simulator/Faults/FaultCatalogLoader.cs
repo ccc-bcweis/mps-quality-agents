@@ -156,6 +156,8 @@ public static class FaultCatalogLoader
         }
 
         var evidence = MapEvidence(dto.Evidence, source, errors);
+        var notes = new List<EvidenceNote>();
+        CollectNotes(dto, id, source, errors, notes);
         if (evidence.Eco?.ToolId is { } ecoTool && !tools.Contains(ecoTool, StringComparer.Ordinal))
         {
             errors.Add($"{source}: ECO tool {ecoTool} is not one of the fault tools.");
@@ -192,8 +194,124 @@ public static class FaultCatalogLoader
             cause,
             dto.CounterEvidence ?? [],
             dto.Actions ?? [],
-            evidence);
+            evidence,
+            notes.First(note => note.Kind == "fault").WhyItMatters,
+            notes);
         return true;
+    }
+
+    private static void CollectNotes(FaultFileDto dto, string faultId, string source, List<string> errors, List<EvidenceNote> notes)
+    {
+        AddNote(notes, "fault", faultId, dto.WhyItMatters, source, "whyItMatters", errors);
+        var evidence = dto.Evidence;
+        if (evidence is null)
+        {
+            return;
+        }
+
+        if (evidence.Eco is not null)
+        {
+            AddNote(notes, "eco", evidence.Eco.EcoId, evidence.Eco.WhyItMatters, source, "evidence.eco.whyItMatters", errors);
+        }
+
+        if (evidence.Config is not null)
+        {
+            AddNote(notes, "config", evidence.Config.ConfigId, evidence.Config.WhyItMatters, source, "evidence.config.whyItMatters", errors);
+        }
+
+        if (evidence.Calibration is not null)
+        {
+            AddNote(notes, "calibration", evidence.Calibration.CalibrationId, evidence.Calibration.WhyItMatters, source, "evidence.calibration.whyItMatters", errors);
+        }
+
+        if (evidence.MaterialLot is not null)
+        {
+            AddNote(notes, "materialLot", evidence.MaterialLot.LotId, evidence.MaterialLot.WhyItMatters, source, "evidence.materialLot.whyItMatters", errors);
+        }
+
+        if (evidence.SupplierNotice is not null)
+        {
+            AddNote(notes, "supplierNotice", evidence.SupplierNotice.NoticeId, evidence.SupplierNotice.WhyItMatters, source, "evidence.supplierNotice.whyItMatters", errors);
+        }
+
+        if (evidence.WorkOrder is not null)
+        {
+            AddNote(notes, "workOrder", evidence.WorkOrder.WorkOrderId, evidence.WorkOrder.WhyItMatters, source, "evidence.workOrder.whyItMatters", errors);
+        }
+
+        if (evidence.Runs is not null)
+        {
+            AddNote(notes, "runs", evidence.Runs.LotId, evidence.Runs.WhyItMatters, source, "evidence.runs.whyItMatters", errors);
+        }
+
+        foreach (var confounder in evidence.Confounders ?? [])
+        {
+            AddNote(notes, "confounder", ConfounderRecordId(confounder), confounder.WhyItMatters, source, "evidence.confounder.whyItMatters", errors);
+        }
+
+        foreach (var missing in evidence.Missing ?? [])
+        {
+            AddNote(notes, "missing", missing.RecordId, missing.WhyItMatters, source, "evidence.missing.whyItMatters", errors);
+        }
+
+        if (evidence.Contradiction is not null)
+        {
+            AddNote(notes, "contradiction", "contradiction", evidence.Contradiction.WhyItMatters, source, "evidence.contradiction.whyItMatters", errors);
+        }
+    }
+
+    private static string? ConfounderRecordId(ConfounderDto confounder)
+    {
+        return confounder.Kind switch
+        {
+            "pm" => confounder.WorkOrderId,
+            "supplierLot" => confounder.Notice?.NoticeId ?? confounder.Material?.LotId,
+            "eco" => confounder.Eco?.EcoId,
+            _ => null,
+        };
+    }
+
+    private static void AddNote(List<EvidenceNote> notes, string kind, string? recordId, string? whyItMatters, string source, string name, List<string> errors)
+    {
+        var line = OneLine(whyItMatters, source, name, errors);
+        if (string.IsNullOrWhiteSpace(recordId) || line is null)
+        {
+            if (string.IsNullOrWhiteSpace(recordId))
+            {
+                errors.Add($"{source}: {name} needs a record id.");
+            }
+
+            return;
+        }
+
+        notes.Add(new EvidenceNote(kind, recordId.Trim(), line));
+    }
+
+    private static string? OneLine(string? value, string source, string name, List<string> errors)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            errors.Add($"{source}: {name} is required.");
+            return null;
+        }
+
+        var text = value.Trim();
+        if (text.Contains('\n', StringComparison.Ordinal) || text.Contains('\r', StringComparison.Ordinal) || text.Length > 220)
+        {
+            errors.Add($"{source}: {name} must be one line of at most 220 characters.");
+            return null;
+        }
+
+        foreach (var token in FaultPlainLanguage.HiddenLabels)
+        {
+            if (text.Contains(token, StringComparison.Ordinal))
+            {
+                errors.Add($"{source}: {name} must stay in plain language.");
+                return null;
+            }
+        }
+
+        return text;
     }
 
     private static void ValidateCategory(string source, string category, string behavior, bool assertCategory, FaultEvidence? evidence, DateTimeOffset onset, List<string> errors)
@@ -594,6 +712,8 @@ public static class FaultCatalogLoader
 
         public List<string>? Actions { get; set; }
 
+        public string? WhyItMatters { get; set; }
+
         public EvidenceDto? Evidence { get; set; }
     }
 
@@ -643,6 +763,8 @@ public static class FaultCatalogLoader
 
         public string? ChangeSummary { get; set; }
 
+        public string? WhyItMatters { get; set; }
+
         public string? PartName { get; set; }
 
         public string? Revision { get; set; }
@@ -657,6 +779,8 @@ public static class FaultCatalogLoader
         public string? Revision { get; set; }
 
         public string? PartName { get; set; }
+
+        public string? WhyItMatters { get; set; }
     }
 
     private sealed class CalibrationDto
@@ -672,6 +796,8 @@ public static class FaultCatalogLoader
         public string? CompletedAt { get; set; }
 
         public bool IsOverdue { get; set; }
+
+        public string? WhyItMatters { get; set; }
     }
 
     private sealed class MaterialDto
@@ -687,6 +813,8 @@ public static class FaultCatalogLoader
         public string? NoticeId { get; set; }
 
         public List<string>? ToolIds { get; set; }
+
+        public string? WhyItMatters { get; set; }
     }
 
     private sealed class NoticeDto
@@ -702,6 +830,8 @@ public static class FaultCatalogLoader
         public string? Summary { get; set; }
 
         public string? IssuedAt { get; set; }
+
+        public string? WhyItMatters { get; set; }
     }
 
     private class WorkOrderDto
@@ -717,6 +847,8 @@ public static class FaultCatalogLoader
         public string? PerformedAt { get; set; }
 
         public string? Summary { get; set; }
+
+        public string? WhyItMatters { get; set; }
     }
 
     private sealed class RunsDto
@@ -730,6 +862,8 @@ public static class FaultCatalogLoader
         public string? MaterialCode { get; set; }
 
         public int? Count { get; set; }
+
+        public string? WhyItMatters { get; set; }
     }
 
     private sealed class ConfounderDto : WorkOrderDto
@@ -748,6 +882,8 @@ public static class FaultCatalogLoader
         public string? RecordType { get; set; }
 
         public string? Reason { get; set; }
+
+        public string? WhyItMatters { get; set; }
     }
 
     private sealed class ConflictDto
@@ -759,6 +895,8 @@ public static class FaultCatalogLoader
         public string? PartName { get; set; }
 
         public string? Detail { get; set; }
+
+        public string? WhyItMatters { get; set; }
     }
 
     private sealed class PerturbationDto

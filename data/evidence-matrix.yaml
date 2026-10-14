@@ -1,0 +1,52 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Root-cause class to signal matrix. supports and rulesOut use the category keys. The sentences stay in plain language.
+classes:
+  - category: engineeringChange
+    whyItMatters: A released part change can move the wafer even when the recipe setpoints stayed put.
+  - category: equipmentCalibrationOrAlignment
+    whyItMatters: An overdue instrument can show a number the wafer never received.
+  - category: supplyChainMaterial
+    whyItMatters: A bad lot can move every tool that used it at the same time.
+  - category: processDrift
+    whyItMatters: Slow wear after a clean can move the result with no new part, lot, or calibration event.
+signals:
+  - id: released-change-before-shift
+    plain: A released hardware change took effect just before the measurement moved.
+    whyItMatters: The clock on the change lines up with the clock on the shift.
+    supports: [engineeringChange]
+    rulesOut: [processDrift]
+  - id: installed-revision-matches-change
+    plain: The installed part revision is the revision the change released.
+    whyItMatters: The tool is running the new part, which is more than paperwork.
+    supports: [engineeringChange]
+    rulesOut: [processDrift]
+  - id: overdue-instrument
+    plain: The instrument that reports this signal is past its calibration date.
+    whyItMatters: The number on the screen can disagree with what the wafer received.
+    supports: [equipmentCalibrationOrAlignment]
+    rulesOut: [engineeringChange]
+  - id: one-chamber-step
+    plain: Only one chamber stepped, and the other chambers on the same tool stayed put.
+    whyItMatters: A shared gas lot would have moved every tool that used it.
+    supports: [equipmentCalibrationOrAlignment]
+    rulesOut: [supplyChainMaterial]
+  - id: shared-lot-before-drop
+    plain: Every affected tool started the same material lot just before the drop.
+    whyItMatters: A lot shared across tools points at the material, not at one chamber's instrument.
+    supports: [supplyChainMaterial]
+    rulesOut: [equipmentCalibrationOrAlignment]
+  - id: supplier-lot-outside-limit
+    plain: The supplier says this lot is outside the limit they promised.
+    whyItMatters: The supplier already measured the problem in the lot.
+    supports: [supplyChainMaterial]
+    rulesOut: [processDrift]
+  - id: slow-slide-since-clean
+    plain: The measurement has been sliding since the last clean, with no new event at the start of the slide.
+    whyItMatters: Wear lines up with hours since the clean.
+    supports: [processDrift]
+    rulesOut: [engineeringChange, supplyChainMaterial]
+  - id: same-hardware-and-recipe
+    plain: The recipe revision and the hardware revision stayed the same across the slide.
+    whyItMatters: Nothing new was released, so the slide is on the same setup.
+    supports: [processDrift]
+    rulesOut: [engineeringChange]
