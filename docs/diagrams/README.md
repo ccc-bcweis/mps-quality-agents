@@ -9,7 +9,7 @@ Pitch drawings for Meridian Precision Systems. The mermaid sources are the revie
 | G1 (#46) | [`logical.md`](logical.md) | Who may decide, and who may only read |
 | G2 (#47) | [`physical.md`](physical.md) | Azure demo resources and the numbers on the box |
 | G3 (#48) | [`cicd.md`](cicd.md) | Lanes, CI, review, and the manual deploy |
-| G4 (#56) | [`investigation-flow.md`](investigation-flow.md) | Swimlane from Alerts to CAPA, with every agent step marked |
+| G4 (#56) | [`investigation-flow.md`](investigation-flow.md) | Swimlane from Alerts to CAPA. Agent steps, the tool schematic, why-lines, and the evidence matrix |
 
 ## What to print
 
