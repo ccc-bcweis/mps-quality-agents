@@ -38,3 +38,6 @@ infra/**/*.json
 # OS
 Thumbs.db
 Desktop.ini
+
+# Local lane worktrees (bcw2)
+.worktrees/
