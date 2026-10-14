@@ -1,51 +1,35 @@
-# Lane report: GB-F foundation
+# Lane report: GB-4 UI
 
-Branch `lane/f-foundation`. Local commits only. Nothing was pushed. `contracts-v1` was not tagged.
+Branch `lane/4-ui`. Local commits only. Nothing was pushed. Contract files were not changed. `design/` is an untracked read-only copy from the design worktree and is not in these commits.
+
+Copyright (c) 2026 Bryan C. Weis and Common Consulting Company. MIT.
 
 | Issue | Commit | What landed |
 |---|---|---|
-| F1 (#1) | `22ca3ba` | `MPS.sln`, layered projects, `Directory.Build.props`, `Directory.Packages.props`, `.editorconfig`, `global.json` (SDK 8.0.426), NetArchTest layering |
-| F2 (#2) | `e8560a1` | Domain entities and invariants, read tools, write ports, `IInvestigationWorkflow`, OpenAPI, mock-enterprise OpenAPI, MSW handlers, 12 event schemas, `docs/adr/ADR-001-contracts.md` |
-| F3 (#3) | `00c9a2f` | `.github/workflows/ci.yml`, `codeql.yml`, `deploy.yml` stub, `coverlet.runsettings` |
-| F4 (#4) | `c34b737` | `docker-compose.yml`, API and placeholder web Dockerfiles, `.env.example`, `.env` gitignore |
-| F5 (#5) | `8d3b3af` | `.vscode` launch/tasks/extensions, `.devcontainer/devcontainer.json`, README Clone and run |
-| F6 (#6) | `a436641` | `infra/main.bicep`, `infra/modules/*.bicep`, `infra/main.bicepparam`, `infra/BUDGET.md` |
+| U1 (#25) | `9efc8de` | React 19 + TypeScript + Vite app in `web/`. Tailwind theme from `design/brand/tailwind.theme.js` when that file is present, otherwise the same theme in `web/brand/tailwind.theme.cjs`. Logo `web/public/logo-concept-1.svg` (concept 1). Shell, fleet overview (eight tools, D-01 ALARM, E-02 WATCH), tool detail with SPC charts. CI web job runs `npm ci`, lint, test, and build. |
+| U2 (#26) | `a9639e4` | Alerts, tickets, investigation (evidence, hypotheses, confounders, rules/AI/human trace), lifecycle bar driven by stage. Escalation stays on Investigation and is labeled. |
+| U3 (#27) | `cafe682` | Approval dialog: type APPROVE, approver id, confirm ("Issue token and create CAPA"), reject with a reason, cancel posts nothing. CAPA screen keeps the decision result and shows the frozen advance error. |
+| U4 (#28) | `e5ab6e7` | Fault injector, including preset S4 (two posts). Metrics screen and ROI screen. The replay/live banner and spend meter are in the shell from U1 because every page renders them; this commit adds the injector, metrics, and ROI behavior. |
 
 ## How it was verified
 
-- After F2: `dotnet format MPS.sln --verify-no-changes` exited 0. `dotnet test MPS.sln --configuration Release` passed 19 domain tests and 10 architecture tests. The 12 event schemas parse as JSON.
-- F5: `dotnet run --project src/Mps.Api --configuration Release` answered `GET http://localhost:8080/health` with `{"status":"ok","service":"Mps.Api"}`. The process was stopped after that check.
-- F6: Bicep CLI 0.47.16 (`%USERPROFILE%\.azure\bin\bicep.exe`) compiled `infra/main.bicep` and `infra/main.bicepparam` with exit 0. The compiled JSON was written under the temp directory and deleted. It is not in git.
-- VS Code and devcontainer JSON files parse.
-- Docker Compose was not started. The dev container was not built. Azure CLI was not used. GitHub Actions were not executed from this machine.
+Before each commit:
 
-## F3 behavior Bob should expect
+- `npm run lint`, `npm test`, and `npm run build` in `web/` (TypeScript `noEmit`, Vite production build).
+- `dotnet format MPS.sln --verify-no-changes`
+- `dotnet build MPS.sln --configuration Release` (0 warnings, 0 errors)
+- `dotnet test MPS.sln --configuration Release --no-build` (Domain.Tests 19 passed, Architecture.Tests 10 passed)
 
-`ci.yml` runs on pull requests and on push to `main`: restore, Release build, `dotnet format --verify-no-changes`, Coverlet plus a ReportGenerator HTML artifact. The 70% coverage gate is not turned on. The web job skips lint and test when `web/package.json` is absent. Gitleaks uses `gitleaks/gitleaks-action` v3.0.0. Dependency review runs on pull requests only. The Bicep job downloads Bicep CLI v0.48.1 and builds `infra/main.bicep`. It does not call `az`.
+Final web suite: 17 files, 33 tests. That includes the approval dialog (disabled until the exact word APPROVE, cancel does not show the token, reject does not show the token, advance shows "Illegal CAPA transition."), the injector (new `corr-inject-` alert, S4 has two correlations), the mode banner (REPLAY MODE, `$0.00 of $2.00`, preview says the gateway is still replay), fleet, tool SPC, alerts, tickets, investigation S1/S2, CAPA empty state, metrics blanks, and the ROI figures `$96M` and `$7,599,195`.
 
-`codeql.yml` analyzes C# with `build-mode: manual` and `dotnet build`. JavaScript is omitted until `web/` exists.
+No browser tools are available in this session. A person has not clicked through the dev server. Vite's production build emits a chunk-size warning (the recharts bundle is about 746 kB). Lint, tests, and the build still exit 0.
 
-`deploy.yml` is `workflow_dispatch` only, environment `azure-demo`, `azure/login` with OIDC (`id-token: write`). Build, push, what-if, and deploy are comments marked `TODO Z1`.
+## Notes for Bob
 
-Action SHAs are pinned in the workflow files. Required checks and the `azure-demo` reviewer are GitHub settings for Bob.
-
-## F6 shape
-
-The deployment is resource-group scoped. It does not create `rg-mps-demo`. It defines a user-assigned identity, Log Analytics, workspace-based Application Insights, Key Vault (RBAC), Azure SQL General Purpose serverless, Azure OpenAI with local auth disabled, a Container Apps environment and app (min replicas 0, max 3, target port 8080), and a Standard Static Web App in `eastus2`. SQL has no password. The managed identity is the Entra-only administrator. The monthly budget module is included only when `budgetContactEmail` is non-empty. The parameters file leaves that value empty. Spend notes are in `infra/BUDGET.md`.
-
-## Open questions for Bob
-
-1. ADR-001 is at `docs/adr/ADR-001-contracts.md` because this brief asked for that path. PLAN section 4 records later decisions under `docs/decisions/`. Say if you want one directory.
-2. Please review and tag `contracts-v1`. ADR-001 status is Proposed. This lane did not create the tag.
-3. SPEC puts compose and IaC under `deploy/`. This lane followed the brief: `docker-compose.yml` at the repo root, Dockerfiles under `deploy/`, Bicep under `infra/`.
-4. PLAN names the GitHub environment `demo`. This brief names `azure-demo`. `deploy.yml` uses `azure-demo`.
-5. PLAN F6 acceptance mentions `az bicep build` and what-if. CI builds with the Bicep CLI and does not run what-if. What-if stays in the Z1 comments on `deploy.yml`.
-6. FluentAssertions is 7.2.2 (Apache-2.0). 8.x is commercially licensed, so it is not referenced from this MIT repo.
-7. `contracts/msw/handlers.ts` is hand-written for MSW 2 and is not executed here. `msw` is not installed, and `web/` was not created, so the web CI job stays skipped.
-8. Gitleaks organization scans need a `GITLEAKS_LICENSE` secret. `ccc-bcweis/mps-quality-agents` is a user-owned repo, so the license is not required unless the repo moves under an organization.
-9. Azure budgets cannot be weekly. The template uses a $40 monthly amount as the stand-in for $10/week. The $2/day model cap remains application code.
-10. After a future deploy, a narrower SQL contained user is still a manual step. The template makes the managed identity the Entra admin and does not run a deployment script.
-11. The Container Apps image is `mcr.microsoft.com/dotnet/aspnet:8.0` until Z1. The Aspire image tag is `mcr.microsoft.com/dotnet/aspire-dashboard:9.5` and was not pulled.
-12. Derived Azure names use prefix `mpsdemo`. Key Vault, SQL, and the Azure OpenAI subdomain must be unique at deploy time. Change `namePrefix` if a name is taken.
-13. A failed CAPA verification does not move the stage backward in this contract. JSON wire enums are camelCase. C# enums stay PascalCase. Mapping is documented in ADR-001 and is not implemented in the API yet.
-14. F5 debugs the API. The web target in Compose is a static placeholder page.
+- Demo list routes in `web/src/mocks/handlers.ts` sit in front of `contracts/msw/handlers.ts`. Health, metrics, decisions, and CAPA stay on the frozen handlers. S1 ids and hypothesis text match the contract fixture.
+- `design/` was missing on this branch. The committed logo and `web/brand/tailwind.theme.cjs` let CI build before the design merge. When `design/brand/tailwind.theme.js` is present, Tailwind loads that file.
+- Open contract questions are in `DESIGN_QUESTIONS.md`. None are blocking.
+- PLAN §6.5 names `data/roi/` CSV. This lane stayed inside `web/` and computed the same inputs in `web/src/roi/model.ts`.
+- The console does not call mock-enterprise. There is no force-QMS-500 button.
+- Fleet p95 is not invented. Metrics nulls render as "—". The confusion sketch is labeled illustrative and is not an eval report.
+- `docs/adr/ADR-002` is not in this checkout. The UI did not need it.
