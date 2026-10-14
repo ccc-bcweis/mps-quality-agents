@@ -3,6 +3,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { renderConsole } from "../test/render";
+import { matchCopy } from "../test/matchCopy";
 
 describe("tool detail", () => {
   it("draws an SPC chart and the etch windows for E-02", async () => {
@@ -12,6 +13,10 @@ describe("tool detail", () => {
     expect(chart).toHaveAccessibleName(/Western Electric rule 2/i);
     expect(screen.getByRole("cell", { name: "40–60 °C" })).toBeInTheDocument();
     expect(screen.getAllByText("53.1 °C osc").length).toBeGreaterThan(0);
+    expect(screen.getByRole("region", { name: "Tool performance" })).toHaveTextContent("24.0 wafers/h");
+    expect(screen.getByText("Illustrative demo readings, not a live tool counter.")).toBeInTheDocument();
+    expect(screen.getByText(matchCopy(/mean time between failures \(MTBF\)/))).toBeInTheDocument();
+    expect(screen.getByText(matchCopy(/mean time to repair \(MTTR\)/))).toBeInTheDocument();
   });
 
   it("binds etch sensors to the schematic and opens the chart for the point that was chosen", async () => {

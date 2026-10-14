@@ -7,6 +7,7 @@ import type { Tool } from "../api/types";
 import { SpcChart } from "../components/SpcChart";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
+import { PlainMetrics } from "../components/PlainMetrics";
 import { ToolSchematic } from "../components/ToolSchematic";
 import { btn, btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
@@ -104,6 +105,7 @@ export function ToolPage() {
           </div>
         ))}
       </div>
+      <PlainMetrics toolIds={[tool.id]} />
       <div className={`${panel} mt-3`}>
         <ToolSchematic family={tool.family} sensors={toolSensors} selectedId={selectedId} onSelect={showSensor} />
       </div>

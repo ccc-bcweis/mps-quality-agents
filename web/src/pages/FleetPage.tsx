@@ -8,6 +8,7 @@ import { mpsColor } from "../brand/colors";
 import { Chip } from "../components/Chip";
 import { Sparkline } from "../components/Sparkline";
 import { Explain } from "../components/Explain";
+import { PlainMetrics, TileMetrics } from "../components/PlainMetrics";
 import { btn, btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { bayCaption, statusTone, storyFor } from "../fleet/catalog";
@@ -66,6 +67,7 @@ export function FleetPage() {
         <Kpi label="Open tickets" value={tickets === null ? "—" : String(tickets)} note="queue" />
         <Kpi label="p95 time" value="—" note="investigation, from metrics" />
       </div>
+      {rows.length > 0 ? <PlainMetrics toolIds={rows.map((tool) => tool.id)} /> : null}
       {bays.map((bay) => (
         <section key={bay} className="mt-5">
           <h2 className="mb-2 font-mono text-mps-micro uppercase tracking-widest text-mps-muted">
@@ -79,28 +81,31 @@ export function FleetPage() {
                 const border = story.status === "alarm" ? "border-mps-alarm" : story.status === "watch" ? "border-mps-warn" : "border-mps-line";
                 const spark = tone === "alarm" ? mpsColor.alarm : tone === "warn" ? mpsColor.warn : tone === "ok" ? mpsColor.ok : mpsColor.nominal;
                 return (
-                  <Link key={tool.id} to={`/tools/${tool.id}`} className={`${panel} block ${border} no-underline hover:bg-mps-raised`}>
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-mps-title font-semibold">{tool.id}</span>
-                      <Chip tone={tone}>{story.status === "watch" ? "WATCH" : story.status === "alarm" ? "ALARM" : "NOMINAL"}</Chip>
-                    </div>
-                    <p className="mt-1 text-mps-micro text-mps-muted">
-                      {tool.model} · {FAMILY_PROCESS[tool.family]}
-                    </p>
-                    <div className="mt-2 space-y-1 font-mono text-mps-micro">
-                      {story.params.map((param) => (
-                        <div key={param.label} className="flex justify-between gap-2">
-                          <span className="text-mps-muted">
-                            <Explain text={param.label} />
-                          </span>
-                          <span className={param.tone === "alarm" ? "text-mps-alarm-text" : param.tone === "warn" ? "text-mps-warn" : "text-mps-secondary"}>
-                            {param.value}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    <Sparkline values={story.spark} color={spark} />
-                  </Link>
+                  <article key={tool.id} className={`${panel} ${border}`}>
+                    <Link to={`/tools/${tool.id}`} className="block no-underline hover:bg-mps-raised">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-mps-title font-semibold">{tool.id}</span>
+                        <Chip tone={tone}>{story.status === "watch" ? "WATCH" : story.status === "alarm" ? "ALARM" : "NOMINAL"}</Chip>
+                      </div>
+                      <p className="mt-1 text-mps-micro text-mps-muted">
+                        {tool.model} · {FAMILY_PROCESS[tool.family]}
+                      </p>
+                      <div className="mt-2 space-y-1 font-mono text-mps-micro">
+                        {story.params.map((param) => (
+                          <div key={param.label} className="flex justify-between gap-2">
+                            <span className="text-mps-muted">
+                              <Explain text={param.label} />
+                            </span>
+                            <span className={param.tone === "alarm" ? "text-mps-alarm-text" : param.tone === "warn" ? "text-mps-warn" : "text-mps-secondary"}>
+                              {param.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <Sparkline values={story.spark} color={spark} />
+                    </Link>
+                    <TileMetrics toolId={tool.id} />
+                  </article>
                 );
               })}
           </div>
