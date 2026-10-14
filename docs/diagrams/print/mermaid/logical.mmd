@@ -1,0 +1,119 @@
+flowchart LR
+  subgraph Intake["Equipment and intake"]
+    SIM["Fleet simulator - 1 Hz telemetry"]
+    INJ["Fault Injector UI"]
+    OPR["Operator report"]
+    NCR["QMS NCR event"]
+    SUP["Supplier notice"]
+  end
+
+  subgraph Mock["Mock enterprise systems"]
+    MES[("MES - runs, lots, recipes")]
+    QMS[("QMS - NCRs, CAPAs")]
+    PLM[("PLM - configs, BOM, ECOs")]
+    ERP[("ERP - lots, suppliers")]
+    CMMS[("CMMS - PM, calibrations")]
+    TKT[("Ticketing - TKT records")]
+  end
+
+  subgraph Docs["Document retrieval"]
+    CORP["Corpus ~12 docs: SOP, FMEA, bulletins, CoA, decoy, injection"]
+    CHUNK["Chunk / embed / index"]
+    RET["Hybrid BM25 + vector with metadata filters"]
+  end
+
+  subgraph Det["DETERMINISTIC - code, unit tested"]
+    SPC["SPC windows + Western Electric 1-4"]
+    INTAKE["Intake normalize, dedupe, severity"]
+    LIFE["Lifecycle state machine"]
+    IMPACT["Scope-of-impact and timing features"]
+    GATE["Evidence gate: sufficiency + contradiction"]
+    APPR["ApprovalToken HMAC, single-use, bound"]
+    ACT["Action service: CAPA write, not an agent tool"]
+  end
+
+  subgraph AI["PROBABILISTIC - model, evaluated"]
+    ORCH["Orchestrator MAF behind IInvestigationWorkflow"]
+    IA["Investigation Agent - read-only tools, no write"]
+    RA["Resolution Agent - evidence pack only, no tools"]
+  end
+
+  subgraph GW["Model gateway"]
+    LEDGER["Cost ledger + daily spend cap"]
+    ROUTE["Route / retry / circuit breaker"]
+    M1["Azure OpenAI"]
+    M2["OpenAI"]
+    M3["Replay recordings"]
+    M4["Mock reasoner"]
+  end
+
+  subgraph Gov["Eval and governance"]
+    GV["Grounding validator - cited IDs subset of pack"]
+    EVAL["Eval runner - 24 cases, hard gates"]
+    RED["Red-team - injection and jailbreak"]
+    AUDIT["Append-only audit log + OTel traces"]
+    REG["Prompt / model / index registry"]
+  end
+
+  UI["React fab console"]
+
+  INJ --> SIM
+  SIM --> SPC
+  SPC --> TKT
+  OPR --> INTAKE
+  NCR --> INTAKE
+  SUP --> INTAKE
+  TKT --> INTAKE
+  INTAKE --> LIFE
+  LIFE --> ORCH
+
+  MES --> IMPACT
+  QMS --> IMPACT
+  PLM --> IMPACT
+  ERP --> IMPACT
+  CMMS --> IMPACT
+  CORP --> CHUNK --> RET
+
+  ORCH --> IA
+  IA --> RET
+  IA --> IMPACT
+  IA --> MES
+  IA --> QMS
+  IA --> PLM
+  IA --> ERP
+  IA --> CMMS
+  IA --> TKT
+
+  IA --> GATE
+  GATE -->|"sufficient"| RA
+  GATE -->|"missing or contradictory"| UI
+  RA --> GV
+  GV --> UI
+  UI -->|"human approve"| APPR
+  APPR --> ACT
+  ACT --> QMS
+
+  IA --> ROUTE
+  RA --> ROUTE
+  ROUTE --> LEDGER
+  LEDGER -->|"under cap"| M1
+  LEDGER -->|"under cap"| M2
+  LEDGER -->|"over cap or local default"| M3
+  LEDGER -->|"no recording"| M4
+  REG --> ROUTE
+
+  SPC --> AUDIT
+  ORCH --> AUDIT
+  LEDGER --> AUDIT
+  AUDIT --> EVAL
+  EVAL --> RED
+  GV --> EVAL
+
+  classDef det fill:#1A1F27,stroke:#22D3EE,color:#F8FAFC
+  classDef proba fill:#1A1F27,stroke:#A78BFA,color:#F8FAFC
+  classDef gw fill:#0B1B33,stroke:#FAC400,color:#F8FAFC
+  classDef gov fill:#1A1F27,stroke:#94A3B8,color:#F8FAFC
+  class SPC,INTAKE,LIFE,IMPACT,GATE,APPR,ACT det
+  class ORCH,IA,RA proba
+  class LEDGER,ROUTE,M1,M2,M3,M4 gw
+  class GV,EVAL,RED,AUDIT,REG gov

@@ -153,3 +153,13 @@ A human in the console **approves**. Only then does the action service mint a si
 All model calls go through the **gateway**: routing, retries, a SQL **cost ledger**, and a **hard daily spend cap**. Over cap (or local default) the UI banner switches to REPLAY; injections without a recording use the labeled mock reasoner. Traces, the audit log, and the eval runner (including red-team injection cases) sit beside the product, not after it.
 
 LangGraph is not in-process. Orchestration is behind `IInvestigationWorkflow`; a stub adapter and MCP-exported tools (stretch) are the swap points. See SPEC §3.1.
+
+## Large-format print
+
+ARCH D sheet (36 × 24 in, landscape), v1.0, 2026-10-14. The mermaid block above is the source. The plotter files are hand-composed so labels do not cross.
+
+- [`print/logical-archD.pdf`](print/logical-archD.pdf)
+- [`print/logical-archD.svg`](print/logical-archD.svg)
+- [`print/logical.svg`](print/logical.svg)
+
+Regenerate with `pwsh docs/diagrams/render.ps1`. See [`README.md`](README.md).
