@@ -1,0 +1,60 @@
+/* MPS + StatusNeo design tokens. Source: design/brand/tokens.json
+   Copyright (c) 2026 Bryan C. Weis and Common Consulting Company */
+
+:root {
+  --sn-navy: #0B1B33;
+  --sn-navy-soft: #1A2744;
+  --sn-gold: #FAC400;
+  --sn-gold-ink: #7A5C00;
+  --sn-gold-wash: #F3E8C2;
+  --sn-paper: #F7F4EA;
+  --sn-ink: #111827;
+  --sn-muted: #4B5563;
+  --sn-white: #FFFFFF;
+
+  --mps-canvas: #0E1116;
+  --mps-panel: #1A1F27;
+  --mps-raised: #252B35;
+  --mps-line: #3D4654;
+  --mps-text: #F8FAFC;
+  --mps-secondary: #E5E7EB;
+  --mps-muted: #94A3B8;
+  --mps-nominal: #22D3EE;
+  --mps-nominal-soft: #67E8F9;
+  --mps-warn: #F59E0B;
+  --mps-warn-soft: #FCD34D;
+  --mps-alarm: #EF4444;
+  --mps-alarm-text: #FECACA;
+  --mps-alarm-solid: #B91C1C;
+  --mps-ok: #10B981;
+  --mps-ok-solid: #047857;
+  --mps-ai: #A78BFA;
+
+  --font-ui: Inter, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+  --font-pitch: "IBM Plex Sans", "Segoe UI", Helvetica Neue, Arial, sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius-sm: 2px;
+  --radius: 4px;
+  --radius-lg: 8px;
+  --radius-pill: 999px;
+
+  --shadow-panel: 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-overlay: 0 16px 48px rgba(0, 0, 0, 0.55);
+
+  --z-banner: 30;
+  --z-nav: 40;
+  --z-overlay: 50;
+
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --fast: 120ms;
+  --med: 200ms;
+}

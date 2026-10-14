@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="replay">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Fleet overview · MPS Fab Ops Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="assets/console.css"/>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="mode-banner">
+    <span class="mode-pill" data-mode-label>REPLAY MODE</span>
+    <span class="mode-note" data-mode-note>Recorded responses. No live model calls.</span>
+    <button type="button" class="mode-toggle" data-mode-toggle>Switch to LIVE AI</button>
+    <div class="spend" title="Hard daily spend cap enforced by the model gateway">
+      <span class="spend-label">Today's spend</span>
+      <div class="spend-track"><div class="spend-fill" data-spend-fill></div></div>
+      <span class="spend-val" data-spend-val>$0.00 of $2.00</span>
+    </div>
+  </div>
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <img src="../brand/logo-concept-1.svg" width="32" height="32" alt="Meridian Precision Systems mark"/>
+      <div>
+        <strong>Meridian Precision Systems</strong>
+        <span>Fab Ops Console · Austin Demo Fab</span>
+      </div>
+    </a>
+    <div class="topbar-meta">
+      <span><span class="led"></span>Sim 14:32 · 1 s = 1 min</span>
+      <span>Plant <b>AUS-1</b></span>
+      <span>Engineer <b>dev-user</b></span>
+    </div>
+  </header>
+  <nav class="nav"><a href="index.html" aria-current="page">Fleet</a><a href="tool.html">Tool</a><a href="alerts.html">Alerts</a><a href="tickets.html">Tickets</a><a href="investigation.html">Investigation</a><a href="approval.html">Approval</a><a href="capa.html">CAPA</a><a href="injector.html">Injector</a><a href="roi.html">ROI</a><a href="metrics.html">Metrics</a></nav>
+  <ol class="lifecycle"><li class="is-current"><span class="pip"></span>Alert</li><li class="is-todo"><span class="pip"></span>Ticket</li><li class="is-todo"><span class="pip"></span>Investigation</li><li class="is-todo"><span class="pip"></span>Recommendation</li><li class="is-todo"><span class="pip"></span>Approval</li><li class="is-todo"><span class="pip"></span>CAPA</li></ol>
+  <main id="main" class="page">
+
+    <div class="page-head">
+      <div>
+        <div class="crumbs">Austin Demo Fab · Bays A / B</div>
+        <h1>Fleet overview</h1>
+        <p>Eight tools, four families. SPC windows + Western Electric rules. Tiles link to tool detail.</p>
+      </div>
+      <div class="btn-row">
+        <a class="btn" href="injector.html">Fault injector</a>
+        <a class="btn btn-primary" href="alerts.html">Open alerts (2)</a>
+      </div>
+    </div>
+    <div class="grid grid-kpis">
+      <div class="panel kpi"><div class="label">Tools</div><div class="value">8</div><div class="delta flat">2 bays</div></div>
+      <div class="panel kpi"><div class="label">Nominal</div><div class="value">6</div><div class="delta">in window</div></div>
+      <div class="panel kpi"><div class="label">Watch</div><div class="value" style="color:var(--mps-warn)">1</div><div class="delta flat">E-02 ESC temp</div></div>
+      <div class="panel kpi"><div class="label">Alarm</div><div class="value" style="color:var(--mps-alarm)">1</div><div class="delta down">D-01 pressure</div></div>
+      <div class="panel kpi"><div class="label">Open TKT</div><div class="value">2</div><div class="delta flat"><a href="tickets.html">queue</a></div></div>
+      <div class="panel kpi"><div class="label">p95 INV</div><div class="value">38s</div><div class="delta">target &lt; 45s</div></div>
+    </div>
+    <h2 style="margin:20px 0 8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mps-muted)">Bay A · deposition / etch</h2>
+    <div class="grid grid-4">
+      <a class="panel tile alarm" href="tool.html?id=D-01">
+        <div class="tile-head"><span class="tile-id">D-01</span><span class="chip alarm">ALARM</span></div>
+        <div class="tile-family">MPS-D7 · PECVD · Ch A/B</div>
+        <div class="tile-params">
+          <div>Chamber P <span class="v" style="color:var(--mps-alarm-text)">6.52 Torr</span></div>
+          <div>Heater <span class="v">372 °C</span></div>
+          <div>RF <span class="v">448 W</span></div>
+        </div>
+        <svg class="spark" viewBox="0 0 220 28" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="#EF4444" stroke-width="1.5" points="0.0,24.0 20.0,23.3 40.0,22.5 60.0,23.3 80.0,21.8 100.0,22.5 120.0,23.3 140.0,9.9 160.0,5.5 180.0,4.7 200.0,5.5 220.0,4.0"/><circle cx="220.0" cy="4.0" r="2.2" fill="#EF4444"/></svg>
+      </a>
+      <a class="panel tile" href="tool.html?id=D-02">
+        <div class="tile-head"><span class="tile-id">D-02</span><span class="chip nominal">NOMINAL</span></div>
+        <div class="tile-family">MPS-D7 · PVD · Ch A/B</div>
+        <div class="tile-params">
+          <div>Chamber P <span class="v">4.05 Torr</span></div>
+          <div>Heater <span class="v">381 °C</span></div>
+          <div>RF <span class="v">510 W</span></div>
+        </div>
+        <svg class="spark" viewBox="0 0 220 28" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="#22D3EE" stroke-width="1.5" points="0.0,12.0 20.0,16.0 40.0,24.0 60.0,8.0 80.0,12.0 100.0,20.0 120.0,16.0 140.0,4.0 160.0,12.0 180.0,20.0 200.0,16.0 220.0,8.0"/><circle cx="220.0" cy="8.0" r="2.2" fill="#22D3EE"/></svg>
+      </a>
+      <a class="panel tile" href="tool.html?id=E-01">
+        <div class="tile-head"><span class="tile-id">E-01</span><span class="chip nominal">NOMINAL</span></div>
+        <div class="tile-family">MPS-E7 · plasma etch · Ch A/B</div>
+        <div class="tile-params">
+          <div>P <span class="v">42 mTorr</span></div>
+          <div>ESC <span class="v">51.2 °C</span></div>
+          <div>Src RF <span class="v">1.4 kW</span></div>
+        </div>
+        <svg class="spark" viewBox="0 0 220 28" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="#22D3EE" stroke-width="1.5" points="0.0,12.0 20.0,16.0 40.0,24.0 60.0,8.0 80.0,12.0 100.0,20.0 120.0,16.0 140.0,4.0 160.0,12.0 180.0,20.0 200.0,16.0 220.0,8.0"/><circle cx="220.0" cy="8.0" r="2.2" fill="#22D3EE"/></svg>
+      </a>
+      <a class="panel tile warn" href="tool.html?id=E-02">
+        <div class="tile-head"><span class="tile-id">E-02</span><span class="chip warn">WATCH</span></div>
+        <div class="tile-family">MPS-E7 · plasma etch · Ch B</div>
+        <div class="tile-params">
+          <div>P <span class="v">44 mTorr</span></div>
+          <div>ESC <span class="v" style="color:var(--mps-warn)">53.1 °C osc</span></div>
+          <div>Src RF <span class="v">1.5 kW</span></div>
+        </div>
+        <svg class="spark" viewBox="0 0 220 28" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="#F59E0B" stroke-width="1.5" points="0.0,15.9 20.0,15.2 40.0,16.3 60.0,14.4 80.0,9.0 100.0,5.9 120.0,11.7 140.0,20.9 160.0,24.0 180.0,18.2 200.0,7.5 220.0,4.0"/><circle cx="220.0" cy="4.0" r="2.2" fill="#F59E0B"/></svg>
+      </a>
+    </div>
+    <h2 style="margin:20px 0 8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mps-muted)">Bay B · strip / clean</h2>
+    <div class="grid grid-4">
+      <a class="panel tile" href="tool.html?id=S-01">
+        <div class="tile-head"><span class="tile-id">S-01</span><span class="chip nominal">NOMINAL</span></div>
+        <div class="tile-family">MPS-S7 · photoresist strip</div>
+        <div class="tile-params">
+          <div>P <span class="v">1.12 Torr</span></div>
+          <div>Temp <span class="v">262 °C</span></div>
+          <div>Remote RF <span class="v">3.1 kW</span></div>
+        </div>
+        <svg class="spark" viewBox="0 0 220 28" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="#22D3EE" stroke-width="1.5" points="0.0,12.0 20.0,16.0 40.0,24.0 60.0,8.0 80.0,12.0 100.0,20.0 120.0,16.0 140.0,4.0 160.0,12.0 180.0,20.0 200.0,16.0 220.0,8.0"/><circle cx="220.0" cy="8.0" r="2.2" fill="#22D3EE"/></svg>
+      </a>
+      <a class="panel tile" href="tool.html?id=S-02">
+        <div class="tile-head"><span class="tile-id">S-02</span><span class="chip nominal">NOMINAL</span></div>
+        <div class="tile-family">MPS-S7 · photoresist strip</div>
+        <div class="tile-params">
+          <div>P <span class="v">1.08 Torr</span></div>
+          <div>Temp <span class="v">258 °C</span></div>
+          <div>Remote RF <span class="v">2.9 kW</span></div>
+        </div>
+        <svg class="spark" viewBox="0 0 220 28" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="#22D3EE" stroke-width="1.5" points="0.0,12.0 20.0,16.0 40.0,24.0 60.0,8.0 80.0,12.0 100.0,20.0 120.0,16.0 140.0,4.0 160.0,12.0 180.0,20.0 200.0,16.0 220.0,8.0"/><circle cx="220.0" cy="8.0" r="2.2" fill="#22D3EE"/></svg>
+      </a>
+      <a class="panel tile" href="tool.html?id=C-01">
+        <div class="tile-head"><span class="tile-id">C-01</span><span class="chip nominal">NOMINAL</span></div>
+        <div class="tile-family">MPS-C7 · single-wafer clean</div>
+        <div class="tile-params">
+          <div>Bath <span class="v">64 °C</span></div>
+          <div>Megasonic <span class="v">720 W</span></div>
+          <div>Adders &gt;45 nm <span class="v">2</span></div>
+        </div>
+        <svg class="spark" viewBox="0 0 220 28" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="#10B981" stroke-width="1.5" points="0.0,12.0 20.0,16.0 40.0,24.0 60.0,8.0 80.0,12.0 100.0,20.0 120.0,16.0 140.0,4.0 160.0,12.0 180.0,20.0 200.0,16.0 220.0,8.0"/><circle cx="220.0" cy="8.0" r="2.2" fill="#10B981"/></svg>
+      </a>
+      <a class="panel tile" href="tool.html?id=C-02">
+        <div class="tile-head"><span class="tile-id">C-02</span><span class="chip nominal">NOMINAL</span></div>
+        <div class="tile-family">MPS-C7 · single-wafer clean</div>
+        <div class="tile-params">
+          <div>Bath <span class="v">66 °C</span></div>
+          <div>Megasonic <span class="v">680 W</span></div>
+          <div>Adders &gt;45 nm <span class="v">1</span></div>
+        </div>
+        <svg class="spark" viewBox="0 0 220 28" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="#10B981" stroke-width="1.5" points="0.0,12.0 20.0,16.0 40.0,24.0 60.0,8.0 80.0,12.0 100.0,20.0 120.0,16.0 140.0,4.0 160.0,12.0 180.0,20.0 200.0,16.0 220.0,8.0"/><circle cx="220.0" cy="8.0" r="2.2" fill="#10B981"/></svg>
+      </a>
+    </div>
+
+  </main>
+  <footer class="site-footer">
+    <span class="sn" title="Placeholder — official StatusNeo artwork not in this repo">Powered by StatusNeo</span>
+    <span>Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · MIT · Fictional demonstration; all companies and data are synthetic.</span>
+  </footer>
+  
+  <script src="assets/console.js"></script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="replay">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Tool E-02 · MPS Fab Ops Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="assets/console.css"/>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="mode-banner">
+    <span class="mode-pill" data-mode-label>REPLAY MODE</span>
+    <span class="mode-note" data-mode-note>Recorded responses. No live model calls.</span>
+    <button type="button" class="mode-toggle" data-mode-toggle>Switch to LIVE AI</button>
+    <div class="spend" title="Hard daily spend cap enforced by the model gateway">
+      <span class="spend-label">Today's spend</span>
+      <div class="spend-track"><div class="spend-fill" data-spend-fill></div></div>
+      <span class="spend-val" data-spend-val>$0.00 of $2.00</span>
+    </div>
+  </div>
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <img src="../brand/logo-concept-1.svg" width="32" height="32" alt="Meridian Precision Systems mark"/>
+      <div>
+        <strong>Meridian Precision Systems</strong>
+        <span>Fab Ops Console · Austin Demo Fab</span>
+      </div>
+    </a>
+    <div class="topbar-meta">
+      <span><span class="led"></span>Sim 14:32 · 1 s = 1 min</span>
+      <span>Plant <b>AUS-1</b></span>
+      <span>Engineer <b>dev-user</b></span>
+    </div>
+  </header>
+  <nav class="nav"><a href="index.html">Fleet</a><a href="tool.html" aria-current="page">Tool</a><a href="alerts.html">Alerts</a><a href="tickets.html">Tickets</a><a href="investigation.html">Investigation</a><a href="approval.html">Approval</a><a href="capa.html">CAPA</a><a href="injector.html">Injector</a><a href="roi.html">ROI</a><a href="metrics.html">Metrics</a></nav>
+  <ol class="lifecycle"><li class="is-current"><span class="pip"></span>Alert</li><li class="is-todo"><span class="pip"></span>Ticket</li><li class="is-todo"><span class="pip"></span>Investigation</li><li class="is-todo"><span class="pip"></span>Recommendation</li><li class="is-todo"><span class="pip"></span>Approval</li><li class="is-todo"><span class="pip"></span>CAPA</li></ol>
+  <main id="main" class="page">
+
+    <div class="banner-callout alarm" id="s2-banner" hidden>
+      Viewing <strong>D-01</strong> (scenario S2): chamber pressure step to 6.52 Torr. PLM showerhead rev C vs MES run header rev B. Calibration record missing. Evidence gate escalates — no root cause asserted.
+      <a href="tickets.html">TKT-1042 / INV-880</a>
+    </div>
+    <div class="page-head">
+      <div>
+        <div class="crumbs"><a href="index.html">Fleet</a> · Bay A · MPS-E7</div>
+        <h1>Tool E-02 · plasma etch</h1>
+        <p>Chamber B · recipe ETCH-OX-14 · Western Electric rule 2 (2 of 3 &gt; 2σ) on ESC temperature. Scenario S1.</p>
+      </div>
+      <div class="btn-row">
+        <a class="btn" href="tool.html?id=D-01">Open D-01 (S2 alarm)</a>
+        <a class="btn btn-primary" href="investigation.html">Open INV-881</a>
+      </div>
+    </div>
+    <div class="grid grid-kpis">
+      <div class="panel kpi"><div class="label">Status</div><div class="value" style="color:var(--mps-warn)">WATCH</div></div>
+      <div class="panel kpi"><div class="label">ESC temp</div><div class="value">53.1 °C</div><div class="delta flat">window 40–60</div></div>
+      <div class="panel kpi"><div class="label">Chamber P</div><div class="value">44 mTorr</div><div class="delta">in window</div></div>
+      <div class="panel kpi"><div class="label">Src / bias</div><div class="value">1.5 / 0.32</div><div class="delta flat">kW</div></div>
+      <div class="panel kpi"><div class="label">RF-hours</div><div class="value">186</div><div class="delta flat">since clean</div></div>
+      <div class="panel kpi"><div class="label">Lot</div><div class="value" style="font-size:14px">L-4419</div></div>
+    </div>
+    <div class="grid grid-2" style="margin-top:12px">
+      <div class="panel" style="grid-column: span 2;">
+        <h2>SPC · ESC temperature <span class="right">WE-2 · σ = 1.2 °C · n = 60</span></h2>
+        <svg class="spc" viewBox="0 0 720 220" role="img" aria-label="SPC chart ESC temperature with Western Electric oscillation">
+  <rect width="720" height="220" fill="#0E1116"/>
+  <rect x="48" y="48.5" width="656" height="123.1" fill="#EF4444" fill-opacity="0.06"/>
+  <rect x="48" y="69.0" width="656" height="82.0" fill="#F59E0B" fill-opacity="0.07"/>
+  <rect x="48" y="89.5" width="656" height="41.0" fill="#22D3EE" fill-opacity="0.08"/>
+  <line x1="48" x2="704" y1="48.5" y2="48.5" stroke="#EF4444" stroke-width="0.8" stroke-dasharray="4 3"/><text x="706" y="45.5" fill="#EF4444" font-size="9" font-family="JetBrains Mono,monospace" text-anchor="end">UCL 3σ</text><line x1="48" x2="704" y1="69.0" y2="69.0" stroke="#F59E0B" stroke-width="0.8" stroke-dasharray="4 3"/><text x="706" y="66.0" fill="#F59E0B" font-size="9" font-family="JetBrains Mono,monospace" text-anchor="end">2σ</text><line x1="48" x2="704" y1="89.5" y2="89.5" stroke="#22D3EE" stroke-width="0.8" stroke-dasharray="4 3"/><text x="706" y="86.5" fill="#22D3EE" font-size="9" font-family="JetBrains Mono,monospace" text-anchor="end">1σ</text><line x1="48" x2="704" y1="110.0" y2="110.0" stroke="#94A3B8" stroke-width="1.2"/><text x="706" y="107.0" fill="#94A3B8" font-size="9" font-family="JetBrains Mono,monospace" text-anchor="end">X̄ 50.0</text><line x1="48" x2="704" y1="130.5" y2="130.5" stroke="#22D3EE" stroke-width="0.8" stroke-dasharray="4 3"/><line x1="48" x2="704" y1="151.0" y2="151.0" stroke="#F59E0B" stroke-width="0.8" stroke-dasharray="4 3"/><line x1="48" x2="704" y1="171.5" y2="171.5" stroke="#EF4444" stroke-width="0.8" stroke-dasharray="4 3"/><text x="706" y="168.5" fill="#EF4444" font-size="9" font-family="JetBrains Mono,monospace" text-anchor="end">LCL 3σ</text>
+  <polyline fill="none" stroke="#E5E7EB" stroke-width="1.4" points="48.0,107.4 59.1,107.2 70.2,105.8 81.4,106.3 92.5,108.6 103.6,111.5 114.7,113.7 125.8,111.6 136.9,112.7 148.1,109.9 159.2,107.2 170.3,105.8 181.4,106.3 192.5,108.6 203.7,109.0 214.8,113.8 225.9,114.2 237.0,112.6 248.1,109.9 259.3,107.1 270.4,105.8 281.5,103.8 292.6,108.7 303.7,111.6 314.8,113.8 326.0,114.2 337.1,112.6 348.2,109.8 359.3,104.5 370.4,105.8 381.6,106.4 392.7,108.8 403.8,111.7 414.9,113.8 426.0,114.2 437.2,110.0 448.3,109.7 459.4,107.0 470.5,105.8 481.6,78.4 492.7,73.9 503.9,96.4 515.0,127.2 526.1,149.2 537.2,140.2 548.3,109.0 559.5,78.5 570.6,70.9 581.7,91.7 592.8,122.8 603.9,147.0 615.1,141.2 626.2,112.9 637.3,83.6 648.4,74.9 659.5,92.7 670.6,120.1 681.8,141.9 692.9,135.9 704.0,110.1"/>
+  <circle cx="470.5" cy="105.8" r="2.4" fill="#F59E0B"/><circle cx="481.6" cy="78.4" r="2.4" fill="#F59E0B"/><circle cx="492.7" cy="73.9" r="2.4" fill="#F59E0B"/><circle cx="503.9" cy="96.4" r="2.4" fill="#F59E0B"/><circle cx="515.0" cy="127.2" r="2.4" fill="#F59E0B"/><circle cx="526.1" cy="149.2" r="2.4" fill="#F59E0B"/><circle cx="537.2" cy="140.2" r="2.4" fill="#F59E0B"/><circle cx="548.3" cy="109.0" r="2.4" fill="#F59E0B"/><circle cx="559.5" cy="78.5" r="2.4" fill="#F59E0B"/><circle cx="570.6" cy="70.9" r="2.4" fill="#F59E0B"/><circle cx="581.7" cy="91.7" r="2.4" fill="#F59E0B"/><circle cx="592.8" cy="122.8" r="2.4" fill="#F59E0B"/><circle cx="603.9" cy="147.0" r="2.4" fill="#F59E0B"/><circle cx="615.1" cy="141.2" r="2.4" fill="#F59E0B"/><circle cx="626.2" cy="112.9" r="2.4" fill="#F59E0B"/><circle cx="637.3" cy="83.6" r="2.4" fill="#F59E0B"/><circle cx="648.4" cy="74.9" r="2.4" fill="#F59E0B"/><circle cx="659.5" cy="92.7" r="2.4" fill="#F59E0B"/><circle cx="670.6" cy="120.1" r="2.4" fill="#F59E0B"/><circle cx="681.8" cy="141.9" r="2.4" fill="#F59E0B"/><circle cx="692.9" cy="135.9" r="2.4" fill="#F59E0B"/><circle cx="704.0" cy="110.1" r="2.4" fill="#F59E0B"/>
+  <text x="8" y="14" fill="#94A3B8" font-size="10" font-family="JetBrains Mono,monospace">°C</text>
+</svg>
+        <div class="legend">
+          <span><i style="background:#22D3EE"></i>±1σ</span>
+          <span><i style="background:#F59E0B"></i>±2σ</span>
+          <span><i style="background:#EF4444"></i>±3σ</span>
+          <span><i style="background:#94A3B8"></i>mean</span>
+          <span><i style="background:#F59E0B"></i>oscillation onset (sim 14:08)</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Operating windows (recipe ETCH-OX-14)</h2>
+        <table class="data">
+          <thead><tr><th>Parameter</th><th>Window</th><th>Now</th></tr></thead>
+          <tbody>
+            <tr><td>Chamber pressure</td><td class="mono">20–80 mTorr</td><td class="mono">44</td></tr>
+            <tr><td>ESC temperature</td><td class="mono">40–60 °C</td><td class="mono" style="color:var(--mps-warn)">53.1 osc</td></tr>
+            <tr><td>Wall</td><td class="mono">60 °C</td><td class="mono">60.2</td></tr>
+            <tr><td>Source RF</td><td class="mono">1–2 kW</td><td class="mono">1.50</td></tr>
+            <tr><td>Bias RF</td><td class="mono">200–500 W</td><td class="mono">320</td></tr>
+            <tr><td>Edge ring height</td><td class="mono">rev C after ECO-4471</td><td class="mono">rev C</td></tr>
+            <tr><td>Particles &gt;45 nm</td><td class="mono">≤15 adders</td><td class="mono">6</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <h2>Linked records</h2>
+        <p><span class="chip warn">ALT-2044</span> auto-ticketed to <a href="tickets.html">TKT-1044</a></p>
+        <p>Investigation <a href="investigation.html">INV-881</a> · Evidence pack ready · human approval pending.</p>
+        <p class="mono" style="color:var(--mps-muted);font-size:11px">Deterministic: WE-2 fired, debounce 45 s, severity Watch. AI has not written anything.</p>
+        <div class="btn-row">
+          <a class="btn" href="alerts.html">Alerts</a>
+          <a class="btn" href="tickets.html">Tickets</a>
+        </div>
+      </div>
+    </div>
+
+  </main>
+  <footer class="site-footer">
+    <span class="sn" title="Placeholder — official StatusNeo artwork not in this repo">Powered by StatusNeo</span>
+    <span>Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · MIT · Fictional demonstration; all companies and data are synthetic.</span>
+  </footer>
+  
+  <script src="assets/console.js"></script>
+</body>
+</html>
