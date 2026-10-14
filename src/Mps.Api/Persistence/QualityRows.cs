@@ -113,6 +113,8 @@ public sealed class InvestigationRow
     public string EvidenceJson { get; set; } = "[]";
 
     public string HypothesesJson { get; set; } = "[]";
+
+    public string EvidenceMatrixJson { get; set; } = "[]";
 }
 
 public sealed class CapaRow
@@ -160,6 +162,9 @@ public sealed class FaultRow
 public sealed class ApprovalRow
 {
     public Guid TokenId { get; set; }
+
+    /// <summary>Monotonic per investigation so a retry sorts after the attempt it follows, even when the clock does not move.</summary>
+    public int Sequence { get; set; }
 
     public Guid InvestigationId { get; set; }
 

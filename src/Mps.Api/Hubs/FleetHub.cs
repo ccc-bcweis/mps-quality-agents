@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.SignalR;
 
 using Mps.Api.Http;
 using Mps.Application.Notifications;
+using Mps.Application.Persistence;
 using Mps.Domain.Capa;
 using Mps.Domain.Incidents;
 using Mps.Domain.Investigations;
@@ -35,11 +36,14 @@ public sealed class FleetHub : Hub
 public sealed class SignalRQualityNotifier : IQualityNotifier
 {
     private readonly IHubContext<FleetHub> _hub;
+    private readonly IInvestigationNarrativeLog _narratives;
 
-    public SignalRQualityNotifier(IHubContext<FleetHub> hub)
+    public SignalRQualityNotifier(IHubContext<FleetHub> hub, IInvestigationNarrativeLog narratives)
     {
         ArgumentNullException.ThrowIfNull(hub);
+        ArgumentNullException.ThrowIfNull(narratives);
         _hub = hub;
+        _narratives = narratives;
     }
 
     public Task AlertRaisedAsync(Alert alert, CancellationToken cancellationToken)
@@ -60,10 +64,12 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
         return SendAsync("incidentChanged", incident.ToolId.ToString(), ContractMapper.ToResponse(incident), cancellationToken);
     }
 
-    public Task InvestigationChangedAsync(InvestigationSnapshot snapshot, CancellationToken cancellationToken)
+    public async Task InvestigationChangedAsync(InvestigationSnapshot snapshot, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
-        return SendAsync("investigationChanged", null, ContractMapper.ToResponse(snapshot), cancellationToken);
+        var narrative = await _narratives.GetAsync(snapshot.Id, cancellationToken).ConfigureAwait(false);
+        await SendAsync("investigationChanged", null, ContractMapper.ToResponse(snapshot, narrative), cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public Task CapaChangedAsync(CapaAction capa, string eventName, CancellationToken cancellationToken)
