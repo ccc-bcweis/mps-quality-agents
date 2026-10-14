@@ -21,6 +21,11 @@ coverage/
 .env.*
 !.env.example
 
+# Local SQLite
+*.db
+*.db-shm
+*.db-wal
+
 # Node (UI lane)
 node_modules/
 dist/

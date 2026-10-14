@@ -1,0 +1,15 @@
+**/.git
+**/.vs
+**/.vscode
+**/.devcontainer
+**/bin
+**/obj
+**/TestResults
+coverage
+.env
+.env.*
+!.env.example
+**/*.user
+**/*.db
+**/*.db-shm
+**/*.db-wal
