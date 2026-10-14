@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Meridian Precision Systems Quality API
-  version: 0.1.0
+  version: 0.2.0
   description: |
     Console API for the fictional Meridian Precision Systems quality-investigation demo.
     Every intake channel becomes one incident. A CAPA is created only after a human approval,
@@ -185,7 +185,7 @@ paths:
       summary: Approve, reject, or request more information
       description: |
         Approve requires approverId. The server issues a single-use approval token bound to the
-        action hash and creates the CAPA. A client-supplied signature is ignored.
+        action hash and creates the CAPA. A client-supplied signature is not part of the schema and the request is rejected (400).
       parameters:
         - $ref: "#/components/parameters/InvestigationId"
       requestBody:
@@ -540,6 +540,34 @@ components:
         externalRef:
           type: string
           nullable: true
+        whyItMatters:
+          type: string
+          nullable: true
+          maxLength: 240
+          description: One plain-language sentence on why this evidence matters (ADR-003). Set by the agent; grounding validator checks it is attached to a cited evidence id.
+        signalId:
+          type: string
+          nullable: true
+          description: Sensor id from the fleet sensor catalog (data/fleet), when the evidence is a signal.
+    EvidenceStance:
+      type: string
+      enum: [supports, rulesOut, neutral]
+    EvidenceMatrixEntry:
+      type: object
+      additionalProperties: false
+      required: [category, evidenceId, stance]
+      properties:
+        category:
+          $ref: "#/components/schemas/RootCauseCategory"
+        evidenceId:
+          type: string
+          format: uuid
+        stance:
+          $ref: "#/components/schemas/EvidenceStance"
+        whyItMatters:
+          type: string
+          nullable: true
+          maxLength: 240
     RootCauseCategory:
       type: string
       enum: [engineeringChange, equipmentCalibrationOrAlignment, supplyChainMaterial, processDrift]
@@ -589,6 +617,11 @@ components:
       additionalProperties: false
       required: [id, incidentId, stage, evidence, hypotheses, correlationId]
       properties:
+        evidenceMatrix:
+          type: array
+          description: Root-cause class to evidence stance matrix (UX3). Optional; empty until the Investigation Agent has ranked.
+          items:
+            $ref: "#/components/schemas/EvidenceMatrixEntry"
         id:
           type: string
           format: uuid
@@ -635,8 +668,9 @@ components:
         investigation:
           $ref: "#/components/schemas/Investigation"
         capa:
-          $ref: "#/components/schemas/Capa"
           nullable: true
+          allOf:
+            - $ref: "#/components/schemas/Capa"
     CapaStage:
       type: string
       enum: [open, containment, rootCauseConfirmed, correctiveAction, verification, closed]
