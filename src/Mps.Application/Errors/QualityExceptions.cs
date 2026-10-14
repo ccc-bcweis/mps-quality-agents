@@ -43,3 +43,24 @@ public sealed class ApprovalForbiddenException : Exception
     {
     }
 }
+
+/// <summary>
+/// A QMS write failed. Status 500 and 408 are retried. Status 409 with an existing id is success.
+/// </summary>
+public sealed class ConnectorWriteException : Exception
+{
+    public ConnectorWriteException(int statusCode, string? existingExternalId, string message)
+        : base(message)
+    {
+        StatusCode = statusCode;
+        ExistingExternalId = string.IsNullOrWhiteSpace(existingExternalId) ? null : existingExternalId.Trim();
+    }
+
+    public int StatusCode { get; }
+
+    public string? ExistingExternalId { get; }
+
+    public bool IsRetryable => StatusCode is 500 or 408;
+
+    public bool IsIdempotentConflict => StatusCode == 409 && ExistingExternalId is not null;
+}

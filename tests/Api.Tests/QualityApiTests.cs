@@ -142,7 +142,7 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task ApproveWithoutTheTokenPathIsForbidden()
+    public async Task ApproveRequiresAnApproverAndThenCreatesOneCapa()
     {
         var client = _factory.CreateClient();
         var opened = await OpenIncidentAsync(client, "C-01", "particles");
@@ -151,15 +151,31 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         var investigationId = (await started.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("id").GetGuid();
 
         var missingApprover = await client.PostAsJsonAsync("/api/investigations/" + investigationId + "/decisions", new { kind = "approve" });
-        var forbidden = await client.PostAsJsonAsync("/api/investigations/" + investigationId + "/decisions", new
+        var approved = await client.PostAsJsonAsync("/api/investigations/" + investigationId + "/decisions", new
         {
             kind = "approve",
             approverId = "eng-17",
             comment = "Hold the lot.",
         });
+        var body = await approved.Content.ReadFromJsonAsync<JsonElement>(Json);
+        var repeat = await client.PostAsJsonAsync("/api/investigations/" + investigationId + "/decisions", new
+        {
+            kind = "approve",
+            approverId = "eng-17",
+            comment = "Hold the lot.",
+        });
+        var repeated = await repeat.Content.ReadFromJsonAsync<JsonElement>(Json);
+        var incident = await client.GetFromJsonAsync<JsonElement>("/api/incidents/" + incidentId);
 
         missingApprover.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        forbidden.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        approved.StatusCode.Should().Be(HttpStatusCode.OK);
+        body.GetProperty("investigation").GetProperty("stage").GetString().Should().Be("approved");
+        body.GetProperty("capa").GetProperty("summary").GetString().Should().Be("Hold the lot.");
+        body.GetProperty("capa").GetProperty("stage").GetString().Should().Be("open");
+        body.GetProperty("capa").GetProperty("approvalTokenId").GetGuid().Should().NotBeEmpty();
+        repeat.StatusCode.Should().Be(HttpStatusCode.OK);
+        repeated.GetProperty("capa").GetProperty("id").GetString().Should().Be(body.GetProperty("capa").GetProperty("id").GetString());
+        incident.GetProperty("stage").GetString().Should().Be("approved");
     }
 
     [Fact]

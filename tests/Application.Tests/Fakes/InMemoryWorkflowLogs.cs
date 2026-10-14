@@ -91,6 +91,41 @@ public sealed class InMemoryCapaLog : ICapaLog
     }
 }
 
+public sealed class InMemoryApprovalLog : IApprovalLog
+{
+    private readonly List<StoredApproval> _approvals = [];
+
+    public IReadOnlyList<StoredApproval> Approvals => _approvals;
+
+    public Task AddAsync(StoredApproval approval, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(approval);
+        _ = cancellationToken;
+        _approvals.Add(approval);
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateAsync(StoredApproval approval, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(approval);
+        _ = cancellationToken;
+        var index = _approvals.FindIndex(item => item.Token.Id == approval.Token.Id);
+        if (index < 0)
+        {
+            throw new InvalidOperationException("Approval was not found.");
+        }
+
+        _approvals[index] = approval;
+        return Task.CompletedTask;
+    }
+
+    public Task<StoredApproval?> FindByInvestigationAsync(InvestigationId investigationId, CancellationToken cancellationToken)
+    {
+        _ = cancellationToken;
+        return Task.FromResult(_approvals.LastOrDefault(item => item.InvestigationId == investigationId));
+    }
+}
+
 public sealed class StubWorkflow : IInvestigationWorkflow
 {
     public InvestigationStage Stage { get; set; } = InvestigationStage.RecommendationReady;

@@ -51,7 +51,10 @@ public static class QualityHost
         builder.Services.AddScoped<IInvestigationLog>(services => services.GetRequiredService<EfQualityStore>());
         builder.Services.AddScoped<ICapaLog>(services => services.GetRequiredService<EfQualityStore>());
         builder.Services.AddScoped<IFaultLog>(services => services.GetRequiredService<EfQualityStore>());
+        builder.Services.AddScoped<IApprovalLog>(services => services.GetRequiredService<EfQualityStore>());
         builder.Services.AddScoped<ITicketingPort>(services => services.GetRequiredService<EfQualityStore>());
+        builder.Services.AddSingleton(ApprovalPolicyLoader.Load(builder.Configuration));
+        builder.Services.AddSingleton<IQmsCapaWriter, FakeQmsCapaWriter>();
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddSingleton<IQualityNotifier, SignalRQualityNotifier>();
         builder.Services.AddScoped<IIntakeService, IntakeService>();

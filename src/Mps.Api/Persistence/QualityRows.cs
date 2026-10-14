@@ -177,6 +177,8 @@ public sealed class ApprovalRow
 
     public bool Consumed { get; set; }
 
+    public string Summary { get; set; } = string.Empty;
+
     public string Decision { get; set; } = string.Empty;
 
     public string Outcome { get; set; } = string.Empty;

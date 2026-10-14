@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Mps.Application.Lifecycle;
 using Mps.Application.Persistence;
 using Mps.Application.Writes;
+using Mps.Domain.Approval;
 using Mps.Domain.Capa;
 using Mps.Domain.Equipment;
 using Mps.Domain.Evidence;
@@ -26,6 +27,7 @@ public sealed class EfQualityStore :
     IInvestigationLog,
     ICapaLog,
     IFaultLog,
+    IApprovalLog,
     ITicketingPort
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -285,6 +287,40 @@ public sealed class EfQualityStore :
     Task<IReadOnlyList<StoredCapa>> ICapaLog.ListAsync(CancellationToken cancellationToken) =>
         ListCapasAsync(cancellationToken);
 
+    public async Task AddAsync(StoredApproval approval, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(approval);
+        _db.Approvals.Add(ToApprovalRow(approval));
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task UpdateAsync(StoredApproval approval, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(approval);
+        var row = await _db.Approvals.SingleAsync(item => item.TokenId == approval.Token.Id.Value, cancellationToken)
+            .ConfigureAwait(false);
+        row.Consumed = approval.Token.IsConsumed;
+        row.Summary = approval.Summary;
+        row.Decision = approval.Decision;
+        row.Outcome = approval.Outcome;
+        row.Comment = approval.Comment;
+        row.CapaId = approval.CapaId.Value;
+        row.ExternalCapaId = approval.ExternalCapaId;
+        row.Attempts = approval.Attempts;
+        row.FailureDetail = approval.FailureDetail;
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<StoredApproval?> FindByInvestigationAsync(InvestigationId investigationId, CancellationToken cancellationToken)
+    {
+        var row = await _db.Approvals.AsNoTracking()
+            .Where(item => item.InvestigationId == investigationId.Value)
+            .OrderByDescending(item => item.IssuedAt)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return row is null ? null : ToApproval(row);
+    }
+
     public async Task AddAsync(FaultRecord fault, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(fault);
@@ -313,6 +349,49 @@ public sealed class EfQualityStore :
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return "TKT-" + sequence.NextNumber.ToString(CultureInfo.InvariantCulture);
     }
+
+    private static ApprovalRow ToApprovalRow(StoredApproval approval) =>
+        new()
+        {
+            TokenId = approval.Token.Id.Value,
+            InvestigationId = approval.InvestigationId.Value,
+            IncidentId = approval.IncidentId.Value,
+            ApproverId = approval.Token.ApproverId,
+            ActionHash = approval.Token.ActionHash,
+            Signature = approval.Token.Signature,
+            IssuedAt = ToUtc(approval.Token.IssuedAt),
+            ExpiresAt = ToUtc(approval.Token.ExpiresAt),
+            Consumed = approval.Token.IsConsumed,
+            Summary = approval.Summary,
+            Decision = approval.Decision,
+            Outcome = approval.Outcome,
+            Comment = approval.Comment,
+            CapaId = approval.CapaId.Value,
+            ExternalCapaId = approval.ExternalCapaId,
+            Attempts = approval.Attempts,
+            FailureDetail = approval.FailureDetail,
+        };
+
+    private static StoredApproval ToApproval(ApprovalRow row) =>
+        new(
+            ApprovalToken.Rehydrate(
+                new ApprovalTokenId(row.TokenId),
+                row.ApproverId,
+                row.ActionHash,
+                FromUtc(row.IssuedAt),
+                FromUtc(row.ExpiresAt),
+                row.Signature,
+                row.Consumed),
+            new InvestigationId(row.InvestigationId),
+            new IncidentId(row.IncidentId),
+            row.Summary,
+            new CapaId(row.CapaId ?? Guid.Empty),
+            row.Decision,
+            row.Outcome,
+            row.Comment,
+            row.ExternalCapaId,
+            row.Attempts,
+            row.FailureDetail);
 
     private static string ParameterKey(string parameter) => parameter.Trim().ToUpperInvariant();
 
