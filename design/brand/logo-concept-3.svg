@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">MPS logo concept 3 — Chamber Viewport</title>
+  <desc id="desc">A process-chamber viewport: steel bezel, RF coil arcs, wafer on chuck, and a status LED. Reads as a tool, not a letterform.</desc>
+  <rect width="64" height="64" rx="8" fill="#0E1116"/>
+  <!-- bezel -->
+  <rect x="8" y="8" width="48" height="48" rx="10" fill="#1A1F27" stroke="#3D4654" stroke-width="1.5"/>
+  <rect x="12.5" y="12.5" width="39" height="39" rx="7" fill="#0E1116" stroke="#22D3EE" stroke-width="1.15"/>
+  <!-- RF coil arcs (upper chamber) -->
+  <g fill="none" stroke="#22D3EE" stroke-linecap="round" opacity="0.9">
+    <path d="M20 24.5 A13 8 0 0 1 44 24.5" stroke-width="1.4"/>
+    <path d="M22.5 22.2 A11 6.5 0 0 1 41.5 22.2" stroke-width="0.9" opacity="0.7"/>
+    <path d="M25 20.2 A8.5 5 0 0 1 39 20.2" stroke-width="0.7" opacity="0.5"/>
+  </g>
+  <!-- wafer on ESC / chuck -->
+  <ellipse cx="32" cy="36.5" rx="12.5" ry="5.6" fill="#1A1F27" stroke="#22D3EE" stroke-width="1.2"/>
+  <ellipse cx="32" cy="36.5" rx="8.2" ry="3.4" fill="none" stroke="#3D4654" stroke-width="0.7"/>
+  <!-- notch -->
+  <path d="M30.4 41.6 Q32 42.8 33.6 41.6" fill="none" stroke="#22D3EE" stroke-width="0.9" stroke-linecap="round"/>
+  <!-- meridian on wafer -->
+  <line x1="32" y1="31.4" x2="32" y2="41.6" stroke="#22D3EE" stroke-width="0.8"/>
+  <!-- origin -->
+  <circle cx="32" cy="36.5" r="1.15" fill="#22D3EE"/>
+  <!-- status LED (nominal) -->
+  <circle cx="46.2" cy="17.8" r="2.15" fill="#22D3EE"/>
+  <circle cx="46.2" cy="17.8" r="3.4" fill="none" stroke="#22D3EE" stroke-width="0.5" opacity="0.45"/>
+  <!-- hinge ticks, equipment language -->
+  <g fill="#3D4654">
+    <rect x="6.5" y="28" width="2.2" height="8" rx="0.6"/>
+    <rect x="55.3" y="28" width="2.2" height="8" rx="0.6"/>
+  </g>
+</svg>
