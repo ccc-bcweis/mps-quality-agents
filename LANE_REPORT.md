@@ -3,7 +3,7 @@
 **Branch:** `lane/d-design`  
 **Agent:** Grok Build  
 **Date:** 2026-10-14  
-**Scope:** DS1 (#7), DS2 (#8), G1 (#46), G2 (#47). No application code. DS3 (hi-fi Fleet + Investigation) is P1 and was not in this brief.
+**Scope:** DS1 (#7), DS2 (#8), G1 (#46), G2 (#47), and round 2 print sheets plus G3 (#48). No application code. DS3 (hi-fi Fleet + Investigation) is P1 and was not in this brief.
 
 Copyright (c) 2026 Bryan C. Weis and Common Consulting Company.
 
@@ -76,3 +76,39 @@ Not verified: live GitHub mermaid renderer; clicking every control in a headed b
 6. **Azure OpenAI quota / region:** still unchecked (no Azure CLI). Not this lane; blocks Z2.
 
 GB-4 can consume `design/brand/tailwind.theme.js` and treat the wireframes as the U1–U4 layout reference.
+
+---
+
+## Round 2 — print sheets
+
+### G3 (#48) — `docs/diagrams/cicd.md`
+Commit `c3cf7bb` `feat(G3): add CI/CD promotion diagram (#48)`
+
+Mermaid plus a gate table. Parallel Grok Build lanes, required CI (build, test, coverage, format, CodeQL, gitleaks, dependency review, Bicep build), eval and red-team drawn as later, Bob as required PR reviewer, merge to `main`, manual `deploy.yml` on environment `azure-demo` (OIDC, what-if, deploy), then smoke. Bryan is named for lane merges and the Azure go, matching SPEC §7.5.
+
+### G1 (#46), G2 (#47), G3 (#48) — ARCH D sheets
+Commits `d5364db` (#46), `ef55d34` (#47), `326d61c` (#48). Plotter files, not the raw mermaid SVG:
+
+| Sheet | PDF | Preview |
+|---|---|---|
+| Logical | `docs/diagrams/print/logical-archD.pdf` | `docs/diagrams/print/preview/logical-archD.png` |
+| Physical | `docs/diagrams/print/physical-archD.pdf` | `docs/diagrams/print/preview/physical-archD.png` |
+| CI/CD | `docs/diagrams/print/cicd-archD.pdf` | `docs/diagrams/print/preview/cicd-archD.png` |
+
+Each sheet is 36 in × 24 in landscape. Title block (bottom right) has concept-1 logo, title, v1.0, 2026-10-14, “Prepared by StatusNeo”, and “(c) 2026 Bryan C. Weis and Common Consulting Company”. Diagram-only SVG is `print/<name>.svg`. Raw mermaid-cli output is `print/mermaid/<name>.svg` and is not for the plotter. Regenerate with `pwsh docs/diagrams/render.ps1` (`docs/diagrams/README.md`).
+
+The physical print sheet says GitHub environment `azure-demo`. `physical.md` still says `demo`.
+
+### How round 2 was verified
+
+- `node docs/diagrams/render.mjs` exits 0. The checker rejects text under 14 pt, missing glyphs, node and zone overlaps, text overlaps, arrows through nodes or labels, and interior line crossings.
+- PDF MediaBox is 2592 × 1728 pt (36 × 24 in). Each PDF has zero font objects; IBM Plex Sans is outlined. `opentype.js` `toPathData()` emitted `NaN` and cut the thesis banner off after “AI”; outlines are now written from the glyph commands. A pixel span of that line is 837 pt, matching the measured string.
+- Preview PNGs are 5400 × 3600 (150 dpi). I looked at crops of the banner, intake, deterministic band, judgment path, write path, title block, legend, physical identity, Container Apps row, data bus, targets, GitHub bar, CI lanes, CI checks, review, deploy, and smoke.
+- Clean on those crops: full thesis sentence, channel pill clear of its bus, Container Apps label clear of the simulator card, lane note fully readable and not covering GB-5, legend and copyright inside the title block, arrows meet cards without crossing labels.
+- mermaid-cli (Edge, not a downloaded Chromium) wrote the three raw SVGs. Auto-layout fans every CI check into Bob with long crossing elbows, so the plotter files stay the hand sheets.
+- No git network, no Azure CLI, no Docker.
+
+### Open questions added in round 2
+
+7. **GitHub environment name:** this brief and the CI/CD sheet use `azure-demo`. PLAN.md §10 and `physical.md` use `demo`. Confirm before the federated credential is created.
+8. **Who approves:** SPEC §7.5 says Bob, then Bryan for lane merges. The CI/CD sheet draws Bob on the arrow into `main`, and Bryan as lane-merge and Azure go, not on that arrow. Confirm the branch-protection rule.
