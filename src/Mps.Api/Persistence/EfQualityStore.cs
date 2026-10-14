@@ -290,7 +290,14 @@ public sealed class EfQualityStore :
     public async Task AddAsync(StoredApproval approval, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(approval);
-        _db.Approvals.Add(ToApprovalRow(approval));
+        var current = await _db.Approvals
+            .Where(item => item.InvestigationId == approval.InvestigationId.Value)
+            .Select(item => (int?)item.Sequence)
+            .MaxAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var row = ToApprovalRow(approval);
+        row.Sequence = (current ?? 0) + 1;
+        _db.Approvals.Add(row);
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -315,10 +322,24 @@ public sealed class EfQualityStore :
     {
         var row = await _db.Approvals.AsNoTracking()
             .Where(item => item.InvestigationId == investigationId.Value)
-            .OrderByDescending(item => item.IssuedAt)
+            .OrderByDescending(item => item.Sequence)
+            .ThenByDescending(item => item.IssuedAt)
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
         return row is null ? null : ToApproval(row);
+    }
+
+    public async Task<IReadOnlyList<StoredApproval>> ListByInvestigationAsync(
+        InvestigationId investigationId,
+        CancellationToken cancellationToken)
+    {
+        var rows = await _db.Approvals.AsNoTracking()
+            .Where(item => item.InvestigationId == investigationId.Value)
+            .OrderBy(item => item.Sequence)
+            .ThenBy(item => item.IssuedAt)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return rows.Select(ToApproval).ToArray();
     }
 
     public async Task AddAsync(FaultRecord fault, CancellationToken cancellationToken)

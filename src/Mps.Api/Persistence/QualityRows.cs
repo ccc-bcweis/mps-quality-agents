@@ -161,6 +161,9 @@ public sealed class ApprovalRow
 {
     public Guid TokenId { get; set; }
 
+    /// <summary>Monotonic per investigation so a retry sorts after the attempt it follows, even when the clock does not move.</summary>
+    public int Sequence { get; set; }
+
     public Guid InvestigationId { get; set; }
 
     public Guid IncidentId { get; set; }

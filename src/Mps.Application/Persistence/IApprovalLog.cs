@@ -34,4 +34,9 @@ public interface IApprovalLog
     Task UpdateAsync(StoredApproval approval, CancellationToken cancellationToken);
 
     Task<StoredApproval?> FindByInvestigationAsync(InvestigationId investigationId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Every approval attempt for the investigation, oldest first. A retry keeps the earlier row.
+    /// </summary>
+    Task<IReadOnlyList<StoredApproval>> ListByInvestigationAsync(InvestigationId investigationId, CancellationToken cancellationToken);
 }

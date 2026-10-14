@@ -1,5 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using System.Collections.Concurrent;
+
 using Mps.Application.Errors;
 using Mps.Application.Lifecycle;
 using Mps.Application.Metrics;
@@ -33,6 +35,8 @@ public interface IHumanDecisionService
 public sealed class HumanDecisionService : IHumanDecisionService
 {
     public const int MaxWriteAttempts = 3;
+
+    private static readonly ConcurrentDictionary<Guid, SemaphoreSlim> ApprovalGates = new();
 
     private readonly IInvestigationLog _investigations;
     private readonly IIncidentLog _incidents;
@@ -97,7 +101,7 @@ public sealed class HumanDecisionService : IHumanDecisionService
             case HumanDecisionKind.Approve:
                 using (QualityDiagnostics.ActivitySource.StartActivity("decision.approve"))
                 {
-                    return await ApproveAsync(snapshot, stored, comment, approverId, cancellationToken).ConfigureAwait(false);
+                    return await ApproveAsync(snapshot, comment, approverId, cancellationToken).ConfigureAwait(false);
                 }
 
             case HumanDecisionKind.Reject:
@@ -114,7 +118,6 @@ public sealed class HumanDecisionService : IHumanDecisionService
 
     private async Task<HumanDecisionOutcome> ApproveAsync(
         InvestigationSnapshot snapshot,
-        StoredIncident stored,
         string? comment,
         string? approverId,
         CancellationToken cancellationToken)
@@ -124,12 +127,36 @@ public sealed class HumanDecisionService : IHumanDecisionService
             throw new IntakeValidationException("Approver id is required.");
         }
 
-        var existing = await _approvals.FindByInvestigationAsync(snapshot.Id, cancellationToken).ConfigureAwait(false);
-        if (existing is not null)
+        var gate = ApprovalGates.GetOrAdd(snapshot.Id.Value, static _ => new SemaphoreSlim(1, 1));
+        await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            return await ResumeAsync(existing, snapshot, stored, cancellationToken).ConfigureAwait(false);
-        }
+            var current = await _investigations.GetAsync(snapshot.Id, cancellationToken).ConfigureAwait(false)
+                ?? throw new ResourceNotFoundException("Investigation was not found.");
+            var incident = await _incidents.GetAsync(current.IncidentId, cancellationToken).ConfigureAwait(false)
+                ?? throw new ResourceNotFoundException("Incident was not found.");
+            var existing = await _approvals.FindByInvestigationAsync(current.Id, cancellationToken).ConfigureAwait(false);
+            if (existing is null || existing.Outcome == ApprovalOutcomes.Failed)
+            {
+                // A stored failure keeps its consumed token. This approve mints a new single-use token.
+                return await BeginApprovalAsync(current, incident, comment, approverId, cancellationToken).ConfigureAwait(false);
+            }
 
+            return await ResumeAsync(existing, current, incident, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
+    private async Task<HumanDecisionOutcome> BeginApprovalAsync(
+        InvestigationSnapshot snapshot,
+        StoredIncident stored,
+        string? comment,
+        string approverId,
+        CancellationToken cancellationToken)
+    {
         var summary = ResolveSummary(comment, snapshot);
         _ = IncidentStagePath.Between(
             stored.Incident.Stage,
@@ -186,10 +213,7 @@ public sealed class HumanDecisionService : IHumanDecisionService
 
         if (existing.Outcome == ApprovalOutcomes.Failed)
         {
-            var failed = snapshot.Stage == InvestigationStage.Failed
-                ? snapshot
-                : Copy(snapshot, InvestigationStage.Failed, snapshot.EscalationReason);
-            return new HumanDecisionOutcome(failed, null);
+            throw new InvalidOperationException("A stored QMS failure is retried with a new approval token.");
         }
 
         EnsureIntact(existing.Token);
