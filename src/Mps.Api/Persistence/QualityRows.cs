@@ -113,6 +113,8 @@ public sealed class InvestigationRow
     public string EvidenceJson { get; set; } = "[]";
 
     public string HypothesesJson { get; set; } = "[]";
+
+    public string EvidenceMatrixJson { get; set; } = "[]";
 }
 
 public sealed class CapaRow

@@ -5,6 +5,8 @@ using System.Text.Json;
 
 using Microsoft.EntityFrameworkCore;
 
+using Mps.Application.Errors;
+using Mps.Application.Evidence;
 using Mps.Application.Lifecycle;
 using Mps.Application.Persistence;
 using Mps.Application.Writes;
@@ -28,9 +30,12 @@ public sealed class EfQualityStore :
     ICapaLog,
     IFaultLog,
     IApprovalLog,
-    ITicketingPort
+    ITicketingPort,
+    IInvestigationNarrativeLog
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
+    private readonly Dictionary<Guid, InvestigationNarrative> _stagedNarratives = [];
 
     private readonly QualityDbContext _db;
 
@@ -200,7 +205,13 @@ public sealed class EfQualityStore :
     public async Task AddAsync(InvestigationSnapshot snapshot, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
-        _db.Investigations.Add(ToInvestigationRow(snapshot));
+        var row = ToInvestigationRow(snapshot);
+        if (_stagedNarratives.Remove(snapshot.Id.Value, out var narrative))
+        {
+            ApplyNarrative(row, narrative);
+        }
+
+        _db.Investigations.Add(row);
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -211,9 +222,54 @@ public sealed class EfQualityStore :
         row.Stage = snapshot.Stage.ToString();
         row.EscalationReason = snapshot.EscalationReason;
         row.CorrelationId = snapshot.CorrelationId;
-        row.EvidenceJson = JsonSerializer.Serialize(snapshot.Evidence.Select(ToEvidenceDocument), JsonOptions);
+        var prior = JsonSerializer.Deserialize<EvidenceDocument[]>(row.EvidenceJson, JsonOptions) ?? [];
+        var priorById = prior.ToDictionary(item => item.Id);
+        var evidence = snapshot.Evidence.Select(item =>
+        {
+            var document = ToEvidenceDocument(item);
+            if (priorById.TryGetValue(document.Id, out var existing))
+            {
+                document = document with { WhyItMatters = existing.WhyItMatters, SignalId = existing.SignalId };
+            }
+
+            return document;
+        }).ToArray();
+        row.EvidenceJson = JsonSerializer.Serialize(evidence, JsonOptions);
         row.HypothesesJson = JsonSerializer.Serialize(snapshot.Hypotheses.Select(ToHypothesisDocument), JsonOptions);
+        var keptIds = evidence.Select(item => item.Id).ToHashSet();
+        var matrix = JsonSerializer.Deserialize<MatrixDocument[]>(MatrixJson(row), JsonOptions) ?? [];
+        row.EvidenceMatrixJson = JsonSerializer.Serialize(matrix.Where(item => keptIds.Contains(item.EvidenceId)).ToArray(), JsonOptions);
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    void IInvestigationNarrativeLog.Stage(InvestigationId id, InvestigationNarrative narrative)
+    {
+        ArgumentNullException.ThrowIfNull(narrative);
+        _stagedNarratives[id.Value] = narrative;
+    }
+
+    async Task<InvestigationNarrative> IInvestigationNarrativeLog.GetAsync(InvestigationId id, CancellationToken cancellationToken)
+    {
+        var row = await _db.Investigations.AsNoTracking().SingleOrDefaultAsync(item => item.Id == id.Value, cancellationToken)
+            .ConfigureAwait(false);
+        if (row is null)
+        {
+            return InvestigationNarrative.Empty;
+        }
+
+        var evidence = JsonSerializer.Deserialize<EvidenceDocument[]>(row.EvidenceJson, JsonOptions) ?? [];
+        var notes = evidence
+            .Where(item => item.WhyItMatters is not null || item.SignalId is not null)
+            .Select(item => new EvidenceNote(item.Id, item.WhyItMatters, item.SignalId))
+            .ToArray();
+        var matrix = JsonSerializer.Deserialize<MatrixDocument[]>(MatrixJson(row), JsonOptions) ?? [];
+        return new InvestigationNarrative(
+            notes,
+            matrix.Select(item => new EvidenceMatrixEntry(
+                Enum.Parse<RootCauseCategory>(item.Category),
+                item.EvidenceId,
+                Enum.Parse<EvidenceStance>(item.Stance),
+                item.WhyItMatters)).ToArray());
     }
 
     public async Task<InvestigationSnapshot?> GetAsync(InvestigationId id, CancellationToken cancellationToken)
@@ -475,6 +531,7 @@ public sealed class EfQualityStore :
             CorrelationId = snapshot.CorrelationId,
             EvidenceJson = JsonSerializer.Serialize(snapshot.Evidence.Select(ToEvidenceDocument), JsonOptions),
             HypothesesJson = JsonSerializer.Serialize(snapshot.Hypotheses.Select(ToHypothesisDocument), JsonOptions),
+            EvidenceMatrixJson = "[]",
         };
 
     private static InvestigationSnapshot ToSnapshot(InvestigationRow row)
@@ -490,6 +547,43 @@ public sealed class EfQualityStore :
             row.EscalationReason,
             row.CorrelationId);
     }
+
+    private static void ApplyNarrative(InvestigationRow row, InvestigationNarrative narrative)
+    {
+        var evidence = JsonSerializer.Deserialize<List<EvidenceDocument>>(row.EvidenceJson, JsonOptions) ?? [];
+        var ids = evidence.Select(item => item.Id).ToHashSet();
+        foreach (var note in narrative.Notes)
+        {
+            if (!ids.Contains(note.EvidenceId))
+            {
+                throw new IntakeValidationException("whyItMatters must cite an evidence item on the investigation.");
+            }
+
+            var index = evidence.FindIndex(item => item.Id == note.EvidenceId);
+            var current = evidence[index];
+            evidence[index] = current with { WhyItMatters = note.WhyItMatters, SignalId = note.SignalId };
+        }
+
+        foreach (var entry in narrative.Matrix)
+        {
+            if (!ids.Contains(entry.EvidenceId))
+            {
+                throw new IntakeValidationException("The evidence matrix must cite an evidence item on the investigation.");
+            }
+        }
+
+        row.EvidenceJson = JsonSerializer.Serialize(evidence, JsonOptions);
+        row.EvidenceMatrixJson = JsonSerializer.Serialize(
+            narrative.Matrix.Select(entry => new MatrixDocument(
+                entry.Category.ToString(),
+                entry.EvidenceId,
+                entry.Stance.ToString(),
+                entry.WhyItMatters)).ToArray(),
+            JsonOptions);
+    }
+
+    private static string MatrixJson(InvestigationRow row) =>
+        string.IsNullOrWhiteSpace(row.EvidenceMatrixJson) ? "[]" : row.EvidenceMatrixJson;
 
     private static EvidenceDocument ToEvidenceDocument(EvidenceItem item) =>
         new(item.Id.Value, item.Source.ToString(), item.Title, item.Excerpt, item.ObservedAt, item.ToolId, item.ExternalRef);
@@ -543,7 +637,11 @@ public sealed class EfQualityStore :
         string Excerpt,
         DateTimeOffset ObservedAt,
         string? ToolId,
-        string? ExternalRef);
+        string? ExternalRef,
+        string? WhyItMatters = null,
+        string? SignalId = null);
+
+    private sealed record MatrixDocument(string Category, Guid EvidenceId, string Stance, string? WhyItMatters);
 
     private sealed record HypothesisDocument(
         Guid Id,

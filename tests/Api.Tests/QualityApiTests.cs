@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 
+using Mps.Api.Fakes;
 using Mps.Application.Persistence;
 using Mps.Domain.Approval;
 using Mps.Domain.Capa;
@@ -151,6 +152,31 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         body.GetProperty("correlationId").GetString().Should().Be(opened.GetProperty("correlationId").GetString());
         again.StatusCode.Should().Be(HttpStatusCode.Conflict);
         incident.GetProperty("stage").GetString().Should().Be("recommendationReady");
+    }
+
+    [Fact]
+    public async Task InvestigationKeepsWhyItMattersSignalIdAndTheEvidenceMatrix()
+    {
+        var client = _factory.CreateClient();
+        var opened = await OpenIncidentAsync(client, "E-02", "escTemperature");
+        var incidentId = opened.GetProperty("id").GetGuid();
+
+        var started = await client.PostAsync("/api/incidents/" + incidentId + "/investigations", null);
+        var created = await started.Content.ReadFromJsonAsync<JsonElement>(Json);
+        var investigationId = created.GetProperty("id").GetGuid();
+        var decision = await client.PostAsJsonAsync("/api/investigations/" + investigationId + "/decisions", new
+        {
+            kind = "reject",
+            comment = "The signal returned to the window.",
+        });
+        var rejected = await decision.Content.ReadFromJsonAsync<JsonElement>(Json);
+        var loaded = await client.GetFromJsonAsync<JsonElement>("/api/investigations/" + investigationId);
+
+        started.StatusCode.Should().Be(HttpStatusCode.Created);
+        decision.StatusCode.Should().Be(HttpStatusCode.OK);
+        AssertNarrative(created);
+        AssertNarrative(rejected.GetProperty("investigation"));
+        AssertNarrative(loaded);
     }
 
     [Fact]
@@ -300,6 +326,26 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         message.GetProperty("parameter").GetString().Should().Be(parameter);
         message.GetProperty("channel").GetString().Should().Be("operatorReport");
         await connection.StopAsync();
+    }
+
+    private static void AssertNarrative(JsonElement investigation)
+    {
+        var evidence = investigation.GetProperty("evidence");
+        evidence.GetArrayLength().Should().BeGreaterThan(0);
+        var item = evidence[0];
+        item.GetProperty("whyItMatters").GetString().Should().Be(FakeInvestigationWorkflow.StandInWhyItMatters);
+        item.GetProperty("signalId").GetString().Should().Be(FakeInvestigationWorkflow.StandInSignalId);
+        var matrix = investigation.GetProperty("evidenceMatrix");
+        matrix.GetArrayLength().Should().Be(4);
+        var evidenceId = item.GetProperty("id").GetGuid();
+        matrix.EnumerateArray().Should().Contain(entry =>
+            entry.GetProperty("category").GetString() == "processDrift"
+            && entry.GetProperty("stance").GetString() == "supports"
+            && entry.GetProperty("evidenceId").GetGuid() == evidenceId
+            && entry.GetProperty("whyItMatters").GetString() == FakeInvestigationWorkflow.StandInWhyItMatters);
+        matrix.EnumerateArray().Should().Contain(entry =>
+            entry.GetProperty("category").GetString() == "engineeringChange"
+            && entry.GetProperty("stance").GetString() == "rulesOut");
     }
 
     private static object FaultBody(string parameter) => new

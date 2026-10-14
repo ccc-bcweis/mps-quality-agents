@@ -54,6 +54,7 @@ public static class QualityHost
         builder.Services.AddScoped<ICapaLog>(services => services.GetRequiredService<EfQualityStore>());
         builder.Services.AddScoped<IFaultLog>(services => services.GetRequiredService<EfQualityStore>());
         builder.Services.AddScoped<IApprovalLog>(services => services.GetRequiredService<EfQualityStore>());
+        builder.Services.AddScoped<IInvestigationNarrativeLog>(services => services.GetRequiredService<EfQualityStore>());
         builder.Services.AddScoped<ITicketingPort>(services => services.GetRequiredService<EfQualityStore>());
         builder.Services.AddSingleton(ApprovalPolicyLoader.Load(builder.Configuration));
         builder.Services.AddSingleton(new InjectorPolicy(builder.Configuration.GetValue("Mps:Injector:DirectTicket", false)));
@@ -63,7 +64,7 @@ public static class QualityHost
         builder.Services.AddScoped<IMetricsLog, EfMetricsLog>();
         builder.Services.AddSingleton<IQmsCapaWriter, FakeQmsCapaWriter>();
         builder.Services.AddSingleton(TimeProvider.System);
-        builder.Services.AddSingleton<IQualityNotifier, SignalRQualityNotifier>();
+        builder.Services.AddScoped<IQualityNotifier, SignalRQualityNotifier>();
         builder.Services.AddScoped<IIntakeService, IntakeService>();
         builder.Services.AddScoped(services =>
         {
