@@ -1,0 +1,29 @@
+{
+  "stryker-config": {
+    "solution": "MPS.sln",
+    "project": "Mps.Application.csproj",
+    "test-projects": [
+      "tests/Architecture.Tests/Architecture.Tests.csproj"
+    ],
+    "mutate": [
+      "!**/LayerAnchor.cs"
+    ],
+    "reporters": [
+      "html",
+      "cleartext",
+      "progress"
+    ],
+    "thresholds": {
+      "high": 80,
+      "low": 60,
+      "break": 0
+    },
+    "since": {
+      "enabled": false
+    },
+    "configuration": "Release",
+    "concurrency": 4,
+    "test-case-filter": "FullyQualifiedName~Mps.Architecture.Tests",
+    "report-file-name": "application-mutation-report"
+  }
+}

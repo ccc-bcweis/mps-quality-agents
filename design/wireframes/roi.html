@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="replay">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ROI · MPS Fab Ops Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="assets/console.css"/>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="mode-banner">
+    <span class="mode-pill" data-mode-label>REPLAY MODE</span>
+    <span class="mode-note" data-mode-note>Recorded responses. No live model calls.</span>
+    <button type="button" class="mode-toggle" data-mode-toggle>Switch to LIVE AI</button>
+    <div class="spend" title="Hard daily spend cap enforced by the model gateway">
+      <span class="spend-label">Today's spend</span>
+      <div class="spend-track"><div class="spend-fill" data-spend-fill></div></div>
+      <span class="spend-val" data-spend-val>$0.00 of $2.00</span>
+    </div>
+  </div>
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <img src="../brand/logo-concept-1.svg" width="32" height="32" alt="Meridian Precision Systems mark"/>
+      <div>
+        <strong>Meridian Precision Systems</strong>
+        <span>Fab Ops Console · Austin Demo Fab</span>
+      </div>
+    </a>
+    <div class="topbar-meta">
+      <span><span class="led"></span>Sim 14:32 · 1 s = 1 min</span>
+      <span>Plant <b>AUS-1</b></span>
+      <span>Engineer <b>dev-user</b></span>
+    </div>
+  </header>
+  <nav class="nav"><a href="index.html">Fleet</a><a href="tool.html">Tool</a><a href="alerts.html">Alerts</a><a href="tickets.html">Tickets</a><a href="investigation.html">Investigation</a><a href="approval.html">Approval</a><a href="capa.html">CAPA</a><a href="injector.html">Injector</a><a href="roi.html" aria-current="page">ROI</a><a href="metrics.html">Metrics</a></nav>
+  <ol class="lifecycle"><li class="is-current"><span class="pip"></span>Alert</li><li class="is-todo"><span class="pip"></span>Ticket</li><li class="is-todo"><span class="pip"></span>Investigation</li><li class="is-todo"><span class="pip"></span>Recommendation</li><li class="is-todo"><span class="pip"></span>Approval</li><li class="is-todo"><span class="pip"></span>CAPA</li></ol>
+  <main id="main" class="page">
+
+    <div class="page-head">
+      <div>
+        <h1>ROI · quality investigation acceleration</h1>
+        <p>Illustrative, synthetic. Assumptions from PLAN §6.5. Not a customer measurement.</p>
+      </div>
+    </div>
+    <div class="banner-callout warn">All figures are simulated for a 3-plant Meridian Precision Systems. Label every chart in the deck the same way.</div>
+    <div class="grid grid-kpis">
+      <div class="panel kpi"><div class="label">Revenue</div><div class="value" style="font-size:16px">$1.2B</div></div>
+      <div class="panel kpi"><div class="label">COPQ 8%</div><div class="value" style="font-size:16px">$96M</div></div>
+      <div class="panel kpi"><div class="label">Incidents / yr</div><div class="value">1,400</div></div>
+      <div class="panel kpi"><div class="label">MTTR-Q</div><div class="value">9.5 d</div></div>
+      <div class="panel kpi"><div class="label">Time to hypothesis</div><div class="value">4.0 d</div></div>
+      <div class="panel kpi"><div class="label">Repeat defect</div><div class="value">18%</div></div>
+    </div>
+    <div class="grid grid-2" style="margin-top:12px">
+      <div class="panel">
+        <h2>Baseline (synthetic)</h2>
+        <table class="data">
+          <tbody>
+            <tr><td>CAPA cycle time</td><td class="mono">62 days</td></tr>
+            <tr><td>Engineer loaded cost</td><td class="mono">$95 / h</td></tr>
+            <tr><td>Hours / investigation</td><td class="mono">22 h</td></tr>
+            <tr><td>Investigation labor</td><td class="mono">1,400 × 22 × $95 ≈ $2.9M</td></tr>
+            <tr><td>Key-tool downtime</td><td class="mono">$12k / h</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <h2>Projected levers</h2>
+        <table class="data">
+          <thead><tr><th>Lever</th><th>Conservative</th><th>Expected</th></tr></thead>
+          <tbody>
+            <tr><td>Investigation hours</td><td class="mono">−30%</td><td class="mono">−45%</td></tr>
+            <tr><td>Time to hypothesis</td><td class="mono">−50%</td><td class="mono">−70%</td></tr>
+            <tr><td>Repeat defects</td><td class="mono">−15%</td><td class="mono">−25%</td></tr>
+            <tr><td>CAPA cycle</td><td class="mono">−20%</td><td class="mono">−35%</td></tr>
+          </tbody>
+        </table>
+        <p>Annual savings range and payback render from <code>data/roi/</code> once GB-1 lands D6. AI run cost: measured $0.02–0.10 per investigation × volume, plus platform.</p>
+      </div>
+    </div>
+
+  </main>
+  <footer class="site-footer">
+    <span class="sn" title="Placeholder — official StatusNeo artwork not in this repo">Powered by StatusNeo</span>
+    <span>Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · MIT · Fictional demonstration; all companies and data are synthetic.</span>
+  </footer>
+  
+  <script src="assets/console.js"></script>
+</body>
+</html>
