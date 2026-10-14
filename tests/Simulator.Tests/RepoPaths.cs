@@ -27,4 +27,8 @@ internal static class RepoPaths
     public static string GroundTruthDirectory() => Path.Combine(Root(), "data", "groundtruth");
 
     public static string SeedFile() => Path.Combine(Root(), "data", "seed", "enterprise.json");
+
+    public static string TemplateDirectory() => Path.Combine(Root(), "data", "docs", "templates");
+
+    public static string CorpusDirectory() => Path.Combine(Root(), "data", "docs", "corpus");
 }
