@@ -2,6 +2,7 @@
 # Synthetic fault. Scenario S2. PLM and MES disagree, and the manometer calibration record is absent.
 id: FLT-CONTRA-D01
 title: D-01 pressure step with a showerhead revision conflict
+whyItMatters: Pressure stepped, and the records disagree, so naming a cause would be a guess.
 category: equipmentCalibrationOrAlignment
 scenario: S2
 expectedBehavior: escalate
@@ -28,18 +29,22 @@ evidence:
     toolId: D-01
     revision: C
     partName: Showerhead
+    whyItMatters: The drawing says one showerhead revision.
   runs:
     recipeId: PECVD-OXIDE
     recipeRevision: B
     lotId: W-D01-220
     materialCode: WAF-SI-300
     count: 4
+    whyItMatters: The run sheet says a different revision.
   missing:
     - recordId: CAL-D01-MANOMETER
       recordType: calibration
       reason: The chamber pressure manometer calibration was due and the record is absent.
+      whyItMatters: The pressure-gauge calibration record is absent.
   contradiction:
     plmRevision: C
     mesRevision: B
     partName: Showerhead
     detail: PLM config says showerhead revision C. MES run headers say recipe revision B.
+    whyItMatters: The drawing and the run sheet disagree, so the investigation stops and asks which is real.

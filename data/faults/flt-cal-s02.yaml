@@ -2,6 +2,7 @@
 # Synthetic fault. Overdue MFC calibration with a supplier-lot confounder.
 id: FLT-CAL-S02
 title: O2 flow step from an overdue MFC on strip S-02
+whyItMatters: Oxygen flow stepped on one strip chamber and can leave photoresist or ash too fast.
 category: equipmentCalibrationOrAlignment
 scenario: S4-calibration
 expectedBehavior: recommend
@@ -27,12 +28,14 @@ evidence:
     instrument: O2 mass flow controller
     dueAt: "2026-09-20T00:00:00Z"
     isOverdue: true
+    whyItMatters: The controller is past its due date, so the screen can disagree with the gas that entered.
   runs:
     recipeId: ASH-STD
     recipeRevision: B
     lotId: W-S02-118
     materialCode: WAF-SI-300
     count: 3
+    whyItMatters: Wafers ran on that chamber after the controller was overdue.
   confounders:
     - kind: supplierLot
       material:
@@ -49,3 +52,4 @@ evidence:
         lotId: N2H2-190
         summary: Certificate density is 0.4 percent low and still inside the widened spec. This is not a moisture failure.
         issuedAt: "2026-10-05T18:00:00Z"
+      whyItMatters: The note says the gas is still inside the widened limit and does not explain a one-chamber step.

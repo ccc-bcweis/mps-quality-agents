@@ -104,7 +104,8 @@ public sealed class ToolSpec
         string model,
         string bay,
         IReadOnlyList<ChamberSpec> chambers,
-        IReadOnlyList<RecipeSpec> recipes)
+        IReadOnlyList<RecipeSpec> recipes,
+        IReadOnlyList<SensorSpec> sensors)
     {
         if (string.IsNullOrWhiteSpace(id))
         {
@@ -128,6 +129,7 @@ public sealed class ToolSpec
 
         ArgumentNullException.ThrowIfNull(chambers);
         ArgumentNullException.ThrowIfNull(recipes);
+        ArgumentNullException.ThrowIfNull(sensors);
         Id = id.Trim();
         Name = name.Trim();
         Family = family;
@@ -135,6 +137,7 @@ public sealed class ToolSpec
         Bay = bay.Trim();
         Chambers = chambers.ToArray();
         Recipes = recipes.ToArray();
+        Sensors = sensors.ToArray();
     }
 
     public string Id { get; }
@@ -150,6 +153,21 @@ public sealed class ToolSpec
     public IReadOnlyList<ChamberSpec> Chambers { get; }
 
     public IReadOnlyList<RecipeSpec> Recipes { get; }
+
+    public IReadOnlyList<SensorSpec> Sensors { get; }
+
+    public SensorSpec RequireParameterSensor(string chamberId, string parameter)
+    {
+        var matches = Sensors.Where(sensor =>
+            string.Equals(sensor.ChamberId, chamberId, StringComparison.Ordinal)
+            && string.Equals(sensor.Parameter, parameter, StringComparison.Ordinal)).ToArray();
+        if (matches.Length != 1)
+        {
+            throw new InvalidOperationException($"Tool {Id} chamber {chamberId} needs exactly one sensor for {parameter}. Found {matches.Length}.");
+        }
+
+        return matches[0];
+    }
 
     public Tool ToDomainTool()
     {
