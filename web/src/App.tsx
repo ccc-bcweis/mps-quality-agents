@@ -6,8 +6,11 @@ import { AlertsPage } from "./pages/AlertsPage";
 import { ApprovalPage } from "./pages/ApprovalPage";
 import { CapaPage } from "./pages/CapaPage";
 import { FleetPage } from "./pages/FleetPage";
+import { InjectorPage } from "./pages/InjectorPage";
 import { InvestigationPage } from "./pages/InvestigationPage";
+import { MetricsPage } from "./pages/MetricsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { RoiPage } from "./pages/RoiPage";
 import { TicketsPage } from "./pages/TicketsPage";
 import { ToolPage } from "./pages/ToolPage";
 
@@ -23,6 +26,9 @@ export function AppRoutes() {
         <Route path="/approvals/:investigationId" element={<ApprovalPage />} />
         <Route path="/capas" element={<CapaPage />} />
         <Route path="/capas/:capaId" element={<CapaPage />} />
+        <Route path="/injector" element={<InjectorPage />} />
+        <Route path="/roi" element={<RoiPage />} />
+        <Route path="/metrics" element={<MetricsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
