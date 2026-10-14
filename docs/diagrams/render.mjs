@@ -138,7 +138,7 @@ async function renderMermaid(edge) {
   fs.mkdirSync(mermaidDir, { recursive: true });
   const puppeteerConfig = path.join(process.env.TEMP || 'C:\\Users\\bcw\\AppData\\Local\\Temp', 'mps-mmdc-puppeteer.json');
   fs.writeFileSync(puppeteerConfig, JSON.stringify({ executablePath: edge, headless: true }));
-  const names = ['logical', 'physical', 'cicd', 'investigation-flow'].filter((n) => !only || n === only);
+  const names = ['logical', 'physical', 'cicd', 'investigation-flow', 'as-is-flow'].filter((n) => !only || n === only);
   for (const name of names) {
     const md = fs.readFileSync(path.join(here, `${name}.md`), 'utf8');
     const match = md.match(/```mermaid\r?\n([\s\S]*?)```/);

@@ -3,6 +3,8 @@
 
 import { INK, NAVY } from './sheet.mjs';
 
+const HAND = '#B91C1C';
+
 function rowOf(sheet, ids, lines, x, y, w, h, gap, tone, opts = {}) {
   const n = lines.length;
   const nodeW = (w - gap * (n - 1)) / n;
@@ -952,6 +954,315 @@ function drawFlowGlossary(sheet, x, y, w, h) {
   return box;
 }
 
+function stageStrip(sheet, x, y, w, h, id, title, duration) {
+  sheet.roundRect(x, y, w, h, 6, { fill: '#E8EEF6', stroke: NAVY, 'stroke-width': 1.2 });
+  const cx = x + w / 2;
+  const clip = { x, y, w, h };
+  sheet.text(`${id}-t`, title, cx, y + 24, {
+    size: 16,
+    weight: 'bold',
+    fill: NAVY,
+    align: 'center',
+    clip,
+  });
+  sheet.text(`${id}-d`, duration, cx, y + 48, {
+    size: 14,
+    weight: 'semibold',
+    fill: INK,
+    align: 'center',
+    clip,
+  });
+  sheet.text(`${id}-s`, 'illustrative / simulated', cx, y + 72, {
+    size: 14,
+    weight: 'regular',
+    fill: INK,
+    align: 'center',
+    clip,
+  });
+}
+
+function manual(n) {
+  return { label: `MANUAL ${n}`, tone: 'manual' };
+}
+
+function risk(n) {
+  return { label: `ERROR RISK ${n}`, tone: 'risk' };
+}
+
+export function drawAsIs(sheet) {
+  const a = sheet.area;
+  const labelW = 160;
+  const contentX = a.x + labelW;
+  const stageGap = 16;
+  const innerGap = 14;
+  const normal = 320;
+  const sub = normal - innerGap / 2;
+  const stageH = 86;
+  const panelH = 252;
+  const panelY = a.y + a.h - panelH;
+  const lanesTop = a.y + stageH + 10;
+  const laneGap = 8;
+  const laneCount = 6;
+  const lanesBottom = panelY - 12;
+  const laneH = (lanesBottom - lanesTop - laneGap * (laneCount - 1)) / laneCount;
+  const cardH = laneH - 18;
+  const inset = 4;
+
+  const xDetect = contentX;
+  const xTriage = xDetect + normal + stageGap;
+  const xGather = xTriage + normal + stageGap;
+  const xMeet = xGather + sub + innerGap;
+  const xDiag = xMeet + sub + stageGap;
+  const xDecide = xDiag + normal + stageGap;
+  const xCapa = xDecide + normal + stageGap;
+  const cols = [
+    { x: xDetect, w: normal },
+    { x: xTriage, w: normal },
+    { x: xGather, w: sub },
+    { x: xMeet, w: sub },
+    { x: xDiag, w: normal },
+    { x: xDecide, w: normal },
+    { x: xCapa, w: normal },
+  ];
+
+  stageStrip(sheet, xDetect, a.y, normal, stageH, 'st-det', 'DETECT', '0.5 day');
+  stageStrip(sheet, xTriage, a.y, normal, stageH, 'st-tri', 'TRIAGE', '0.5 day');
+  stageStrip(sheet, xGather, a.y, sub + innerGap + sub, stageH, 'st-gth', 'GATHER EVIDENCE', '2.0 days');
+  stageStrip(sheet, xDiag, a.y, normal, stageH, 'st-dia', 'DIAGNOSE', '1.0 day');
+  stageStrip(sheet, xDecide, a.y, normal, stageH, 'st-dec', 'DECIDE / APPROVE', '2.0 days');
+  stageStrip(sheet, xCapa, a.y, normal, stageH, 'st-capa', 'CAPA', '62 days');
+
+  const laneMeta = [
+    ['L-op', 'Operator', 'human'],
+    ['L-tech', 'Technician', 'review'],
+    ['L-pe', 'Process engineer', 'deploy'],
+    ['L-qe', 'Quality engineer', 'gov'],
+    ['L-sc', 'Supply chain', 'gw'],
+    ['L-mgmt', 'Management', 'ok'],
+  ];
+  const lanes = laneMeta.map((meta, i) => {
+    const y = lanesTop + i * (laneH + laneGap);
+    return sheet.band(meta[0], a.x, y, a.w, laneH, meta[1], meta[2]);
+  });
+
+  const put = (id, col, lane, lines, tone, badges) => {
+    const c = cols[col];
+    const row = lanes[lane];
+    const y = row.y + (row.h - cardH) / 2;
+    const opts = badges && badges.length ? { badges } : {};
+    sheet.node(id, c.x + inset, y, c.w - inset * 2, cardH, lines, tone, opts);
+  };
+
+  put('d-op', 0, 0, ['Alarm noticed', 'MX-400 etch hits a limit', 'Notes chamber and recipe'], 'human');
+  put(
+    'd-tech',
+    0,
+    1,
+    ['Told in person', 'Repeats the chamber', 'Nothing is written yet'],
+    'review',
+    [manual(1), risk(1)],
+  );
+  put(
+    't-tech',
+    1,
+    1,
+    ['Types the ticket', 'Tool, time, and symptom', 'Email is the record'],
+    'review',
+    [manual(2), risk(2)],
+  );
+  put(
+    't-qe',
+    1,
+    3,
+    ['Assigns an owner', 'Reply-all on the mail', 'Recipe step often dropped'],
+    'gov',
+    [manual(3), risk(3)],
+  );
+  put(
+    'g-tech',
+    2,
+    1,
+    ['MES spreadsheet', 'Runs, lots, and recipe', 'Exported, then emailed'],
+    'review',
+    [manual(4), risk(4)],
+  );
+  put(
+    'g-pe',
+    2,
+    2,
+    ['Historian, SPC, ECN', 'Three files, copied out', 'Change log checked by eye'],
+    'deploy',
+    [manual(5), risk(5)],
+  );
+  put(
+    'g-qe',
+    2,
+    3,
+    ['Prior cases', 'Pulled from a folder', 'Forwarded into the thread'],
+    'gov',
+    [manual(6), risk(6)],
+  );
+  put(
+    'g-sc',
+    2,
+    4,
+    ['Supplier lots', 'Looked up, then emailed', 'Not joined to the run'],
+    'gw',
+    [manual(7), risk(7)],
+  );
+  put(
+    'g-meet',
+    3,
+    2,
+    ['Emails and a meeting', 'Spreadsheets compared live', 'No single evidence pack'],
+    'deploy',
+    [manual(8), risk(8)],
+  );
+  put(
+    'n-pe',
+    4,
+    2,
+    ['Tribal hypothesis', 'Last alarm was the chamber', 'Stated from memory'],
+    'deploy',
+    [manual(9), risk(9)],
+  );
+  put(
+    'a-qe',
+    5,
+    3,
+    ['Asks for approval', 'Email to management', 'No evidence pack attached'],
+    'gov',
+    [manual(10)],
+  );
+  put(
+    'a-mgmt',
+    5,
+    5,
+    ['Approves by reply', 'The meeting is the signature', 'The cause is not cited'],
+    'ok',
+    [manual(11), risk(10)],
+  );
+  put(
+    'c-qe',
+    6,
+    3,
+    ['CAPA written by hand', 'Re-keyed into the QMS', 'Narrative, lot, and actions'],
+    'gov',
+    [manual(12), risk(11)],
+  );
+  put(
+    'c-mgmt',
+    6,
+    5,
+    ['Signs the CAPA', 'Paper or a workflow click', 'Does not see the files'],
+    'ok',
+    [manual(13)],
+  );
+
+  const down = (fromId, toId, id) => sheet.link(fromId, toId, 'bottom', 'top', { id, color: HAND });
+  const right = (fromId, toId, id) => sheet.link(fromId, toId, 'right', 'left', { id, color: HAND });
+  const upTo = (fromId, toId, id) => sheet.link(fromId, toId, 'top', 'bottom', { id, color: HAND });
+
+  down('d-op', 'd-tech', 'op-tech');
+  right('d-tech', 't-tech', 'tech-ticket');
+  down('t-tech', 't-qe', 'ticket-owner');
+  right('t-tech', 'g-tech', 'ticket-mes');
+  right('t-qe', 'g-qe', 'owner-cases');
+  upTo('g-sc', 'g-qe', 'lots-cases');
+  right('g-pe', 'g-meet', 'files-meet');
+
+  const techR = sheet.anchor('g-tech', 'right');
+  const meetTop = sheet.anchor('g-meet', 'top');
+  sheet.arrow([techR, { x: meetTop.x, y: techR.y }, meetTop], { id: 'mes-meet', color: HAND });
+
+  const qeR = sheet.anchor('g-qe', 'right');
+  const meetBot = sheet.anchor('g-meet', 'bottom');
+  sheet.arrow([qeR, { x: meetBot.x, y: qeR.y }, meetBot], { id: 'cases-meet', color: HAND });
+
+  right('g-meet', 'n-pe', 'meet-hyp');
+  handoff(sheet, 'n-pe', 'a-qe', 'hyp-ask', { color: HAND });
+  down('a-qe', 'a-mgmt', 'ask-approve');
+  handoff(sheet, 'a-mgmt', 'c-qe', 'approve-rekey', { color: HAND });
+  down('c-qe', 'c-mgmt', 'rekey-sign');
+
+  const glossW = 700;
+  const glossX = a.x + a.w - glossW;
+  drawAsIsCallouts(sheet, a.x, panelY, glossX - a.x - 16, panelH);
+  drawAsIsGlossary(sheet, glossX, panelY, glossW, panelH);
+}
+
+function drawAsIsCallouts(sheet, x, y, w, h) {
+  const box = sheet.frame('callouts', x, y, w, h, 'risk');
+  const clip = { x, y, w, h };
+  const left = x + 24;
+  const mid = x + 24 + (w - 48) / 2;
+  sheet.text('co-title', 'ERROR RISK callouts', left, y + 26, {
+    size: 16,
+    weight: 'bold',
+    fill: NAVY,
+    clip,
+  });
+  sheet.text('co-dek1', '13 manual hand-offs. 11 places a fact can change. Illustrative / simulated.', left, y + 50, {
+    size: 14,
+    weight: 'regular',
+    fill: INK,
+    clip,
+  });
+  sheet.text(
+    'co-dek2',
+    'Detect through Diagnose is 4.0 days to a hypothesis, simulated. CAPA at 62 days is the record cycle, simulated.',
+    left,
+    y + 74,
+    { size: 14, weight: 'regular', fill: INK, clip },
+  );
+  const leftLines = [
+    'E1   Spoken alarm. The chamber is written from memory.',
+    'E2   Ticket retyped. Tool, time, and symptom change.',
+    'E3   Data gap. The reply drops the recipe step.',
+    'E4   Run sheet pasted into a spreadsheet.',
+    'E5   Missed engineering change. The log is checked by eye.',
+    'E6   Data gap. Prior cases sit in a folder.',
+  ];
+  const rightLines = [
+    'E7   Wrong lot traced. The supplier lot is not joined to the run.',
+    'E8   Data gap. The meeting does not record which file was current.',
+    'E9   Bias toward the last known cause.',
+    'E10  Uncited approval. The meeting has no evidence pack.',
+    'E11  Re-keyed record. The files stay in email.',
+  ];
+  leftLines.forEach((text, i) => {
+    sheet.text(`co-l${i}`, text, left, y + 108 + i * 24, { size: 14, weight: 'regular', fill: INK, clip });
+  });
+  rightLines.forEach((text, i) => {
+    sheet.text(`co-r${i}`, text, mid, y + 108 + i * 24, { size: 14, weight: 'regular', fill: INK, clip });
+  });
+  return box;
+}
+
+function drawAsIsGlossary(sheet, x, y, w, h) {
+  const box = sheet.frame('glossary', x, y, w, h, 'neutral');
+  const clip = { x, y, w, h };
+  const left = x + 24;
+  sheet.text('gl-title', 'Glossary', left, y + 26, { size: 16, weight: 'bold', fill: NAVY, clip });
+  sheet.text('gl-dek', 'Short forms on this sheet, spelled out.', left, y + 50, {
+    size: 14,
+    weight: 'regular',
+    fill: INK,
+    clip,
+  });
+  const terms = [
+    'MES    manufacturing execution system',
+    'SPC    statistical process control',
+    'ECN    engineering change notice',
+    'QMS    quality management system',
+    'CAPA   corrective and preventive action',
+  ];
+  terms.forEach((text, i) => {
+    sheet.text(`gl-t${i}`, text, left, y + 86 + i * 28, { size: 14, weight: 'regular', fill: INK, clip });
+  });
+  return box;
+}
+
 export const SHEETS = [
   {
     sheetId: 'G1',
@@ -1016,6 +1327,24 @@ export const SHEETS = [
       { tone: 'neutral', label: 'Console. Glossary plain language.' },
       { tone: 'gov', label: 'Read-only tools, then the quality write.' },
       { tone: 'gw', label: 'Model gateway. Completions only.' },
+    ],
+  },
+  {
+    sheetId: 'G5',
+    issue: '#74',
+    kicker: 'AS-IS INVESTIGATION',
+    title: 'As-is investigation flow',
+    slug: 'as-is-flow',
+    draw: drawAsIs,
+    legend: [
+      { tone: 'human', label: 'Operator. Notices the alarm on the tool.' },
+      { tone: 'review', label: 'Technician. The call, the ticket, the run sheet.' },
+      { tone: 'deploy', label: 'Process engineer. Files, the meeting, the hypothesis.' },
+      { tone: 'gov', label: 'Quality engineer. Owner, the thread, the record.' },
+      { tone: 'gw', label: 'Supply chain. Supplier lots by email.' },
+      { tone: 'ok', label: 'Management. Approves and signs.' },
+      { tone: 'manual', label: 'Red MANUAL badge and red arrow. A hand-off.' },
+      { tone: 'risk', label: 'Amber ERROR RISK badge. A fact can change.' },
     ],
   },
 ];

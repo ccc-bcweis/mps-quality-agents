@@ -1,0 +1,33 @@
+flowchart LR
+  subgraph OP["Operator"]
+    ALARM["Alarm noticed. MX-400 etch hits a limit."]
+  end
+  subgraph TECH["Technician"]
+    TOLD["Told in person. MANUAL 1."]
+    TICKET["Types the ticket. MANUAL 2."]
+    MES["MES spreadsheet. MANUAL 4."]
+  end
+  subgraph PE["Process engineer"]
+    FILES["Historian, SPC, and ECN log. MANUAL 5."]
+    MEET["Emails and a meeting. MANUAL 8."]
+    HYP["Tribal hypothesis. MANUAL 9."]
+  end
+  subgraph QE["Quality engineer"]
+    OWNER["Assigns an owner. MANUAL 3."]
+    CASES["Prior cases from a folder. MANUAL 6."]
+    ASK["Asks for approval. MANUAL 10."]
+    REKEY["CAPA re-keyed into the QMS. MANUAL 12."]
+  end
+  subgraph SC["Supply chain"]
+    LOTS["Supplier lots by email. MANUAL 7."]
+  end
+  subgraph MGMT["Management"]
+    APPR["Approves by reply. MANUAL 11."]
+    SIGN["Signs the CAPA. MANUAL 13."]
+  end
+
+  ALARM --> TOLD --> TICKET --> OWNER
+  TICKET --> MES --> MEET
+  FILES --> MEET
+  LOTS --> CASES --> MEET
+  MEET --> HYP --> ASK --> APPR --> REKEY --> SIGN
