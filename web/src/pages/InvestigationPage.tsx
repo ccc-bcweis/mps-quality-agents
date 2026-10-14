@@ -4,11 +4,14 @@ import { Link, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { CATEGORY_LABEL } from "../api/labels";
 import type { Investigation } from "../api/types";
+import { AgentTimeline } from "../components/AgentTimeline";
+import { EvidenceMatrix } from "../components/EvidenceMatrix";
 import { Explain } from "../components/Explain";
 import { Term } from "../components/Term";
 import { btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { lifecycleForInvestigation } from "../lifecycle";
+import { INVESTIGATION_POLL_MS } from "../investigation/timeline";
 import { buildTrace } from "../trace";
 
 export function InvestigationPage() {
@@ -22,16 +25,21 @@ export function InvestigationPage() {
     let cancelled = false;
     setInvestigation(null);
     setError(null);
-    api
-      .getInvestigation(investigationId)
-      .then((next) => {
-        if (!cancelled) setInvestigation(next);
-      })
-      .catch((reason: unknown) => {
-        if (!cancelled) setError(reason instanceof ApiProblem ? reason.title : "Investigation did not load.");
-      });
+    const load = (initial: boolean) => {
+      api
+        .getInvestigation(investigationId)
+        .then((next) => {
+          if (!cancelled) setInvestigation(next);
+        })
+        .catch((reason: unknown) => {
+          if (!cancelled && initial) setError(reason instanceof ApiProblem ? reason.title : "Investigation did not load.");
+        });
+    };
+    load(true);
+    const timer = window.setInterval(() => load(false), INVESTIGATION_POLL_MS);
     return () => {
       cancelled = true;
+      window.clearInterval(timer);
     };
   }, [investigationId]);
 
@@ -66,6 +74,9 @@ export function InvestigationPage() {
           Evidence gate: <strong>sufficient</strong> for a recommendation. Confounders are listed on the hypothesis and have to be addressed.
         </p>
       )}
+      <section className={`${panel} mb-3`}>
+        <AgentTimeline investigation={investigation} />
+      </section>
       <div className="grid gap-3 lg:grid-cols-3">
         <section className={panel}>
           <h2 className="mb-2 text-mps-title font-semibold">
@@ -81,6 +92,7 @@ export function InvestigationPage() {
                 <p className="text-mps-secondary">
                   <Explain text={item.excerpt} />
                 </p>
+                {item.whyItMatters ? <p className="text-mps-secondary">Why it matters: {item.whyItMatters}</p> : null}
                 <p className="font-mono text-mps-micro text-mps-muted">{item.source}</p>
               </li>
             ))}
@@ -128,6 +140,9 @@ export function InvestigationPage() {
           </ol>
         </section>
       </div>
+      <section className={`${panel} mt-3`}>
+        <EvidenceMatrix investigationId={investigation.id} />
+      </section>
     </div>
   );
 }
