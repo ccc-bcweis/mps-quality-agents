@@ -4,5 +4,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Mps.Application\Mps.Application.csproj" />
+    <ProjectReference Include="..\Mps.Domain\Mps.Domain.csproj" />
   </ItemGroup>
 </Project>

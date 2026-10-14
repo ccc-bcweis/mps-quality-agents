@@ -85,7 +85,7 @@ public sealed class LayeringTests
     [Fact]
     public void ConnectorsImplementApplicationPorts()
     {
-        AssertDependsOn(Connectors, "Mps.Application");
+        AssertDependsOn(Connectors, "Mps.Application", "Mps.Application.Writes");
         AssertDoesNotDependOn(
             Connectors,
             AllExcept("Mps.Connectors", "Mps.Application", "Mps.Domain"));

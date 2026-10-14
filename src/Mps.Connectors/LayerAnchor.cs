@@ -1,5 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Application.Writes;
+
 namespace Mps.Connectors;
 
 /// <summary>
@@ -10,4 +12,6 @@ public static class LayerAnchor
     public static string Name => "Mps.Connectors";
 
     public static string DependsOn => Mps.Application.LayerAnchor.Name;
+
+    public static Type WritePort => typeof(IQmsCapaWriter);
 }

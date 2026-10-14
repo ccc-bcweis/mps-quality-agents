@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.meridian-precision.example/events/ticket-opened.schema.json",
+  "title": "TicketOpened",
+  "description": "An intake ticket was opened. Ticket numbers start with TKT-.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "occurredAt", "correlationId", "payload"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": { "const": "ticketOpened" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string", "minLength": 1 },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "number", "incidentId", "toolId", "title", "openedAt"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "number": { "type": "string", "pattern": "^TKT-.+" },
+        "incidentId": { "type": "string", "format": "uuid" },
+        "toolId": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "openedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

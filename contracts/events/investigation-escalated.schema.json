@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.meridian-precision.example/events/investigation-escalated.schema.json",
+  "title": "InvestigationEscalated",
+  "description": "The investigation escalated. The reason names the gap or the conflict. No root cause is asserted.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "occurredAt", "correlationId", "payload"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": { "const": "investigationEscalated" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string", "minLength": 1 },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["investigationId", "incidentId", "reason"],
+      "properties": {
+        "investigationId": { "type": "string", "format": "uuid" },
+        "incidentId": { "type": "string", "format": "uuid" },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

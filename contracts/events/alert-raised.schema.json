@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.meridian-precision.example/events/alert-raised.schema.json",
+  "title": "AlertRaised",
+  "description": "An SPC rule raised an alert on the fictional Meridian Precision Systems fleet. The envelope correlationId is the correlation for this alert.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "occurredAt", "correlationId", "payload"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": { "const": "alertRaised" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string", "minLength": 1 },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "toolId", "parameter", "severity", "rule", "raisedAt"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "toolId": { "type": "string", "minLength": 1 },
+        "chamberId": { "type": ["string", "null"] },
+        "parameter": { "type": "string", "minLength": 1 },
+        "severity": { "enum": ["low", "medium", "high", "critical"] },
+        "rule": { "type": "string", "minLength": 1 },
+        "raisedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}
