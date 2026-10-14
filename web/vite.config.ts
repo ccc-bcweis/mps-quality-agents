@@ -5,26 +5,20 @@ import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vitest/config";
 import { parseFleetSensors, type FleetSensor } from "./src/fleet/sensors";
-import { parseGlossaryYaml, termsFromGlossaryFile } from "./src/glossary/parse";
+import { parseGlossaryYaml } from "./src/glossary/parse";
 import type { GlossaryTerm } from "./src/glossary/types";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 
 function loadGlossary(): { source: string; note: string; terms: GlossaryTerm[] } {
   const yamlPath = path.resolve(root, "../data/glossary.yaml");
-  const fallbackPath = path.resolve(root, "src/glossary.fallback.json");
-  if (fs.existsSync(yamlPath)) {
-    return {
-      source: "data/glossary.yaml",
-      note: "",
-      terms: parseGlossaryYaml(fs.readFileSync(yamlPath, "utf8")),
-    };
+  if (!fs.existsSync(yamlPath)) {
+    throw new Error("data/glossary.yaml is required. The console does not keep a second glossary.");
   }
-  const file = JSON.parse(fs.readFileSync(fallbackPath, "utf8")) as { sourceNote?: string };
   return {
-    source: "web/src/glossary.fallback.json",
-    note: file.sourceNote ?? "",
-    terms: termsFromGlossaryFile(file),
+    source: "data/glossary.yaml",
+    note: "",
+    terms: parseGlossaryYaml(fs.readFileSync(yamlPath, "utf8")),
   };
 }
 

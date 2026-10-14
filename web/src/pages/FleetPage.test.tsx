@@ -25,6 +25,6 @@ describe("fleet overview", () => {
     expect(screen.getByText("22.0 wafers/h")).toBeInTheDocument();
     const oee = screen.getByText(matchCopy(/overall equipment effectiveness \(OEE\)/));
     await user.click(oee);
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(/how much good work a tool produced/i);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(/good-wafer rate/i);
   });
 });

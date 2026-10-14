@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { glossarySource, glossaryTerms } from "virtual:glossary";
+import { glossaryNote, glossarySource, glossaryTerms } from "virtual:glossary";
 import { missingAcronyms, REQUIRED_TERMS, stringLiterals } from "./scan";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -46,13 +46,12 @@ function uiCopyHits(): { token: string; file: string }[] {
 }
 
 describe("glossary coverage", () => {
-  it("loads data/glossary.yaml at build time, or the stub when that file is absent", () => {
+  it("loads data/glossary.yaml as the only glossary", () => {
     const yamlPath = path.join(repoRoot, "data", "glossary.yaml");
-    if (fs.existsSync(yamlPath)) {
-      expect(glossarySource).toBe("data/glossary.yaml");
-    } else {
-      expect(glossarySource).toBe("web/src/glossary.fallback.json");
-    }
+    expect(fs.existsSync(yamlPath)).toBe(true);
+    expect(fs.existsSync(path.join(webRoot, "src", "glossary.fallback.json"))).toBe(false);
+    expect(glossarySource).toBe("data/glossary.yaml");
+    expect(glossaryNote).toBe("");
     expect(glossaryTerms.length).toBeGreaterThan(REQUIRED_TERMS.length);
   });
 
@@ -68,6 +67,8 @@ describe("glossary coverage", () => {
     expect(missingAcronyms("Recipe ETCH-OX-14, CAL-ESC-02, and NF3-220.", glossaryTerms)).toEqual([]);
     expect(missingAcronyms("#EF4444 AppShell ModeBanner SpcChart", glossaryTerms)).toEqual([]);
     expect(missingAcronyms("WE-1 and MTTR-Q stay in the glossary.", glossaryTerms)).toEqual([]);
+    expect(missingAcronyms("WE-1 tripped.", [{ term: "SPC", expansion: "x", definition: "y" }])).toEqual(["WE-1"]);
+    expect(missingAcronyms("WE-1 tripped.", [{ term: "WE", expansion: "x", definition: "y" }])).toEqual([]);
     const hits = uiCopyHits();
     expect(hits, hits.map((hit) => `${hit.token} in ${hit.file}`).join("\n")).toEqual([]);
   });

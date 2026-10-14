@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import type { GlossaryFile, GlossaryTerm } from "./types";
+import type { GlossaryTerm } from "./types";
 
 const FIELDS = ["term", "expansion", "definition", "whyItMatters"] as const;
 
@@ -52,21 +52,4 @@ export function parseGlossaryYaml(source: string): GlossaryTerm[] {
   }
   flush();
   return terms;
-}
-
-export function termsFromGlossaryFile(value: unknown): GlossaryTerm[] {
-  if (!value || typeof value !== "object" || !("terms" in value) || !Array.isArray((value as GlossaryFile).terms)) {
-    throw new Error("Glossary file is missing a terms array.");
-  }
-  return (value as GlossaryFile).terms.map((term) => {
-    if (!term.term || !term.expansion || !term.definition) {
-      throw new Error("Glossary file entry is incomplete.");
-    }
-    return {
-      term: term.term,
-      expansion: term.expansion,
-      definition: term.definition,
-      whyItMatters: term.whyItMatters,
-    };
-  });
 }

@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { glossaryTerms } from "./terms";
+import { glossaryTerms, isAcronymTerm } from "./terms";
 import type { GlossaryTerm } from "./types";
 
 export type GlossaryPart = { kind: "text"; text: string } | { kind: "term"; term: string };
@@ -12,11 +12,16 @@ let cachedKey = "";
 let cachedPattern: RegExp | null = null;
 
 function patternFor(terms: GlossaryTerm[]): RegExp | null {
-  if (terms.length === 0) return null;
-  const key = terms.map((term) => term.term).join("\n");
+  // Units and plain words stay on the glossary page. "rev C" is a revision letter, not Celsius.
+  const linkable = terms.filter((term) => isAcronymTerm(term.term));
+  const rules = terms.some((term) => term.term === "WE");
+  if (linkable.length === 0 && !rules) return null;
+  const key = `${linkable.map((term) => term.term).join("\n")}|${rules ? "WE-#" : ""}`;
   if (cachedPattern && cachedKey === key) return cachedPattern;
-  const sorted = [...terms].sort((a, b) => b.term.length - a.term.length);
-  const body = sorted.map((term) => escapeRegExp(term.term)).join("|");
+  const sorted = [...linkable].sort((a, b) => b.term.length - a.term.length);
+  const parts = sorted.map((term) => escapeRegExp(term.term));
+  if (rules) parts.unshift("WE-\\d+");
+  const body = parts.join("|");
   cachedKey = key;
   cachedPattern = new RegExp(`(?<![A-Za-z0-9-])(?:${body})(?![A-Za-z0-9-])`, "g");
   return cachedPattern;

@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+import { ruleCodeBase } from "./terms";
 import type { GlossaryTerm } from "./types";
 
 /** Spec 2.10 terms. The glossary must contain these even when a screen does not use them yet. */
@@ -60,7 +61,8 @@ const UPPER_SHAPE = /\b[A-Z]{2,}(?:-[A-Z0-9]+)?\b/g;
 /**
  * Whole hyphenated tokens (ETCH-OX-14, CAL-ESC-02, NF3-220, ECO-4471, D-01).
  * A word boundary sits on the hyphen, so a partial mask would leave ETCH or CAL
- * for the acronym scan. Western Electric rule ids and MTTR-Q stay visible.
+ * for the acronym scan. WE-1 stays visible and is covered by the term WE.
+ * MTTR-Q stays visible and has to be its own glossary term.
  */
 const IDENTIFIER = /\b[A-Za-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)+\b/g;
 const KEPT_IDENTIFIER = /^(?:WE-\d+|MTTR-Q)$/;
@@ -85,7 +87,11 @@ export function findAcronymTokens(text: string): string[] {
 
 export function missingAcronyms(text: string, terms: GlossaryTerm[]): string[] {
   const known = new Set(terms.map((term) => term.term));
-  return findAcronymTokens(text).filter((token) => !known.has(token));
+  return findAcronymTokens(text).filter((token) => {
+    if (known.has(token)) return false;
+    const base = ruleCodeBase(token);
+    return !base || !known.has(base);
+  });
 }
 
 export function stripSourceComments(source: string): string {

@@ -6,9 +6,3 @@ export type GlossaryTerm = {
   definition: string;
   whyItMatters?: string;
 };
-
-export type GlossaryFile = {
-  copyright?: string;
-  sourceNote?: string;
-  terms: GlossaryTerm[];
-};

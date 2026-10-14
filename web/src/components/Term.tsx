@@ -14,7 +14,7 @@ export function Term({ id, spellOut = true, children }: { id: string; spellOut?:
 
   if (!entry) return <>{children ?? id}</>;
 
-  const token = children ?? entry.term;
+  const token = children ?? (id.toLowerCase() === entry.term.toLowerCase() ? entry.term : id);
 
   function place(target: HTMLElement) {
     const rect = target.getBoundingClientRect();

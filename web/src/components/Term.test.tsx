@@ -32,7 +32,22 @@ describe("glossary term", () => {
     expect(first).not.toBeNull();
     await user.click(first as HTMLElement);
     const tip = await screen.findByRole("tooltip");
-    expect(tip).toHaveTextContent(/running chart/i);
+    expect(tip).toHaveTextContent(/running check/i);
+    expect(tip).toHaveTextContent(/opens a ticket/i);
     expect(tip).toHaveTextContent(/Why it matters/i);
+  });
+
+  it("spells the first Western Electric rule code from WE and keeps the suffix on the next rule", () => {
+    show(
+      <>
+        <Term id="WE-1" />
+        <Term id="WE-2" />
+      </>,
+    );
+    const first = document.querySelector("[data-term='WE'][data-first-use='true']");
+    expect(first?.textContent).toMatch(/Western Electric rules \(WE-1\)/);
+    const second = document.querySelectorAll("[data-term='WE'][data-first-use='false']");
+    expect(second).toHaveLength(1);
+    expect(second[0]?.textContent).toBe("WE-2");
   });
 });
