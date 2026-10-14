@@ -101,3 +101,13 @@ flowchart TB
 4. Smoke: Entra sign-in as an invited guest, LIVE badge, spend meter, S1 in replay then live.
 
 Open: Azure OpenAI quota in the subscription was not checked from this box (no Azure CLI). Bryan or Bob confirm region and gpt-4o-mini / gpt-4o quota before Z2.
+
+## Large-format print
+
+ARCH D sheet (36 × 24 in, landscape), v1.0, 2026-10-14. The mermaid block above is the source. The plotter files are hand-composed so labels do not cross. The print sheet labels the GitHub environment `azure-demo`. The identity table in this file still says `demo`. See [`cicd.md`](cicd.md).
+
+- [`print/physical-archD.pdf`](print/physical-archD.pdf)
+- [`print/physical-archD.svg`](print/physical-archD.svg)
+- [`print/physical.svg`](print/physical.svg)
+
+Regenerate with `pwsh docs/diagrams/render.ps1`. See [`README.md`](README.md).
