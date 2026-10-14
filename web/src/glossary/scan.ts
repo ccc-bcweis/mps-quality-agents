@@ -92,8 +92,13 @@ export function stripSourceComments(source: string): string {
   return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:\\])\/\/.*$/gm, "$1");
 }
 
+/** Regex literals are not UI copy. A quote inside one must not swallow the rest of the file. */
+function stripRegexLiterals(source: string): string {
+  return source.replace(/(^|[^A-Za-z0-9_$'"])\/(?:\\.|\[(?:\\.|[^\]])*\]|[^/\n\\])+\/[dgimsuy]*/g, "$1 ");
+}
+
 export function stringLiterals(source: string): string[] {
-  const cleaned = stripSourceComments(source);
+  const cleaned = stripRegexLiterals(stripSourceComments(source));
   const values: string[] = [];
   const pattern = /`(?:\\.|[^`\\])*`|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g;
   for (const match of cleaned.matchAll(pattern)) {

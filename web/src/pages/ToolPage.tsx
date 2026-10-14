@@ -7,9 +7,12 @@ import type { Tool } from "../api/types";
 import { SpcChart } from "../components/SpcChart";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
+import { ToolSchematic } from "../components/ToolSchematic";
 import { btn, btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
+import { chartSpec } from "../fleet/chartSpec";
 import { statusTone, storyFor, windowRows } from "../fleet/catalog";
+import { fleetSensors } from "virtual:fleet-sensors";
 import { S1_INVESTIGATION_ID, S2_INVESTIGATION_ID } from "../mocks/demoData";
 
 const INVESTIGATION_LINK: Record<string, string> = {
@@ -21,6 +24,7 @@ export function ToolPage() {
   const { toolId = "" } = useParams();
   const [tool, setTool] = useState<Tool | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const story = tool ? storyFor(tool) : null;
   useSetLifecycle(story?.lifecycle ?? "alert", story?.escalated ?? false);
 
@@ -28,6 +32,7 @@ export function ToolPage() {
     let cancelled = false;
     setTool(null);
     setError(null);
+    setSelectedId(null);
     api
       .getTool(toolId)
       .then((next) => {
@@ -46,6 +51,15 @@ export function ToolPage() {
 
   const tone = statusTone(story.status);
   const investigationId = INVESTIGATION_LINK[tool.id];
+  const toolSensors = fleetSensors.filter((sensor) => sensor.toolId === tool.id);
+  const selected = toolSensors.find((sensor) => sensor.id === selectedId) ?? null;
+  const chart = selected ? chartSpec(selected, story) : story.chart;
+
+  function showSensor(sensor: (typeof toolSensors)[number]) {
+    setSelectedId(sensor.id);
+    const node = document.getElementById("spc-chart");
+    if (node && typeof node.scrollIntoView === "function") node.scrollIntoView({ block: "nearest" });
+  }
 
   return (
     <div>
@@ -91,20 +105,23 @@ export function ToolPage() {
         ))}
       </div>
       <div className={`${panel} mt-3`}>
+        <ToolSchematic family={tool.family} sensors={toolSensors} selectedId={selectedId} onSelect={showSensor} />
+      </div>
+      <div id="spc-chart" className={`${panel} mt-3 scroll-mt-16`}>
         <h2 className="mb-2 text-mps-title font-semibold">
-          <Explain text={`SPC · ${story.chart.label}`} />{" "}
+          <Explain text={`SPC · ${chart.label}`} />{" "}
           <span className="float-right font-mono text-mps-micro font-normal text-mps-muted">
-            σ = {story.chart.sigma} {story.chart.unit} · n = 60
+            σ = {chart.sigma} {chart.unit} · n = 60
           </span>
         </h2>
         <SpcChart
-          seedKey={`${tool.id}:${story.chart.parameter}`}
-          label={story.chart.label}
-          unit={story.chart.unit}
-          mean={story.chart.mean}
-          sigma={story.chart.sigma}
-          shape={story.chart.shape}
-          endValue={story.chart.endValue}
+          seedKey={`${tool.id}:${chart.parameter}`}
+          label={chart.label}
+          unit={chart.unit}
+          mean={chart.mean}
+          sigma={chart.sigma}
+          shape={chart.shape}
+          endValue={chart.endValue}
         />
       </div>
       <div className="mt-3 grid gap-3 lg:grid-cols-2">

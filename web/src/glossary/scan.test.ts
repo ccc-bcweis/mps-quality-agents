@@ -64,6 +64,7 @@ describe("glossary coverage", () => {
 
   it("fails when UI copy uses an acronym that is not in the glossary", () => {
     expect(missingAcronyms("The ZZZ chart drifted.", glossaryTerms)).toContain("ZZZ");
+    expect(stringLiterals('const pattern = /("REQUIRED")/g;\nconst label = "ZZZ";')).toEqual(["ZZZ"]);
     expect(missingAcronyms("Recipe ETCH-OX-14, CAL-ESC-02, and NF3-220.", glossaryTerms)).toEqual([]);
     expect(missingAcronyms("#EF4444 AppShell ModeBanner SpcChart", glossaryTerms)).toEqual([]);
     expect(missingAcronyms("WE-1 and MTTR-Q stay in the glossary.", glossaryTerms)).toEqual([]);

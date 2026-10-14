@@ -9,6 +9,14 @@ declare module "virtual:glossary" {
   export const glossaryTerms: GlossaryTerm[];
 }
 
+declare module "virtual:fleet-sensors" {
+  import type { FleetSensor } from "./fleet/sensors";
+
+  export const fleetSensorSource: string;
+  export const fleetSensorNote: string;
+  export const fleetSensors: FleetSensor[];
+}
+
 interface ImportMetaEnv {
   readonly VITE_USE_MSW?: string;
   readonly VITE_API_BASE?: string;
