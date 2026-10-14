@@ -5,6 +5,7 @@ toolFamily: Etch
 revision: B
 kind: sop
 untrusted: false
+whyItMatters: "This procedure is the baseline for a normal etch."
 ---
 # MPS-E7 preventive maintenance
 

@@ -128,6 +128,38 @@ public sealed class TelemetrySimulatorTests
     }
 
     [Fact]
+    public void SimulatorEmitsExactlyTheCatalogSensorIdsAndUnits()
+    {
+        var simulator = new FleetSimulator(Catalog, 20261014, Origin);
+        var cycle = Catalog.Tools.Max(tool => tool.Recipes.Sum(recipe => recipe.Steps.Count)) * RecipeSchedule.StepSeconds;
+        var frames = simulator.Advance(TimeSpan.FromSeconds(cycle));
+
+        foreach (var tool in Catalog.Tools)
+        {
+            var byId = tool.Sensors.ToDictionary(sensor => sensor.Id, StringComparer.Ordinal);
+            var emitted = frames.Where(frame => frame.ToolId == tool.Id).ToArray();
+            emitted.Select(frame => frame.SensorId).Distinct().Should().BeEquivalentTo(byId.Keys);
+            emitted.Should().OnlyContain(frame =>
+                byId.ContainsKey(frame.SensorId)
+                && frame.Unit == byId[frame.SensorId].Unit
+                && frame.Parameter == (byId[frame.SensorId].Parameter ?? frame.SensorId)
+                && frame.ChamberId == byId[frame.SensorId].FrameChamberId(tool.Id));
+        }
+    }
+
+    [Fact]
+    public void ToolOutputCountsWafersInsideTheSimulatedHour()
+    {
+        var simulator = new FleetSimulator(Catalog, 20261014, Origin);
+        var frames = simulator.Advance(TimeSpan.FromSeconds(RecipeSchedule.WaferSeconds + 1));
+        var output = frames.Where(frame => frame.SensorId == "E-02-OUTPUT").OrderBy(frame => frame.SimulatedAt).ToArray();
+
+        output[0].Value.Should().Be(0d);
+        output[0].Unit.Should().Be("wafers");
+        output[^1].Value.Should().Be(1d);
+    }
+
+    [Fact]
     public void TelemetryFramesDoNotCarryARootCause()
     {
         typeof(TelemetryFrame).GetProperties().Select(property => property.Name)

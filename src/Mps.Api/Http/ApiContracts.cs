@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Application.Evidence;
 using Mps.Domain.Capa;
 using Mps.Domain.Equipment;
 using Mps.Domain.Evidence;
@@ -52,7 +53,15 @@ public sealed record EvidenceResponse(
     string Excerpt,
     DateTimeOffset ObservedAt,
     string? ToolId,
-    string? ExternalRef);
+    string? ExternalRef,
+    string? WhyItMatters,
+    string? SignalId);
+
+public sealed record EvidenceMatrixResponse(
+    RootCauseCategory Category,
+    Guid EvidenceId,
+    EvidenceStance Stance,
+    string? WhyItMatters);
 
 public sealed record HypothesisResponse(
     Guid Id,
@@ -70,7 +79,8 @@ public sealed record InvestigationResponse(
     IReadOnlyList<EvidenceResponse> Evidence,
     IReadOnlyList<HypothesisResponse> Hypotheses,
     string? EscalationReason,
-    string CorrelationId);
+    string CorrelationId,
+    IReadOnlyList<EvidenceMatrixResponse> EvidenceMatrix);
 
 public sealed record CapaResponse(
     Guid Id,

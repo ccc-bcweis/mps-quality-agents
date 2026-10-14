@@ -28,7 +28,7 @@ internal sealed class SeededRng
         return Math.Sqrt(-2d * Math.Log(u1)) * Math.Cos(2d * Math.PI * u2);
     }
 
-    private double NextUnit()
+    public double NextUnit()
     {
         return (Next() >> 11) * (1d / (1UL << 53));
     }

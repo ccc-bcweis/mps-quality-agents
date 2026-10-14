@@ -5,6 +5,7 @@ toolFamily: Strip
 revision: B
 kind: sop
 untrusted: false
+whyItMatters: "This procedure is the baseline for a normal ash."
 ---
 # MPS-S7 preventive maintenance
 

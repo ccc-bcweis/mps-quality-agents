@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Application.Evidence;
 using Mps.Application.Persistence;
 using Mps.Domain.Capa;
 using Mps.Domain.Equipment;
@@ -47,18 +48,31 @@ public static class ContractMapper
             incident.Stage);
 
     public static InvestigationResponse ToResponse(InvestigationSnapshot snapshot) =>
-        new(
+        ToResponse(snapshot, InvestigationNarrative.Empty);
+
+    public static InvestigationResponse ToResponse(InvestigationSnapshot snapshot, InvestigationNarrative narrative)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(narrative);
+        var notes = narrative.Notes.ToDictionary(note => note.EvidenceId);
+        return new InvestigationResponse(
             snapshot.Id.Value,
             snapshot.IncidentId.Value,
             snapshot.Stage,
-            snapshot.Evidence.Select(item => new EvidenceResponse(
-                item.Id.Value,
-                item.Source,
-                item.Title,
-                item.Excerpt,
-                item.ObservedAt,
-                item.ToolId,
-                item.ExternalRef)).ToArray(),
+            snapshot.Evidence.Select(item =>
+            {
+                notes.TryGetValue(item.Id.Value, out var note);
+                return new EvidenceResponse(
+                    item.Id.Value,
+                    item.Source,
+                    item.Title,
+                    item.Excerpt,
+                    item.ObservedAt,
+                    item.ToolId,
+                    item.ExternalRef,
+                    note?.WhyItMatters,
+                    note?.SignalId);
+            }).ToArray(),
             snapshot.Hypotheses.Select(item => new HypothesisResponse(
                 item.Id.Value,
                 item.Category,
@@ -68,7 +82,13 @@ public static class ContractMapper
                 item.CounterEvidence,
                 item.Actions)).ToArray(),
             snapshot.EscalationReason,
-            snapshot.CorrelationId);
+            snapshot.CorrelationId,
+            narrative.Matrix.Select(entry => new EvidenceMatrixResponse(
+                entry.Category,
+                entry.EvidenceId,
+                entry.Stance,
+                entry.WhyItMatters)).ToArray());
+    }
 
     public static CapaResponse ToResponse(CapaAction capa) =>
         new(capa.Id.Value, capa.IncidentId.Value, capa.Summary, capa.ApprovalTokenId.Value, capa.ActionHash, capa.Stage, capa.OpenedAt);

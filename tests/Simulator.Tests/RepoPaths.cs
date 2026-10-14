@@ -33,4 +33,8 @@ internal static class RepoPaths
     public static string CorpusDirectory() => Path.Combine(Root(), "data", "docs", "corpus");
 
     public static string RoiDirectory() => Path.Combine(Root(), "data", "roi");
+
+    public static string KpiDirectory() => Path.Combine(Root(), "data", "kpis");
+
+    public static string EvidenceMatrixFile() => Path.Combine(Root(), "data", "evidence-matrix.yaml");
 }
