@@ -1,0 +1,42 @@
+{
+  "faultId": "FLT-CAL-S02",
+  "scenario": "S4-calibration",
+  "category": "equipmentCalibrationOrAlignment",
+  "expectedBehavior": "recommend",
+  "assertCategory": true,
+  "cause": "The O2 mass flow controller on S-02 chamber A is overdue and was not completed.",
+  "tools": [
+    "S-02"
+  ],
+  "parameter": "o2Flow",
+  "chamberId": "S-02-A",
+  "evidenceRecordIds": [
+    "CAL-S02-O2-MFC",
+    "RUN-FLT-CAL-S02-S-02-00",
+    "RUN-FLT-CAL-S02-S-02-01",
+    "RUN-FLT-CAL-S02-S-02-02"
+  ],
+  "confounderRecordIds": [
+    "N2H2-190",
+    "SN-N2H2-190"
+  ],
+  "missingRecordIds": [],
+  "contradiction": null,
+  "counterEvidence": [
+    "Supplier notice SN-N2H2-190 arrived the day before and describes a density shift that is still inside the widened spec."
+  ],
+  "signals": [
+    {
+      "toolId": "S-02",
+      "chamberId": "S-02-A",
+      "parameter": "o2Flow",
+      "shape": "step",
+      "magnitudeKind": "sigma",
+      "magnitude": 4,
+      "onset": "2026-10-06T11:00:00Z",
+      "periodSeconds": 30,
+      "rampSeconds": 600,
+      "dutyCycle": 0.5
+    }
+  ]
+}

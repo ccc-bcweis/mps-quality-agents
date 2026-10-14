@@ -1,0 +1,4352 @@
+{
+  "seed": 20261014,
+  "windowStart": "2026-07-16T00:00:00Z",
+  "windowEnd": "2026-10-14T00:00:00Z",
+  "runs": [
+    {
+      "runId": "RUN-BG-20261014-C-01-W00-00",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W00",
+      "startedAt": "2026-07-16T00:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W00-00",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W00",
+      "startedAt": "2026-07-16T01:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W00-01",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W00",
+      "startedAt": "2026-07-16T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W00-00",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W00",
+      "startedAt": "2026-07-16T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W00-01",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W00",
+      "startedAt": "2026-07-16T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W00-00",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W00",
+      "startedAt": "2026-07-16T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W00-02",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W00",
+      "startedAt": "2026-07-16T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W00-01",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W00",
+      "startedAt": "2026-07-16T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W00-00",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W00",
+      "startedAt": "2026-07-16T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W00-02",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W00",
+      "startedAt": "2026-07-16T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W00-01",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W00",
+      "startedAt": "2026-07-16T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W00-00",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W00",
+      "startedAt": "2026-07-16T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W00-03",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W00",
+      "startedAt": "2026-07-16T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W00-02",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W00",
+      "startedAt": "2026-07-16T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W00-01",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W00",
+      "startedAt": "2026-07-16T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W00-00",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W00",
+      "startedAt": "2026-07-16T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W00-03",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W00",
+      "startedAt": "2026-07-16T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W00-02",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W00",
+      "startedAt": "2026-07-16T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W00-01",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W00",
+      "startedAt": "2026-07-16T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W00-00",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W00",
+      "startedAt": "2026-07-16T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W00-03",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W00",
+      "startedAt": "2026-07-16T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W00-02",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W00",
+      "startedAt": "2026-07-16T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W00-01",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W00",
+      "startedAt": "2026-07-16T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W00-03",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W00",
+      "startedAt": "2026-07-16T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W00-02",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W00",
+      "startedAt": "2026-07-16T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W00-01",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W00",
+      "startedAt": "2026-07-16T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W00-03",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W00",
+      "startedAt": "2026-07-16T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W00-02",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W00",
+      "startedAt": "2026-07-16T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W00-03",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W00",
+      "startedAt": "2026-07-16T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W00-02",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W00",
+      "startedAt": "2026-07-16T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W00-03",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W00",
+      "startedAt": "2026-07-16T12:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W00-03",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W00",
+      "startedAt": "2026-07-16T13:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W01-00",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W01",
+      "startedAt": "2026-07-23T00:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W01-00",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W01",
+      "startedAt": "2026-07-23T01:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W01-01",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W01",
+      "startedAt": "2026-07-23T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W01-00",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W01",
+      "startedAt": "2026-07-23T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W01-01",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W01",
+      "startedAt": "2026-07-23T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W01-00",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W01",
+      "startedAt": "2026-07-23T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W01-02",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W01",
+      "startedAt": "2026-07-23T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W01-01",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W01",
+      "startedAt": "2026-07-23T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W01-00",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W01",
+      "startedAt": "2026-07-23T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W01-02",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W01",
+      "startedAt": "2026-07-23T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W01-01",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W01",
+      "startedAt": "2026-07-23T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W01-00",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W01",
+      "startedAt": "2026-07-23T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W01-03",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W01",
+      "startedAt": "2026-07-23T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W01-02",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W01",
+      "startedAt": "2026-07-23T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W01-01",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W01",
+      "startedAt": "2026-07-23T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W01-00",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W01",
+      "startedAt": "2026-07-23T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W01-03",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W01",
+      "startedAt": "2026-07-23T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W01-02",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W01",
+      "startedAt": "2026-07-23T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W01-01",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W01",
+      "startedAt": "2026-07-23T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W01-00",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W01",
+      "startedAt": "2026-07-23T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W01-03",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W01",
+      "startedAt": "2026-07-23T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W01-02",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W01",
+      "startedAt": "2026-07-23T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W01-01",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W01",
+      "startedAt": "2026-07-23T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W01-03",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W01",
+      "startedAt": "2026-07-23T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W01-02",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W01",
+      "startedAt": "2026-07-23T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W01-01",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W01",
+      "startedAt": "2026-07-23T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W01-03",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W01",
+      "startedAt": "2026-07-23T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W01-02",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W01",
+      "startedAt": "2026-07-23T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W01-03",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W01",
+      "startedAt": "2026-07-23T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W01-02",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W01",
+      "startedAt": "2026-07-23T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W01-03",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W01",
+      "startedAt": "2026-07-23T12:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W01-03",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W01",
+      "startedAt": "2026-07-23T13:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W02-00",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W02",
+      "startedAt": "2026-07-30T00:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W02-00",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W02",
+      "startedAt": "2026-07-30T01:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W02-01",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W02",
+      "startedAt": "2026-07-30T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W02-00",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W02",
+      "startedAt": "2026-07-30T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W02-01",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W02",
+      "startedAt": "2026-07-30T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W02-00",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W02",
+      "startedAt": "2026-07-30T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W02-02",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W02",
+      "startedAt": "2026-07-30T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W02-01",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W02",
+      "startedAt": "2026-07-30T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W02-00",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W02",
+      "startedAt": "2026-07-30T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W02-02",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W02",
+      "startedAt": "2026-07-30T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W02-01",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W02",
+      "startedAt": "2026-07-30T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W02-00",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W02",
+      "startedAt": "2026-07-30T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W02-03",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W02",
+      "startedAt": "2026-07-30T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W02-02",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W02",
+      "startedAt": "2026-07-30T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W02-01",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W02",
+      "startedAt": "2026-07-30T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W02-00",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W02",
+      "startedAt": "2026-07-30T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W02-03",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W02",
+      "startedAt": "2026-07-30T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W02-02",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W02",
+      "startedAt": "2026-07-30T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W02-01",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W02",
+      "startedAt": "2026-07-30T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W02-00",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W02",
+      "startedAt": "2026-07-30T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W02-03",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W02",
+      "startedAt": "2026-07-30T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W02-02",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W02",
+      "startedAt": "2026-07-30T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W02-01",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W02",
+      "startedAt": "2026-07-30T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W02-03",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W02",
+      "startedAt": "2026-07-30T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W02-02",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W02",
+      "startedAt": "2026-07-30T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W02-01",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W02",
+      "startedAt": "2026-07-30T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W02-03",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W02",
+      "startedAt": "2026-07-30T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W02-02",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W02",
+      "startedAt": "2026-07-30T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W02-03",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W02",
+      "startedAt": "2026-07-30T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W02-02",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W02",
+      "startedAt": "2026-07-30T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W02-03",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W02",
+      "startedAt": "2026-07-30T12:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W02-03",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W02",
+      "startedAt": "2026-07-30T13:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W03-00",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W03",
+      "startedAt": "2026-08-06T00:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W03-00",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W03",
+      "startedAt": "2026-08-06T01:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W03-01",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W03",
+      "startedAt": "2026-08-06T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W03-00",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W03",
+      "startedAt": "2026-08-06T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W03-01",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W03",
+      "startedAt": "2026-08-06T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W03-00",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W03",
+      "startedAt": "2026-08-06T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W03-02",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W03",
+      "startedAt": "2026-08-06T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W03-01",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W03",
+      "startedAt": "2026-08-06T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W03-00",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W03",
+      "startedAt": "2026-08-06T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W03-02",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W03",
+      "startedAt": "2026-08-06T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W03-01",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W03",
+      "startedAt": "2026-08-06T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W03-00",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W03",
+      "startedAt": "2026-08-06T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W03-03",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W03",
+      "startedAt": "2026-08-06T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W03-02",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W03",
+      "startedAt": "2026-08-06T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W03-01",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W03",
+      "startedAt": "2026-08-06T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W03-00",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W03",
+      "startedAt": "2026-08-06T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W03-03",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W03",
+      "startedAt": "2026-08-06T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W03-02",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W03",
+      "startedAt": "2026-08-06T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W03-01",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W03",
+      "startedAt": "2026-08-06T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W03-00",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W03",
+      "startedAt": "2026-08-06T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W03-03",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W03",
+      "startedAt": "2026-08-06T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W03-02",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W03",
+      "startedAt": "2026-08-06T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W03-01",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W03",
+      "startedAt": "2026-08-06T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W03-03",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W03",
+      "startedAt": "2026-08-06T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W03-02",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W03",
+      "startedAt": "2026-08-06T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W03-01",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W03",
+      "startedAt": "2026-08-06T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W03-03",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W03",
+      "startedAt": "2026-08-06T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W03-02",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W03",
+      "startedAt": "2026-08-06T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W03-03",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W03",
+      "startedAt": "2026-08-06T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W03-02",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W03",
+      "startedAt": "2026-08-06T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W03-03",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W03",
+      "startedAt": "2026-08-06T12:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W03-03",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W03",
+      "startedAt": "2026-08-06T13:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W04-00",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W04",
+      "startedAt": "2026-08-13T00:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W04-00",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W04",
+      "startedAt": "2026-08-13T01:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W04-01",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W04",
+      "startedAt": "2026-08-13T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W04-00",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W04",
+      "startedAt": "2026-08-13T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W04-01",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W04",
+      "startedAt": "2026-08-13T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W04-00",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W04",
+      "startedAt": "2026-08-13T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W04-02",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W04",
+      "startedAt": "2026-08-13T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W04-01",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W04",
+      "startedAt": "2026-08-13T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W04-00",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W04",
+      "startedAt": "2026-08-13T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W04-02",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W04",
+      "startedAt": "2026-08-13T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W04-01",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W04",
+      "startedAt": "2026-08-13T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W04-00",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W04",
+      "startedAt": "2026-08-13T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W04-03",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W04",
+      "startedAt": "2026-08-13T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W04-02",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W04",
+      "startedAt": "2026-08-13T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W04-01",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W04",
+      "startedAt": "2026-08-13T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W04-00",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W04",
+      "startedAt": "2026-08-13T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W04-03",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W04",
+      "startedAt": "2026-08-13T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W04-02",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W04",
+      "startedAt": "2026-08-13T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W04-01",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W04",
+      "startedAt": "2026-08-13T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W04-00",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W04",
+      "startedAt": "2026-08-13T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W04-03",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W04",
+      "startedAt": "2026-08-13T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W04-02",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W04",
+      "startedAt": "2026-08-13T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W04-01",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W04",
+      "startedAt": "2026-08-13T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W04-03",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W04",
+      "startedAt": "2026-08-13T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W04-02",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W04",
+      "startedAt": "2026-08-13T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W04-01",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W04",
+      "startedAt": "2026-08-13T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W04-03",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W04",
+      "startedAt": "2026-08-13T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W04-02",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W04",
+      "startedAt": "2026-08-13T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W04-03",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W04",
+      "startedAt": "2026-08-13T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W04-02",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W04",
+      "startedAt": "2026-08-13T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W04-03",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W04",
+      "startedAt": "2026-08-13T12:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W04-03",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W04",
+      "startedAt": "2026-08-13T13:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W05-00",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W05",
+      "startedAt": "2026-08-20T00:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W05-00",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W05",
+      "startedAt": "2026-08-20T01:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W05-01",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W05",
+      "startedAt": "2026-08-20T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W05-00",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W05",
+      "startedAt": "2026-08-20T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W05-01",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W05",
+      "startedAt": "2026-08-20T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W05-00",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W05",
+      "startedAt": "2026-08-20T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W05-02",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W05",
+      "startedAt": "2026-08-20T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W05-01",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W05",
+      "startedAt": "2026-08-20T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W05-00",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W05",
+      "startedAt": "2026-08-20T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W05-02",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W05",
+      "startedAt": "2026-08-20T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W05-01",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W05",
+      "startedAt": "2026-08-20T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W05-00",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W05",
+      "startedAt": "2026-08-20T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W05-03",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W05",
+      "startedAt": "2026-08-20T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W05-02",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W05",
+      "startedAt": "2026-08-20T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W05-01",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W05",
+      "startedAt": "2026-08-20T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W05-00",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W05",
+      "startedAt": "2026-08-20T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W05-03",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W05",
+      "startedAt": "2026-08-20T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W05-02",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W05",
+      "startedAt": "2026-08-20T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W05-01",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W05",
+      "startedAt": "2026-08-20T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W05-00",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W05",
+      "startedAt": "2026-08-20T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W05-03",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W05",
+      "startedAt": "2026-08-20T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W05-02",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W05",
+      "startedAt": "2026-08-20T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W05-01",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W05",
+      "startedAt": "2026-08-20T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W05-03",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W05",
+      "startedAt": "2026-08-20T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W05-02",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W05",
+      "startedAt": "2026-08-20T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W05-01",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W05",
+      "startedAt": "2026-08-20T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W05-03",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W05",
+      "startedAt": "2026-08-20T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W05-02",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W05",
+      "startedAt": "2026-08-20T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W05-03",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W05",
+      "startedAt": "2026-08-20T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W05-02",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W05",
+      "startedAt": "2026-08-20T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W05-03",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W05",
+      "startedAt": "2026-08-20T12:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W05-03",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W05",
+      "startedAt": "2026-08-20T13:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W06-00",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W06",
+      "startedAt": "2026-08-27T00:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W06-00",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W06",
+      "startedAt": "2026-08-27T01:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W06-01",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W06",
+      "startedAt": "2026-08-27T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W06-00",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W06",
+      "startedAt": "2026-08-27T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W06-01",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W06",
+      "startedAt": "2026-08-27T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W06-00",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W06",
+      "startedAt": "2026-08-27T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W06-02",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W06",
+      "startedAt": "2026-08-27T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W06-01",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W06",
+      "startedAt": "2026-08-27T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W06-00",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W06",
+      "startedAt": "2026-08-27T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W06-02",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W06",
+      "startedAt": "2026-08-27T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W06-01",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W06",
+      "startedAt": "2026-08-27T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W06-00",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W06",
+      "startedAt": "2026-08-27T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W06-03",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W06",
+      "startedAt": "2026-08-27T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W06-02",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W06",
+      "startedAt": "2026-08-27T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W06-01",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W06",
+      "startedAt": "2026-08-27T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W06-00",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W06",
+      "startedAt": "2026-08-27T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W06-03",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W06",
+      "startedAt": "2026-08-27T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W06-02",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W06",
+      "startedAt": "2026-08-27T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W06-01",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W06",
+      "startedAt": "2026-08-27T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W06-00",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W06",
+      "startedAt": "2026-08-27T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W06-03",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W06",
+      "startedAt": "2026-08-27T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W06-02",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W06",
+      "startedAt": "2026-08-27T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W06-01",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W06",
+      "startedAt": "2026-08-27T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W06-03",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W06",
+      "startedAt": "2026-08-27T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W06-02",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W06",
+      "startedAt": "2026-08-27T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W06-01",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W06",
+      "startedAt": "2026-08-27T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W06-03",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W06",
+      "startedAt": "2026-08-27T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W06-02",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W06",
+      "startedAt": "2026-08-27T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W06-03",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W06",
+      "startedAt": "2026-08-27T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W06-02",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W06",
+      "startedAt": "2026-08-27T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W06-03",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W06",
+      "startedAt": "2026-08-27T12:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W06-03",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W06",
+      "startedAt": "2026-08-27T13:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-DRIFT-E01-E-01-00",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "W-E01-090",
+      "startedAt": "2026-09-01T00:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-DRIFT-E01-E-01-01",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "W-E01-090",
+      "startedAt": "2026-09-01T02:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-DRIFT-E01-E-01-02",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "W-E01-090",
+      "startedAt": "2026-09-01T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W07-00",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W07",
+      "startedAt": "2026-09-03T00:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W07-00",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W07",
+      "startedAt": "2026-09-03T01:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W07-01",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W07",
+      "startedAt": "2026-09-03T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W07-00",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W07",
+      "startedAt": "2026-09-03T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W07-01",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W07",
+      "startedAt": "2026-09-03T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W07-00",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W07",
+      "startedAt": "2026-09-03T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W07-02",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W07",
+      "startedAt": "2026-09-03T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W07-01",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W07",
+      "startedAt": "2026-09-03T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W07-00",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W07",
+      "startedAt": "2026-09-03T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W07-02",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W07",
+      "startedAt": "2026-09-03T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W07-01",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W07",
+      "startedAt": "2026-09-03T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W07-00",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W07",
+      "startedAt": "2026-09-03T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W07-03",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W07",
+      "startedAt": "2026-09-03T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W07-02",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W07",
+      "startedAt": "2026-09-03T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W07-01",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W07",
+      "startedAt": "2026-09-03T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W07-00",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W07",
+      "startedAt": "2026-09-03T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W07-03",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W07",
+      "startedAt": "2026-09-03T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W07-02",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W07",
+      "startedAt": "2026-09-03T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W07-01",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W07",
+      "startedAt": "2026-09-03T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W07-00",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W07",
+      "startedAt": "2026-09-03T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W07-03",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W07",
+      "startedAt": "2026-09-03T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W07-02",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W07",
+      "startedAt": "2026-09-03T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W07-01",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W07",
+      "startedAt": "2026-09-03T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W07-03",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W07",
+      "startedAt": "2026-09-03T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W07-02",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W07",
+      "startedAt": "2026-09-03T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W07-01",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W07",
+      "startedAt": "2026-09-03T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W07-03",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W07",
+      "startedAt": "2026-09-03T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W07-02",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W07",
+      "startedAt": "2026-09-03T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W07-03",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W07",
+      "startedAt": "2026-09-03T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W07-02",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W07",
+      "startedAt": "2026-09-03T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W07-03",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W07",
+      "startedAt": "2026-09-03T12:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W07-03",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W07",
+      "startedAt": "2026-09-03T13:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W08-00",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W08",
+      "startedAt": "2026-09-10T00:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W08-00",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W08",
+      "startedAt": "2026-09-10T01:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W08-01",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W08",
+      "startedAt": "2026-09-10T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W08-00",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W08",
+      "startedAt": "2026-09-10T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W08-01",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W08",
+      "startedAt": "2026-09-10T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W08-00",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W08",
+      "startedAt": "2026-09-10T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W08-02",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W08",
+      "startedAt": "2026-09-10T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W08-01",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W08",
+      "startedAt": "2026-09-10T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W08-00",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W08",
+      "startedAt": "2026-09-10T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W08-02",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W08",
+      "startedAt": "2026-09-10T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W08-01",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W08",
+      "startedAt": "2026-09-10T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W08-00",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W08",
+      "startedAt": "2026-09-10T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W08-03",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W08",
+      "startedAt": "2026-09-10T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W08-02",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W08",
+      "startedAt": "2026-09-10T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W08-01",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W08",
+      "startedAt": "2026-09-10T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W08-00",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W08",
+      "startedAt": "2026-09-10T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W08-03",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W08",
+      "startedAt": "2026-09-10T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W08-02",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W08",
+      "startedAt": "2026-09-10T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W08-01",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W08",
+      "startedAt": "2026-09-10T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W08-00",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W08",
+      "startedAt": "2026-09-10T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W08-03",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W08",
+      "startedAt": "2026-09-10T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W08-02",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W08",
+      "startedAt": "2026-09-10T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W08-01",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W08",
+      "startedAt": "2026-09-10T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W08-03",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W08",
+      "startedAt": "2026-09-10T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W08-02",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W08",
+      "startedAt": "2026-09-10T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W08-01",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W08",
+      "startedAt": "2026-09-10T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W08-03",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W08",
+      "startedAt": "2026-09-10T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W08-02",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W08",
+      "startedAt": "2026-09-10T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W08-03",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W08",
+      "startedAt": "2026-09-10T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W08-02",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W08",
+      "startedAt": "2026-09-10T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W08-03",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W08",
+      "startedAt": "2026-09-10T12:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W08-03",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W08",
+      "startedAt": "2026-09-10T13:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W09-00",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W09",
+      "startedAt": "2026-09-17T00:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W09-00",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W09",
+      "startedAt": "2026-09-17T01:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W09-01",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W09",
+      "startedAt": "2026-09-17T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W09-00",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W09",
+      "startedAt": "2026-09-17T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W09-01",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W09",
+      "startedAt": "2026-09-17T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W09-00",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W09",
+      "startedAt": "2026-09-17T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W09-02",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W09",
+      "startedAt": "2026-09-17T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W09-01",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W09",
+      "startedAt": "2026-09-17T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W09-00",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W09",
+      "startedAt": "2026-09-17T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W09-02",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W09",
+      "startedAt": "2026-09-17T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W09-01",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W09",
+      "startedAt": "2026-09-17T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W09-00",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W09",
+      "startedAt": "2026-09-17T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W09-03",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W09",
+      "startedAt": "2026-09-17T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W09-02",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W09",
+      "startedAt": "2026-09-17T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W09-01",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W09",
+      "startedAt": "2026-09-17T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W09-00",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W09",
+      "startedAt": "2026-09-17T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W09-03",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W09",
+      "startedAt": "2026-09-17T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W09-02",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W09",
+      "startedAt": "2026-09-17T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W09-01",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W09",
+      "startedAt": "2026-09-17T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W09-00",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W09",
+      "startedAt": "2026-09-17T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W09-03",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W09",
+      "startedAt": "2026-09-17T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W09-02",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W09",
+      "startedAt": "2026-09-17T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W09-01",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W09",
+      "startedAt": "2026-09-17T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W09-03",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W09",
+      "startedAt": "2026-09-17T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W09-02",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W09",
+      "startedAt": "2026-09-17T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W09-01",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W09",
+      "startedAt": "2026-09-17T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W09-03",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W09",
+      "startedAt": "2026-09-17T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W09-02",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W09",
+      "startedAt": "2026-09-17T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W09-03",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W09",
+      "startedAt": "2026-09-17T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W09-02",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W09",
+      "startedAt": "2026-09-17T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W09-03",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W09",
+      "startedAt": "2026-09-17T12:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W09-03",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W09",
+      "startedAt": "2026-09-17T13:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W10-00",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W10",
+      "startedAt": "2026-09-24T00:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W10-00",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W10",
+      "startedAt": "2026-09-24T01:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W10-01",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W10",
+      "startedAt": "2026-09-24T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W10-00",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W10",
+      "startedAt": "2026-09-24T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W10-01",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W10",
+      "startedAt": "2026-09-24T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W10-00",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W10",
+      "startedAt": "2026-09-24T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W10-02",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W10",
+      "startedAt": "2026-09-24T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W10-01",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W10",
+      "startedAt": "2026-09-24T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W10-00",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W10",
+      "startedAt": "2026-09-24T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W10-02",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W10",
+      "startedAt": "2026-09-24T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W10-01",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W10",
+      "startedAt": "2026-09-24T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W10-00",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W10",
+      "startedAt": "2026-09-24T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W10-03",
+      "toolId": "C-01",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W10",
+      "startedAt": "2026-09-24T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W10-02",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W10",
+      "startedAt": "2026-09-24T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W10-01",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W10",
+      "startedAt": "2026-09-24T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W10-00",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W10",
+      "startedAt": "2026-09-24T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W10-03",
+      "toolId": "C-02",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W10",
+      "startedAt": "2026-09-24T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W10-02",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W10",
+      "startedAt": "2026-09-24T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W10-01",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W10",
+      "startedAt": "2026-09-24T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W10-00",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W10",
+      "startedAt": "2026-09-24T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W10-03",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W10",
+      "startedAt": "2026-09-24T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W10-02",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W10",
+      "startedAt": "2026-09-24T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W10-01",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W10",
+      "startedAt": "2026-09-24T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W10-03",
+      "toolId": "D-02",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W10",
+      "startedAt": "2026-09-24T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W10-02",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W10",
+      "startedAt": "2026-09-24T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W10-01",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W10",
+      "startedAt": "2026-09-24T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W10-03",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W10",
+      "startedAt": "2026-09-24T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W10-02",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W10",
+      "startedAt": "2026-09-24T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W10-03",
+      "toolId": "E-02",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-02-W10",
+      "startedAt": "2026-09-24T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W10-02",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W10",
+      "startedAt": "2026-09-24T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W10-03",
+      "toolId": "S-01",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W10",
+      "startedAt": "2026-09-24T12:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W10-03",
+      "toolId": "S-02",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W10",
+      "startedAt": "2026-09-24T13:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-ECO-4471-E-02-00",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "C",
+      "lotId": "W-E02-441",
+      "startedAt": "2026-09-28T14:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-ECO-4471-E-02-01",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "C",
+      "lotId": "W-E02-441",
+      "startedAt": "2026-09-28T16:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-ECO-4471-E-02-02",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "C",
+      "lotId": "W-E02-441",
+      "startedAt": "2026-09-28T18:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-ECO-4471-E-02-03",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "C",
+      "lotId": "W-E02-441",
+      "startedAt": "2026-09-28T20:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W11-00",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W11",
+      "startedAt": "2026-10-01T00:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W11-00",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W11",
+      "startedAt": "2026-10-01T01:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W11-01",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W11",
+      "startedAt": "2026-10-01T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W11-00",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W11",
+      "startedAt": "2026-10-01T02:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W11-01",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W11",
+      "startedAt": "2026-10-01T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W11-00",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W11",
+      "startedAt": "2026-10-01T03:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W11-02",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W11",
+      "startedAt": "2026-10-01T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W11-01",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W11",
+      "startedAt": "2026-10-01T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W11-00",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W11",
+      "startedAt": "2026-10-01T04:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W11-02",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W11",
+      "startedAt": "2026-10-01T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W11-01",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W11",
+      "startedAt": "2026-10-01T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W11-00",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "C",
+      "lotId": "LOT-E-02-W11",
+      "startedAt": "2026-10-01T05:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-01-W11-03",
+      "toolId": "C-01",
+      "recipeId": "DIW-RINSE",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-01-W11",
+      "startedAt": "2026-10-01T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W11-02",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W11",
+      "startedAt": "2026-10-01T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W11-01",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W11",
+      "startedAt": "2026-10-01T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W11-00",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W11",
+      "startedAt": "2026-10-01T06:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-C-02-W11-03",
+      "toolId": "C-02",
+      "recipeId": "SC1-SC2",
+      "recipeRevision": "A",
+      "lotId": "LOT-C-02-W11",
+      "startedAt": "2026-10-01T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W11-02",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W11",
+      "startedAt": "2026-10-01T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W11-01",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "C",
+      "lotId": "LOT-E-02-W11",
+      "startedAt": "2026-10-01T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W11-00",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W11",
+      "startedAt": "2026-10-01T07:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-01-W11-03",
+      "toolId": "D-01",
+      "recipeId": "PECVD-NITRIDE",
+      "recipeRevision": "B",
+      "lotId": "LOT-D-01-W11",
+      "startedAt": "2026-10-01T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W11-02",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W11",
+      "startedAt": "2026-10-01T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W11-01",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W11",
+      "startedAt": "2026-10-01T08:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-D-02-W11-03",
+      "toolId": "D-02",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "A",
+      "lotId": "LOT-D-02-W11",
+      "startedAt": "2026-10-01T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W11-02",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "C",
+      "lotId": "LOT-E-02-W11",
+      "startedAt": "2026-10-01T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W11-01",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W11",
+      "startedAt": "2026-10-01T09:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-01-W11-03",
+      "toolId": "E-01",
+      "recipeId": "POLY-ETCH",
+      "recipeRevision": "B",
+      "lotId": "LOT-E-01-W11",
+      "startedAt": "2026-10-01T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W11-02",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W11",
+      "startedAt": "2026-10-01T10:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-E-02-W11-03",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "C",
+      "lotId": "LOT-E-02-W11",
+      "startedAt": "2026-10-01T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W11-02",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W11",
+      "startedAt": "2026-10-01T11:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-01-W11-03",
+      "toolId": "S-01",
+      "recipeId": "ASH-HIGH",
+      "recipeRevision": "A",
+      "lotId": "LOT-S-01-W11",
+      "startedAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "runId": "RUN-BG-20261014-S-02-W11-03",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "LOT-S-02-W11",
+      "startedAt": "2026-10-01T13:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-CONTRA-D01-D-01-00",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "W-D01-220",
+      "startedAt": "2026-10-02T09:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-CONTRA-D01-D-01-01",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "W-D01-220",
+      "startedAt": "2026-10-02T11:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-CONTRA-D01-D-01-02",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "W-D01-220",
+      "startedAt": "2026-10-02T13:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-CONTRA-D01-D-01-03",
+      "toolId": "D-01",
+      "recipeId": "PECVD-OXIDE",
+      "recipeRevision": "B",
+      "lotId": "W-D01-220",
+      "startedAt": "2026-10-02T15:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-CAL-S02-S-02-00",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "W-S02-118",
+      "startedAt": "2026-10-06T11:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-CAL-S02-S-02-01",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "W-S02-118",
+      "startedAt": "2026-10-06T13:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-CAL-S02-S-02-02",
+      "toolId": "S-02",
+      "recipeId": "ASH-STD",
+      "recipeRevision": "B",
+      "lotId": "W-S02-118",
+      "startedAt": "2026-10-06T15:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-GAS-NF3317-E-01-00",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "W-ETCH-778",
+      "startedAt": "2026-10-08T08:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-GAS-NF3317-E-02-00",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "W-ETCH-778",
+      "startedAt": "2026-10-08T08:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-GAS-NF3317-E-01-01",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "W-ETCH-778",
+      "startedAt": "2026-10-08T10:00:00Z"
+    },
+    {
+      "runId": "RUN-FLT-GAS-NF3317-E-02-01",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "recipeRevision": "B",
+      "lotId": "W-ETCH-778",
+      "startedAt": "2026-10-08T10:00:00Z"
+    }
+  ],
+  "lots": [
+    {
+      "lotId": "LOT-C-01-W00",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "LOT-C-01-W01",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "LOT-C-01-W02",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "LOT-C-01-W03",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "LOT-C-01-W04",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "LOT-C-01-W05",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "LOT-C-01-W06",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "LOT-C-01-W07",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "LOT-C-01-W08",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "LOT-C-01-W09",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "LOT-C-01-W10",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "LOT-C-01-W11",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "QR-TANK-003",
+      "materialCode": "QT-BATH",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "SC1-006",
+      "materialCode": "CHEM-SC1",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "WAF-14",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "LOT-C-02-W00",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "LOT-C-02-W01",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "LOT-C-02-W02",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "LOT-C-02-W03",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "LOT-C-02-W04",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "LOT-C-02-W05",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "LOT-C-02-W06",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "LOT-C-02-W07",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "LOT-C-02-W08",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "LOT-C-02-W09",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "LOT-C-02-W10",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "LOT-C-02-W11",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "QR-TANK-003",
+      "materialCode": "QT-BATH",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "SC1-006",
+      "materialCode": "CHEM-SC1",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "WAF-14",
+      "materialCode": "WAF-SI-300",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "LOT-D-01-W00",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "LOT-D-01-W01",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "LOT-D-01-W02",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "LOT-D-01-W03",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "LOT-D-01-W04",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "LOT-D-01-W05",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "LOT-D-01-W06",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "LOT-D-01-W07",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "LOT-D-01-W08",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "LOT-D-01-W09",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "LOT-D-01-W10",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "LOT-D-01-W11",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "SIH4-088",
+      "materialCode": "GAS-SIH4",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "W-D01-220",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "WAF-14",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "LOT-D-02-W00",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-02"
+    },
+    {
+      "lotId": "LOT-D-02-W01",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-02"
+    },
+    {
+      "lotId": "LOT-D-02-W02",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-02"
+    },
+    {
+      "lotId": "LOT-D-02-W03",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-02"
+    },
+    {
+      "lotId": "LOT-D-02-W04",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-02"
+    },
+    {
+      "lotId": "LOT-D-02-W05",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-02"
+    },
+    {
+      "lotId": "LOT-D-02-W06",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-02"
+    },
+    {
+      "lotId": "LOT-D-02-W07",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-02"
+    },
+    {
+      "lotId": "LOT-D-02-W08",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-02"
+    },
+    {
+      "lotId": "LOT-D-02-W09",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-02"
+    },
+    {
+      "lotId": "LOT-D-02-W10",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-02"
+    },
+    {
+      "lotId": "LOT-D-02-W11",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-02"
+    },
+    {
+      "lotId": "SIH4-088",
+      "materialCode": "GAS-SIH4",
+      "toolId": "D-02"
+    },
+    {
+      "lotId": "WAF-14",
+      "materialCode": "WAF-SI-300",
+      "toolId": "D-02"
+    },
+    {
+      "lotId": "CF4-014",
+      "materialCode": "GAS-CF4",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "LOT-E-01-W00",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "LOT-E-01-W01",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "LOT-E-01-W02",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "LOT-E-01-W03",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "LOT-E-01-W04",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "LOT-E-01-W05",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "LOT-E-01-W06",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "LOT-E-01-W07",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "LOT-E-01-W08",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "LOT-E-01-W09",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "LOT-E-01-W10",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "LOT-E-01-W11",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "NF-3317",
+      "materialCode": "GAS-NF3-O2",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "W-E01-090",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "W-ETCH-778",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "WAF-14",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "CF4-014",
+      "materialCode": "GAS-CF4",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "LOT-E-02-W00",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "LOT-E-02-W01",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "LOT-E-02-W02",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "LOT-E-02-W03",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "LOT-E-02-W04",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "LOT-E-02-W05",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "LOT-E-02-W06",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "LOT-E-02-W07",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "LOT-E-02-W08",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "LOT-E-02-W09",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "LOT-E-02-W10",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "LOT-E-02-W11",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "NF-3317",
+      "materialCode": "GAS-NF3-O2",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "W-E02-441",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "W-ETCH-778",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "WAF-14",
+      "materialCode": "WAF-SI-300",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "LOT-S-01-W00",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-01"
+    },
+    {
+      "lotId": "LOT-S-01-W01",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-01"
+    },
+    {
+      "lotId": "LOT-S-01-W02",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-01"
+    },
+    {
+      "lotId": "LOT-S-01-W03",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-01"
+    },
+    {
+      "lotId": "LOT-S-01-W04",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-01"
+    },
+    {
+      "lotId": "LOT-S-01-W05",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-01"
+    },
+    {
+      "lotId": "LOT-S-01-W06",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-01"
+    },
+    {
+      "lotId": "LOT-S-01-W07",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-01"
+    },
+    {
+      "lotId": "LOT-S-01-W08",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-01"
+    },
+    {
+      "lotId": "LOT-S-01-W09",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-01"
+    },
+    {
+      "lotId": "LOT-S-01-W10",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-01"
+    },
+    {
+      "lotId": "LOT-S-01-W11",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-01"
+    },
+    {
+      "lotId": "WAF-14",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-01"
+    },
+    {
+      "lotId": "LOT-S-02-W00",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-02"
+    },
+    {
+      "lotId": "LOT-S-02-W01",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-02"
+    },
+    {
+      "lotId": "LOT-S-02-W02",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-02"
+    },
+    {
+      "lotId": "LOT-S-02-W03",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-02"
+    },
+    {
+      "lotId": "LOT-S-02-W04",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-02"
+    },
+    {
+      "lotId": "LOT-S-02-W05",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-02"
+    },
+    {
+      "lotId": "LOT-S-02-W06",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-02"
+    },
+    {
+      "lotId": "LOT-S-02-W07",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-02"
+    },
+    {
+      "lotId": "LOT-S-02-W08",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-02"
+    },
+    {
+      "lotId": "LOT-S-02-W09",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-02"
+    },
+    {
+      "lotId": "LOT-S-02-W10",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-02"
+    },
+    {
+      "lotId": "LOT-S-02-W11",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-02"
+    },
+    {
+      "lotId": "N2H2-190",
+      "materialCode": "GAS-N2H2",
+      "toolId": "S-02"
+    },
+    {
+      "lotId": "W-S02-118",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-02"
+    },
+    {
+      "lotId": "WAF-14",
+      "materialCode": "WAF-SI-300",
+      "toolId": "S-02"
+    }
+  ],
+  "ncrs": [
+    {
+      "ncrId": "NCR-C-01-104",
+      "toolId": "C-01",
+      "title": "Particle count above the bay limit during a bath change.",
+      "openedAt": "2026-08-04T15:00:00Z",
+      "lotId": "LOT-C-01-W02"
+    },
+    {
+      "ncrId": "NCR-D-02-077",
+      "toolId": "D-02",
+      "title": "Thickness uniformity check requested by the bay lead.",
+      "openedAt": "2026-08-18T11:00:00Z",
+      "lotId": null
+    },
+    {
+      "ncrId": "NCR-S-01-052",
+      "toolId": "S-01",
+      "title": "Ash endpoint delayed on one cassette.",
+      "openedAt": "2026-09-02T09:30:00Z",
+      "lotId": "LOT-S-01-W06"
+    }
+  ],
+  "ecos": [
+    {
+      "ecoId": "ECO-4471",
+      "title": "Edge ring revision C on etch E-02",
+      "toolId": "E-02",
+      "recipeId": "OXIDE-ETCH",
+      "effectiveAt": "2026-09-28T06:00:00Z",
+      "changeSummary": "Replace the chamber A edge ring with revision C. OXIDE-ETCH setpoints are unchanged."
+    },
+    {
+      "ecoId": "ECO-4502",
+      "title": "Liner note on etch E-01",
+      "toolId": "E-01",
+      "recipeId": "OXIDE-ETCH",
+      "effectiveAt": "2026-10-06T12:00:00Z",
+      "changeSummary": "Document-only liner note on E-01. Setpoints were not changed. E-02 is outside this note."
+    }
+  ],
+  "configs": [
+    {
+      "configId": "CFG-C-01",
+      "toolId": "C-01",
+      "revision": "A",
+      "partName": "Bath vessel"
+    },
+    {
+      "configId": "CFG-C-02",
+      "toolId": "C-02",
+      "revision": "A",
+      "partName": "Bath vessel"
+    },
+    {
+      "configId": "CFG-D-01",
+      "toolId": "D-01",
+      "revision": "C",
+      "partName": "Showerhead"
+    },
+    {
+      "configId": "CFG-D-02",
+      "toolId": "D-02",
+      "revision": "A",
+      "partName": "Showerhead"
+    },
+    {
+      "configId": "CFG-E-01",
+      "toolId": "E-01",
+      "revision": "B",
+      "partName": "Liner"
+    },
+    {
+      "configId": "CFG-E-02",
+      "toolId": "E-02",
+      "revision": "C",
+      "partName": "Edge ring"
+    },
+    {
+      "configId": "CFG-S-01",
+      "toolId": "S-01",
+      "revision": "A",
+      "partName": "Plasma tube"
+    },
+    {
+      "configId": "CFG-S-02",
+      "toolId": "S-02",
+      "revision": "A",
+      "partName": "Plasma tube"
+    }
+  ],
+  "materialLots": [
+    {
+      "lotId": "CF4-014",
+      "materialCode": "GAS-CF4",
+      "supplierName": "Cinderwell Specialty Gases",
+      "receivedAt": "2026-08-03T00:00:00Z",
+      "noticeId": null
+    },
+    {
+      "lotId": "N2H2-190",
+      "materialCode": "GAS-N2H2",
+      "supplierName": "Cinderwell Specialty Gases",
+      "receivedAt": "2026-10-05T16:00:00Z",
+      "noticeId": "SN-N2H2-190"
+    },
+    {
+      "lotId": "NF-3317",
+      "materialCode": "GAS-NF3-O2",
+      "supplierName": "Cinderwell Specialty Gases",
+      "receivedAt": "2026-10-07T18:00:00Z",
+      "noticeId": "SN-NF-3317"
+    },
+    {
+      "lotId": "QR-TANK-003",
+      "materialCode": "QT-BATH",
+      "supplierName": "Bramble Quartz Components",
+      "receivedAt": "2026-07-31T00:00:00Z",
+      "noticeId": null
+    },
+    {
+      "lotId": "SC1-006",
+      "materialCode": "CHEM-SC1",
+      "supplierName": "Northline Process Materials",
+      "receivedAt": "2026-07-25T00:00:00Z",
+      "noticeId": null
+    },
+    {
+      "lotId": "SIH4-088",
+      "materialCode": "GAS-SIH4",
+      "supplierName": "Cinderwell Specialty Gases",
+      "receivedAt": "2026-07-28T00:00:00Z",
+      "noticeId": "SN-SIH4-088"
+    },
+    {
+      "lotId": "WAF-14",
+      "materialCode": "WAF-SI-300",
+      "supplierName": "Northline Process Materials",
+      "receivedAt": "2026-07-21T00:00:00Z",
+      "noticeId": null
+    }
+  ],
+  "materialUses": [
+    {
+      "lotId": "CF4-014",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "CF4-014",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "N2H2-190",
+      "toolId": "S-02"
+    },
+    {
+      "lotId": "NF-3317",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "NF-3317",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "QR-TANK-003",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "QR-TANK-003",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "SC1-006",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "SC1-006",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "SIH4-088",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "SIH4-088",
+      "toolId": "D-02"
+    },
+    {
+      "lotId": "WAF-14",
+      "toolId": "C-01"
+    },
+    {
+      "lotId": "WAF-14",
+      "toolId": "C-02"
+    },
+    {
+      "lotId": "WAF-14",
+      "toolId": "D-01"
+    },
+    {
+      "lotId": "WAF-14",
+      "toolId": "D-02"
+    },
+    {
+      "lotId": "WAF-14",
+      "toolId": "E-01"
+    },
+    {
+      "lotId": "WAF-14",
+      "toolId": "E-02"
+    },
+    {
+      "lotId": "WAF-14",
+      "toolId": "S-01"
+    },
+    {
+      "lotId": "WAF-14",
+      "toolId": "S-02"
+    }
+  ],
+  "notices": [
+    {
+      "noticeId": "SN-N2H2-190",
+      "supplierName": "Cinderwell Specialty Gases",
+      "materialCode": "GAS-N2H2",
+      "lotId": "N2H2-190",
+      "summary": "Certificate density is 0.4 percent low and still inside the widened spec. This is not a moisture failure.",
+      "issuedAt": "2026-10-05T18:00:00Z"
+    },
+    {
+      "noticeId": "SN-NF-3317",
+      "supplierName": "Cinderwell Specialty Gases",
+      "materialCode": "GAS-NF3-O2",
+      "lotId": "NF-3317",
+      "summary": "Lot NF-3317 moisture is out of spec for the NF3/O2 mix released to etch.",
+      "issuedAt": "2026-10-07T20:00:00Z"
+    },
+    {
+      "noticeId": "SN-SIH4-088",
+      "supplierName": "Cinderwell Specialty Gases",
+      "materialCode": "GAS-SIH4",
+      "lotId": "SIH4-088",
+      "summary": "Silane lot SIH4-088 matches the purchase specification.",
+      "issuedAt": "2026-07-28T04:00:00Z"
+    }
+  ],
+  "workOrders": [
+    {
+      "workOrderId": "WO-CLN-E01-220",
+      "toolId": "E-01",
+      "chamberId": "E-01-A",
+      "kind": "clean",
+      "performedAt": "2026-08-20T04:00:00Z",
+      "summary": "Last chamber clean. Chamber A is past 420 RF-hours since that clean."
+    },
+    {
+      "workOrderId": "WO-PM-8821",
+      "toolId": "E-02",
+      "chamberId": "E-02-A",
+      "kind": "pm",
+      "performedAt": "2026-09-26T22:00:00Z",
+      "summary": "Scheduled chamber PM on E-02 chamber A the same week as ECO-4471. The ESC loop was not calibrated."
+    },
+    {
+      "workOrderId": "WO-PM-C-01-00",
+      "toolId": "C-01",
+      "chamberId": "C-01-A",
+      "kind": "pm",
+      "performedAt": "2026-07-23T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on C-01."
+    },
+    {
+      "workOrderId": "WO-PM-C-01-01",
+      "toolId": "C-01",
+      "chamberId": "C-01-A",
+      "kind": "pm",
+      "performedAt": "2026-08-20T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on C-01."
+    },
+    {
+      "workOrderId": "WO-PM-C-01-02",
+      "toolId": "C-01",
+      "chamberId": "C-01-A",
+      "kind": "pm",
+      "performedAt": "2026-09-17T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on C-01."
+    },
+    {
+      "workOrderId": "WO-PM-C-02-00",
+      "toolId": "C-02",
+      "chamberId": "C-02-A",
+      "kind": "pm",
+      "performedAt": "2026-07-23T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on C-02."
+    },
+    {
+      "workOrderId": "WO-PM-C-02-01",
+      "toolId": "C-02",
+      "chamberId": "C-02-A",
+      "kind": "pm",
+      "performedAt": "2026-08-20T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on C-02."
+    },
+    {
+      "workOrderId": "WO-PM-C-02-02",
+      "toolId": "C-02",
+      "chamberId": "C-02-A",
+      "kind": "pm",
+      "performedAt": "2026-09-17T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on C-02."
+    },
+    {
+      "workOrderId": "WO-PM-D-01-00",
+      "toolId": "D-01",
+      "chamberId": "D-01-A",
+      "kind": "pm",
+      "performedAt": "2026-07-23T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on D-01."
+    },
+    {
+      "workOrderId": "WO-PM-D-01-01",
+      "toolId": "D-01",
+      "chamberId": "D-01-A",
+      "kind": "pm",
+      "performedAt": "2026-08-20T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on D-01."
+    },
+    {
+      "workOrderId": "WO-PM-D-01-02",
+      "toolId": "D-01",
+      "chamberId": "D-01-A",
+      "kind": "pm",
+      "performedAt": "2026-09-17T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on D-01."
+    },
+    {
+      "workOrderId": "WO-PM-D-02-00",
+      "toolId": "D-02",
+      "chamberId": "D-02-A",
+      "kind": "pm",
+      "performedAt": "2026-07-23T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on D-02."
+    },
+    {
+      "workOrderId": "WO-PM-D-02-01",
+      "toolId": "D-02",
+      "chamberId": "D-02-A",
+      "kind": "pm",
+      "performedAt": "2026-08-20T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on D-02."
+    },
+    {
+      "workOrderId": "WO-PM-D-02-02",
+      "toolId": "D-02",
+      "chamberId": "D-02-A",
+      "kind": "pm",
+      "performedAt": "2026-09-17T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on D-02."
+    },
+    {
+      "workOrderId": "WO-PM-E-01-00",
+      "toolId": "E-01",
+      "chamberId": "E-01-A",
+      "kind": "pm",
+      "performedAt": "2026-07-23T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on E-01."
+    },
+    {
+      "workOrderId": "WO-PM-E-01-01",
+      "toolId": "E-01",
+      "chamberId": "E-01-A",
+      "kind": "pm",
+      "performedAt": "2026-08-20T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on E-01."
+    },
+    {
+      "workOrderId": "WO-PM-E-01-02",
+      "toolId": "E-01",
+      "chamberId": "E-01-A",
+      "kind": "pm",
+      "performedAt": "2026-09-17T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on E-01."
+    },
+    {
+      "workOrderId": "WO-PM-E-02-00",
+      "toolId": "E-02",
+      "chamberId": "E-02-A",
+      "kind": "pm",
+      "performedAt": "2026-07-23T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on E-02."
+    },
+    {
+      "workOrderId": "WO-PM-E-02-01",
+      "toolId": "E-02",
+      "chamberId": "E-02-A",
+      "kind": "pm",
+      "performedAt": "2026-08-20T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on E-02."
+    },
+    {
+      "workOrderId": "WO-PM-E-02-02",
+      "toolId": "E-02",
+      "chamberId": "E-02-A",
+      "kind": "pm",
+      "performedAt": "2026-09-17T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on E-02."
+    },
+    {
+      "workOrderId": "WO-PM-S-01-00",
+      "toolId": "S-01",
+      "chamberId": "S-01-A",
+      "kind": "pm",
+      "performedAt": "2026-07-23T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on S-01."
+    },
+    {
+      "workOrderId": "WO-PM-S-01-01",
+      "toolId": "S-01",
+      "chamberId": "S-01-A",
+      "kind": "pm",
+      "performedAt": "2026-08-20T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on S-01."
+    },
+    {
+      "workOrderId": "WO-PM-S-01-02",
+      "toolId": "S-01",
+      "chamberId": "S-01-A",
+      "kind": "pm",
+      "performedAt": "2026-09-17T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on S-01."
+    },
+    {
+      "workOrderId": "WO-PM-S-02-00",
+      "toolId": "S-02",
+      "chamberId": "S-02-A",
+      "kind": "pm",
+      "performedAt": "2026-07-23T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on S-02."
+    },
+    {
+      "workOrderId": "WO-PM-S-02-01",
+      "toolId": "S-02",
+      "chamberId": "S-02-A",
+      "kind": "pm",
+      "performedAt": "2026-08-20T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on S-02."
+    },
+    {
+      "workOrderId": "WO-PM-S-02-02",
+      "toolId": "S-02",
+      "chamberId": "S-02-A",
+      "kind": "pm",
+      "performedAt": "2026-09-17T00:00:00Z",
+      "summary": "Scheduled preventive maintenance on S-02."
+    }
+  ],
+  "calibrations": [
+    {
+      "calibrationId": "CAL-C-01-INST",
+      "toolId": "C-01",
+      "instrument": "Bath thermocouple",
+      "dueAt": "2026-11-13T00:00:00Z",
+      "completedAt": "2026-08-05T00:00:00Z",
+      "isOverdue": false
+    },
+    {
+      "calibrationId": "CAL-C-02-INST",
+      "toolId": "C-02",
+      "instrument": "Bath thermocouple",
+      "dueAt": "2026-11-13T00:00:00Z",
+      "completedAt": "2026-08-05T00:00:00Z",
+      "isOverdue": false
+    },
+    {
+      "calibrationId": "CAL-D-01-INST",
+      "toolId": "D-01",
+      "instrument": "Heater thermocouple",
+      "dueAt": "2026-11-13T00:00:00Z",
+      "completedAt": "2026-08-05T00:00:00Z",
+      "isOverdue": false
+    },
+    {
+      "calibrationId": "CAL-D-02-INST",
+      "toolId": "D-02",
+      "instrument": "Heater thermocouple",
+      "dueAt": "2026-11-13T00:00:00Z",
+      "completedAt": "2026-08-05T00:00:00Z",
+      "isOverdue": false
+    },
+    {
+      "calibrationId": "CAL-E-01-INST",
+      "toolId": "E-01",
+      "instrument": "RF generator",
+      "dueAt": "2026-11-13T00:00:00Z",
+      "completedAt": "2026-08-05T00:00:00Z",
+      "isOverdue": false
+    },
+    {
+      "calibrationId": "CAL-E-02-INST",
+      "toolId": "E-02",
+      "instrument": "RF generator",
+      "dueAt": "2026-11-13T00:00:00Z",
+      "completedAt": "2026-08-05T00:00:00Z",
+      "isOverdue": false
+    },
+    {
+      "calibrationId": "CAL-S-01-INST",
+      "toolId": "S-01",
+      "instrument": "Plasma sensor",
+      "dueAt": "2026-11-13T00:00:00Z",
+      "completedAt": "2026-08-05T00:00:00Z",
+      "isOverdue": false
+    },
+    {
+      "calibrationId": "CAL-S02-O2-MFC",
+      "toolId": "S-02",
+      "instrument": "O2 mass flow controller",
+      "dueAt": "2026-09-20T00:00:00Z",
+      "completedAt": null,
+      "isOverdue": true
+    }
+  ]
+}

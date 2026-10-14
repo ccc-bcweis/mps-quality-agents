@@ -49,7 +49,7 @@ Layering is enforced by a NetArchTest suite in CI (F1), so violations fail the b
 ## 4. Design track and design-question handling
 - **Track (GB-D):** DS1 brand kit → DS2 wireframes (clickable HTML) → DS3 hi-fi prototypes for Fleet + Investigation. GB-4 starts on shell/data plumbing against MSW mocks and applies the theme once DS1 lands, so it doesn't wait on design.
 - **Brands:** StatusNeo pitch shell (deck title/closing, "Powered by StatusNeo" footer; text wordmark unless Bryan OKs the logo); **Meridian Precision Systems** customer brand inside the console (dark fab ops look from SPEC §2.0, 3 SVG logo concepts).
-- **Design questions:** any agent that hits ambiguity opens an issue labeled `design-question` (template: context, options, recommendation, blocking?), keeps working on non-blocked items, and links it from its PR. Bob resolves within the same day; the decision is recorded as `docs/decisions/ADR-NNN-*.md` and the issue is closed with a link. Questions needing Bryan (brand, scope, money) get the label `needs-bryan` and are batched to him by email.
+- **Design questions:** any agent that hits ambiguity opens an issue labeled `design-question` (template: context, options, recommendation, blocking?), keeps working on non-blocked items, and links it from its PR. Bob resolves within the same day; the decision is recorded as `docs/adr/ADR-NNN-*.md` and the issue is closed with a link. Questions needing Bryan (brand, scope, money) get the label `needs-bryan` and are batched to him by email.
 
 ## 5. Test strategy
 | Layer | Author | Lives in | Runs |
@@ -95,6 +95,8 @@ Draft outline now; finish after the demo with real screenshots and measured metr
 1. Title + MPS context (fleet, plants, pain) · 2. The problem in numbers (ROI baseline) · 3. Thesis: engineers decide, AI assembles evidence, rules enforce · 4. Opportunity landscape (5, prioritized) · 5. Deep dive: current vs future state + Rules/AI/Human table · 6. Business case: KPIs, baselines, projected savings, payback · 7. Architecture (logical + physical; MAF ↔ LangGraph) · 8. 90-day roadmap + production gates · 9. How we built it: AI agents in parallel lanes, Project board, CI/test/eval evidence, open statement that it's AI-built · 10. Risks, controls and ask (closing slide carries the IP notice).
 **IP notice (footer on every slide + closing slide):** "© 2026 Bryan C. Weis and Common Consulting Company. All intellectual property owned by Bryan C. Weis / Common Consulting Company. Fictional demonstration, AI-assisted; all companies and data are synthetic."
 (Core exec story = slides 1-6 + 8, per the 6-8 recommendation; 7 and 9 support the architecture and code segments.)
+
+- **Design principle slide (K5 #66):** Plain-language operations (ADR-003): a supervisor or manager who isn't an engineer can understand and explain a problem, because nothing is in code. Show glossary hovers, the tool schematic, why-it-matters evidence and plain-word metrics.
 
 ## 8. Issue breakdown
 Labels: `lane:*`, `phase:*`, `type:test`, `design-question`, `stretch` (plus `type:design|infra|docs|ci`, `needs-bryan`).

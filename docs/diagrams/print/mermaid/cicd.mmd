@@ -1,0 +1,78 @@
+flowchart LR
+  subgraph Lanes["Grok Build lanes - parallel PRs"]
+    direction TB
+    GBF["GB-F Foundation - lane/f-foundation - P0"]
+    GBD["GB-D Design - lane/d-design - P0"]
+    GB1["GB-1 Data and simulation - lane/1-data-sim"]
+    GB2["GB-2 Agents - lane/2-agents"]
+    GB3["GB-3 API - lane/3-api"]
+    GB4["GB-4 UI - lane/4-ui"]
+    GB5["GB-5 QA, eval, security - lane/5-qa"]
+  end
+
+  PR["Pull request"]
+
+  subgraph CI["ci.yml - required checks"]
+    direction TB
+    BUILD["Build - warnings as errors, analyzers"]
+    TEST["Test - xUnit, Vitest, ESLint, tsc"]
+    COV["Coverage - 70 percent Domain and Application"]
+    FMT["Format - dotnet format verify"]
+    CQ["CodeQL - C# and JavaScript"]
+    GL["gitleaks - secret scan"]
+    DEP["Dependency review"]
+    BICEP["Bicep build - compile only, no deploy"]
+  end
+
+  subgraph Later["After I1 - not on day-1 PRs"]
+    direction TB
+    EVAL["Eval replay - hard gates"]
+    RED["Red-team and ZAP baseline"]
+  end
+
+  BOB["Required review - Bob"]
+  BRY["Bryan - lane merges and Azure go"]
+  MAIN["Merge to main"]
+
+  subgraph DEPLOY["deploy.yml - manual, gated"]
+    direction TB
+    MAN["workflow_dispatch only"]
+    ENV["Environment azure-demo"]
+    REVU["Required reviewer"]
+    OIDC["OIDC to Azure - no stored secrets"]
+    PUSH["Build and push containers"]
+    WHAT["Bicep what-if"]
+    APPLY["Deploy rg-mps-demo"]
+  end
+
+  SMOKE["Smoke - invited sign-in, LIVE badge, S1"]
+
+  GBF --> PR
+  GBD --> PR
+  GB1 --> PR
+  GB2 --> PR
+  GB3 --> PR
+  GB4 --> PR
+  GB5 --> PR
+  PR --> BUILD
+  PR --> TEST
+  PR --> COV
+  PR --> FMT
+  PR --> CQ
+  PR --> GL
+  PR --> DEP
+  PR --> BICEP
+  BUILD --> BOB
+  TEST --> BOB
+  COV --> BOB
+  FMT --> BOB
+  CQ --> BOB
+  GL --> BOB
+  DEP --> BOB
+  BICEP --> BOB
+  EVAL -.-> BOB
+  RED -.-> BOB
+  BOB --> BRY
+  BRY --> MAIN
+  MAIN --> MAN
+  MAN --> ENV --> REVU --> OIDC --> PUSH --> WHAT --> APPLY --> SMOKE

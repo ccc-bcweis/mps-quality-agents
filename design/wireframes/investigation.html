@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="replay">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Investigation INV-881 · MPS Fab Ops Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="assets/console.css"/>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="mode-banner">
+    <span class="mode-pill" data-mode-label>REPLAY MODE</span>
+    <span class="mode-note" data-mode-note>Recorded responses. No live model calls.</span>
+    <button type="button" class="mode-toggle" data-mode-toggle>Switch to LIVE AI</button>
+    <div class="spend" title="Hard daily spend cap enforced by the model gateway">
+      <span class="spend-label">Today's spend</span>
+      <div class="spend-track"><div class="spend-fill" data-spend-fill></div></div>
+      <span class="spend-val" data-spend-val>$0.00 of $2.00</span>
+    </div>
+  </div>
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <img src="../brand/logo-concept-1.svg" width="32" height="32" alt="Meridian Precision Systems mark"/>
+      <div>
+        <strong>Meridian Precision Systems</strong>
+        <span>Fab Ops Console · Austin Demo Fab</span>
+      </div>
+    </a>
+    <div class="topbar-meta">
+      <span><span class="led"></span>Sim 14:32 · 1 s = 1 min</span>
+      <span>Plant <b>AUS-1</b></span>
+      <span>Engineer <b>dev-user</b></span>
+    </div>
+  </header>
+  <nav class="nav"><a href="index.html">Fleet</a><a href="tool.html">Tool</a><a href="alerts.html">Alerts</a><a href="tickets.html">Tickets</a><a href="investigation.html" aria-current="page">Investigation</a><a href="approval.html">Approval</a><a href="capa.html">CAPA</a><a href="injector.html">Injector</a><a href="roi.html">ROI</a><a href="metrics.html">Metrics</a></nav>
+  <ol class="lifecycle"><li class="is-done"><span class="pip"></span>Alert</li><li class="is-done"><span class="pip"></span>Ticket</li><li class="is-current"><span class="pip"></span>Investigation</li><li class="is-todo"><span class="pip"></span>Recommendation</li><li class="is-todo"><span class="pip"></span>Approval</li><li class="is-todo"><span class="pip"></span>CAPA</li></ol>
+  <main id="main" class="page">
+
+    <div class="page-head">
+      <div>
+        <div class="crumbs"><a href="tickets.html">TKT-1044</a> · E-02 · S1 success path</div>
+        <h1>Investigation INV-881</h1>
+        <p>Same steps as the G4 swimlane. Violet agent badge on triage, hypotheses, tool calls, ranking, and the CAPA draft. Cyan is deterministic. The human gate is still ahead.</p>
+      </div>
+      <div class="btn-row">
+        <a class="btn" href="approval.html">Review recommendation</a>
+      </div>
+    </div>
+    <div class="banner-callout ok">
+      Evidence gate: <strong>sufficient</strong>, no contradiction. Scope = single tool / chamber B. Timing aligns with ECO-4471. Confounder (PM-3381 same week) is present and must be addressed.
+    </div>
+    <section class="panel timeline-panel" aria-labelledby="agent-steps-h">
+      <h2 id="agent-steps-h">Agent steps <span class="right">live timeline · S1</span></h2>
+      <p class="step-key">Status chips
+        <span class="chip queued">queued</span>
+        <span class="chip running">running</span>
+        <span class="chip done">done</span>
+        <span class="chip escalated">escalated</span>
+        <span class="step-screen">running is in-flight. This S1 trace has none in flight.</span>
+      </p>
+      <ol class="agent-steps">
+        <li data-status="done" data-actor="rules">
+          <span class="step-n">01</span>
+          <div>
+            <div class="step-top"><span class="step-title">Alerts to ticket</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip">Rules</span> <span class="step-screen">Alerts / Tickets</span></div>
+            <p>SPC and Western Electric open ALT-2044 and TKT-1044. Not an agent.</p>
+          </div>
+        </li>
+        <li data-status="done" data-actor="agent">
+          <span class="step-n">02</span>
+          <div>
+            <div class="step-top"><span class="step-title">Triage</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip ai">Investigation Agent</span> <span class="step-screen">Investigation</span></div>
+            <p>Plans the evidence pack. Does not diagnose.</p>
+          </div>
+        </li>
+        <li data-status="done" data-actor="agent">
+          <span class="step-n">03</span>
+          <div>
+            <div class="step-top"><span class="step-title">Hypothesis generation</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip ai">Investigation Agent</span> <span class="step-screen">Investigation</span></div>
+            <p>Four classes, none picked: engineering change, equipment out of calibration, bad material lot, process drift.</p>
+          </div>
+        </li>
+        <li data-status="done" data-actor="agent">
+          <span class="step-n">04</span>
+          <div>
+            <div class="step-top"><span class="step-title">Evidence tool calls</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip ai">Investigation Agent</span> <span class="step-screen">Investigation</span></div>
+            <p>Read-only MES, QMS, PLM, ERP, CMMS, and document retrieval. Eight calls. Impact.Scope included.</p>
+          </div>
+        </li>
+        <li data-status="done" data-actor="rules">
+          <span class="step-n">05</span>
+          <div>
+            <div class="step-top"><span class="step-title">Evidence gate</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip">Rules</span> <span class="step-screen">Investigation</span></div>
+            <p>Sufficient. No contradiction. Scope is one chamber.</p>
+          </div>
+        </li>
+        <li data-status="done" data-actor="rules">
+          <span class="step-n">06</span>
+          <div>
+            <div class="step-top"><span class="step-title">Escalation path</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip">Rules</span> <span class="step-screen">Investigation</span></div>
+            <p>Checked. Not taken on S1. Missing or contradictory evidence stops here and asserts no root cause.</p>
+          </div>
+        </li>
+        <li data-status="done" data-actor="agent">
+          <span class="step-n">07</span>
+          <div>
+            <div class="step-top"><span class="step-title">Hypothesis ranking</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip ai">Resolution Agent</span> <span class="step-screen">Investigation</span></div>
+            <p>H1 engineering change, 0.78, citations, PM confounder addressed as counterEvidence.</p>
+          </div>
+        </li>
+        <li data-status="done" data-actor="agent">
+          <span class="step-n">08</span>
+          <div>
+            <div class="step-top"><span class="step-title">CAPA draft</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip ai">Resolution Agent</span> <span class="step-screen">Investigation</span></div>
+            <p>actions[] on the same completion. Containment and a CAPA proposal. Not a write.</p>
+          </div>
+        </li>
+        <li data-status="done" data-actor="rules">
+          <span class="step-n">09</span>
+          <div>
+            <div class="step-top"><span class="step-title">Grounding validation</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip">Rules</span> <span class="step-screen">Investigation</span></div>
+            <p>Every cited ID is in the pack. No uncited claim.</p>
+          </div>
+        </li>
+        <li data-status="queued" data-actor="human">
+          <span class="step-n">10</span>
+          <div>
+            <div class="step-top"><span class="step-title">Human approval</span><span class="chip queued">queued</span></div>
+            <div class="step-meta"><span class="chip warn">Human</span> <span class="step-screen">Approval</span></div>
+            <p>Explicit confirm mints a single-use ApprovalToken. Reject mints nothing.</p>
+          </div>
+        </li>
+        <li data-status="queued" data-actor="rules">
+          <span class="step-n">11</span>
+          <div>
+            <div class="step-top"><span class="step-title">CAPA in mock QMS</span><span class="chip queued">queued</span></div>
+            <div class="step-meta"><span class="chip">Rules</span> <span class="step-screen">CAPA</span></div>
+            <p>Action service calls CreateCapa after the token. Agents never write.</p>
+          </div>
+        </li>
+      </ol>
+      <p class="step-note">S2 reference, <a href="tickets.html">TKT-1042 / INV-880</a>: the evidence gate chip is <span class="chip escalated">escalated</span> (PLM rev C vs MES rev B, calibration record missing). Ranking, the CAPA draft, grounding, and approval stay <span class="chip queued">queued</span>. No root cause is asserted.</p>
+    </section>
+    <div class="cols">
+      <section class="panel">
+        <h2>Evidence pack <span class="right">12 items</span></h2>
+        <div class="ev-item"><div class="id">TEL-E02-ESC-14:08</div>ESC temp series, WE-2 on chamber B only.</div>
+        <div class="ev-item"><div class="id">PLM-ECO-4471</div>Edge ring rev B → C, effective sim 13:40, tools E-02 only.</div>
+        <div class="ev-item"><div class="id">MES-RUN-L4419</div>Run header recipe ETCH-OX-14, ring rev C, chamber B.</div>
+        <div class="ev-item"><div class="id">CMMS-PM-3381</div>Preventive maintenance on E-02, sim 12:10 (confounder).</div>
+        <div class="ev-item"><div class="id">CMMS-CAL-ESC-02</div>ESC thermocouple calibration current, not overdue.</div>
+        <div class="ev-item"><div class="id">ERP-LOT-NF3-220</div>Same gas lot on E-01 and E-02; E-01 nominal (against supply-chain).</div>
+        <div class="ev-item"><div class="id">DOC-SB-441</div>Service bulletin: rev C ring can couple ESC heat if gap &lt; spec.</div>
+        <div class="ev-item"><div class="id">QMS-NCR-none</div>No open NCR on E-02 this week.</div>
+      </section>
+      <section class="panel">
+        <h2>Hypotheses <span class="right tag-ai">Resolution Agent</span></h2>
+        <article class="hypo is-top">
+          <div class="id">H1 · 0.78 · engineering change</div>
+          <p>Edge ring rev C (ECO-4471) changed ESC thermal coupling on chamber B. Cites <code>PLM-ECO-4471</code>, <code>DOC-SB-441</code>, <code>TEL-E02-ESC-14:08</code>.</p>
+          <p><strong>counterEvidence:</strong> PM-3381 is same-day but fleet-wide PM on E-01 (nominal) used the same procedure — PM does not explain single-chamber scope.</p>
+        </article>
+        <article class="hypo is-reject">
+          <div class="id">H2 · 0.11 · equipment calibration</div>
+          <p>Rejected: <code>CMMS-CAL-ESC-02</code> current; signal is oscillation not offset.</p>
+        </article>
+        <article class="hypo is-reject">
+          <div class="id">H3 · 0.07 · supply-chain material</div>
+          <p>Rejected: gas lot shared with E-01, which is in control.</p>
+        </article>
+        <article class="hypo is-reject">
+          <div class="id">H4 · 0.04 · process drift</div>
+          <p>Rejected: onset is a step at ECO time, not a ramp with RF-hours.</p>
+        </article>
+        <p class="mono" style="font-size:11px;color:var(--mps-muted)">Proposed actions: contain lots L-4419/L-4420; revert ring to rev B or apply SB-441 gap spec; CAPA on ECO verification.</p>
+      </section>
+      <section class="panel">
+        <h2>Trace</h2>
+        <div class="trace-step"><div class="who rules">Rules · SPC</div>WE-2 fired → ALT-2044 → TKT-1044</div>
+        <div class="trace-step"><div class="who rules">Intake</div>Normalized Incident INC-2044, dedupe miss (new).</div>
+        <div class="trace-step"><div class="who ai">Investigation Agent</div>8 tool calls: Telemetry, Spc, Mes, Plm, Cmms, Erp, Docs, Impact.Scope</div>
+        <div class="trace-step"><div class="who rules">Evidence gate</div>Sufficiency OK · contradiction none · scope=chamber</div>
+        <div class="trace-step"><div class="who ai">Resolution Agent</div>1 completion, schema-valid JSON, citations ⊂ pack</div>
+        <div class="trace-step"><div class="who rules">Grounding validator</div>All evidenceIds known. No uncited claims.</div>
+        <div class="trace-step"><div class="who human">Human</div>Awaiting approval. No write yet.</div>
+        <p class="mono" style="font-size:11px;color:var(--mps-muted)">Tokens 4.1k · $0.018 · 36 s · prompt v1.2.0 · model gpt-4o-mini / gpt-4o</p>
+      </section>
+    </div>
+    <p style="margin-top:12px;font-size:12px;color:var(--mps-muted)">S2 path (contradiction) is <a href="tickets.html">TKT-1042 / INV-880</a>: gate escalates, Resolution Agent is not called, no root cause asserted.</p>
+
+  </main>
+  <footer class="site-footer">
+    <span class="sn" title="Placeholder — official StatusNeo artwork not in this repo">Powered by StatusNeo</span>
+    <span>Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · MIT · Fictional demonstration; all companies and data are synthetic.</span>
+  </footer>
+  
+  <script src="assets/console.js"></script>
+</body>
+</html>
