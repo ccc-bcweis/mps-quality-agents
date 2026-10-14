@@ -246,6 +246,22 @@ export class Sheet {
     return rec;
   }
 
+  // Chrome only. The caller places the lines and must keep them inside the box.
+  frame(id, x, y, w, h, toneName) {
+    const tone = TONES[toneName];
+    this.roundRect(x, y, w, h, 8, {
+      fill: WHITE,
+      stroke: tone.stroke,
+      'stroke-width': 1.6,
+    });
+    this.shape(
+      `<rect x="${(x + 1).toFixed(2)}" y="${(y + 8).toFixed(2)}" width="7" height="${(h - 16).toFixed(2)}" rx="2" fill="${tone.bar}"/>`,
+    );
+    const rec = { id, x, y, w, h };
+    this.nodes.set(id, rec);
+    return rec;
+  }
+
   // Badge sits on its own row so it cannot collide with the title. Returns the reserved height.
   badge(id, box, label, tone) {
     const size = 14;
@@ -274,7 +290,8 @@ export class Sheet {
   }
 
   // Horizontal swimlane. Title is a left label, not a top band, so cards can use the full row.
-  band(id, x, y, w, h, title, toneName) {
+  // Optional subtitle is a second left line (the console lane names the glossary).
+  band(id, x, y, w, h, title, toneName, subtitle = '') {
     const tone = TONES[toneName];
     this.roundRect(x, y, w, h, 8, { fill: tone.zone, stroke: tone.stroke, 'stroke-width': 1.15 });
     this.shape(
@@ -283,8 +300,28 @@ export class Sheet {
     const size = 14;
     const weight = 'semibold';
     const font = this.fontOf(weight);
-    const baseline = y + h / 2 + (this.asc(font, size) - this.em(font, size) / 2);
-    this.text(`${id}-label`, title, x + 18, baseline, { size, weight, fill: tone.title });
+    if (!subtitle) {
+      const baseline = y + h / 2 + (this.asc(font, size) - this.em(font, size) / 2);
+      this.text(`${id}-label`, title, x + 18, baseline, { size, weight, fill: tone.title });
+    } else {
+      const subSize = 14;
+      const subWeight = 'regular';
+      const subFont = this.fontOf(subWeight);
+      const gap = 6;
+      const block = this.em(font, size) + gap + this.em(subFont, subSize);
+      let top = y + (h - block) / 2;
+      this.text(`${id}-label`, title, x + 18, top + this.asc(font, size), {
+        size,
+        weight,
+        fill: tone.title,
+      });
+      top += this.em(font, size) + gap;
+      this.text(`${id}-sub`, subtitle, x + 18, top + this.asc(subFont, subSize), {
+        size: subSize,
+        weight: subWeight,
+        fill: tone.title,
+      });
+    }
     return { id, x, y, w, h };
   }
 
@@ -570,7 +607,8 @@ export class Sheet {
       weight: 'bold',
       fill: NAVY,
     });
-    this.text('tb-meta', `${m.sheetId}  ·  Issue ${m.issue}      Version v1.0      Date 2026-10-14`, TITLE.x + 16, TITLE.y + 132, {
+    const version = m.version || 'v1.0';
+    this.text('tb-meta', `${m.sheetId}  ·  Issue ${m.issue}      Version ${version}      Date 2026-10-14`, TITLE.x + 16, TITLE.y + 132, {
       size: 14,
       weight: 'regular',
       fill: INK,
