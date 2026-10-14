@@ -1,0 +1,71 @@
+flowchart LR
+  subgraph HUM["Engineer / Human"]
+    direction TB
+    HOPEN["Opens the ticket. No write yet."]
+    HESC["No root cause. Named gaps only."]
+    HAPR["HUMAN APPROVAL gate. ApprovalToken."]
+  end
+
+  subgraph CON["Console screen"]
+    direction TB
+    CALERT["Alerts, then Tickets"]
+    CESC["Request info. Missing or contradictory."]
+    CAPR["Approval screen. Explicit confirm."]
+    CCAPA["CAPA screen"]
+  end
+
+  subgraph DET["Deterministic services"]
+    direction TB
+    SPC["SPC alert. Western Electric. Opens a ticket."]
+    GATE["Evidence gate. Sufficiency and contradiction."]
+    GROUND["Grounding validation. Cited IDs must be in the pack."]
+    ACT["Action service. Token required. Not an agent tool."]
+  end
+
+  subgraph INV["Investigation Agent"]
+    direction TB
+    TRI["Triage. AGENT. Plans the pack. Does not diagnose."]
+    HYP["Hypotheses. AGENT. Engineering change. Equipment out of calibration. Bad material lot. Process drift."]
+    CALLS["Tool calls. AGENT. Read-only. At most 10."]
+  end
+
+  subgraph RES["Resolution Agent"]
+    direction TB
+    RANK["Rank causes. AGENT. Confidence, citations, counterEvidence."]
+    DRAFT["CAPA draft. AGENT. Actions only. Not a write."]
+  end
+
+  subgraph TOOL["Tools / enterprise systems"]
+    direction TB
+    READ["MES, QMS, PLM, ERP, CMMS, document retrieval. Read-only."]
+    QMS["Mock QMS CreateCapa. 500, timeout, or 409."]
+  end
+
+  subgraph MOD["Model gateway"]
+    direction TB
+    GTRI["Model call for triage. Ledger and daily cap."]
+    GRANK["Model call for ranking. Schema JSON. At most two calls."]
+  end
+
+  SPC --> CALERT --> HOPEN --> TRI
+  TRI --> GTRI
+  TRI --> HYP --> CALLS --> READ --> GATE
+  GATE -->|missing or contradictory| CESC --> HESC
+  GATE -->|sufficient| RANK
+  RANK --> GRANK
+  RANK --> DRAFT --> GROUND --> CAPR --> HAPR --> ACT
+  ACT --> QMS
+  ACT --> CCAPA
+
+  classDef agent fill:#F3EEFF,stroke:#6D28D9,color:#111827
+  classDef rules fill:#E7F8FB,stroke:#0E7490,color:#111827
+  classDef human fill:#E7F7F4,stroke:#0F766E,color:#111827
+  classDef screen fill:#FFFFFF,stroke:#334155,color:#111827
+  classDef tools fill:#F1F5F9,stroke:#475569,color:#111827
+  classDef gateway fill:#FFF6D8,stroke:#A16207,color:#111827
+  class TRI,HYP,CALLS,RANK,DRAFT agent
+  class SPC,GATE,GROUND,ACT rules
+  class HOPEN,HESC,HAPR human
+  class CALERT,CESC,CAPR,CCAPA screen
+  class READ,QMS tools
+  class GTRI,GRANK gateway

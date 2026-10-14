@@ -707,6 +707,145 @@ export function drawCicd(sheet) {
   );
 }
 
+const ESCALATE = '#C2410C';
+
+function handoff(sheet, fromId, toId, id, opts = {}) {
+  const a = sheet.anchor(fromId, 'right');
+  const b = sheet.anchor(toId, 'left');
+  const last = 18;
+  if (Math.abs(a.y - b.y) < 0.8) {
+    sheet.arrow([a, b], { id, dashed: opts.dashed, color: opts.color });
+    return;
+  }
+  const elbowX = b.x - last;
+  if (elbowX <= a.x + 1) sheet.errors.push(`${id}: gutter is too narrow for the arrow head`);
+  sheet.arrow([a, { x: elbowX, y: a.y }, { x: elbowX, y: b.y }, b], {
+    id,
+    dashed: opts.dashed,
+    color: opts.color,
+  });
+}
+
+export function drawInvestigation(sheet) {
+  const a = sheet.area;
+  const lanesTop = a.y + 36;
+  const laneH = 174;
+  const laneGap = 8;
+  const contentX = a.x + 204;
+  const gap = 22;
+  const widths = [200, 190, 252, 210, 210, 210, 196, 196, 206, 200];
+  const cols = [];
+  let cursor = contentX;
+  widths.forEach((w) => {
+    cols.push({ x: cursor, w });
+    cursor += w + gap;
+  });
+
+  const laneMeta = [
+    ['L-human', 'Engineer / Human', 'human'],
+    ['L-console', 'Console screen', 'neutral'],
+    ['L-det', 'Deterministic services', 'det'],
+    ['L-inv', 'Investigation Agent', 'ai'],
+    ['L-res', 'Resolution Agent', 'ai'],
+    ['L-tools', 'Tools / enterprise systems', 'gov'],
+    ['L-gw', 'Model gateway', 'gw'],
+  ];
+  const lanes = laneMeta.map((meta, i) => {
+    const y = lanesTop + i * (laneH + laneGap);
+    return sheet.band(meta[0], a.x, y, a.w, laneH, meta[1], meta[2]);
+  });
+
+  const span = (from, to) => {
+    const x = cols[from].x;
+    const right = cols[to].x + cols[to].w;
+    return { x, w: right - x };
+  };
+  const head = (id, text, from, to) => {
+    const box = span(from, to);
+    sheet.text(id, text, box.x + box.w / 2, a.y + 20, {
+      size: 16,
+      weight: 'bold',
+      fill: NAVY,
+      align: 'center',
+    });
+  };
+  head('stage-alerts', 'ALERTS / TICKETS', 0, 0);
+  head('stage-inv', 'INVESTIGATION', 1, 7);
+  head('stage-appr', 'APPROVAL', 8, 8);
+  head('stage-capa', 'CAPA', 9, 9);
+
+  const put = (id, col, lane, h, lines, tone, opts = {}) => {
+    const c = cols[col];
+    const row = lanes[lane];
+    const y = row.y + (row.h - h) / 2;
+    sheet.node(id, c.x, y, c.w, h, lines, tone, opts);
+  };
+
+  const plain = 96;
+  const agent = 124;
+  const hypo = 162;
+
+  put('spc', 0, 2, plain, ['SPC alert', 'Western Electric 1-4', 'Opens a ticket'], 'det');
+  put('alerts', 0, 1, plain, ['Alerts, then Tickets', 'Both screens update', 'Lifecycle bar moves'], 'neutral');
+  put('open', 0, 0, plain, ['Opens the ticket', 'Starts investigation', 'No write yet'], 'human');
+
+  put('triage', 1, 3, agent, ['Triage', 'Plans the pack', 'Does not diagnose'], 'ai', { badge: 'AGENT' });
+  put('gw-triage', 1, 6, plain, ['Model call', 'Investigation route', 'Ledger and the cap'], 'gw');
+
+  put(
+    'hypo',
+    2,
+    3,
+    hypo,
+    ['Hypotheses', 'Engineering change', 'Equipment out of calibration', 'Bad material lot', 'Process drift'],
+    'ai',
+    { badge: 'AGENT' },
+  );
+
+  put('calls', 3, 3, agent, ['Tool calls', 'Read-only, ten calls', 'Impact.Scope included'], 'ai', { badge: 'AGENT' });
+  put('reads', 3, 5, plain, ['Enterprise reads', 'MES, QMS, PLM, ERP', 'CMMS and documents'], 'gov');
+
+  put('gate', 4, 2, plain, ['Evidence gate', 'Sufficient, continue', 'Else stop, list gaps'], 'det');
+  put('esc-ui', 4, 1, plain, ['Request info', 'Missing or contradictory', 'Named gaps on screen'], 'neutral');
+  put('esc-human', 4, 0, plain, ['No root cause', 'Human owns the gap', 'Nothing is asserted'], 'human');
+
+  put('rank', 5, 4, agent, ['Rank causes', 'Confidence and cites', 'counterEvidence'], 'ai', { badge: 'AGENT' });
+  put('gw-rank', 5, 6, plain, ['Model call', 'gpt-4o, schema JSON', 'At most two calls'], 'gw');
+
+  put('draft', 6, 4, agent, ['CAPA draft', 'Actions, not a write', 'Same agent output'], 'ai', { badge: 'AGENT' });
+  put('ground', 7, 2, plain, ['Grounding check', 'Cited IDs in the pack', 'Rejects unknown IDs'], 'det');
+
+  put('appr-ui', 8, 1, plain, ['Approval screen', 'Recommendation shown', 'Explicit confirm'], 'neutral');
+  put('appr', 8, 0, agent, ['Approval gate', 'ApprovalToken', 'HMAC, single-use'], 'human', { badge: 'HUMAN' });
+
+  put('act', 9, 2, plain, ['Action service', 'Token required', 'Not an agent tool'], 'det');
+  put('qms', 9, 5, plain, ['Mock QMS', 'CreateCapa', '500, timeout, or 409'], 'gov');
+  put('capa-ui', 9, 1, plain, ['CAPA screen', 'Lifecycle advances', 'Open, then stages'], 'neutral');
+
+  const up = (fromId, toId, id, opts = {}) => sheet.link(fromId, toId, 'top', 'bottom', { id, ...opts });
+  const down = (fromId, toId, id, opts = {}) => sheet.link(fromId, toId, 'bottom', 'top', { id, ...opts });
+
+  up('spc', 'alerts', 'spc-ui');
+  up('alerts', 'open', 'ui-open');
+  handoff(sheet, 'open', 'triage', 'open-triage');
+  down('triage', 'gw-triage', 'triage-gw');
+  handoff(sheet, 'triage', 'hypo', 'triage-hypo');
+  handoff(sheet, 'hypo', 'calls', 'hypo-calls');
+  down('calls', 'reads', 'calls-reads');
+  handoff(sheet, 'reads', 'gate', 'reads-gate');
+  up('gate', 'esc-ui', 'gate-esc', { dashed: true, color: ESCALATE });
+  up('esc-ui', 'esc-human', 'esc-human-up', { dashed: true, color: ESCALATE });
+  handoff(sheet, 'gate', 'rank', 'gate-rank');
+  down('rank', 'gw-rank', 'rank-gw');
+  handoff(sheet, 'rank', 'draft', 'rank-draft');
+  handoff(sheet, 'draft', 'ground', 'draft-ground');
+  handoff(sheet, 'ground', 'appr-ui', 'ground-ui');
+  up('appr-ui', 'appr', 'ui-appr');
+  handoff(sheet, 'appr', 'act', 'appr-act');
+  up('act', 'capa-ui', 'act-ui');
+  down('act', 'qms', 'act-qms');
+}
+
 export const SHEETS = [
   {
     sheetId: 'G1',
@@ -754,6 +893,22 @@ export const SHEETS = [
       { tone: 'review', label: 'Human review gate.' },
       { tone: 'deploy', label: 'Manual deploy.yml.' },
       { tone: 'human', label: 'Smoke after deploy.' },
+    ],
+  },
+  {
+    sheetId: 'G4',
+    issue: '#56',
+    kicker: 'INVESTIGATION FLOW',
+    title: 'Investigation flow',
+    slug: 'investigation-flow',
+    draw: drawInvestigation,
+    legend: [
+      { tone: 'ai', label: 'Agent step. Violet badge. No write.' },
+      { tone: 'det', label: 'Deterministic. Dashed arrow escalates.' },
+      { tone: 'human', label: 'Engineer. ApprovalToken is human.' },
+      { tone: 'neutral', label: 'Console screen for that stage.' },
+      { tone: 'gov', label: 'Read-only tools, then mock QMS.' },
+      { tone: 'gw', label: 'Model gateway. Completions only.' },
     ],
   },
 ];
