@@ -1,8 +1,11 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Application.Intake;
 using Mps.Application.Notifications;
 using Mps.Application.Spc;
 using Mps.Application.Tests.Fakes;
+using Mps.Domain.Equipment;
+using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
 
 namespace Mps.Application.Tests.Spc;
@@ -139,7 +142,10 @@ public sealed class SpcAlertServiceTests
             Alerts = new InMemoryAlertLog();
             Incidents = new InMemoryIncidentLog();
             Ticketing = new InMemoryTicketingPort();
-            Service = new SpcAlertService(Alerts, Incidents, Ticketing, NullQualityNotifier.Instance, SpcAlertService.DefaultDebounce);
+            var fleet = new InMemoryFleetCatalog();
+            fleet.Add(new Tool(SpcSeries.Tool, "Etch 02", ToolFamily.Etch, "MPS-E7", "Bay-2", [new Chamber("A", "Chamber A")]));
+            var intake = new IntakeService(fleet, Incidents, Ticketing, NullQualityNotifier.Instance, TimeProvider.System);
+            Service = new SpcAlertService(Alerts, intake, NullQualityNotifier.Instance, SpcAlertService.DefaultDebounce);
         }
 
         public InMemoryAlertLog Alerts { get; }

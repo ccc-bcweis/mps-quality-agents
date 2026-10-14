@@ -2,6 +2,7 @@
 
 using Mps.Application.Persistence;
 using Mps.Application.Writes;
+using Mps.Domain.Equipment;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
 
@@ -112,5 +113,28 @@ public sealed class InMemoryTicketingPort : ITicketingPort
             incident.OpenedAt);
         Tickets.Add(ticket);
         return Task.FromResult(ticket);
+    }
+}
+
+public sealed class InMemoryFleetCatalog : IFleetCatalog
+{
+    private readonly List<Tool> _tools = [];
+
+    public void Add(Tool tool)
+    {
+        ArgumentNullException.ThrowIfNull(tool);
+        _tools.Add(tool);
+    }
+
+    public Task<IReadOnlyList<Tool>> ListAsync(CancellationToken cancellationToken)
+    {
+        _ = cancellationToken;
+        return Task.FromResult<IReadOnlyList<Tool>>(_tools.ToArray());
+    }
+
+    public Task<Tool?> FindAsync(ToolId toolId, CancellationToken cancellationToken)
+    {
+        _ = cancellationToken;
+        return Task.FromResult(_tools.FirstOrDefault(tool => tool.Id == toolId));
     }
 }

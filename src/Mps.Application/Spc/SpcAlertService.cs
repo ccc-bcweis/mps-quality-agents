@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Application.Intake;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
-using Mps.Application.Writes;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
 
@@ -16,21 +16,18 @@ public sealed class SpcAlertService
     public static readonly TimeSpan DefaultDebounce = TimeSpan.FromMinutes(10);
 
     private readonly IAlertLog _alerts;
-    private readonly IIncidentLog _incidents;
-    private readonly ITicketingPort _ticketing;
+    private readonly IIntakeService _intake;
     private readonly IQualityNotifier _notifier;
     private readonly TimeSpan _debounce;
 
     public SpcAlertService(
         IAlertLog alerts,
-        IIncidentLog incidents,
-        ITicketingPort ticketing,
+        IIntakeService intake,
         IQualityNotifier notifier,
         TimeSpan debounce)
     {
         ArgumentNullException.ThrowIfNull(alerts);
-        ArgumentNullException.ThrowIfNull(incidents);
-        ArgumentNullException.ThrowIfNull(ticketing);
+        ArgumentNullException.ThrowIfNull(intake);
         ArgumentNullException.ThrowIfNull(notifier);
         if (debounce < TimeSpan.Zero)
         {
@@ -38,8 +35,7 @@ public sealed class SpcAlertService
         }
 
         _alerts = alerts;
-        _incidents = incidents;
-        _ticketing = ticketing;
+        _intake = intake;
         _notifier = notifier;
         _debounce = debounce;
     }
@@ -81,33 +77,24 @@ public sealed class SpcAlertService
         await _alerts.AddAsync(alert, cancellationToken).ConfigureAwait(false);
         await _notifier.AlertRaisedAsync(alert, cancellationToken).ConfigureAwait(false);
 
-        if (severity < Severity.High)
+        if (!SeverityRules.OpensTicketFromSignal(severity))
         {
             return new SpcAlertOutcome(violations, alert, null, null, debounced: false);
         }
 
-        var open = await _incidents.FindOpenAsync(sample.ToolId, sample.Parameter, cancellationToken).ConfigureAwait(false);
-        if (open is not null)
-        {
-            return new SpcAlertOutcome(violations, alert, open.Incident, null, debounced: false);
-        }
-
         var summary = "SPC " + rule + " on " + sample.ToolId + " " + sample.Parameter + ".";
-        var incident = Incident.Open(
-            IncidentId.New(),
-            sample.ToolId,
-            sample.ChamberId,
-            sample.Parameter,
-            IncidentChannel.IotSpcAlert,
-            severity,
-            summary,
-            correlationId,
-            at);
-        var stored = new StoredIncident(incident, escalationRequired: severity == Severity.Critical, hasEscalated: false);
-        await _incidents.AddAsync(stored, cancellationToken).ConfigureAwait(false);
-        var ticket = await _ticketing.OpenAsync(incident, summary, cancellationToken).ConfigureAwait(false);
-        await _notifier.TicketOpenedAsync(ticket, cancellationToken).ConfigureAwait(false);
-        await _notifier.IncidentChangedAsync(incident, cancellationToken).ConfigureAwait(false);
-        return new SpcAlertOutcome(violations, alert, incident, ticket, debounced: false);
+        var intake = await _intake.AcceptAsync(
+            new IntakeSubmission(
+                IncidentChannel.IotSpcAlert,
+                sample.ToolId.ToString(),
+                sample.ChamberId,
+                sample.Parameter,
+                summary,
+                requestedSeverity: null,
+                signalSeverity: severity,
+                correlationId,
+                at),
+            cancellationToken).ConfigureAwait(false);
+        return new SpcAlertOutcome(violations, alert, intake.Incident, intake.Ticket, debounced: false);
     }
 }
