@@ -31,4 +31,6 @@ internal static class RepoPaths
     public static string TemplateDirectory() => Path.Combine(Root(), "data", "docs", "templates");
 
     public static string CorpusDirectory() => Path.Combine(Root(), "data", "docs", "corpus");
+
+    public static string RoiDirectory() => Path.Combine(Root(), "data", "roi");
 }

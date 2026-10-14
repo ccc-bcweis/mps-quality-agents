@@ -4,12 +4,14 @@ using System.Globalization;
 
 using Mps.Simulator.Faults;
 using Mps.Simulator.Fleet;
+using Mps.Simulator.Roi;
 using Mps.Simulator.Seed;
 
 var seed = EnterpriseSeedGenerator.DemoSeed;
 var fleetDirectory = Path.Combine("data", "fleet");
 var faultDirectory = Path.Combine("data", "faults");
 var output = Path.Combine("data", "seed", "enterprise.json");
+string? roiDirectory = null;
 
 try
 {
@@ -29,6 +31,9 @@ try
             case "--out":
                 output = Take(args, ref index, "--out");
                 break;
+            case "--roi":
+                roiDirectory = Take(args, ref index, "--roi");
+                break;
             default:
                 throw new InvalidOperationException($"Unknown argument {args[index]}.");
         }
@@ -37,7 +42,7 @@ try
 catch (Exception exception) when (exception is InvalidOperationException or FormatException)
 {
     Console.Error.WriteLine(exception.Message);
-    Console.Error.WriteLine("Usage: DataGen --seed 20261014 --fleet data/fleet --faults data/faults --out data/seed/enterprise.json");
+    Console.Error.WriteLine("Usage: DataGen --seed 20261014 --fleet data/fleet --faults data/faults --out data/seed/enterprise.json [--roi data/roi]");
     return 1;
 }
 
@@ -45,6 +50,12 @@ var fleet = FleetCatalogLoader.Load(fleetDirectory);
 var catalog = FaultCatalogLoader.Load(faultDirectory, fleet);
 SeedJson.Write(EnterpriseSeedGenerator.Generate(fleet, catalog, seed), output);
 Console.WriteLine($"Wrote {output}");
+if (roiDirectory is not null)
+{
+    RoiCsv.Write(RoiCalculator.Calculate(new RoiAssumptions { Seed = seed }), roiDirectory);
+    Console.WriteLine($"Wrote {roiDirectory}");
+}
+
 return 0;
 
 static string Take(string[] args, ref int index, string name)
