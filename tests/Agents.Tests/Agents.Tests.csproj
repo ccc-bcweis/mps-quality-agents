@@ -5,6 +5,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Mps.Agents\Mps.Agents.csproj" />
     <ProjectReference Include="..\..\src\Mps.Domain\Mps.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Mps.ModelGateway\Mps.ModelGateway.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="FluentAssertions" />
