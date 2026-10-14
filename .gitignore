@@ -1,6 +1,7 @@
 # Build
 [Bb]in/
 [Oo]bj/
+StrykerOutput/
 [Ll]og/
 [Ll]ogs/
 TestResults/
@@ -38,3 +39,6 @@ infra/**/*.json
 # OS
 Thumbs.db
 Desktop.ini
+
+# Local lane worktrees (bcw2)
+.worktrees/

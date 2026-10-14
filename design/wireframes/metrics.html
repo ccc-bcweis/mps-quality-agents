@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="replay">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Metrics · MPS Fab Ops Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="assets/console.css"/>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="mode-banner">
+    <span class="mode-pill" data-mode-label>REPLAY MODE</span>
+    <span class="mode-note" data-mode-note>Recorded responses. No live model calls.</span>
+    <button type="button" class="mode-toggle" data-mode-toggle>Switch to LIVE AI</button>
+    <div class="spend" title="Hard daily spend cap enforced by the model gateway">
+      <span class="spend-label">Today's spend</span>
+      <div class="spend-track"><div class="spend-fill" data-spend-fill></div></div>
+      <span class="spend-val" data-spend-val>$0.00 of $2.00</span>
+    </div>
+  </div>
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <img src="../brand/logo-concept-1.svg" width="32" height="32" alt="Meridian Precision Systems mark"/>
+      <div>
+        <strong>Meridian Precision Systems</strong>
+        <span>Fab Ops Console · Austin Demo Fab</span>
+      </div>
+    </a>
+    <div class="topbar-meta">
+      <span><span class="led"></span>Sim 14:32 · 1 s = 1 min</span>
+      <span>Plant <b>AUS-1</b></span>
+      <span>Engineer <b>dev-user</b></span>
+    </div>
+  </header>
+  <nav class="nav"><a href="index.html">Fleet</a><a href="tool.html">Tool</a><a href="alerts.html">Alerts</a><a href="tickets.html">Tickets</a><a href="investigation.html">Investigation</a><a href="approval.html">Approval</a><a href="capa.html">CAPA</a><a href="injector.html">Injector</a><a href="roi.html">ROI</a><a href="metrics.html" aria-current="page">Metrics</a></nav>
+  <ol class="lifecycle"><li class="is-current"><span class="pip"></span>Alert</li><li class="is-todo"><span class="pip"></span>Ticket</li><li class="is-todo"><span class="pip"></span>Investigation</li><li class="is-todo"><span class="pip"></span>Recommendation</li><li class="is-todo"><span class="pip"></span>Approval</li><li class="is-todo"><span class="pip"></span>CAPA</li></ol>
+  <main id="main" class="page">
+
+    <div class="page-head">
+      <div>
+        <h1>Metrics / eval</h1>
+        <p>Per investigation and aggregate. Hard gates: safe escalation 100%, injection resistance 100%. Category accuracy ≥ 80%, grounding ≥ 90%.</p>
+      </div>
+      <a class="btn" href="investigation.html">Last trace INV-881</a>
+    </div>
+    <div class="grid grid-kpis">
+      <div class="panel kpi"><div class="label">Completion</div><div class="value">100%</div><div class="delta">24 / 24 cases</div></div>
+      <div class="panel kpi"><div class="label">Safe escalation</div><div class="value">100%</div><div class="delta">hard gate</div></div>
+      <div class="panel kpi"><div class="label">Category acc.</div><div class="value">83%</div><div class="delta">gate ≥80%</div></div>
+      <div class="panel kpi"><div class="label">Grounding</div><div class="value">94%</div><div class="delta">gate ≥90%</div></div>
+      <div class="panel kpi"><div class="label">p95 INV</div><div class="value">38s</div><div class="delta">target &lt;45s</div></div>
+      <div class="panel kpi"><div class="label">Cost / success</div><div class="value" style="font-size:16px">$0.04</div><div class="delta flat">unit cost</div></div>
+    </div>
+    <div class="grid grid-2" style="margin-top:12px">
+      <div class="panel">
+        <h2>Confusion (replay, illustrative)</h2>
+        <table class="data">
+          <thead><tr><th></th><th>ECO</th><th>Cal</th><th>Lot</th><th>Drift</th></tr></thead>
+          <tbody>
+            <tr><td>ECO</td><td class="mono">4</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td></tr>
+            <tr><td>Cal</td><td class="mono">0</td><td class="mono">3</td><td class="mono">1</td><td class="mono">0</td></tr>
+            <tr><td>Lot</td><td class="mono">0</td><td class="mono">0</td><td class="mono">4</td><td class="mono">0</td></tr>
+            <tr><td>Drift</td><td class="mono">0</td><td class="mono">1</td><td class="mono">0</td><td class="mono">2</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <h2>AI health</h2>
+        <table class="data">
+          <tbody>
+            <tr><td>Tool success</td><td class="mono">97%</td></tr>
+            <tr><td>Gateway fallback to replay</td><td class="mono">cap never hit today</td></tr>
+            <tr><td>Prompt injection (2 cases)</td><td class="mono">0 writes, 100% refuse</td></tr>
+            <tr><td>QMS 500 path</td><td class="mono">retry then Failed</td></tr>
+            <tr><td>API p95</td><td class="mono">180 ms (async INV)</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:12px;color:var(--mps-muted)">Runner: <code>dotnet run --project eval/Eval.Runner</code> plus promptfoo. These numbers are placeholders until E1 lands.</p>
+      </div>
+    </div>
+
+  </main>
+  <footer class="site-footer">
+    <span class="sn" title="Placeholder — official StatusNeo artwork not in this repo">Powered by StatusNeo</span>
+    <span>Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · MIT · Fictional demonstration; all companies and data are synthetic.</span>
+  </footer>
+  
+  <script src="assets/console.js"></script>
+</body>
+</html>

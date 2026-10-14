@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="replay">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>CAPA-2201 · MPS Fab Ops Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="assets/console.css"/>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="mode-banner">
+    <span class="mode-pill" data-mode-label>REPLAY MODE</span>
+    <span class="mode-note" data-mode-note>Recorded responses. No live model calls.</span>
+    <button type="button" class="mode-toggle" data-mode-toggle>Switch to LIVE AI</button>
+    <div class="spend" title="Hard daily spend cap enforced by the model gateway">
+      <span class="spend-label">Today's spend</span>
+      <div class="spend-track"><div class="spend-fill" data-spend-fill></div></div>
+      <span class="spend-val" data-spend-val>$0.00 of $2.00</span>
+    </div>
+  </div>
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <img src="../brand/logo-concept-1.svg" width="32" height="32" alt="Meridian Precision Systems mark"/>
+      <div>
+        <strong>Meridian Precision Systems</strong>
+        <span>Fab Ops Console · Austin Demo Fab</span>
+      </div>
+    </a>
+    <div class="topbar-meta">
+      <span><span class="led"></span>Sim 14:32 · 1 s = 1 min</span>
+      <span>Plant <b>AUS-1</b></span>
+      <span>Engineer <b>dev-user</b></span>
+    </div>
+  </header>
+  <nav class="nav"><a href="index.html">Fleet</a><a href="tool.html">Tool</a><a href="alerts.html">Alerts</a><a href="tickets.html">Tickets</a><a href="investigation.html">Investigation</a><a href="approval.html">Approval</a><a href="capa.html" aria-current="page">CAPA</a><a href="injector.html">Injector</a><a href="roi.html">ROI</a><a href="metrics.html">Metrics</a></nav>
+  <ol class="lifecycle"><li class="is-done"><span class="pip"></span>Alert</li><li class="is-done"><span class="pip"></span>Ticket</li><li class="is-done"><span class="pip"></span>Investigation</li><li class="is-done"><span class="pip"></span>Recommendation</li><li class="is-done"><span class="pip"></span>Approval</li><li class="is-current"><span class="pip"></span>CAPA</li></ol>
+  <main id="main" class="page">
+
+    <div class="page-head">
+      <div>
+        <div class="crumbs"><a href="approval.html">APR-330</a> · mock QMS</div>
+        <h1>CAPA-2201</h1>
+        <p>Lifecycle after Open is advanced by the engineer in this demo. Stretch: verification auto-checks SPC back in control.</p>
+      </div>
+    </div>
+    <div class="banner-callout ok">ApprovalToken consumed (single-use). Mock QMS 201 Created. Containment holds L-4419, L-4420.</div>
+    <div class="panel" style="margin-bottom:12px">
+      <h2>CAPA stages</h2>
+      <ol class="lifecycle" style="padding:0;border:0">
+        <li class="is-done"><span class="pip"></span>Open</li>
+        <li class="is-current"><span class="pip"></span>Containment</li>
+        <li><span class="pip"></span>Root cause confirmed</li>
+        <li><span class="pip"></span>Corrective action</li>
+        <li><span class="pip"></span>Verification</li>
+        <li><span class="pip"></span>Closed</li>
+      </ol>
+      <div class="btn-row">
+        <button class="btn" type="button">Advance stage</button>
+        <button class="btn" type="button">Force QMS 500 (retry demo)</button>
+      </div>
+    </div>
+    <div class="grid grid-2">
+      <div class="panel">
+        <h2>Record</h2>
+        <table class="data">
+          <tbody>
+            <tr><td>Source</td><td class="mono">INV-881 / TKT-1044 / ALT-2044</td></tr>
+            <tr><td>Category</td><td>Engineering change</td></tr>
+            <tr><td>Cause</td><td>ECO-4471 edge ring rev C thermal coupling</td></tr>
+            <tr><td>Owner</td><td>Process Engineering</td></tr>
+            <tr><td>Due</td><td class="mono">sim +14 d</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <h2>Audit</h2>
+        <p class="mono" style="font-size:11px;color:var(--mps-muted)">
+          14:38:02 APR-330 approve · user=dev-user · token=…a91 · actionHash=9f2c…e1<br/>
+          14:38:03 QMS POST /capas 201 · id=CAPA-2201<br/>
+          14:38:03 MES hold lots L-4419, L-4420<br/>
+          Evidence snapshot sha256=c4e1…90
+        </p>
+      </div>
+    </div>
+
+  </main>
+  <footer class="site-footer">
+    <span class="sn" title="Placeholder — official StatusNeo artwork not in this repo">Powered by StatusNeo</span>
+    <span>Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · MIT · Fictional demonstration; all companies and data are synthetic.</span>
+  </footer>
+  
+  <script src="assets/console.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Mps.Api.IntegrationTests</RootNamespace>
+    <!-- The shared test package set matches names that end in .Tests. This project does not. -->
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- CI calls dotnet test with no filter. This property keeps Category=PendingLane
+         off that run. A command-line filter overrides it. -->
+    <VSTestTestCaseFilter>Category!=PendingLane</VSTestTestCaseFilter>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Mps.Api\Mps.Api.csproj" />
+    <ProjectReference Include="..\..\src\Mps.MockEnterprise\Mps.MockEnterprise.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="FluentAssertions" />
+    <Using Include="Mps.Api.IntegrationTests.Support" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

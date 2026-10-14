@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="replay">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Alerts · MPS Fab Ops Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="assets/console.css"/>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="mode-banner">
+    <span class="mode-pill" data-mode-label>REPLAY MODE</span>
+    <span class="mode-note" data-mode-note>Recorded responses. No live model calls.</span>
+    <button type="button" class="mode-toggle" data-mode-toggle>Switch to LIVE AI</button>
+    <div class="spend" title="Hard daily spend cap enforced by the model gateway">
+      <span class="spend-label">Today's spend</span>
+      <div class="spend-track"><div class="spend-fill" data-spend-fill></div></div>
+      <span class="spend-val" data-spend-val>$0.00 of $2.00</span>
+    </div>
+  </div>
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <img src="../brand/logo-concept-1.svg" width="32" height="32" alt="Meridian Precision Systems mark"/>
+      <div>
+        <strong>Meridian Precision Systems</strong>
+        <span>Fab Ops Console · Austin Demo Fab</span>
+      </div>
+    </a>
+    <div class="topbar-meta">
+      <span><span class="led"></span>Sim 14:32 · 1 s = 1 min</span>
+      <span>Plant <b>AUS-1</b></span>
+      <span>Engineer <b>dev-user</b></span>
+    </div>
+  </header>
+  <nav class="nav"><a href="index.html">Fleet</a><a href="tool.html">Tool</a><a href="alerts.html" aria-current="page">Alerts</a><a href="tickets.html">Tickets</a><a href="investigation.html">Investigation</a><a href="approval.html">Approval</a><a href="capa.html">CAPA</a><a href="injector.html">Injector</a><a href="roi.html">ROI</a><a href="metrics.html">Metrics</a></nav>
+  <ol class="lifecycle"><li class="is-current"><span class="pip"></span>Alert</li><li class="is-todo"><span class="pip"></span>Ticket</li><li class="is-todo"><span class="pip"></span>Investigation</li><li class="is-todo"><span class="pip"></span>Recommendation</li><li class="is-todo"><span class="pip"></span>Approval</li><li class="is-todo"><span class="pip"></span>CAPA</li></ol>
+  <main id="main" class="page">
+
+    <div class="page-head">
+      <div>
+        <h1>Alerts</h1>
+        <p>Spec-window violations and Western Electric rules 1–4. Debounced per tool + parameter. Severity Watch+ auto-creates a ticket.</p>
+      </div>
+      <a class="btn" href="injector.html">Inject a fault</a>
+    </div>
+    <div class="banner-callout warn injected-only" style="display:none">
+      Injected supply-chain material fault on etch tools (gas lot NF-3317). New alert ALT-2048 created. <a href="tickets.html">Open TKT-1048</a>
+    </div>
+    <div class="panel">
+      <h2>Active <span class="right">rules engine · not a model</span></h2>
+      <table class="data">
+        <thead><tr><th>ID</th><th>Tool</th><th>Parameter</th><th>Rule</th><th>Severity</th><th>Age</th><th>Ticket</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><a href="tool.html?id=D-01">ALT-2041</a></td>
+            <td class="mono">D-01</td>
+            <td>Chamber pressure</td>
+            <td>WE-1 · 1 pt &gt; 3σ (step)</td>
+            <td><span class="chip alarm">ALARM</span></td>
+            <td class="mono">18 min</td>
+            <td><a href="tickets.html">TKT-1042</a></td>
+          </tr>
+          <tr>
+            <td><a href="tool.html?id=E-02">ALT-2044</a></td>
+            <td class="mono">E-02</td>
+            <td>ESC temperature</td>
+            <td>WE-2 · 2 of 3 &gt; 2σ (osc)</td>
+            <td><span class="chip warn">WATCH</span></td>
+            <td class="mono">24 min</td>
+            <td><a href="tickets.html">TKT-1044</a></td>
+          </tr>
+          <tr class="injected-row" style="display:none">
+            <td><a href="tool.html?id=E-01">ALT-2048</a></td>
+            <td class="mono">E-01 / E-02</td>
+            <td>NF3/O2 moisture (inferred)</td>
+            <td>WE-1 on etch-rate proxy · cross-tool</td>
+            <td><span class="chip alarm">ALARM</span></td>
+            <td class="mono">12 s</td>
+            <td><a href="tickets.html">TKT-1048</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <style>
+      html[data-injected="1"] .injected-only,
+      html[data-injected="1"] .injected-row { display: block !important; }
+      html[data-injected="1"] tr.injected-row { display: table-row !important; }
+    </style>
+
+  </main>
+  <footer class="site-footer">
+    <span class="sn" title="Placeholder — official StatusNeo artwork not in this repo">Powered by StatusNeo</span>
+    <span>Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · MIT · Fictional demonstration; all companies and data are synthetic.</span>
+  </footer>
+  
+  <script src="assets/console.js"></script>
+</body>
+</html>
