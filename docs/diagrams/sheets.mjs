@@ -1263,6 +1263,235 @@ function drawAsIsGlossary(sheet, x, y, w, h) {
   return box;
 }
 
+function stageRail(sheet, x, y, w, h, id, lines) {
+  const gap = 10;
+  const heights = lines.map((line) => sheet.em(sheet.fontOf(line.weight), line.size));
+  const total = heights.reduce((sum, value) => sum + value, 0) + gap * (lines.length - 1);
+  let cursor = y + (h - total) / 2;
+  const cx = x + w / 2;
+  const clip = { x, y, w, h };
+  lines.forEach((line, i) => {
+    const baseline = cursor + sheet.asc(sheet.fontOf(line.weight), line.size);
+    sheet.text(`${id}-r${i}`, line.text, cx, baseline, {
+      size: line.size,
+      weight: line.weight,
+      fill: line.fill,
+      align: 'center',
+      clip,
+    });
+    cursor += heights[i] + gap;
+  });
+}
+
+function compareCard(sheet, id, x, y, w, h, lines, tone, badges) {
+  const opts = badges && badges.length ? { badges } : {};
+  sheet.node(id, x, y, w, h, lines, tone, opts);
+}
+
+export function drawCompare(sheet) {
+  const a = sheet.area;
+  const glossH = 156;
+  const glossY = a.y + a.h - glossH;
+  const top = a.y + 48;
+  const bottom = glossY - 14;
+  const rowGap = 10;
+  const rowCount = 6;
+  const rowH = (bottom - top - rowGap * (rowCount - 1)) / rowCount;
+  const railW = 268;
+  const benW = 500;
+  const gap = 14;
+  const colW = (a.w - railW - benW - gap * 3) / 2;
+  const railX = a.x;
+  const asX = railX + railW + gap;
+  const toX = asX + colW + gap;
+  const benX = toX + colW + gap;
+  const bandW = toX + colW - railX;
+
+  const headY = a.y + 26;
+  const headClip = { x: a.x, y: a.y, w: a.w, h: 42 };
+  sheet.text('h-stage', 'STAGE', railX + railW / 2, headY, {
+    size: 16,
+    weight: 'bold',
+    fill: NAVY,
+    align: 'center',
+    clip: { ...headClip, x: railX, w: railW },
+  });
+  sheet.text('h-as', 'AS-IS  ·  current investigation', asX + colW / 2, headY, {
+    size: 16,
+    weight: 'bold',
+    fill: NAVY,
+    align: 'center',
+    clip: { ...headClip, x: asX, w: colW },
+  });
+  sheet.text('h-to', 'TO-BE  ·  assisted investigation', toX + colW / 2, headY, {
+    size: 16,
+    weight: 'bold',
+    fill: NAVY,
+    align: 'center',
+    clip: { ...headClip, x: toX, w: colW },
+  });
+  sheet.text('h-ben', 'BENEFITS  ·  simulated', benX + benW / 2, headY, {
+    size: 16,
+    weight: 'bold',
+    fill: NAVY,
+    align: 'center',
+    clip: { ...headClip, x: benX, w: benW },
+  });
+
+  const manualBadge = [{ label: 'MANUAL', tone: 'manual' }];
+  const humanBadge = [{ label: 'HUMAN', tone: 'human' }];
+  const agentBadge = [{ label: 'AGENT', tone: 'ai' }];
+  const bothBadge = [
+    { label: 'HUMAN', tone: 'human' },
+    { label: 'AGENT', tone: 'ai' },
+  ];
+  const stages = [
+    {
+      id: 'det',
+      title: 'DETECT',
+      asDur: '0.5 day as-is',
+      toDur: '0.1 day to-be',
+      asLines: ['Alarm noticed on the MX-400 etch.', 'The operator tells a technician in person.', '1 manual hand-off, simulated.'],
+      asTone: 'review',
+      asBadges: manualBadge,
+      toLines: ['Statistical process control opens the ticket.', 'The console shows the alert. Nobody retypes it.', '0 manual hand-offs, simulated.'],
+      toTone: 'det',
+      toBadges: [],
+    },
+    {
+      id: 'tri',
+      title: 'TRIAGE',
+      asDur: '0.5 day as-is',
+      toDur: '0.2 day to-be',
+      asLines: ['The technician types the ticket into email.', 'The quality engineer assigns an owner by reply.', '2 manual hand-offs, simulated.'],
+      asTone: 'review',
+      asBadges: manualBadge,
+      toLines: ['The engineer opens the ticket.', 'The agent plans the pack and does not diagnose.', '1 human hand-off, simulated.'],
+      toTone: 'ai',
+      toBadges: bothBadge,
+    },
+    {
+      id: 'gth',
+      title: 'GATHER EVIDENCE',
+      asDur: '2.0 days as-is',
+      toDur: '0.4 day to-be',
+      asLines: ['Run sheet, historian, control chart, change log.', 'Prior cases and supplier lots. A meeting compares them.', '5 manual hand-offs, simulated.'],
+      asTone: 'review',
+      asBadges: manualBadge,
+      toLines: ['Read-only calls. One evidence pack.', 'One plain sentence on each evidence item.', '0 manual hand-offs, simulated.'],
+      toTone: 'ai',
+      toBadges: agentBadge,
+    },
+    {
+      id: 'dia',
+      title: 'DIAGNOSE',
+      asDur: '1.0 day as-is',
+      toDur: '0.5 day to-be',
+      asLines: ['The process engineer states the last known cause.', 'The four cause classes are not checked as a set.', '1 manual hand-off, simulated.'],
+      asTone: 'review',
+      asBadges: manualBadge,
+      toLines: ['Four causes are checked on every incident.', 'The agent ranks one and names what rules it out.', '0 manual hand-offs, simulated.'],
+      toTone: 'ai',
+      toBadges: agentBadge,
+    },
+    {
+      id: 'dec',
+      title: 'DECIDE / APPROVE',
+      asDur: '2.0 days as-is',
+      toDur: '2.0 days to-be',
+      asLines: ['Approval is a meeting or a mail reply.', 'No evidence pack is attached to the ask.', '2 manual hand-offs, simulated.'],
+      asTone: 'review',
+      asBadges: manualBadge,
+      toLines: ['Grounding rejects a claim with no citation.', 'The engineer approves with a signed token.', '1 human hand-off, simulated.'],
+      toTone: 'human',
+      toBadges: humanBadge,
+    },
+    {
+      id: 'capa',
+      title: 'CAPA',
+      asDur: '62 days as-is',
+      toDur: '40.3 days to-be',
+      asLines: ['The record is re-keyed into the quality system.', 'Management signs it and does not see the files.', '2 manual hand-offs, simulated.'],
+      asTone: 'review',
+      asBadges: manualBadge,
+      toLines: ['The action service writes the record.', 'The agent draft is not a write.', '0 manual hand-offs, simulated.'],
+      toTone: 'det',
+      toBadges: [],
+    },
+  ];
+
+  stages.forEach((stage, i) => {
+    const rowY = top + i * (rowH + rowGap);
+    const bandH = rowH - 6;
+    const bandY = rowY + 3;
+    sheet.roundRect(railX, bandY, bandW, bandH, 8, {
+      fill: '#E8EEF6',
+      stroke: NAVY,
+      'stroke-width': 1.15,
+    });
+    stageRail(sheet, railX + 8, bandY, railW - 16, bandH, `rail-${stage.id}`, [
+      { text: stage.title, size: 16, weight: 'bold', fill: NAVY },
+      { text: stage.asDur, size: 14, weight: 'semibold', fill: INK },
+      { text: stage.toDur, size: 14, weight: 'regular', fill: INK },
+      { text: 'simulated', size: 14, weight: 'semibold', fill: NAVY },
+    ]);
+    const cardH = bandH - 16;
+    const cardY = bandY + 8;
+    compareCard(sheet, `as-${stage.id}`, asX, cardY, colW, cardH, stage.asLines, stage.asTone, stage.asBadges);
+    compareCard(sheet, `to-${stage.id}`, toX, cardY, colW, cardH, stage.toLines, stage.toTone, stage.toBadges);
+  });
+
+  const benefits = [
+    ['Time to root cause', '4.0 days down to 1.2 days, simulated.', 'Detect through Diagnose only.', 'Approval days are not reduced.'],
+    ['Fewer hand-offs', '13 manual hand-offs down to 2, simulated.', 'The engineer opens the ticket.', 'The engineer approves.'],
+    ['Traceable evidence trail', 'One pack, with a citation on each claim.', 'The mail thread is not the record.', 'Simulated comparison.'],
+    ['Consistent four-cause check', 'Engineering change, out of spec,', 'supply-chain material, and process drift.', 'The same four, every time.'],
+    ['The human stays the approver', 'A signed token is required.', 'Agents do not write the record.', 'The person decides.'],
+  ];
+  const benGap = 12;
+  const benH = (bottom - top - benGap * (benefits.length - 1)) / benefits.length;
+  benefits.forEach((lines, i) => {
+    const y = top + i * (benH + benGap);
+    compareCard(sheet, `ben-${i}`, benX, y, benW, benH, lines, 'gw');
+  });
+
+  drawCompareGlossary(sheet, a.x, glossY, a.w, glossH);
+}
+
+function drawCompareGlossary(sheet, x, y, w, h) {
+  const box = sheet.frame('cglossary', x, y, w, h, 'neutral');
+  const clip = { x, y, w, h };
+  const left = x + 24;
+  sheet.text('cgl-title', 'Glossary', left, y + 28, { size: 16, weight: 'bold', fill: NAVY, clip });
+  sheet.text('cgl-dek', 'Short forms on this sheet. All figures are simulated.', left, y + 54, {
+    size: 14,
+    weight: 'regular',
+    fill: INK,
+    clip,
+  });
+  sheet.text('cgl-capa', 'CAPA    corrective and preventive action', left, y + 84, {
+    size: 14,
+    weight: 'regular',
+    fill: INK,
+    clip,
+  });
+  sheet.text(
+    'cgl-note1',
+    'Detect through Diagnose is the time to a hypothesis: 4.0 days down to 1.2 days, simulated.',
+    left,
+    y + 112,
+    { size: 14, weight: 'regular', fill: INK, clip },
+  );
+  sheet.text(
+    'cgl-note2',
+    'The CAPA row is the record cycle, simulated. Decide / approve stays at 2.0 days, simulated.',
+    left,
+    y + 136,
+    { size: 14, weight: 'regular', fill: INK, clip },
+  );
+  return box;
+}
+
 export const SHEETS = [
   {
     sheetId: 'G1',
@@ -1345,6 +1574,22 @@ export const SHEETS = [
       { tone: 'ok', label: 'Management. Approves and signs.' },
       { tone: 'manual', label: 'Red MANUAL badge and red arrow. A hand-off.' },
       { tone: 'risk', label: 'Amber ERROR RISK badge. A fact can change.' },
+    ],
+  },
+  {
+    sheetId: 'G5',
+    issue: '#74',
+    kicker: 'CURRENT VERSUS FUTURE',
+    title: 'Current and future state',
+    slug: 'as-is-vs-to-be',
+    draw: drawCompare,
+    legend: [
+      { tone: 'review', label: 'As-is step. People, email, and files.' },
+      { tone: 'manual', label: 'Red MANUAL badge. A hand-off.' },
+      { tone: 'det', label: 'To-be rules. Code opens the ticket and writes.' },
+      { tone: 'ai', label: 'To-be agent. Plans, gathers, and ranks.' },
+      { tone: 'human', label: 'To-be human. Opens the ticket and approves.' },
+      { tone: 'gw', label: 'Benefit. Every figure is simulated.' },
     ],
   },
 ];
