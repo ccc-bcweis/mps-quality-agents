@@ -8,13 +8,27 @@ namespace Mps.Agents.Grounding;
 public sealed class GroundingResult
 {
     public GroundingResult(bool accepted, IReadOnlyList<string> failures)
+        : this(accepted, failures, null, false)
+    {
+    }
+
+    public GroundingResult(bool accepted, IReadOnlyList<string> failures, ResolutionClaim? claim, bool repaired)
     {
         ArgumentNullException.ThrowIfNull(failures);
         Failures = failures.ToArray();
         Accepted = accepted && Failures.Count == 0;
+        Claim = Accepted ? claim : null;
+        Repaired = Accepted && repaired;
     }
 
     public bool Accepted { get; }
 
     public IReadOnlyList<string> Failures { get; }
+
+    /// <summary>
+    /// The claim to publish. Set when <see cref="Accepted"/> is true, after any repair.
+    /// </summary>
+    public ResolutionClaim? Claim { get; }
+
+    public bool Repaired { get; }
 }

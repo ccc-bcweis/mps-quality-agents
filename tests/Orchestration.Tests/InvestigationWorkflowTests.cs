@@ -2,10 +2,12 @@
 
 using Microsoft.Extensions.AI;
 
+using Mps.Agents.Explain;
 using Mps.Agents.Grounding;
 using Mps.Agents.Reasoning;
 using Mps.Domain.Approval;
 using Mps.Domain.Capa;
+using Mps.Domain.Evidence;
 using Mps.Domain.Hypotheses;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
@@ -53,6 +55,65 @@ public sealed class InvestigationWorkflowTests
         replayed.Stage.Should().Be(InvestigationStage.AwaitingApproval);
         replayed.Hypotheses[0].Category.Should().Be(RootCauseCategory.EngineeringChange);
         replayed.Hypotheses[0].Cause.Should().Contain("ECO-4471");
+    }
+
+    [Fact]
+    public async Task S1StoresWhyItMattersAndAFourClassMatrixAndReplaysThem()
+    {
+        var catalog = new RecordingReplayCatalog();
+        using var recording = WorkflowRig.Gateway(catalog, new QualityMockReasoner(), recordMisses: true);
+        var rig = new WorkflowRig(ScenarioKind.EngineeringChange, recording, recording);
+        var incident = EngineeringIncident(Severity.High, "corr-s1-why");
+        rig.Incidents.Add(incident);
+
+        var started = await rig.Workflow.StartAsync(incident.Id, CancellationToken.None);
+        var session = rig.Sessions.Require(started.Id);
+
+        started.Stage.Should().Be(InvestigationStage.AwaitingApproval);
+        session.EvidenceMatrix.Select(entry => entry.Category).Distinct().Should().HaveCount(4);
+        var engineering = Cell(session, RootCauseCategory.EngineeringChange);
+        var equipment = Cell(session, RootCauseCategory.EquipmentCalibrationOrAlignment);
+        var supply = Cell(session, RootCauseCategory.SupplyChainMaterial);
+        var drift = Cell(session, RootCauseCategory.ProcessDrift);
+        engineering.Stance.Should().Be(EvidenceStance.Supports);
+        session.Evidence.Single(item => item.Id == engineering.EvidenceId).ExternalRef.Should().Be("ECO-4471");
+        equipment.Stance.Should().Be(EvidenceStance.Neutral);
+        session.Evidence.Single(item => item.Id == equipment.EvidenceId).ExternalRef.Should().Be("WO-19");
+        supply.Stance.Should().Be(EvidenceStance.RulesOut);
+        drift.Stance.Should().Be(EvidenceStance.RulesOut);
+        session.Evidence.Single(item => item.Id == drift.EvidenceId).Source
+            .Should().BeOneOf(EvidenceSource.Telemetry, EvidenceSource.Spc);
+        session.Explanations.Should().NotBeEmpty();
+        session.Explanations.Should().OnlyContain(item => PlainSentence.IsValid(item.WhyItMatters));
+        var sensors = session.Evidence
+            .Where(item => item.Source is EvidenceSource.Telemetry or EvidenceSource.Spc)
+            .Select(item => item.Id)
+            .ToHashSet();
+        sensors.Should().NotBeEmpty();
+        session.Explanations.Where(item => sensors.Contains(item.EvidenceId))
+            .Should().OnlyContain(item => !string.IsNullOrWhiteSpace(item.SignalId));
+        foreach (var evidenceId in started.Hypotheses[0].EvidenceIds)
+        {
+            session.Explanations.Should().Contain(item => item.EvidenceId == evidenceId);
+        }
+
+        catalog.Stored.Should().Contain(turn =>
+            turn.Text != null
+            && turn.Text.Contains("whyItMatters", StringComparison.Ordinal)
+            && turn.Text.Contains("evidenceMatrix", StringComparison.Ordinal));
+
+        var reasoner = new ThrowingReasoner();
+        using var replay = WorkflowRig.Gateway(catalog, reasoner, recordMisses: false);
+        var second = EngineeringIncident(Severity.High, "corr-s1-why-replay");
+        rig.Incidents.Add(second);
+        var replayedRig = rig.ContinueWith(replay, replay);
+        var replayed = await replayedRig.Workflow.StartAsync(second.Id, CancellationToken.None);
+        var replayedSession = replayedRig.Sessions.Require(replayed.Id);
+
+        reasoner.Calls.Should().Be(0);
+        replayed.Stage.Should().Be(InvestigationStage.AwaitingApproval);
+        replayedSession.EvidenceMatrix.Select(entry => entry.Category).Distinct().Should().HaveCount(4);
+        replayedSession.Explanations.Should().OnlyContain(item => PlainSentence.IsValid(item.WhyItMatters));
     }
 
     [Fact]
@@ -312,6 +373,11 @@ public sealed class InvestigationWorkflowTests
         var act = async () => await rig.Workflow.GetStateAsync(InvestigationId.New(), CancellationToken.None);
 
         await act.Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    private static EvidenceMatrixEntry Cell(InvestigationSession session, RootCauseCategory category)
+    {
+        return session.EvidenceMatrix.Single(entry => entry.Category == category);
     }
 
     private static WorkflowRig MockRig(ScenarioKind kind)

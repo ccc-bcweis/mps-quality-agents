@@ -1,0 +1,54 @@
+{
+  "copyright": "Copyright (c) 2026 Bryan C. Weis and Common Consulting Company",
+  "category": "engineeringChange",
+  "cause": "Edge ring revision C landed in ECO-4471 just before the signal moved.",
+  "confidence": 0.86,
+  "evidenceIds": [
+    "00000000-0000-0000-0000-000000000001",
+    "00000000-0000-0000-0000-000000000003"
+  ],
+  "counterEvidence": [
+    "Preventive maintenance the same week is a confounder."
+  ],
+  "actions": [
+    "Review the engineering change before opening a corrective action."
+  ],
+  "whyItMatters": [
+    {
+      "evidenceId": "00000000-0000-0000-0000-000000000001",
+      "whyItMatters": "An engineering change landed just before this signal moved, which can change the process result.",
+      "signalId": null
+    },
+    {
+      "evidenceId": "00000000-0000-0000-0000-000000000003",
+      "whyItMatters": "Chuck temperature moved outside the recipe window, which can change etch depth.",
+      "signalId": "esc-temp"
+    }
+  ],
+  "evidenceMatrix": [
+    {
+      "category": "engineeringChange",
+      "evidenceId": "00000000-0000-0000-0000-000000000001",
+      "stance": "supports",
+      "whyItMatters": "An engineering change landed just before this signal moved, which can change the process result."
+    },
+    {
+      "category": "equipmentCalibrationOrAlignment",
+      "evidenceId": "00000000-0000-0000-0000-000000000002",
+      "stance": "neutral",
+      "whyItMatters": "Maintenance or calibration is in the window, but it is not the selected cause."
+    },
+    {
+      "category": "supplyChainMaterial",
+      "evidenceId": "00000000-0000-0000-0000-000000000001",
+      "stance": "rulesOut",
+      "whyItMatters": "No material lot or supplier notice is in this evidence, so that class does not explain the incident."
+    },
+    {
+      "category": "processDrift",
+      "evidenceId": "00000000-0000-0000-0000-000000000003",
+      "stance": "rulesOut",
+      "whyItMatters": "The signal is not a slow drift, so process drift does not explain the incident."
+    }
+  ]
+}

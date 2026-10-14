@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
 using Mps.Agents.Evidence;
+using Mps.Agents.Explain;
 using Mps.Agents.Impact;
 using Mps.Domain.Enterprise;
 using Mps.Domain.Evidence;
@@ -41,10 +42,15 @@ public sealed class ResolutionRequest
 
     public string[] SignalEvidenceIds { get; set; } = [];
 
+    public string[] PmEvidenceIds { get; set; } = [];
+
+    public EvidenceNote[] Notes { get; set; } = [];
+
     public static ResolutionRequest From(EvidencePack pack, ImpactFeatures features)
     {
         ArgumentNullException.ThrowIfNull(pack);
         ArgumentNullException.ThrowIfNull(features);
+        var catalog = WhyItMattersCatalog.Shared;
         return new ResolutionRequest
         {
             ScopeKind = ScopeName(features.Kind),
@@ -64,6 +70,32 @@ public sealed class ResolutionRequest
                 .Where(item => item.Source is EvidenceSource.Spc or EvidenceSource.Telemetry)
                 .Select(item => item.Id.ToString())
                 .ToArray(),
+            PmEvidenceIds = Ids(pack, pack.WorkOrders.Where(order => !IsAlignment(order)).Select(order => order.WorkOrderId)),
+            Notes = pack.Items.Select(item => new EvidenceNote
+            {
+                Id = item.Id.ToString(),
+                Source = SourceName(item.Source),
+                Title = item.Title,
+                Parameter = WhyItMattersCatalog.ParameterOf(item),
+                SignalId = catalog.SignalIdFor(item),
+                ExternalRef = item.ExternalRef,
+            }).ToArray(),
+        };
+    }
+
+    private static string SourceName(EvidenceSource source)
+    {
+        return source switch
+        {
+            EvidenceSource.Telemetry => "telemetry",
+            EvidenceSource.Spc => "spc",
+            EvidenceSource.Mes => "mes",
+            EvidenceSource.Qms => "qms",
+            EvidenceSource.Plm => "plm",
+            EvidenceSource.Erp => "erp",
+            EvidenceSource.Cmms => "cmms",
+            EvidenceSource.Ticketing => "ticketing",
+            _ => "document",
         };
     }
 
@@ -109,4 +141,22 @@ public sealed class ResolutionRequest
             _ => "unknown",
         };
     }
+}
+
+/// <summary>
+/// One evidence row the resolution prompt can cite. The model does not invent ids.
+/// </summary>
+public sealed class EvidenceNote
+{
+    public string Id { get; set; } = string.Empty;
+
+    public string Source { get; set; } = string.Empty;
+
+    public string Title { get; set; } = string.Empty;
+
+    public string? Parameter { get; set; }
+
+    public string? SignalId { get; set; }
+
+    public string? ExternalRef { get; set; }
 }

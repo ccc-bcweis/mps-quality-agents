@@ -2,6 +2,7 @@
 
 using Microsoft.Agents.AI.Workflows;
 
+using Mps.Agents.Explain;
 using Mps.Domain.Evidence;
 using Mps.Domain.Hypotheses;
 using Mps.Domain.Identity;
@@ -16,6 +17,8 @@ public sealed class InvestigationSession
 {
     private readonly List<EvidenceItem> _evidence = [];
     private readonly List<Hypothesis> _hypotheses = [];
+    private readonly List<CitedEvidence> _explanations = [];
+    private readonly List<EvidenceMatrixEntry> _matrix = [];
 
     public InvestigationSession(InvestigationId id, IncidentId incidentId)
     {
@@ -46,6 +49,10 @@ public sealed class InvestigationSession
     public IReadOnlyList<EvidenceItem> Evidence => _evidence;
 
     public IReadOnlyList<Hypothesis> Hypotheses => _hypotheses;
+
+    public IReadOnlyList<CitedEvidence> Explanations => _explanations;
+
+    public IReadOnlyList<EvidenceMatrixEntry> EvidenceMatrix => _matrix;
 
     /// <summary>
     /// Checkpoint taken while the run is waiting for a human decision. Resume needs the same checkpoint manager.
@@ -90,5 +97,19 @@ public sealed class InvestigationSession
     internal void ClearHypotheses()
     {
         _hypotheses.Clear();
+    }
+
+    internal void ReplaceExplanations(IEnumerable<CitedEvidence> explanations)
+    {
+        ArgumentNullException.ThrowIfNull(explanations);
+        _explanations.Clear();
+        _explanations.AddRange(explanations);
+    }
+
+    internal void ReplaceMatrix(IEnumerable<EvidenceMatrixEntry> matrix)
+    {
+        ArgumentNullException.ThrowIfNull(matrix);
+        _matrix.Clear();
+        _matrix.AddRange(matrix);
     }
 }

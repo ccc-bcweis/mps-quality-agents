@@ -1,5 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using System.Diagnostics.CodeAnalysis;
+
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
 
@@ -363,5 +365,23 @@ internal sealed class ScenarioTools :
         }
 
         return Task.FromResult(new ImpactScope(ImpactScopeKind.Tool, toolId.Value, null, "tool reported scope"));
+    }
+}
+
+internal sealed class RecordingReplayCatalog : IReplayCatalog
+{
+    private readonly InMemoryReplayCatalog _inner = new();
+
+    public List<ReplayTurn> Stored { get; } = [];
+
+    public bool TryGet(string promptHash, [NotNullWhen(true)] out ReplayTurn? turn)
+    {
+        return _inner.TryGet(promptHash, out turn);
+    }
+
+    public void Store(string promptHash, ReplayTurn turn)
+    {
+        Stored.Add(turn);
+        _inner.Store(promptHash, turn);
     }
 }

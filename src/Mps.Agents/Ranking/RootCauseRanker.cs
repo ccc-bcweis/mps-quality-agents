@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Agents.Explain;
 using Mps.Agents.Grounding;
 using Mps.Domain.Hypotheses;
 using Mps.Domain.Identity;
@@ -34,7 +35,7 @@ public static class RootCauseRanker
                 : "Material lot " + lot + " spans the affected tools and supplier notice " + notice + " matches it.";
             var counters = request.EcoIds.Select(id => "ECO " + id + " is a confounder.").ToArray();
             var cited = Prefer(request.LotEvidenceIds, request.SignalEvidenceIds);
-            return Recommend(RootCauseCategory.SupplyChainMaterial, cause, 0.84d, cited, counters, ["Hold material lot " + lot + " pending supplier review."]);
+            return Recommend(request, RootCauseCategory.SupplyChainMaterial, cause, 0.84d, cited, counters, ["Hold material lot " + lot + " pending supplier review."]);
         }
 
         if (eco)
@@ -44,6 +45,7 @@ public static class RootCauseRanker
                 ? Array.Empty<string>()
                 : request.PmSummaries;
             return Recommend(
+                request,
                 RootCauseCategory.EngineeringChange,
                 "ECO " + ecoId + " changed the affected scope shortly before onset.",
                 0.86d,
@@ -63,12 +65,13 @@ public static class RootCauseRanker
             var cited = Prefer(
                 request.OverdueEvidenceIds.Length > 0 ? request.OverdueEvidenceIds : request.AlignmentEvidenceIds,
                 request.SignalEvidenceIds);
-            return Recommend(RootCauseCategory.EquipmentCalibrationOrAlignment, cause, 0.82d, cited, counters, ["Restore calibration or alignment on chamber " + request.ScopeKey + " before the next run."]);
+            return Recommend(request, RootCauseCategory.EquipmentCalibrationOrAlignment, cause, 0.82d, cited, counters, ["Restore calibration or alignment on chamber " + request.ScopeKey + " before the next run."]);
         }
 
         if (string.Equals(request.SignalShape, "ramp", StringComparison.OrdinalIgnoreCase) && !eco && !calibration && !material)
         {
             return Recommend(
+                request,
                 RootCauseCategory.ProcessDrift,
                 "The parameter ramps with no discrete ECO, calibration, or material event in the window.",
                 0.74d,
@@ -81,6 +84,7 @@ public static class RootCauseRanker
     }
 
     private static RankDecision Recommend(
+        ResolutionRequest request,
         RootCauseCategory category,
         string cause,
         double confidence,
@@ -94,7 +98,10 @@ public static class RootCauseRanker
             return RankDecision.Escalation("primary has no evidence id");
         }
 
-        var claim = new ResolutionClaim(category, cause, confidence, ids, counterEvidence, actions, []);
+        var catalog = WhyItMattersCatalog.Shared;
+        var explanations = CitedEvidenceFactory.ForRequest(request, ids, catalog);
+        var matrix = EvidenceMatrixBuilder.FromRequest(request, category, ids, catalog);
+        var claim = new ResolutionClaim(category, cause, confidence, ids, counterEvidence, actions, [], explanations, matrix);
         return RankDecision.Recommendation(claim);
     }
 

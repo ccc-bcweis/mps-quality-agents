@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Agents.Explain;
 using Mps.Agents.Impact;
 using Mps.Domain.Enterprise;
 using Mps.Domain.Evidence;
@@ -20,7 +21,8 @@ public sealed class EvidencePack
         IReadOnlyList<MaterialLot> materialLots,
         IReadOnlyList<SupplierNotice> supplierNotices,
         bool calibrationLookupCompleted,
-        SignalShape signalShape)
+        SignalShape signalShape,
+        IReadOnlyList<CitedEvidence>? explanations = null)
     {
         ArgumentNullException.ThrowIfNull(items);
         ArgumentNullException.ThrowIfNull(configClaims);
@@ -39,6 +41,7 @@ public sealed class EvidencePack
         SupplierNotices = supplierNotices.ToArray();
         CalibrationLookupCompleted = calibrationLookupCompleted;
         SignalShape = signalShape;
+        Explanations = explanations?.ToArray() ?? [];
     }
 
     public IReadOnlyList<EvidenceItem> Items { get; }
@@ -58,4 +61,9 @@ public sealed class EvidencePack
     public bool CalibrationLookupCompleted { get; }
 
     public SignalShape SignalShape { get; }
+
+    /// <summary>
+    /// whyItMatters for every item in the pack. Sensor items also carry signalId.
+    /// </summary>
+    public IReadOnlyList<CitedEvidence> Explanations { get; }
 }
