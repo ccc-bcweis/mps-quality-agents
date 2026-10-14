@@ -633,3 +633,7 @@ terms:
     expansion: "Western Electric rules"
     plainDefinition: "A standard set of control-chart rules that flag unusual patterns, such as several points in a row drifting the same way."
     whyItMatters: "They catch a slow drift before it becomes a hard out-of-spec failure."
+  - term: "JSX"
+    expansion: "JavaScript XML"
+    plainDefinition: "The way the web console's screens are written, mixing page layout with code."
+    whyItMatters: "It is a developer term only; operators never see it."

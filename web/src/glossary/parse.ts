@@ -42,9 +42,10 @@ export function parseGlossaryYaml(source: string): GlossaryTerm[] {
       current = { term: clean(item[1] ?? "") };
       continue;
     }
-    const field = line.match(/^\s+(term|expansion|definition|whyItMatters):\s*(.*)$/);
-    if (field && current && FIELDS.includes(field[1] as (typeof FIELDS)[number])) {
-      const key = field[1] as keyof GlossaryTerm;
+    const field = line.match(/^\s+(term|expansion|definition|plainDefinition|whyItMatters):\s*(.*)$/);
+    const fieldName = field?.[1] === "plainDefinition" ? "definition" : field?.[1];
+    if (field && current && FIELDS.includes(fieldName as (typeof FIELDS)[number])) {
+      const key = fieldName as keyof GlossaryTerm;
       current[key] = clean(field[2] ?? "");
       continue;
     }
