@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+import { Term } from "./Term";
 import { LIFECYCLE, type LifecycleView } from "../lifecycle";
 
 export function LifecycleBar({ current, escalated }: LifecycleView) {
@@ -19,7 +20,7 @@ export function LifecycleBar({ current, escalated }: LifecycleView) {
           >
             {index > 0 ? <span className="px-2 text-mps-line">›</span> : null}
             <span className={`mr-1 inline-block h-1.5 w-1.5 rounded-pill ${state === "todo" ? "bg-mps-line" : "bg-current"}`} />
-            {label}
+            {item.id === "capa" && !label.includes("escalated") ? <Term id="CAPA" spellOut={false} /> : label}
           </li>
         );
       })}

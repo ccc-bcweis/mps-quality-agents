@@ -4,6 +4,8 @@ import { Link, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { CATEGORY_LABEL } from "../api/labels";
 import type { Investigation } from "../api/types";
+import { Explain } from "../components/Explain";
+import { Term } from "../components/Term";
 import { btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { lifecycleForInvestigation } from "../lifecycle";
@@ -45,7 +47,9 @@ export function InvestigationPage() {
         <div>
           <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">{investigation.correlationId}</p>
           <h1 className="text-mps-display font-semibold">Investigation</h1>
-          <p className="max-w-3xl text-mps-secondary">Read-only evidence, then ranked hypotheses. Violet marks the resolution agent. Cyan marks deterministic rules. The model cannot write.</p>
+          <p className="max-w-3xl text-mps-secondary">
+            <Explain text="Read-only evidence, then ranked hypotheses. AI proposes a ranking. Violet marks the model. Cyan marks deterministic rules. The model cannot write." />
+          </p>
         </div>
         {investigation.stage === "recommendationReady" ? (
           <Link className={btnPrimary} to={`/approvals/${investigation.id}`}>
@@ -55,7 +59,7 @@ export function InvestigationPage() {
       </div>
       {investigation.escalationReason ? (
         <p className="mb-3 rounded border border-mps-warn bg-mps-panel px-3 py-2" role="status">
-          Evidence gate: <strong>escalate</strong>. {investigation.escalationReason}
+          Evidence gate: <strong>escalate</strong>. <Explain text={investigation.escalationReason ?? ""} />
         </p>
       ) : (
         <p className="mb-3 rounded border border-mps-ok bg-mps-panel px-3 py-2">
@@ -71,8 +75,12 @@ export function InvestigationPage() {
             {investigation.evidence.map((item) => (
               <li key={item.id} className="border-t border-mps-line pt-2">
                 <div className="font-mono text-mps-micro text-mps-nominal">{item.externalRef ?? item.id.slice(0, 8)}</div>
-                <div className="font-medium">{item.title}</div>
-                <p className="text-mps-secondary">{item.excerpt}</p>
+                <div className="font-medium">
+                  <Explain text={item.title} spellOut={false} />
+                </div>
+                <p className="text-mps-secondary">
+                  <Explain text={item.excerpt} />
+                </p>
                 <p className="font-mono text-mps-micro text-mps-muted">{item.source}</p>
               </li>
             ))}
@@ -89,7 +97,9 @@ export function InvestigationPage() {
                 <div className="font-mono text-mps-micro text-mps-ai">
                   H{index + 1} · {hypothesis.confidence.toFixed(2)} · {CATEGORY_LABEL[hypothesis.category]}
                 </div>
-                <p>{hypothesis.cause}</p>
+                <p>
+                  <Explain text={hypothesis.cause} spellOut={false} />
+                </p>
                 {hypothesis.counterEvidence.length > 0 ? (
                   <p className="mt-1">
                     <strong>counterEvidence:</strong> {hypothesis.counterEvidence.join(" ")}
@@ -105,10 +115,14 @@ export function InvestigationPage() {
             {trace.map((row) => (
               <li key={row.id} className="border-t border-mps-line pt-2">
                 <div className={`font-mono text-mps-micro uppercase ${row.kind === "ai" ? "text-mps-ai" : row.kind === "human" ? "text-mps-warn" : "text-mps-nominal"}`}>
-                  {row.kind === "ai" ? "AI" : row.kind === "human" ? "Human" : "Rules"}
+                  {row.kind === "ai" ? <Term id="AI" spellOut={false} /> : row.kind === "human" ? "Human" : "Rules"}
                 </div>
-                <div className="font-medium">{row.title}</div>
-                <p className="text-mps-secondary">{row.detail}</p>
+                <div className="font-medium">
+                  <Explain text={row.title} spellOut={false} />
+                </div>
+                <p className="text-mps-secondary">
+                  <Explain text={row.detail} spellOut={false} />
+                </p>
               </li>
             ))}
           </ol>

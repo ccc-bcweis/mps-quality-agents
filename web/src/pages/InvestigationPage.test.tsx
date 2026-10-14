@@ -2,6 +2,7 @@
 import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { S1_INVESTIGATION_ID, S2_INVESTIGATION_ID } from "../mocks/demoData";
+import { matchCopy } from "../test/matchCopy";
 import { renderConsole } from "../test/render";
 
 describe("investigation", () => {
@@ -18,7 +19,7 @@ describe("investigation", () => {
   it("escalates S2 and does not assert a root cause", async () => {
     renderConsole(`/investigations/${S2_INVESTIGATION_ID}`);
     expect((await screen.findAllByText(/No root cause is asserted/)).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/PLM says showerhead revision C/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(matchCopy(/PLM says showerhead revision C/)).length).toBeGreaterThan(0);
     expect(screen.queryByText("Edge ring revision C changed the thermal path.")).not.toBeInTheDocument();
     expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Investigation (escalated)");
   });

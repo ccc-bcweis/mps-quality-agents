@@ -6,6 +6,7 @@ import { FAMILY_PROCESS } from "../api/labels";
 import type { Tool } from "../api/types";
 import { SpcChart } from "../components/SpcChart";
 import { Chip } from "../components/Chip";
+import { Explain } from "../components/Explain";
 import { btn, btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { statusTone, storyFor, windowRows } from "../fleet/catalog";
@@ -80,7 +81,9 @@ export function ToolPage() {
         </div>
         {story.params.map((param) => (
           <div key={param.label} className={panel}>
-            <div className="font-mono text-mps-micro uppercase text-mps-muted">{param.label}</div>
+            <div className="font-mono text-mps-micro uppercase text-mps-muted">
+              <Explain text={param.label} spellOut={false} />
+            </div>
             <div className={`font-mono text-mps-title ${param.tone === "alarm" ? "text-mps-alarm-text" : param.tone === "warn" ? "text-mps-warn" : ""}`}>
               {param.value}
             </div>
@@ -89,7 +92,7 @@ export function ToolPage() {
       </div>
       <div className={`${panel} mt-3`}>
         <h2 className="mb-2 text-mps-title font-semibold">
-          SPC · {story.chart.label}{" "}
+          <Explain text={`SPC · ${story.chart.label}`} />{" "}
           <span className="float-right font-mono text-mps-micro font-normal text-mps-muted">
             σ = {story.chart.sigma} {story.chart.unit} · n = 60
           </span>
@@ -118,7 +121,9 @@ export function ToolPage() {
             <tbody>
               {windowRows(tool).map((row) => (
                 <tr key={row.parameter} className="border-t border-mps-line">
-                  <td className="py-1.5">{row.label}</td>
+                  <td className="py-1.5">
+                    <Explain text={row.label} />
+                  </td>
                   <td className="py-1.5 font-mono">{row.window}</td>
                   <td className={`py-1.5 font-mono ${row.tone === "alarm" ? "text-mps-alarm-text" : row.tone === "warn" ? "text-mps-warn" : ""}`}>{row.now}</td>
                 </tr>

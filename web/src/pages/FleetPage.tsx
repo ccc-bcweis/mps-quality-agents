@@ -7,6 +7,7 @@ import type { Tool } from "../api/types";
 import { mpsColor } from "../brand/colors";
 import { Chip } from "../components/Chip";
 import { Sparkline } from "../components/Sparkline";
+import { Explain } from "../components/Explain";
 import { btn, btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { bayCaption, statusTone, storyFor } from "../fleet/catalog";
@@ -43,7 +44,9 @@ export function FleetPage() {
         <div>
           <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">Austin Demo Fab · Bays A / B</p>
           <h1 className="text-mps-display font-semibold">Fleet overview</h1>
-          <p className="text-mps-secondary">Eight tools, four families. SPC windows and Western Electric rules. Tiles open tool detail.</p>
+          <p className="text-mps-secondary">
+            <Explain text="Eight tools, four families. SPC windows and Western Electric rules watch chamber pressure, ESC temperature, and RF power. Tiles open tool detail." />
+          </p>
         </div>
         <div className="flex gap-2">
           <Link className={btn} to="/injector">
@@ -60,8 +63,8 @@ export function FleetPage() {
         <Kpi label="Nominal" value={String(stories.filter((item) => item.story.status === "nominal").length)} note="in window" />
         <Kpi label="Watch" value={String(stories.filter((item) => item.story.status === "watch").length)} note="inside window, rule tripped" tone="warn" />
         <Kpi label="Alarm" value={String(stories.filter((item) => item.story.status === "alarm").length)} note="outside window" tone="alarm" />
-        <Kpi label="Open TKT" value={tickets === null ? "—" : String(tickets)} note="queue" />
-        <Kpi label="p95 INV" value="—" note="from /api/metrics" />
+        <Kpi label="Open tickets" value={tickets === null ? "—" : String(tickets)} note="queue" />
+        <Kpi label="p95 time" value="—" note="investigation, from metrics" />
       </div>
       {bays.map((bay) => (
         <section key={bay} className="mt-5">
@@ -87,7 +90,9 @@ export function FleetPage() {
                     <div className="mt-2 space-y-1 font-mono text-mps-micro">
                       {story.params.map((param) => (
                         <div key={param.label} className="flex justify-between gap-2">
-                          <span className="text-mps-muted">{param.label}</span>
+                          <span className="text-mps-muted">
+                            <Explain text={param.label} />
+                          </span>
                           <span className={param.tone === "alarm" ? "text-mps-alarm-text" : param.tone === "warn" ? "text-mps-warn" : "text-mps-secondary"}>
                             {param.value}
                           </span>

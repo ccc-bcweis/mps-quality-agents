@@ -4,9 +4,12 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { api } from "../api/client";
 import { useConsole } from "../context/ConsoleContext";
 import { S1_INVESTIGATION_ID } from "../mocks/demoData";
+import { Explain } from "./Explain";
+import { GlossaryScope } from "./GlossaryScope";
 import { Led } from "./Chip";
 import { LifecycleBar } from "./LifecycleBar";
 import { ModeBanner } from "./ModeBanner";
+import { Term } from "./Term";
 
 const NAV = [
   { to: "/", label: "Fleet", match: (path: string) => path === "/" },
@@ -19,7 +22,13 @@ const NAV = [
   { to: "/injector", label: "Injector", match: (path: string) => path.startsWith("/injector") },
   { to: "/roi", label: "ROI", match: (path: string) => path.startsWith("/roi") },
   { to: "/metrics", label: "Metrics", match: (path: string) => path.startsWith("/metrics") },
+  { to: "/glossary", label: "Glossary", match: (path: string) => path.startsWith("/glossary") },
 ];
+
+function NavLabel({ label }: { label: string }) {
+  if (label === "CAPA" || label === "ROI") return <Term id={label} spellOut={false} />;
+  return label;
+}
 
 export function AppShell() {
   const location = useLocation();
@@ -42,6 +51,7 @@ export function AppShell() {
   }, []);
 
   return (
+    <GlossaryScope key={location.pathname}>
     <div className="flex min-h-screen flex-col bg-mps-canvas text-mps-text">
       <a className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-toast focus:bg-mps-panel focus:p-2" href="#main">
         Skip to content
@@ -77,7 +87,7 @@ export function AppShell() {
               aria-current={active ? "page" : undefined}
               className={`whitespace-nowrap border-b-2 px-3 py-2 text-mps-body no-underline ${active ? "border-mps-nominal text-mps-nominal" : "border-transparent text-mps-muted hover:text-mps-text"}`}
             >
-              {item.label}
+              <NavLabel label={item.label} />
             </Link>
           );
         })}
@@ -90,11 +100,14 @@ export function AppShell() {
         <span className="font-pitch text-mps-body font-bold tracking-wide text-sn-gold" title="Placeholder. Official StatusNeo artwork is not in this repo.">
           Powered by StatusNeo
         </span>
-        <span>Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · MIT · Fictional demonstration. All companies and data are synthetic.</span>
+        <span>
+          Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · <Explain text="MIT" /> · Fictional demonstration. All companies and data are synthetic.
+        </span>
         <a className="text-mps-nominal" href="https://github.com/ccc-bcweis/mps-quality-agents">
           How we built it
         </a>
       </footer>
     </div>
+    </GlossaryScope>
   );
 }

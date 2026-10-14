@@ -1,13 +1,51 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vitest/config";
+import { defineConfig, type Plugin } from "vitest/config";
+import { parseGlossaryYaml, termsFromGlossaryFile } from "./src/glossary/parse";
+import type { GlossaryTerm } from "./src/glossary/types";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 
+function loadGlossary(): { source: string; note: string; terms: GlossaryTerm[] } {
+  const yamlPath = path.resolve(root, "../data/glossary.yaml");
+  const fallbackPath = path.resolve(root, "src/glossary.fallback.json");
+  if (fs.existsSync(yamlPath)) {
+    return {
+      source: "data/glossary.yaml",
+      note: "",
+      terms: parseGlossaryYaml(fs.readFileSync(yamlPath, "utf8")),
+    };
+  }
+  const file = JSON.parse(fs.readFileSync(fallbackPath, "utf8")) as { sourceNote?: string };
+  return {
+    source: "web/src/glossary.fallback.json",
+    note: file.sourceNote ?? "",
+    terms: termsFromGlossaryFile(file),
+  };
+}
+
+function glossaryPlugin(): Plugin {
+  const virtualId = "virtual:glossary";
+  const resolvedId = "\0virtual:glossary";
+  return {
+    name: "mps-glossary",
+    resolveId(id) {
+      if (id === virtualId) return resolvedId;
+      return null;
+    },
+    load(id) {
+      if (id !== resolvedId) return null;
+      const loaded = loadGlossary();
+      return `export const glossarySource = ${JSON.stringify(loaded.source)};\nexport const glossaryNote = ${JSON.stringify(loaded.note)};\nexport const glossaryTerms = ${JSON.stringify(loaded.terms)};\n`;
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), glossaryPlugin()],
   resolve: {
     alias: {
       // contracts/msw/handlers.ts lives outside this package and imports "msw".

@@ -5,6 +5,8 @@ import { api, ApiProblem } from "../api/client";
 import { CHANNEL_LABEL, STAGE_LABEL, severityTone, severityWord } from "../api/labels";
 import type { Incident, Severity, Ticket, Tool } from "../api/types";
 import { Chip } from "../components/Chip";
+import { Explain } from "../components/Explain";
+import { Term } from "../components/Term";
 import { btn, btnPrimary, field, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { lifecycleForIncident } from "../lifecycle";
@@ -65,20 +67,26 @@ export function TicketsPage() {
     <div>
       <div className="mb-4">
         <h1 className="text-mps-display font-semibold">Tickets</h1>
-        <p className="text-mps-secondary">Normalized intake: IoT SPC, operator, QMS NCR, supplier notice, and the fault injector. An open incident on the same tool and parameter is linked.</p>
+        <p className="text-mps-secondary">
+          <Explain text="Normalized intake: IoT SPC, operator, QMS NCR, supplier notice, and the fault injector. An open incident on the same tool and parameter is linked." />
+        </p>
       </div>
       {error ? <p className="mb-3 text-mps-alarm-text">{error}</p> : null}
       <div className={`${panel} overflow-x-auto`}>
         <table className="w-full text-left">
           <thead>
             <tr className="font-mono text-mps-micro uppercase text-mps-muted">
-              <th className="py-1 font-medium">TKT</th>
+              <th className="py-1 font-medium">
+                <Term id="TKT" spellOut={false} />
+              </th>
               <th className="py-1 font-medium">Channel</th>
               <th className="py-1 font-medium">Tool</th>
               <th className="py-1 font-medium">Summary</th>
               <th className="py-1 font-medium">Sev</th>
               <th className="py-1 font-medium">State</th>
-              <th className="py-1 font-medium">INV</th>
+              <th className="py-1 font-medium">
+                <Term id="INV" spellOut={false} />
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -90,7 +98,7 @@ export function TicketsPage() {
                   <td className="py-1.5 font-mono">
                     <Link to={`/investigations/${ticket.incidentId}`}>{ticket.number}</Link>
                   </td>
-                  <td className="py-1.5">{incident ? CHANNEL_LABEL[incident.channel] : "—"}</td>
+                  <td className="py-1.5">{incident ? <Explain text={CHANNEL_LABEL[incident.channel]} spellOut={false} /> : "—"}</td>
                   <td className="py-1.5 font-mono">{ticket.toolId}</td>
                   <td className="py-1.5">{ticket.title}</td>
                   <td className="py-1.5">{incident ? <Chip tone={incident.stage === "closed" ? "ok" : severityTone(incident.severity)}>{incident.stage === "closed" ? "CLOSED" : severityWord(incident.severity)}</Chip> : "—"}</td>

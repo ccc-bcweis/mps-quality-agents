@@ -1,0 +1,258 @@
+{
+  "copyright": "Copyright (c) 2026 Bryan C. Weis and Common Consulting Company",
+  "sourceNote": "data/glossary.yaml is not in this checkout. The console loads this stub at build time until the data lane adds the shared glossary.",
+  "terms": [
+    {
+      "term": "SPC",
+      "expansion": "statistical process control",
+      "definition": "A running chart of one measurement. It shows whether the tool is behaving the way it usually does.",
+      "whyItMatters": "A point outside the normal pattern is the alarm a supervisor can act on before a lot is scrapped."
+    },
+    {
+      "term": "CAPA",
+      "expansion": "corrective and preventive action",
+      "definition": "The official record of what will be contained now and what will be changed so the same problem does not return.",
+      "whyItMatters": "Nothing is written to the quality system until a person approves this record."
+    },
+    {
+      "term": "PM",
+      "expansion": "preventive maintenance",
+      "definition": "Scheduled work that services a tool before it fails, such as a clean, a part change, or a check.",
+      "whyItMatters": "Maintenance in the same week as an alarm can look like the cause even when it is not."
+    },
+    {
+      "term": "OEE",
+      "expansion": "overall equipment effectiveness",
+      "definition": "One number for how much good work a tool produced compared with the time it was scheduled to run. It folds in uptime, speed, and good wafers.",
+      "whyItMatters": "A manager can compare tools without reading each sensor."
+    },
+    {
+      "term": "MTBF",
+      "expansion": "mean time between failures",
+      "definition": "The average hours a tool runs before it needs a repair.",
+      "whyItMatters": "A short gap means the tool is failing often, even if each repair is quick."
+    },
+    {
+      "term": "MTTR",
+      "expansion": "mean time to repair",
+      "definition": "The average hours to bring a tool back after it stops.",
+      "whyItMatters": "A long repair keeps the tool out of production after the failure is already known."
+    },
+    {
+      "term": "MTTR-Q",
+      "expansion": "mean time to repair a quality incident",
+      "definition": "The average days from a quality incident opening until the fix is in place.",
+      "whyItMatters": "This is the investigation clock, not the mechanic's repair clock."
+    },
+    {
+      "term": "EC",
+      "expansion": "engineering change",
+      "definition": "A deliberate change to a recipe, a part, or a setting.",
+      "whyItMatters": "A change just before an alarm is a prime suspect when only the changed tool moved."
+    },
+    {
+      "term": "ECN",
+      "expansion": "engineering change notice",
+      "definition": "The notice that tells the fab an engineering change is approved and when it takes effect.",
+      "whyItMatters": "The notice dates the change so it can be lined up with the first bad wafer."
+    },
+    {
+      "term": "ECO",
+      "expansion": "engineering change order",
+      "definition": "The numbered order that authorizes an engineering change.",
+      "whyItMatters": "The order is the citation that ties a part or recipe change to a specific tool."
+    },
+    {
+      "term": "UCL",
+      "expansion": "upper control limit",
+      "definition": "The top line on a control chart. Points above it are unusual for this measurement.",
+      "whyItMatters": "Crossing it is a signal to look, even when the product spec has not been broken yet."
+    },
+    {
+      "term": "LCL",
+      "expansion": "lower control limit",
+      "definition": "The bottom line on a control chart. Points below it are unusual for this measurement.",
+      "whyItMatters": "A drop below the line can be as serious as a spike above it."
+    },
+    {
+      "term": "Cpk",
+      "expansion": "process capability index",
+      "definition": "A score for how comfortably the normal spread of a measurement sits inside its allowed window.",
+      "whyItMatters": "A low score means the tool is making parts close to the edge even when no single point is an alarm."
+    },
+    {
+      "term": "FDC",
+      "expansion": "fault detection and classification",
+      "definition": "Software that watches many sensors at once and groups the pattern into a known kind of fault.",
+      "whyItMatters": "It is the automatic watch that raises an alarm before an engineer plots one chart."
+    },
+    {
+      "term": "NCR",
+      "expansion": "nonconformance report",
+      "definition": "A quality record that a wafer, a lot, or a tool did not meet its requirement.",
+      "whyItMatters": "An open report is prior evidence. A missing one means this incident is new."
+    },
+    {
+      "term": "COPQ",
+      "expansion": "cost of poor quality",
+      "definition": "The money spent because work was not right the first time: scrap, rework, warranty, downtime, and investigation time.",
+      "whyItMatters": "It turns a technical incident into a cost a manager can compare."
+    },
+    {
+      "term": "RF",
+      "expansion": "radio frequency",
+      "definition": "Electrical power at a high frequency that lights and sustains the plasma, or that shakes a clean bath.",
+      "whyItMatters": "Too much or too little changes etch rate, film quality, or how clean a wafer gets."
+    },
+    {
+      "term": "sccm",
+      "expansion": "standard cubic centimeters per minute",
+      "definition": "How much gas is flowing, measured as if the gas were at standard temperature and pressure.",
+      "whyItMatters": "The recipe's gas mix is set in these units. A drift changes the chemistry in the chamber."
+    },
+    {
+      "term": "mTorr",
+      "expansion": "millitorr",
+      "definition": "A very small pressure unit. One thousand millitorr is one torr, about a thousandth of atmospheric pressure.",
+      "whyItMatters": "Etch recipes run at a set pressure. A step away from it changes how the plasma hits the wafer."
+    },
+    {
+      "term": "ESC",
+      "expansion": "electrostatic chuck",
+      "definition": "The plate that holds a wafer with an electric charge and controls the wafer's temperature.",
+      "whyItMatters": "If the chuck temperature wobbles, etch depth and film thickness wobble with it."
+    },
+    {
+      "term": "QMS",
+      "expansion": "quality management system",
+      "definition": "The system of record for nonconformance reports and corrective actions.",
+      "whyItMatters": "The approved fix is written here. The model is not allowed to write it."
+    },
+    {
+      "term": "MES",
+      "expansion": "manufacturing execution system",
+      "definition": "The system that records which recipe, lot, and tool configuration actually ran.",
+      "whyItMatters": "It is the shop-floor record. If it disagrees with the design record, the cause cannot be named yet."
+    },
+    {
+      "term": "PLM",
+      "expansion": "product lifecycle management",
+      "definition": "The system that stores the approved design: parts, revisions, and engineering changes.",
+      "whyItMatters": "It says what should have been installed. The run record says what was installed."
+    },
+    {
+      "term": "ERP",
+      "expansion": "enterprise resource planning",
+      "definition": "The system that records material lots, suppliers, and what was issued to a tool.",
+      "whyItMatters": "A new gas or chemical lot that touched several tools points at the material, not one chamber."
+    },
+    {
+      "term": "CMMS",
+      "expansion": "computerized maintenance management system",
+      "definition": "The system that records work orders, calibrations, and preventive maintenance.",
+      "whyItMatters": "An overdue calibration or a same-week service visit is evidence about the equipment."
+    },
+    {
+      "term": "ROI",
+      "expansion": "return on investment",
+      "definition": "The money the change is expected to save compared with what it costs to run.",
+      "whyItMatters": "The figures on this screen are illustrative and synthetic. They are not a customer measurement."
+    },
+    {
+      "term": "WE",
+      "expansion": "Western Electric",
+      "definition": "A set of pattern rules for a control chart. They flag unusual runs, not only a single point outside the window.",
+      "whyItMatters": "A tool can still be inside its spec window and already be drifting."
+    },
+    {
+      "term": "WE-1",
+      "expansion": "Western Electric rule 1",
+      "definition": "One point farther than three standard deviations from the average.",
+      "whyItMatters": "That point is rare for a stable process and is treated as an alarm."
+    },
+    {
+      "term": "WE-2",
+      "expansion": "Western Electric rule 2",
+      "definition": "Two of three points farther than two standard deviations from the average, on the same side.",
+      "whyItMatters": "The pattern can trip while every point is still inside the product window."
+    },
+    {
+      "term": "WE-3",
+      "expansion": "Western Electric rule 3",
+      "definition": "Four of five points farther than one standard deviation from the average, on the same side.",
+      "whyItMatters": "It catches a shift that is smaller than a single-point alarm."
+    },
+    {
+      "term": "WE-4",
+      "expansion": "Western Electric rule 4",
+      "definition": "Eight points in a row on one side of the average.",
+      "whyItMatters": "A long run on one side means the process has moved, even if it has not spiked."
+    },
+    {
+      "term": "IoT",
+      "expansion": "internet of things",
+      "definition": "Sensors on the tool that publish measurements automatically.",
+      "whyItMatters": "This is the channel for an alarm that a chart raised, as opposed to a person typing a report."
+    },
+    {
+      "term": "MFC",
+      "expansion": "mass flow controller",
+      "definition": "The device that meters how much gas enters the chamber.",
+      "whyItMatters": "A controller that reads high or low changes the recipe without a person touching the setpoint."
+    },
+    {
+      "term": "AI",
+      "expansion": "artificial intelligence",
+      "definition": "The model that reads the evidence pack and drafts a ranking. It does not write to the quality system.",
+      "whyItMatters": "Violet marks model steps. Cyan marks rules. A person still approves."
+    },
+    {
+      "term": "API",
+      "expansion": "application programming interface",
+      "definition": "The request path the console uses to read or update a record.",
+      "whyItMatters": "A failed request is shown as-is. The console does not invent a record the service refused."
+    },
+    {
+      "term": "SPEC",
+      "expansion": "product specification",
+      "definition": "The written target for this demonstration: what the product must do, and the gates it must pass.",
+      "whyItMatters": "A blank metric means the gate has not been scored yet. It is not a passing score."
+    },
+    {
+      "term": "MIT",
+      "expansion": "MIT License",
+      "definition": "The open-source license for this demonstration. It grants use and does not transfer ownership.",
+      "whyItMatters": "Ownership stays with Bryan C. Weis and Common Consulting Company."
+    },
+    {
+      "term": "TKT",
+      "expansion": "ticket",
+      "definition": "The numbered work item opened when an alarm or a report needs an engineer.",
+      "whyItMatters": "The ticket is the human queue. The investigation starts from it."
+    },
+    {
+      "term": "INV",
+      "expansion": "investigation",
+      "definition": "The case that gathers evidence and, when the evidence is enough, a recommended cause.",
+      "whyItMatters": "Opening an investigation does not write a fix."
+    },
+    {
+      "term": "Run rate",
+      "expansion": "wafers finished per hour",
+      "definition": "How many wafers the tool finishes in an hour while it is running the current recipe.",
+      "whyItMatters": "A drop means the tool is slower, even if it has not stopped."
+    },
+    {
+      "term": "Uptime",
+      "expansion": "share of time the tool was ready",
+      "definition": "The percent of scheduled time the tool was up and able to run.",
+      "whyItMatters": "This is availability. It does not say whether the wafers were good."
+    },
+    {
+      "term": "First-pass yield",
+      "expansion": "wafers that passed the first time",
+      "definition": "The percent of wafers that met the requirement without rework.",
+      "whyItMatters": "Rework hides in output counts. First-pass yield does not."
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { useEffect, useId, useRef, useState, type RefObject } from "react";
+import { Explain } from "./Explain";
+import { Term } from "./Term";
 import { btn, btnDanger, btnOk, field } from "./ui";
 import { APPROVE_WORD, approvalReady, rejectReady } from "../lifecycle";
 
@@ -48,7 +50,9 @@ export function ApprovalDialog({
         </h2>
         {approving ? (
           <>
-            <p className="mt-2 text-mps-secondary">This asks the server to issue a single-use approval token and create the CAPA. The console does not send a signature.</p>
+            <p className="mt-2 text-mps-secondary">
+              <Explain text="This asks the server to issue a single-use approval token and create the CAPA. The console does not send a signature." spellOut={false} />
+            </p>
             <label className="mt-3 block text-mps-label text-mps-muted">
               Approver id
               <input ref={firstField as RefObject<HTMLInputElement>} className={field} value={approverId} onChange={(event) => onApproverId(event.target.value)} />
@@ -60,7 +64,9 @@ export function ApprovalDialog({
           </>
         ) : (
           <>
-            <p className="mt-2 text-mps-secondary">The reason is stored with the decision and can become an eval case. No CAPA is created.</p>
+            <p className="mt-2 text-mps-secondary">
+              <Explain text="The reason is stored with the decision and can become an eval case. No CAPA is created." spellOut={false} />
+            </p>
             <label className="mt-3 block text-mps-label text-mps-muted">
               Reject reason
               <textarea
@@ -81,7 +87,13 @@ export function ApprovalDialog({
             disabled={!ready}
             onClick={() => (approving ? onApprove() : onReject(comment.trim()))}
           >
-            {approving ? "Issue token and create CAPA" : "Reject recommendation"}
+            {approving ? (
+              <>
+                Issue token and create <Term id="CAPA" spellOut={false} />
+              </>
+            ) : (
+              "Reject recommendation"
+            )}
           </button>
           <button type="button" className={btn} onClick={onCancel}>
             Cancel

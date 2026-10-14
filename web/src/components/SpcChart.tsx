@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, Tooltip, XAxis, YAxis } from "recharts";
 import { mpsColor } from "../brand/colors";
+import { Term } from "./Term";
 import { buildSeries, limits, seedFrom, violatesWesternElectric1, violatesWesternElectric2, type SeriesShape } from "../spc/series";
 
 export function SpcChart({
@@ -62,6 +63,9 @@ export function SpcChart({
         <span>σ2 <i className="inline-block h-2 w-3 bg-mps-warn" /></span>
         <span>σ3 <i className="inline-block h-2 w-3 bg-mps-alarm" /></span>
         <span className="text-mps-secondary">{finding}</span>
+        <span>
+          <Term id="UCL" spellOut={false} /> and <Term id="LCL" spellOut={false} /> are the outer chart lines.
+        </span>
       </figcaption>
     </figure>
   );

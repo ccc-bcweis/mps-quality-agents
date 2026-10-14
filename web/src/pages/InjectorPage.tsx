@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { CATEGORY_LABEL } from "../api/labels";
 import type { FaultInjectionRequest, FaultShape, RootCauseCategory, Tool } from "../api/types";
+import { Explain } from "../components/Explain";
 import { btn, btnPrimary, field, panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
 import { pollUntil } from "../poll";
@@ -13,8 +14,8 @@ const CATEGORIES = Object.keys(CATEGORY_LABEL) as RootCauseCategory[];
 
 const PARAMETERS = [
   { id: "chamberPressure", label: "Chamber pressure" },
-  { id: "calibrationOffset", label: "Calibration (MFC / manometer)" },
-  { id: "escTemperature", label: "ESC / heater temperature" },
+  { id: "calibrationOffset", label: "Calibration (mass flow controller / manometer)" },
+  { id: "escTemperature", label: "Electrostatic chuck / heater temperature" },
   { id: "particleAdders", label: "Particle adders" },
   { id: "gasFlow", label: "Gas / chem flow" },
 ];
@@ -196,7 +197,9 @@ export function InjectorPage() {
           <ol className="list-decimal space-y-1 pl-5">
             <li>The simulator applies the signal shape on the selected tool and parameter.</li>
             <li>Ground truth records are written for eval. They are not an agent tool.</li>
-            <li>SPC rules raise an alert, then a ticket.</li>
+            <li>
+              <Explain text="SPC rules raise an alert, then a ticket." />
+            </li>
             <li>The alert should show on the alerts screen within 10 seconds.</li>
             <li>In a live preview with no recording, the banner switches to the mock reasoner.</li>
           </ol>
