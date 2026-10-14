@@ -218,7 +218,7 @@ export class Sheet {
     this.roundRect(x, y, w, h, 8, {
       fill: WHITE,
       stroke: tone.stroke,
-      'stroke-width': 1.5,
+      'stroke-width': opts.badge ? 2.4 : 1.5,
       'stroke-dasharray': dash,
     });
     this.shape(
@@ -235,10 +235,57 @@ export class Sheet {
       }
       return line;
     });
-    this.layoutInBox(id, specs, { x, y, w, h }, opts.align || 'center');
+    let textBox = { x, y, w, h };
+    if (opts.badge) {
+      const reserved = this.badge(id, { x, y, w, h }, opts.badge, tone);
+      textBox = { x, y: y + reserved, w, h: h - reserved };
+    }
+    this.layoutInBox(id, specs, textBox, opts.align || 'center');
     const rec = { id, x, y, w, h };
     this.nodes.set(id, rec);
     return rec;
+  }
+
+  // Badge sits on its own row so it cannot collide with the title. Returns the reserved height.
+  badge(id, box, label, tone) {
+    const size = 14;
+    const weight = 'bold';
+    const tw = this.width(weight, label, size);
+    const font = this.fontOf(weight);
+    const th = this.em(font, size);
+    const padX = 7;
+    const padY = 3;
+    const pw = tw + padX * 2;
+    const ph = th + padY * 2;
+    const x = box.x + (box.w - pw) / 2;
+    const y = box.y + 6;
+    this.roundRect(x, y, pw, ph, 4, { fill: tone.zone, stroke: tone.stroke, 'stroke-width': 1.2 });
+    const baseline = y + padY + this.asc(font, size);
+    this.addText({
+      id: `${id}-badge`,
+      text: label,
+      x: x + padX,
+      baseline,
+      size,
+      weight,
+      fill: tone.title,
+    });
+    return 6 + ph + 6;
+  }
+
+  // Horizontal swimlane. Title is a left label, not a top band, so cards can use the full row.
+  band(id, x, y, w, h, title, toneName) {
+    const tone = TONES[toneName];
+    this.roundRect(x, y, w, h, 8, { fill: tone.zone, stroke: tone.stroke, 'stroke-width': 1.15 });
+    this.shape(
+      `<rect x="${x.toFixed(2)}" y="${(y + 6).toFixed(2)}" width="7" height="${(h - 12).toFixed(2)}" rx="2" fill="${tone.bar}"/>`,
+    );
+    const size = 14;
+    const weight = 'semibold';
+    const font = this.fontOf(weight);
+    const baseline = y + h / 2 + (this.asc(font, size) - this.em(font, size) / 2);
+    this.text(`${id}-label`, title, x + 18, baseline, { size, weight, fill: tone.title });
+    return { id, x, y, w, h };
   }
 
   layoutInBox(id, specs, box, align) {
@@ -405,7 +452,12 @@ export class Sheet {
       const mid = (a.y + b.y) / 2;
       pts = [a, { x: a.x, y: mid }, { x: b.x, y: mid }, b];
     }
-    this.arrow(pts, { id: opts.id || `${fromId}-${toId}`, head: opts.head !== false, dashed: opts.dashed });
+    this.arrow(pts, {
+      id: opts.id || `${fromId}-${toId}`,
+      head: opts.head !== false,
+      dashed: opts.dashed,
+      color: opts.color,
+    });
   }
 
   box(id) {

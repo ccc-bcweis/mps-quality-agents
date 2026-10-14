@@ -15,7 +15,7 @@ Mode banner (LIVE AI / REPLAY) and the **today's spend** meter are on every scre
 | `tool.html` | **Tool detail** for E-02 with SPC chart (±1/2/3σ bands, Western Electric oscillation). Windows from SPEC §2.1. Link to D-01 and INV-881. |
 | `alerts.html` | **Alerts.** Deterministic SPC/WE rules. Auto-ticketed. Injector lands here with `?injected=1`. |
 | `tickets.html` | **Tickets.** Five intake channels (IoT, operator, NCR, supplier, injector) normalized; S1/S2 rows. |
-| `investigation.html` | **Investigation INV-881 (S1).** Three columns: evidence pack (IDs), ranked hypotheses with `counterEvidence`, trace (rules vs AI vs human). |
+| `investigation.html` | **Investigation INV-881 (S1).** Agent-step timeline (queued / running / done / escalated) from Alerts through CAPA, then evidence pack, ranked hypotheses with `counterEvidence`, and trace. |
 | `approval.html` | **Approval.** Explicit confirm / reject modals. ApprovalToken rules listed. Confirm → CAPA. |
 | `capa.html` | **CAPA-2201.** Stages Open → … → Closed; audit log; QMS 500 retry control (visual). |
 | `injector.html` | **Fault injector.** Tool, parameter, shape, magnitude, root-cause type, confounders. Submit → alerts. Preset S4 gas-lot. |
