@@ -64,7 +64,12 @@ internal sealed class SeriesCursor
 
     public double Next(OperatingWindow window, DateTimeOffset at, IReadOnlyList<FaultSignal> faults, string toolId, string chamberId, string parameter)
     {
-        _deviation = (TelemetryMath.Phi * _deviation) + (window.Sigma * TelemetryMath.NoiseScale * _rng.NextNormal());
-        return window.Nominal + _deviation + TelemetryMath.Offset(window, faults, at, toolId, chamberId, parameter);
+        return window.Nominal + NextDeviation(window.Sigma) + TelemetryMath.Offset(window, faults, at, toolId, chamberId, parameter);
+    }
+
+    public double NextDeviation(double sigma)
+    {
+        _deviation = (TelemetryMath.Phi * _deviation) + (sigma * TelemetryMath.NoiseScale * _rng.NextNormal());
+        return _deviation;
     }
 }

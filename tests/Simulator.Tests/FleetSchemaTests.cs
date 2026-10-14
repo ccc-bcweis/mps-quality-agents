@@ -2,6 +2,7 @@
 
 using Mps.Domain.Equipment;
 using Mps.Simulator.Fleet;
+using Mps.Simulator.Telemetry;
 
 namespace Mps.Simulator.Tests;
 
@@ -107,5 +108,72 @@ public sealed class FleetSchemaTests
         var act = () => FleetCatalogLoader.Load(Path.Combine(Path.GetTempPath(), "mps-fleet-missing-" + Guid.NewGuid().ToString("N")));
 
         act.Should().Throw<FleetSpecException>().WithMessage("*does not exist*");
+    }
+
+    [Fact]
+    public void EveryToolCarriesTheSchematicSensorCatalog()
+    {
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        Catalog.Tools.Should().AllSatisfy(tool =>
+        {
+            tool.Sensors.Should().NotBeEmpty();
+            tool.Sensors.Select(sensor => sensor.Type).Should().Contain(SensorCatalog.RequiredTypes(tool.Family));
+            tool.Sensors.Should().Contain(sensor => sensor.Type == SensorCatalog.Thermocouple && sensor.Parameter != null);
+            tool.Sensors.Should().Contain(sensor => sensor.Type == SensorCatalog.RunRate && sensor.Unit == "wafers/hour" && sensor.IsToolScope);
+            tool.Sensors.Should().Contain(sensor => sensor.Type == SensorCatalog.Throughput && sensor.Unit == "wafers/hour");
+            tool.Sensors.Should().Contain(sensor => sensor.Type == SensorCatalog.Yield && sensor.Unit == "percent");
+            tool.Sensors.Should().Contain(sensor => sensor.Type == SensorCatalog.Output && sensor.Unit == "wafers" && sensor.IsToolScope);
+            tool.Sensors.Select(sensor => sensor.SchematicAnchor).Should().OnlyHaveUniqueItems();
+            foreach (var sensor in tool.Sensors)
+            {
+                ids.Add(sensor.Id).Should().BeTrue($"sensor {sensor.Id} is unique");
+                sensor.Limits.Nominal.Should().BeInRange(sensor.Limits.WarningMinimum, sensor.Limits.WarningMaximum);
+            }
+        });
+
+        Catalog.GetRequired("E-02").Sensors.Should().Contain(sensor => sensor.Parameter == "escTemperature");
+        Catalog.GetRequired("E-02").Sensors.Should().Contain(sensor => sensor.Parameter == "wallTemperature");
+        Catalog.GetRequired("E-02").Sensors.Count(sensor => sensor.Type == SensorCatalog.RfReflectedPower).Should().Be(
+            Catalog.GetRequired("E-02").Sensors.Count(sensor => sensor.Type == SensorCatalog.RfForwardPower));
+        Catalog.GetRequired("C-01").Sensors.Should().NotContain(sensor => sensor.Type == SensorCatalog.RfForwardPower);
+        Catalog.GetRequired("C-01").Sensors.Should().Contain(sensor => sensor.Type == SensorCatalog.MegasonicPower && sensor.Unit == "W");
+        Catalog.Tools.SelectMany(tool => tool.Sensors).Should().Contain(sensor => sensor.Type == SensorCatalog.GasFlow);
+        Catalog.Tools.SelectMany(tool => tool.Sensors).Should().Contain(sensor => sensor.Type == SensorCatalog.Vibration && sensor.Unit == "mm/s");
+    }
+
+    [Fact]
+    public void SensorUnitThatDisagreesWithItsTypeIsRejected()
+    {
+        var temp = CopyFleet();
+        try
+        {
+            var path = Path.Combine(temp, "mps-d7.yaml");
+            var text = File.ReadAllText(path);
+            File.WriteAllText(
+                path,
+                text.Replace(
+                    "id: D-01-A-TC-HEATER, type: thermocouple, unit: C",
+                    "id: D-01-A-TC-HEATER, type: thermocouple, unit: W",
+                    StringComparison.Ordinal));
+
+            var act = () => FleetCatalogLoader.Load(temp);
+
+            act.Should().Throw<FleetSpecException>().WithMessage("*unit*");
+        }
+        finally
+        {
+            Directory.Delete(temp, true);
+        }
+    }
+
+    private static string CopyFleet()
+    {
+        var temp = Directory.CreateTempSubdirectory("mps-fleet").FullName;
+        foreach (var file in Directory.GetFiles(RepoPaths.FleetDirectory(), "*.yaml"))
+        {
+            File.Copy(file, Path.Combine(temp, Path.GetFileName(file)));
+        }
+
+        return temp;
     }
 }

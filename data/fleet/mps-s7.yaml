@@ -50,9 +50,59 @@ tools:
     chambers:
       - { id: S-01-A, name: Chamber A }
       - { id: S-01-B, name: Chamber B }
+    sensors:
+      - { id: S-01-A-TC-PLATEN, type: thermocouple, unit: C, subsystem: chuckHeater, schematicAnchor: a.chuck.temperature, minimum: 250, maximum: 280, nominal: 262, warningMinimum: 253, warningMaximum: 277, chamberId: S-01-A, parameter: temperature }
+      - { id: S-01-A-PT-CHAMBER, type: chamberPressure, unit: Torr, subsystem: chamber, schematicAnchor: a.chamber.pressure, minimum: 0.8, maximum: 1.5, nominal: 1.05, warningMinimum: 0.87, warningMaximum: 1.43, chamberId: S-01-A, parameter: chamberPressure }
+      - { id: S-01-A-RF-REMOTE-FWD, type: rfForwardPower, unit: W, subsystem: rfGenerator, schematicAnchor: a.rf.remote.forward, minimum: 2000, maximum: 4000, nominal: 2800, warningMinimum: 2200, warningMaximum: 3800, chamberId: S-01-A, parameter: remotePlasmaPower }
+      - { id: S-01-A-MFC-O2, type: gasFlow, unit: sccm, subsystem: gasBox, schematicAnchor: a.gas.o2, minimum: 200, maximum: 5000, nominal: 2000, warningMinimum: 680, warningMaximum: 4520, chamberId: S-01-A, parameter: o2Flow }
+      - { id: S-01-A-MFC-N2H2, type: gasFlow, unit: sccm, subsystem: gasBox, schematicAnchor: a.gas.n2h2, minimum: 50, maximum: 2000, nominal: 320, warningMinimum: 245, warningMaximum: 1805, chamberId: S-01-A, parameter: n2h2Flow }
+      - { id: S-01-A-VIB-PUMP, type: vibration, unit: mm/s, subsystem: vacuum, schematicAnchor: a.vacuum.vibration, minimum: 0, maximum: 2.5, nominal: 0.7, warningMinimum: 0.25, warningMaximum: 2.25, chamberId: S-01-A, parameter: vibrationRms }
+      - { id: S-01-A-ALN-CENTER, type: alignment, unit: mm, subsystem: waferHandler, schematicAnchor: a.handler.center, minimum: 0, maximum: 0.15, nominal: 0.04, warningMinimum: 0.015, warningMaximum: 0.135, chamberId: S-01-A, parameter: waferCenterOffset }
+      - { id: S-01-A-OUT-ASH, type: output, unit: nm/min, subsystem: chamber, schematicAnchor: a.chamber.ashRate, minimum: 100, maximum: 2500, nominal: 1100, warningMinimum: 340, warningMaximum: 2260, chamberId: S-01-A, parameter: ashRate }
+      - { id: S-01-A-OUT-PARTICLES, type: output, unit: count, subsystem: chamber, schematicAnchor: a.chamber.particles, minimum: 0, maximum: 10, nominal: 3, warningMinimum: 1, warningMaximum: 9, chamberId: S-01-A, parameter: particlesAdders }
+      - { id: S-01-A-RF-REMOTE-RFL, type: rfReflectedPower, unit: W, subsystem: rfGenerator, schematicAnchor: a.rf.remote.reflected, minimum: 0, maximum: 600, nominal: 84, warningMinimum: 60, warningMaximum: 540, chamberId: S-01-A, tracksSensorId: S-01-A-RF-REMOTE-FWD }
+      - { id: S-01-B-TC-PLATEN, type: thermocouple, unit: C, subsystem: chuckHeater, schematicAnchor: b.chuck.temperature, minimum: 250, maximum: 280, nominal: 262, warningMinimum: 253, warningMaximum: 277, chamberId: S-01-B, parameter: temperature }
+      - { id: S-01-B-PT-CHAMBER, type: chamberPressure, unit: Torr, subsystem: chamber, schematicAnchor: b.chamber.pressure, minimum: 0.8, maximum: 1.5, nominal: 1.05, warningMinimum: 0.87, warningMaximum: 1.43, chamberId: S-01-B, parameter: chamberPressure }
+      - { id: S-01-B-RF-REMOTE-FWD, type: rfForwardPower, unit: W, subsystem: rfGenerator, schematicAnchor: b.rf.remote.forward, minimum: 2000, maximum: 4000, nominal: 2800, warningMinimum: 2200, warningMaximum: 3800, chamberId: S-01-B, parameter: remotePlasmaPower }
+      - { id: S-01-B-MFC-O2, type: gasFlow, unit: sccm, subsystem: gasBox, schematicAnchor: b.gas.o2, minimum: 200, maximum: 5000, nominal: 2000, warningMinimum: 680, warningMaximum: 4520, chamberId: S-01-B, parameter: o2Flow }
+      - { id: S-01-B-MFC-N2H2, type: gasFlow, unit: sccm, subsystem: gasBox, schematicAnchor: b.gas.n2h2, minimum: 50, maximum: 2000, nominal: 320, warningMinimum: 245, warningMaximum: 1805, chamberId: S-01-B, parameter: n2h2Flow }
+      - { id: S-01-B-VIB-PUMP, type: vibration, unit: mm/s, subsystem: vacuum, schematicAnchor: b.vacuum.vibration, minimum: 0, maximum: 2.5, nominal: 0.7, warningMinimum: 0.25, warningMaximum: 2.25, chamberId: S-01-B, parameter: vibrationRms }
+      - { id: S-01-B-ALN-CENTER, type: alignment, unit: mm, subsystem: waferHandler, schematicAnchor: b.handler.center, minimum: 0, maximum: 0.15, nominal: 0.04, warningMinimum: 0.015, warningMaximum: 0.135, chamberId: S-01-B, parameter: waferCenterOffset }
+      - { id: S-01-B-OUT-ASH, type: output, unit: nm/min, subsystem: chamber, schematicAnchor: b.chamber.ashRate, minimum: 100, maximum: 2500, nominal: 1100, warningMinimum: 340, warningMaximum: 2260, chamberId: S-01-B, parameter: ashRate }
+      - { id: S-01-B-OUT-PARTICLES, type: output, unit: count, subsystem: chamber, schematicAnchor: b.chamber.particles, minimum: 0, maximum: 10, nominal: 3, warningMinimum: 1, warningMaximum: 9, chamberId: S-01-B, parameter: particlesAdders }
+      - { id: S-01-B-RF-REMOTE-RFL, type: rfReflectedPower, unit: W, subsystem: rfGenerator, schematicAnchor: b.rf.remote.reflected, minimum: 0, maximum: 600, nominal: 84, warningMinimum: 60, warningMaximum: 540, chamberId: S-01-B, tracksSensorId: S-01-B-RF-REMOTE-FWD }
+      - { id: S-01-RUN-RATE, type: runRate, unit: wafers/hour, subsystem: waferHandler, schematicAnchor: tool.runRate, minimum: 8, maximum: 14, nominal: 12, warningMinimum: 8.6, warningMaximum: 13.4 }
+      - { id: S-01-THROUGHPUT, type: throughput, unit: wafers/hour, subsystem: waferHandler, schematicAnchor: tool.throughput, minimum: 7, maximum: 14, nominal: 11.4, warningMinimum: 7.7, warningMaximum: 13.3 }
+      - { id: S-01-OUTPUT, type: output, unit: wafers, subsystem: waferHandler, schematicAnchor: tool.output, minimum: 0, maximum: 14, nominal: 12, warningMinimum: 1.4, warningMaximum: 12.6 }
+      - { id: S-01-YIELD, type: yield, unit: percent, subsystem: waferHandler, schematicAnchor: tool.yield, minimum: 90, maximum: 100, nominal: 97, warningMinimum: 91, warningMaximum: 99 }
   - id: S-02
     name: Strip S-02
     bay: Bay-2
     chambers:
       - { id: S-02-A, name: Chamber A }
       - { id: S-02-B, name: Chamber B }
+    sensors:
+      - { id: S-02-A-TC-PLATEN, type: thermocouple, unit: C, subsystem: chuckHeater, schematicAnchor: a.chuck.temperature, minimum: 250, maximum: 280, nominal: 262, warningMinimum: 253, warningMaximum: 277, chamberId: S-02-A, parameter: temperature }
+      - { id: S-02-A-PT-CHAMBER, type: chamberPressure, unit: Torr, subsystem: chamber, schematicAnchor: a.chamber.pressure, minimum: 0.8, maximum: 1.5, nominal: 1.05, warningMinimum: 0.87, warningMaximum: 1.43, chamberId: S-02-A, parameter: chamberPressure }
+      - { id: S-02-A-RF-REMOTE-FWD, type: rfForwardPower, unit: W, subsystem: rfGenerator, schematicAnchor: a.rf.remote.forward, minimum: 2000, maximum: 4000, nominal: 2800, warningMinimum: 2200, warningMaximum: 3800, chamberId: S-02-A, parameter: remotePlasmaPower }
+      - { id: S-02-A-MFC-O2, type: gasFlow, unit: sccm, subsystem: gasBox, schematicAnchor: a.gas.o2, minimum: 200, maximum: 5000, nominal: 2000, warningMinimum: 680, warningMaximum: 4520, chamberId: S-02-A, parameter: o2Flow }
+      - { id: S-02-A-MFC-N2H2, type: gasFlow, unit: sccm, subsystem: gasBox, schematicAnchor: a.gas.n2h2, minimum: 50, maximum: 2000, nominal: 320, warningMinimum: 245, warningMaximum: 1805, chamberId: S-02-A, parameter: n2h2Flow }
+      - { id: S-02-A-VIB-PUMP, type: vibration, unit: mm/s, subsystem: vacuum, schematicAnchor: a.vacuum.vibration, minimum: 0, maximum: 2.5, nominal: 0.7, warningMinimum: 0.25, warningMaximum: 2.25, chamberId: S-02-A, parameter: vibrationRms }
+      - { id: S-02-A-ALN-CENTER, type: alignment, unit: mm, subsystem: waferHandler, schematicAnchor: a.handler.center, minimum: 0, maximum: 0.15, nominal: 0.04, warningMinimum: 0.015, warningMaximum: 0.135, chamberId: S-02-A, parameter: waferCenterOffset }
+      - { id: S-02-A-OUT-ASH, type: output, unit: nm/min, subsystem: chamber, schematicAnchor: a.chamber.ashRate, minimum: 100, maximum: 2500, nominal: 1100, warningMinimum: 340, warningMaximum: 2260, chamberId: S-02-A, parameter: ashRate }
+      - { id: S-02-A-OUT-PARTICLES, type: output, unit: count, subsystem: chamber, schematicAnchor: a.chamber.particles, minimum: 0, maximum: 10, nominal: 3, warningMinimum: 1, warningMaximum: 9, chamberId: S-02-A, parameter: particlesAdders }
+      - { id: S-02-A-RF-REMOTE-RFL, type: rfReflectedPower, unit: W, subsystem: rfGenerator, schematicAnchor: a.rf.remote.reflected, minimum: 0, maximum: 600, nominal: 84, warningMinimum: 60, warningMaximum: 540, chamberId: S-02-A, tracksSensorId: S-02-A-RF-REMOTE-FWD }
+      - { id: S-02-B-TC-PLATEN, type: thermocouple, unit: C, subsystem: chuckHeater, schematicAnchor: b.chuck.temperature, minimum: 250, maximum: 280, nominal: 262, warningMinimum: 253, warningMaximum: 277, chamberId: S-02-B, parameter: temperature }
+      - { id: S-02-B-PT-CHAMBER, type: chamberPressure, unit: Torr, subsystem: chamber, schematicAnchor: b.chamber.pressure, minimum: 0.8, maximum: 1.5, nominal: 1.05, warningMinimum: 0.87, warningMaximum: 1.43, chamberId: S-02-B, parameter: chamberPressure }
+      - { id: S-02-B-RF-REMOTE-FWD, type: rfForwardPower, unit: W, subsystem: rfGenerator, schematicAnchor: b.rf.remote.forward, minimum: 2000, maximum: 4000, nominal: 2800, warningMinimum: 2200, warningMaximum: 3800, chamberId: S-02-B, parameter: remotePlasmaPower }
+      - { id: S-02-B-MFC-O2, type: gasFlow, unit: sccm, subsystem: gasBox, schematicAnchor: b.gas.o2, minimum: 200, maximum: 5000, nominal: 2000, warningMinimum: 680, warningMaximum: 4520, chamberId: S-02-B, parameter: o2Flow }
+      - { id: S-02-B-MFC-N2H2, type: gasFlow, unit: sccm, subsystem: gasBox, schematicAnchor: b.gas.n2h2, minimum: 50, maximum: 2000, nominal: 320, warningMinimum: 245, warningMaximum: 1805, chamberId: S-02-B, parameter: n2h2Flow }
+      - { id: S-02-B-VIB-PUMP, type: vibration, unit: mm/s, subsystem: vacuum, schematicAnchor: b.vacuum.vibration, minimum: 0, maximum: 2.5, nominal: 0.7, warningMinimum: 0.25, warningMaximum: 2.25, chamberId: S-02-B, parameter: vibrationRms }
+      - { id: S-02-B-ALN-CENTER, type: alignment, unit: mm, subsystem: waferHandler, schematicAnchor: b.handler.center, minimum: 0, maximum: 0.15, nominal: 0.04, warningMinimum: 0.015, warningMaximum: 0.135, chamberId: S-02-B, parameter: waferCenterOffset }
+      - { id: S-02-B-OUT-ASH, type: output, unit: nm/min, subsystem: chamber, schematicAnchor: b.chamber.ashRate, minimum: 100, maximum: 2500, nominal: 1100, warningMinimum: 340, warningMaximum: 2260, chamberId: S-02-B, parameter: ashRate }
+      - { id: S-02-B-OUT-PARTICLES, type: output, unit: count, subsystem: chamber, schematicAnchor: b.chamber.particles, minimum: 0, maximum: 10, nominal: 3, warningMinimum: 1, warningMaximum: 9, chamberId: S-02-B, parameter: particlesAdders }
+      - { id: S-02-B-RF-REMOTE-RFL, type: rfReflectedPower, unit: W, subsystem: rfGenerator, schematicAnchor: b.rf.remote.reflected, minimum: 0, maximum: 600, nominal: 84, warningMinimum: 60, warningMaximum: 540, chamberId: S-02-B, tracksSensorId: S-02-B-RF-REMOTE-FWD }
+      - { id: S-02-RUN-RATE, type: runRate, unit: wafers/hour, subsystem: waferHandler, schematicAnchor: tool.runRate, minimum: 8, maximum: 14, nominal: 12, warningMinimum: 8.6, warningMaximum: 13.4 }
+      - { id: S-02-THROUGHPUT, type: throughput, unit: wafers/hour, subsystem: waferHandler, schematicAnchor: tool.throughput, minimum: 7, maximum: 14, nominal: 11.4, warningMinimum: 7.7, warningMaximum: 13.3 }
+      - { id: S-02-OUTPUT, type: output, unit: wafers, subsystem: waferHandler, schematicAnchor: tool.output, minimum: 0, maximum: 14, nominal: 12, warningMinimum: 1.4, warningMaximum: 12.6 }
+      - { id: S-02-YIELD, type: yield, unit: percent, subsystem: waferHandler, schematicAnchor: tool.yield, minimum: 90, maximum: 100, nominal: 97, warningMinimum: 91, warningMaximum: 99 }
