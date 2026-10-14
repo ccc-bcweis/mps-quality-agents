@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Mps.Agents.Tests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Mps.Agents\Mps.Agents.csproj" />
+    <ProjectReference Include="..\..\src\Mps.Domain\Mps.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Mps.ModelGateway\Mps.ModelGateway.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="FluentAssertions" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

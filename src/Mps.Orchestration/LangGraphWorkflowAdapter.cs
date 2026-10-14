@@ -7,7 +7,7 @@ using Mps.Domain.Investigations;
 namespace Mps.Orchestration;
 
 /// <summary>
-/// Stub showing where a LangGraph service would plug in. It is not a runtime. See ADR-001.
+/// Stub showing where a LangGraph service would plug in. It is not a runtime. See docs/langgraph-compat.md.
 /// </summary>
 public sealed class LangGraphWorkflowAdapter : IInvestigationWorkflow
 {
@@ -34,5 +34,5 @@ public sealed class LangGraphWorkflowAdapter : IInvestigationWorkflow
     }
 
     private static NotSupportedException Stub(string id) =>
-        new($"LangGraphWorkflowAdapter is a stub and cannot run investigation {id}. Microsoft Agent Framework is the orchestration runtime. See docs/adr/ADR-001-contracts.md.");
+        new($"LangGraphWorkflowAdapter is a stub and cannot run investigation {id}. Microsoft Agent Framework is the orchestration runtime. See docs/langgraph-compat.md.");
 }
