@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -231,21 +232,34 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task FaultInjectionOpensTheInjectorChannelAndALargeMagnitudeRaisesAnAlert()
+    public async Task FaultInjectionAcceptsTheFaultWithoutOpeningATicketByDefault()
     {
         var client = _factory.CreateClient();
         var parameter = "gasFlow-" + Guid.NewGuid().ToString("N");
 
-        var response = await client.PostAsJsonAsync("/api/faults", new
-        {
-            toolId = "E-02",
-            chamberId = "A",
-            parameter,
-            shape = "step",
-            magnitude = 4.5,
-            rootCauseCategory = "supplyChainMaterial",
-            confounders = true,
-        });
+        var response = await client.PostAsJsonAsync("/api/faults", FaultBody(parameter));
+        var accepted = await response.Content.ReadFromJsonAsync<JsonElement>(Json);
+        var incidents = await client.GetFromJsonAsync<JsonElement>("/api/incidents");
+        var alerts = await client.GetFromJsonAsync<JsonElement>("/api/alerts?toolId=E-02");
+        var tickets = await client.GetFromJsonAsync<JsonElement>("/api/tickets");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
+        accepted.GetProperty("faultId").GetGuid().Should().NotBeEmpty();
+        accepted.GetProperty("correlationId").GetString().Should().NotBeNullOrWhiteSpace();
+        incidents.EnumerateArray().Should().NotContain(incident => incident.GetProperty("parameter").GetString() == parameter);
+        alerts.EnumerateArray().Should().NotContain(alert => alert.GetProperty("parameter").GetString() == parameter);
+        tickets.EnumerateArray().Should().NotContain(ticket => ticket.GetProperty("title").GetString()!.Contains(parameter, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task FaultInjectionOpensTheInjectorChannelWhenDirectTicketIsEnabled()
+    {
+        await using var factory = new ApiFactory().WithWebHostBuilder(builder =>
+            builder.UseSetting("Mps:Injector:DirectTicket", "true"));
+        var client = factory.CreateClient();
+        var parameter = "gasFlow-" + Guid.NewGuid().ToString("N");
+
+        var response = await client.PostAsJsonAsync("/api/faults", FaultBody(parameter));
         var accepted = await response.Content.ReadFromJsonAsync<JsonElement>(Json);
         var incidents = await client.GetFromJsonAsync<JsonElement>("/api/incidents");
         var alerts = await client.GetFromJsonAsync<JsonElement>("/api/alerts?toolId=E-02");
@@ -287,6 +301,17 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         message.GetProperty("channel").GetString().Should().Be("operatorReport");
         await connection.StopAsync();
     }
+
+    private static object FaultBody(string parameter) => new
+    {
+        toolId = "E-02",
+        chamberId = "A",
+        parameter,
+        shape = "step",
+        magnitude = 4.5,
+        rootCauseCategory = "supplyChainMaterial",
+        confounders = true,
+    };
 
     private static async Task<JsonElement> OpenIncidentAsync(HttpClient client, string toolId, string parameter)
     {

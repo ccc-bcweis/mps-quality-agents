@@ -56,6 +56,7 @@ public static class QualityHost
         builder.Services.AddScoped<IApprovalLog>(services => services.GetRequiredService<EfQualityStore>());
         builder.Services.AddScoped<ITicketingPort>(services => services.GetRequiredService<EfQualityStore>());
         builder.Services.AddSingleton(ApprovalPolicyLoader.Load(builder.Configuration));
+        builder.Services.AddSingleton(new InjectorPolicy(builder.Configuration.GetValue("Mps:Injector:DirectTicket", false)));
         builder.Services.AddSingleton(new MetricsPolicy(
             builder.Configuration.GetValue("Metrics:CostPerInvestigationUsd", 0d),
             builder.Configuration.GetValue("Metrics:SpendCapUsd", 2d)));

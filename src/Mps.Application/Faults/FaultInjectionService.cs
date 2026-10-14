@@ -29,7 +29,8 @@ public interface IFaultInjectionService
 }
 
 /// <summary>
-/// Records an injector-channel incident. A magnitude past 3 sigma also raises an SPC alert, which dedupes onto that incident.
+/// Records the injected fault. Direct ticket creation is off unless <see cref="InjectorPolicy.DirectTicket"/> is set.
+/// When that flag is on, the injector opens an incident and a magnitude past 3 sigma also raises an SPC alert.
 /// </summary>
 public sealed class FaultInjectionService : IFaultInjectionService
 {
@@ -47,6 +48,7 @@ public sealed class FaultInjectionService : IFaultInjectionService
     private readonly SpcAlertService _spc;
     private readonly IQualityNotifier _notifier;
     private readonly TimeProvider _time;
+    private readonly InjectorPolicy _injector;
 
     public FaultInjectionService(
         IFleetCatalog fleet,
@@ -54,7 +56,8 @@ public sealed class FaultInjectionService : IFaultInjectionService
         IIntakeService intake,
         SpcAlertService spc,
         IQualityNotifier notifier,
-        TimeProvider time)
+        TimeProvider time,
+        InjectorPolicy injector)
     {
         ArgumentNullException.ThrowIfNull(fleet);
         ArgumentNullException.ThrowIfNull(faults);
@@ -62,12 +65,14 @@ public sealed class FaultInjectionService : IFaultInjectionService
         ArgumentNullException.ThrowIfNull(spc);
         ArgumentNullException.ThrowIfNull(notifier);
         ArgumentNullException.ThrowIfNull(time);
+        ArgumentNullException.ThrowIfNull(injector);
         _fleet = fleet;
         _faults = faults;
         _intake = intake;
         _spc = spc;
         _notifier = notifier;
         _time = time;
+        _injector = injector;
     }
 
     public async Task<FaultAccepted> InjectAsync(FaultInjectionRequest request, CancellationToken cancellationToken)
@@ -119,6 +124,10 @@ public sealed class FaultInjectionService : IFaultInjectionService
             now);
         await _faults.AddAsync(fault, cancellationToken).ConfigureAwait(false);
         await _notifier.FaultInjectedAsync(faultId, correlationId, fault.ToolId, cancellationToken).ConfigureAwait(false);
+        if (!_injector.DirectTicket)
+        {
+            return new FaultAccepted(faultId, correlationId, Guid.Empty);
+        }
 
         var intake = await _intake.AcceptAsync(
             new IntakeSubmission(
