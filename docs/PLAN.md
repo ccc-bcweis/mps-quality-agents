@@ -49,7 +49,7 @@ Layering is enforced by a NetArchTest suite in CI (F1), so violations fail the b
 ## 4. Design track and design-question handling
 - **Track (GB-D):** DS1 brand kit → DS2 wireframes (clickable HTML) → DS3 hi-fi prototypes for Fleet + Investigation. GB-4 starts on shell/data plumbing against MSW mocks and applies the theme once DS1 lands, so it doesn't wait on design.
 - **Brands:** StatusNeo pitch shell (deck title/closing, "Powered by StatusNeo" footer; text wordmark unless Bryan OKs the logo); **Meridian Precision Systems** customer brand inside the console (dark fab ops look from SPEC §2.0, 3 SVG logo concepts).
-- **Design questions:** any agent that hits ambiguity opens an issue labeled `design-question` (template: context, options, recommendation, blocking?), keeps working on non-blocked items, and links it from its PR. Bob resolves within the same day; the decision is recorded as `docs/decisions/ADR-NNN-*.md` and the issue is closed with a link. Questions needing Bryan (brand, scope, money) get the label `needs-bryan` and are batched to him by email.
+- **Design questions:** any agent that hits ambiguity opens an issue labeled `design-question` (template: context, options, recommendation, blocking?), keeps working on non-blocked items, and links it from its PR. Bob resolves within the same day; the decision is recorded as `docs/adr/ADR-NNN-*.md` and the issue is closed with a link. Questions needing Bryan (brand, scope, money) get the label `needs-bryan` and are batched to him by email.
 
 ## 5. Test strategy
 | Layer | Author | Lives in | Runs |
