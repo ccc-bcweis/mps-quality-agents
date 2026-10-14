@@ -1,0 +1,97 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Seeded 90-day tool and fleet figures. The formula is in README.md. All figures are synthetic.
+seed: 20261014
+plannedHours: 2160
+idealWafersPerHour: 12.00
+tools:
+  - toolId: C-01
+    runRateWafersPerHour: 11.40
+    uptimePercent: 96.40
+    oeePercent: 86.20
+    firstPassYieldPercent: 94.13
+    mtbfHours: 416.45
+    mttrHours: 5.61
+    operatingHours: 2082.24
+    failureCount: 5
+    repairHours: 28.05
+  - toolId: C-02
+    runRateWafersPerHour: 10.80
+    uptimePercent: 93.82
+    oeePercent: 82.54
+    firstPassYieldPercent: 97.75
+    mtbfHours: 337.75
+    mttrHours: 5.99
+    operatingHours: 2026.51
+    failureCount: 6
+    repairHours: 35.94
+  - toolId: D-01
+    runRateWafersPerHour: 11.76
+    uptimePercent: 92.48
+    oeePercent: 86.65
+    firstPassYieldPercent: 95.61
+    mtbfHours: 332.93
+    mttrHours: 4.83
+    operatingHours: 1997.57
+    failureCount: 6
+    repairHours: 28.98
+  - toolId: D-02
+    runRateWafersPerHour: 10.92
+    uptimePercent: 93.27
+    oeePercent: 80.56
+    firstPassYieldPercent: 94.92
+    mtbfHours: 503.66
+    mttrHours: 5.02
+    operatingHours: 2014.63
+    failureCount: 4
+    repairHours: 20.08
+  - toolId: E-01
+    runRateWafersPerHour: 11.28
+    uptimePercent: 95.88
+    oeePercent: 87.07
+    firstPassYieldPercent: 96.61
+    mtbfHours: 690.34
+    mttrHours: 2.93
+    operatingHours: 2071.01
+    failureCount: 3
+    repairHours: 8.79
+  - toolId: E-02
+    runRateWafersPerHour: 10.92
+    uptimePercent: 95.38
+    oeePercent: 81.87
+    firstPassYieldPercent: 94.33
+    mtbfHours: 686.74
+    mttrHours: 4.79
+    operatingHours: 2060.21
+    failureCount: 3
+    repairHours: 14.37
+  - toolId: S-01
+    runRateWafersPerHour: 11.04
+    uptimePercent: 94.59
+    oeePercent: 84.11
+    firstPassYieldPercent: 96.65
+    mtbfHours: 681.05
+    mttrHours: 5.25
+    operatingHours: 2043.14
+    failureCount: 3
+    repairHours: 15.75
+  - toolId: S-02
+    runRateWafersPerHour: 11.64
+    uptimePercent: 92.16
+    oeePercent: 86.20
+    firstPassYieldPercent: 96.43
+    mtbfHours: 398.13
+    mttrHours: 4.94
+    operatingHours: 1990.66
+    failureCount: 5
+    repairHours: 24.70
+fleet:
+  runRateWafersPerHour: 89.76
+  uptimePercent: 94.25
+  oeePercent: 84.42
+  firstPassYieldPercent: 95.80
+  mtbfHours: 465.31
+  mttrHours: 5.05
+  operatingHours: 16285.97
+  failureCount: 35
+  repairHours: 176.66
+  toolCount: 8

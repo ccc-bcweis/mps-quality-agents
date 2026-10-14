@@ -28,3 +28,10 @@ Parallel lanes need one shape for incidents, evidence, approvals, and the consol
 ## Confirmation
 
 `dotnet test` covers the CAPA token rules, hypothesis citation, and the illegal incident and CAPA transitions. The layering suite covers the write-port boundary.
+
+## Addendum: contracts-v1.1 (2026-10-14, Bob)
+- `DecisionResult.capa` nullable via `allOf` wrapper (OpenAPI 3.0 keeps `nullable` beside `allOf`; GB-5 DQ1).
+- Approve endpoint wording: client signature is rejected (400), not ignored (GB-5 DQ2).
+- `EvidenceItem.whyItMatters` (nullable, <=240 chars) and `EvidenceItem.signalId` (fleet sensor id) per ADR-003 / UX3.
+- `EvidenceStance`, `EvidenceMatrixEntry`, optional `Investigation.evidenceMatrix` (UX3).
+- All additions are optional, so v1 clients remain compatible. Spec version 0.2.0.

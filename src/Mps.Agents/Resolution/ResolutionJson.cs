@@ -2,6 +2,7 @@
 
 using System.Text.Json;
 
+using Mps.Agents.Explain;
 using Mps.Agents.Grounding;
 using Mps.Agents.Ranking;
 using Mps.Domain.Hypotheses;
@@ -62,6 +63,19 @@ public static class ResolutionJson
             ["evidenceIds"] = claim.EvidenceIds.Select(id => id.ToString()).ToArray(),
             ["counterEvidence"] = claim.CounterEvidence,
             ["actions"] = claim.Actions,
+            ["whyItMatters"] = claim.Explanations.Select(item => new Dictionary<string, object?>
+            {
+                ["evidenceId"] = item.EvidenceId.ToString(),
+                ["whyItMatters"] = item.WhyItMatters,
+                ["signalId"] = item.SignalId,
+            }).ToArray(),
+            ["evidenceMatrix"] = claim.EvidenceMatrix.Select(item => new Dictionary<string, object?>
+            {
+                ["category"] = Wire(item.Category),
+                ["evidenceId"] = item.EvidenceId.ToString(),
+                ["stance"] = WireStance(item.Stance),
+                ["whyItMatters"] = item.WhyItMatters,
+            }).ToArray(),
         });
     }
 
@@ -124,6 +138,16 @@ public static class ResolutionJson
                 return false;
             }
 
+            if (!TryReadExplanations(root, out var explanations, out error))
+            {
+                return false;
+            }
+
+            if (!TryReadMatrix(root, out var matrix, out error))
+            {
+                return false;
+            }
+
             claim = new ResolutionClaim(
                 category,
                 cause,
@@ -131,7 +155,9 @@ public static class ResolutionJson
                 evidenceIds,
                 ReadStrings(root, "counterEvidence"),
                 ReadStrings(root, "actions"),
-                []);
+                [],
+                explanations,
+                matrix);
             return true;
         }
         catch (JsonException)
@@ -182,6 +208,152 @@ public static class ResolutionJson
         }
 
         return ids;
+    }
+
+    private static bool TryReadExplanations(JsonElement root, out List<CitedEvidence> explanations, out string? error)
+    {
+        explanations = [];
+        error = null;
+        if (!root.TryGetProperty("whyItMatters", out var array))
+        {
+            return true;
+        }
+
+        if (array.ValueKind != JsonValueKind.Array)
+        {
+            error = "whyItMatters is not an array";
+            return false;
+        }
+
+        foreach (var item in array.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.Object)
+            {
+                error = "whyItMatters entry is not an object";
+                return false;
+            }
+
+            if (!TryEvidenceId(item, out var evidenceId))
+            {
+                error = "whyItMatters evidence id is not a GUID";
+                return false;
+            }
+
+            var text = item.TryGetProperty("whyItMatters", out var textElement) ? textElement.GetString() : null;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                error = "whyItMatters text is missing";
+                return false;
+            }
+
+            string? signalId = null;
+            if (item.TryGetProperty("signalId", out var signalElement) && signalElement.ValueKind == JsonValueKind.String)
+            {
+                signalId = signalElement.GetString();
+            }
+
+            explanations.Add(new CitedEvidence(evidenceId, text, signalId));
+        }
+
+        return true;
+    }
+
+    private static bool TryReadMatrix(JsonElement root, out List<EvidenceMatrixEntry> matrix, out string? error)
+    {
+        matrix = [];
+        error = null;
+        if (!root.TryGetProperty("evidenceMatrix", out var array))
+        {
+            return true;
+        }
+
+        if (array.ValueKind != JsonValueKind.Array)
+        {
+            error = "evidenceMatrix is not an array";
+            return false;
+        }
+
+        foreach (var item in array.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.Object)
+            {
+                error = "evidenceMatrix entry is not an object";
+                return false;
+            }
+
+            if (!item.TryGetProperty("category", out var categoryElement) || !TryCategory(categoryElement.GetString(), out var category))
+            {
+                error = "evidenceMatrix category is missing";
+                return false;
+            }
+
+            if (!TryEvidenceId(item, out var evidenceId))
+            {
+                error = "evidenceMatrix evidence id is not a GUID";
+                return false;
+            }
+
+            if (!item.TryGetProperty("stance", out var stanceElement) || !TryStance(stanceElement.GetString(), out var stance))
+            {
+                error = "evidenceMatrix stance is missing";
+                return false;
+            }
+
+            var why = item.TryGetProperty("whyItMatters", out var whyElement) && whyElement.ValueKind == JsonValueKind.String
+                ? whyElement.GetString()
+                : null;
+            matrix.Add(new EvidenceMatrixEntry(category, evidenceId, stance, why));
+        }
+
+        return true;
+    }
+
+    private static bool TryEvidenceId(JsonElement item, out EvidenceId evidenceId)
+    {
+        evidenceId = default;
+        if (!item.TryGetProperty("evidenceId", out var idElement))
+        {
+            return false;
+        }
+
+        var value = idElement.GetString();
+        if (!Guid.TryParse(value, out var parsed) || parsed == Guid.Empty)
+        {
+            return false;
+        }
+
+        evidenceId = new EvidenceId(parsed);
+        return true;
+    }
+
+    private static bool TryStance(string? value, out EvidenceStance stance)
+    {
+        switch (value)
+        {
+            case "supports":
+                stance = EvidenceStance.Supports;
+                return true;
+            case "rulesOut":
+                stance = EvidenceStance.RulesOut;
+                return true;
+            case "neutral":
+                stance = EvidenceStance.Neutral;
+                return true;
+            default:
+                stance = default;
+                return false;
+        }
+    }
+
+    private static string WireStance(EvidenceStance stance)
+    {
+        return stance switch
+        {
+            EvidenceStance.Supports => "supports",
+            EvidenceStance.RulesOut => "rulesOut",
+            EvidenceStance.Neutral => "neutral",
+            _ => throw new ArgumentOutOfRangeException(nameof(stance)),
+        };
     }
 
     private static List<string> ReadStrings(JsonElement root, string name)

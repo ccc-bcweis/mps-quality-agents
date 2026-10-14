@@ -28,6 +28,11 @@ public static class FaultCategories
 
 public sealed record FaultRuns(string RecipeId, string RecipeRevision, string LotId, string MaterialCode, int Count);
 
+/// <summary>
+/// A supervisor-facing line for one evidence block. It is not copied onto the enterprise records.
+/// </summary>
+public sealed record EvidenceNote(string Kind, string RecordId, string WhyItMatters);
+
 public sealed record MissingRecord(string RecordId, string RecordType, string Reason);
 
 public sealed record RevisionConflict(string PlmRevision, string MesRevision, string PartName, string Detail);
@@ -125,7 +130,9 @@ public sealed class FaultDefinition
         string cause,
         IReadOnlyList<string> counterEvidence,
         IReadOnlyList<string> actions,
-        FaultEvidence evidence)
+        FaultEvidence evidence,
+        string whyItMatters,
+        IReadOnlyList<EvidenceNote> notes)
     {
         Id = Require(id);
         Title = Require(title);
@@ -134,10 +141,12 @@ public sealed class FaultDefinition
         ExpectedBehavior = Require(expectedBehavior);
         Parameter = Require(parameter);
         Cause = Require(cause);
+        WhyItMatters = OneLine(whyItMatters);
         ArgumentNullException.ThrowIfNull(toolIds);
         ArgumentNullException.ThrowIfNull(counterEvidence);
         ArgumentNullException.ThrowIfNull(actions);
         ArgumentNullException.ThrowIfNull(evidence);
+        ArgumentNullException.ThrowIfNull(notes);
         AssertCategory = assertCategory;
         ToolIds = toolIds.ToArray();
         ChamberId = string.IsNullOrWhiteSpace(chamberId) ? null : chamberId.Trim();
@@ -151,6 +160,11 @@ public sealed class FaultDefinition
         CounterEvidence = counterEvidence.ToArray();
         Actions = actions.ToArray();
         Evidence = evidence;
+        Notes = notes.ToArray();
+        foreach (var note in Notes)
+        {
+            _ = OneLine(note.WhyItMatters);
+        }
     }
 
     public string Id { get; }
@@ -187,11 +201,15 @@ public sealed class FaultDefinition
 
     public string Cause { get; }
 
+    public string WhyItMatters { get; }
+
     public IReadOnlyList<string> CounterEvidence { get; }
 
     public IReadOnlyList<string> Actions { get; }
 
     public FaultEvidence Evidence { get; }
+
+    public IReadOnlyList<EvidenceNote> Notes { get; }
 
     public IReadOnlyList<FaultSignal> ToSignals()
     {
@@ -216,6 +234,17 @@ public sealed class FaultDefinition
         }
 
         return value.Trim();
+    }
+
+    private static string OneLine(string value)
+    {
+        var text = Require(value);
+        if (text.Contains('\n', StringComparison.Ordinal) || text.Contains('\r', StringComparison.Ordinal) || text.Length > 220)
+        {
+            throw new ArgumentException("whyItMatters is one line.");
+        }
+
+        return text;
     }
 }
 

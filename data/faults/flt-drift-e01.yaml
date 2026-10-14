@@ -2,6 +2,7 @@
 # Synthetic fault. Slow etch-rate ramp after a clean. No discrete confounder.
 id: FLT-DRIFT-E01
 title: Etch rate ramp with RF hours on E-01
+whyItMatters: Etch rate has been sliding since the last clean, and the slide lines up with wear.
 category: processDrift
 scenario: S5
 expectedBehavior: recommend
@@ -29,14 +30,17 @@ evidence:
     kind: clean
     performedAt: "2026-08-20T04:00:00Z"
     summary: Last chamber clean. Chamber A is past 420 RF-hours since that clean.
+    whyItMatters: The last clean is the clock start, and the slide lines up with plasma hours.
   config:
     configId: CFG-E-01
     toolId: E-01
     revision: B
     partName: Liner
+    whyItMatters: The hardware revision did not change.
   runs:
     recipeId: OXIDE-ETCH
     recipeRevision: B
     lotId: W-E01-090
     materialCode: WAF-SI-300
     count: 3
+    whyItMatters: The same recipe revision kept running.

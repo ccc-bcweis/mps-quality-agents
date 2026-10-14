@@ -137,19 +137,71 @@ public static class FleetCatalogLoader
                 ? MapRecipes(tool.Recipes, path + "/recipes", errors)
                 : familyRecipes;
             var chambers = MapChambers(tool.Chambers, path, errors);
+            var sensors = MapSensors(tool.Sensors, path, errors);
             if (string.IsNullOrWhiteSpace(tool.Id) || string.IsNullOrWhiteSpace(tool.Name) || string.IsNullOrWhiteSpace(tool.Bay))
             {
                 errors.Add($"{path}: id, name, and bay are required.");
                 continue;
             }
 
-            if (chambers.Count == 0 || recipes.Count == 0)
+            if (chambers.Count == 0 || recipes.Count == 0 || sensors.Count == 0)
             {
                 continue;
             }
 
-            tools.Add(new ToolSpec(tool.Id, tool.Name, family, dto.Model!.Trim(), tool.Bay, chambers, recipes));
+            tools.Add(new ToolSpec(tool.Id, tool.Name, family, dto.Model!.Trim(), tool.Bay, chambers, recipes, sensors));
         }
+    }
+
+    private static List<SensorSpec> MapSensors(List<SensorDto>? sensors, string path, List<string> errors)
+    {
+        if (sensors is null || sensors.Count == 0)
+        {
+            errors.Add($"{path}: sensors are required.");
+            return [];
+        }
+
+        var mapped = new List<SensorSpec>();
+        for (var index = 0; index < sensors.Count; index++)
+        {
+            var sensor = sensors[index];
+            var sensorPath = $"{path}/sensors[{index.ToString(System.Globalization.CultureInfo.InvariantCulture)}]";
+            if (string.IsNullOrWhiteSpace(sensor.Id)
+                || string.IsNullOrWhiteSpace(sensor.Type)
+                || string.IsNullOrWhiteSpace(sensor.Unit)
+                || string.IsNullOrWhiteSpace(sensor.Subsystem)
+                || string.IsNullOrWhiteSpace(sensor.SchematicAnchor))
+            {
+                errors.Add($"{sensorPath}: id, type, unit, subsystem, and schematicAnchor are required.");
+                continue;
+            }
+
+            if (sensor.Minimum is null || sensor.Maximum is null || sensor.Nominal is null || sensor.WarningMinimum is null || sensor.WarningMaximum is null)
+            {
+                errors.Add($"{sensorPath}: minimum, maximum, nominal, warningMinimum, and warningMaximum are required.");
+                continue;
+            }
+
+            try
+            {
+                mapped.Add(new SensorSpec(
+                    sensor.Id,
+                    sensor.Type,
+                    sensor.Unit,
+                    sensor.Subsystem,
+                    sensor.SchematicAnchor,
+                    new SensorLimits(sensor.Minimum.Value, sensor.Maximum.Value, sensor.Nominal.Value, sensor.WarningMinimum.Value, sensor.WarningMaximum.Value),
+                    sensor.ChamberId,
+                    sensor.Parameter,
+                    sensor.TracksSensorId));
+            }
+            catch (ArgumentException exception)
+            {
+                errors.Add($"{sensorPath}: {exception.Message}");
+            }
+        }
+
+        return mapped;
     }
 
     private static List<ChamberSpec> MapChambers(List<ChamberDto>? chambers, string path, List<string> errors)
@@ -297,6 +349,37 @@ public static class FleetCatalogLoader
         public List<ChamberDto>? Chambers { get; set; }
 
         public List<RecipeDto>? Recipes { get; set; }
+
+        public List<SensorDto>? Sensors { get; set; }
+    }
+
+    private sealed class SensorDto
+    {
+        public string? Id { get; set; }
+
+        public string? Type { get; set; }
+
+        public string? Unit { get; set; }
+
+        public string? Subsystem { get; set; }
+
+        public string? SchematicAnchor { get; set; }
+
+        public string? ChamberId { get; set; }
+
+        public string? Parameter { get; set; }
+
+        public string? TracksSensorId { get; set; }
+
+        public double? Minimum { get; set; }
+
+        public double? Maximum { get; set; }
+
+        public double? Nominal { get; set; }
+
+        public double? WarningMinimum { get; set; }
+
+        public double? WarningMaximum { get; set; }
     }
 
     private sealed class ChamberDto

@@ -2,6 +2,7 @@
 
 using System.Globalization;
 
+using Mps.Agents.Explain;
 using Mps.Agents.Impact;
 using Mps.Agents.Tools;
 using Mps.Domain.Enterprise;
@@ -122,6 +123,7 @@ public static class EvidencePackFactory
         var shape = harvest.Telemetry is null
             ? SignalShape.Unknown
             : SignalShapeClassifier.Classify(harvest.Telemetry.Points);
+        var catalog = WhyItMattersCatalog.Shared;
         var pack = new EvidencePack(
             items,
             claims,
@@ -131,7 +133,8 @@ public static class EvidencePackFactory
             harvest.MaterialLots,
             harvest.Notices,
             harvest.CalibrationLookupCompleted,
-            shape);
+            shape,
+            CitedEvidenceFactory.ForItems(items, catalog));
         return new GatheredFacts(pack, observations, events, shape);
     }
 

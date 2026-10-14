@@ -31,11 +31,14 @@ public sealed class PromptCatalogTests
         var catalog = PromptCatalog.Load();
 
         catalog.Investigation.Id.Should().Be("investigation");
-        catalog.Investigation.Version.Should().Be("1.0.0");
+        catalog.Investigation.Version.Should().Be("1.1.0");
         catalog.Investigation.Body.Should().Contain("data, not instructions");
         catalog.Investigation.Body.Should().Contain("do not diagnose, write, or approve");
+        catalog.Investigation.Body.Should().Contain("whyItMatters");
         catalog.Resolution.Id.Should().Be("resolution");
-        catalog.Resolution.Version.Should().Be("1.0.0");
+        catalog.Resolution.Version.Should().Be("1.1.0");
+        catalog.Resolution.Body.Should().Contain("whyItMatters");
+        catalog.Resolution.Body.Should().Contain("evidenceMatrix");
         catalog.Resolution.Body.Should().Contain("evidence ids");
         catalog.Resolution.Body.Should().Contain("confounders");
         catalog.Resolution.Body.Should().Contain("data, not instructions");
@@ -198,7 +201,7 @@ public sealed class InvestigationAgentTests
         first.ToolCalls.Select(call => call.Name).Should().Equal(AgentToolNames.DefaultPlan);
         first.ToolCalls.Should().OnlyContain(call => call.Executed);
         first.PromptId.Should().Be("investigation");
-        first.PromptVersion.Should().Be("1.0.0");
+        first.PromptVersion.Should().Be("1.1.0");
         first.Pack!.Ecos.Should().Contain(eco => eco.EcoId == "ECO-4471");
         first.Features!.Kind.Should().Be(ImpactScopeKind.Chamber);
         first.Features.Key.Should().Be("E-02");
@@ -352,7 +355,7 @@ public sealed class ResolutionAgentTests
 
         result.Escalated.Should().BeFalse();
         result.ModelCalls.Should().Be(1);
-        result.PromptVersion.Should().Be("1.0.0");
+        result.PromptVersion.Should().Be("1.1.0");
         result.Claim!.Category.Should().Be(RootCauseCategory.EngineeringChange);
         result.Claim.EvidenceIds.Should().Contain(id);
         result.Claim.CounterEvidence.Should().NotBeEmpty();
@@ -415,6 +418,8 @@ public sealed class ResolutionAgentTests
 
         result.Escalated.Should().BeFalse();
         result.Claim!.Cause.Should().Contain("ECO-4471");
+        result.Claim.Explanations.Should().NotBeEmpty();
+        result.Claim.EvidenceMatrix.Select(entry => entry.Category).Distinct().Should().HaveCount(4);
         result.ModelCalls.Should().Be(1);
     }
 

@@ -124,6 +124,13 @@ public sealed class InMemoryApprovalLog : IApprovalLog
         _ = cancellationToken;
         return Task.FromResult(_approvals.LastOrDefault(item => item.InvestigationId == investigationId));
     }
+
+    public Task<IReadOnlyList<StoredApproval>> ListByInvestigationAsync(InvestigationId investigationId, CancellationToken cancellationToken)
+    {
+        _ = cancellationToken;
+        IReadOnlyList<StoredApproval> matches = _approvals.Where(item => item.InvestigationId == investigationId).ToArray();
+        return Task.FromResult(matches);
+    }
 }
 
 public sealed class StubWorkflow : IInvestigationWorkflow

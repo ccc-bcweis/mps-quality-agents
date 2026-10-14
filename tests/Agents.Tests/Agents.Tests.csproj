@@ -11,4 +11,7 @@
     <Using Include="FluentAssertions" />
     <Using Include="Xunit" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Fixtures\s1-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

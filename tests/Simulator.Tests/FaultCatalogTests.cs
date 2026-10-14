@@ -248,6 +248,40 @@ public sealed class FaultCatalogTests
         }
     }
 
+    [Fact]
+    public void EachEvidenceBlockSaysWhyItMattersInPlainLanguage()
+    {
+        foreach (var fault in Catalog.Faults)
+        {
+            fault.WhyItMatters.Should().NotContain("\n");
+            fault.WhyItMatters.Length.Should().BeInRange(1, 220);
+            fault.Notes.Should().Contain(note => note.Kind == "fault" && note.RecordId == fault.Id && note.WhyItMatters == fault.WhyItMatters);
+            foreach (var note in fault.Notes)
+            {
+                note.WhyItMatters.Length.Should().BeInRange(1, 220);
+                note.WhyItMatters.Should().NotContain("\n");
+                foreach (var token in FaultPlainLanguage.HiddenLabels)
+                {
+                    note.WhyItMatters.Should().NotContain(token);
+                }
+            }
+
+            var draft = new EnterpriseDraft();
+            _ = GroundTruthWriter.Apply(fault, draft);
+            string.Join('\n', draft.VisibleText()).Should().NotContain(fault.WhyItMatters);
+        }
+
+        Kinds("FLT-ECO-4471").Should().BeEquivalentTo("fault", "eco", "config", "runs", "confounder");
+        Kinds("FLT-CAL-S02").Should().BeEquivalentTo("fault", "calibration", "runs", "confounder");
+        Kinds("FLT-GAS-NF3317").Should().BeEquivalentTo("fault", "materialLot", "supplierNotice", "runs", "confounder");
+        Kinds("FLT-DRIFT-E01").Should().BeEquivalentTo("fault", "workOrder", "config", "runs");
+        Kinds("FLT-CONTRA-D01").Should().BeEquivalentTo("fault", "config", "runs", "missing", "contradiction");
+        Catalog.GetRequired("FLT-ECO-4471").Notes.Should().Contain(note => note.RecordId == "ECO-4471" && note.WhyItMatters.Contains("hardware change", StringComparison.Ordinal));
+        Catalog.GetRequired("FLT-CONTRA-D01").Notes.Should().Contain(note => note.Kind == "contradiction" && note.RecordId == "contradiction");
+    }
+
+    private static IEnumerable<string> Kinds(string id) => Catalog.GetRequired(id).Notes.Select(note => note.Kind);
+
     private static (EnterpriseDraft Draft, GroundTruthDocument Truth) Apply(string id)
     {
         var draft = new EnterpriseDraft();

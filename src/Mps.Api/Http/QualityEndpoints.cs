@@ -79,24 +79,30 @@ public static class QualityEndpoints
         app.MapPost("/api/incidents/{incidentId:guid}/investigations", async (
             Guid incidentId,
             IInvestigationService investigations,
+            IInvestigationNarrativeLog narratives,
             CancellationToken cancellationToken) =>
         {
             var snapshot = await investigations.StartAsync(new IncidentId(incidentId), cancellationToken).ConfigureAwait(false);
-            var response = ContractMapper.ToResponse(snapshot);
+            var narrative = await narratives.GetAsync(snapshot.Id, cancellationToken).ConfigureAwait(false);
+            var response = ContractMapper.ToResponse(snapshot, narrative);
             return Results.Created("/api/investigations/" + response.Id.ToString("D"), response);
         });
         app.MapGet("/api/investigations/{investigationId:guid}", async (
             Guid investigationId,
             IInvestigationService investigations,
+            IInvestigationNarrativeLog narratives,
             CancellationToken cancellationToken) =>
         {
-            var snapshot = await investigations.GetAsync(new InvestigationId(investigationId), cancellationToken).ConfigureAwait(false);
-            return Results.Ok(ContractMapper.ToResponse(snapshot));
+            var id = new InvestigationId(investigationId);
+            var snapshot = await investigations.GetAsync(id, cancellationToken).ConfigureAwait(false);
+            var narrative = await narratives.GetAsync(id, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(ContractMapper.ToResponse(snapshot, narrative));
         });
         app.MapPost("/api/investigations/{investigationId:guid}/decisions", async (
             Guid investigationId,
             DecisionBody? body,
             IHumanDecisionService decisions,
+            IInvestigationNarrativeLog narratives,
             CancellationToken cancellationToken) =>
         {
             if (body?.Kind is null)
@@ -104,14 +110,16 @@ public static class QualityEndpoints
                 throw new IntakeValidationException("Decision kind is required.");
             }
 
+            var id = new InvestigationId(investigationId);
             var outcome = await decisions.DecideAsync(
-                new InvestigationId(investigationId),
+                id,
                 body.Kind.Value,
                 body.Comment,
                 body.ApproverId,
                 cancellationToken).ConfigureAwait(false);
+            var narrative = await narratives.GetAsync(id, cancellationToken).ConfigureAwait(false);
             return Results.Ok(new DecisionResponse(
-                ContractMapper.ToResponse(outcome.Investigation),
+                ContractMapper.ToResponse(outcome.Investigation, narrative),
                 outcome.Capa is null ? null : ContractMapper.ToResponse(outcome.Capa.Capa)));
         });
         app.MapGet("/api/capas", async (ICapaLifecycleService capas, CancellationToken cancellationToken) =>

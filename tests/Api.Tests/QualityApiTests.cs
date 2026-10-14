@@ -4,9 +4,11 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 
+using Mps.Api.Fakes;
 using Mps.Application.Persistence;
 using Mps.Domain.Approval;
 using Mps.Domain.Capa;
@@ -153,6 +155,31 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task InvestigationKeepsWhyItMattersSignalIdAndTheEvidenceMatrix()
+    {
+        var client = _factory.CreateClient();
+        var opened = await OpenIncidentAsync(client, "E-02", "escTemperature");
+        var incidentId = opened.GetProperty("id").GetGuid();
+
+        var started = await client.PostAsync("/api/incidents/" + incidentId + "/investigations", null);
+        var created = await started.Content.ReadFromJsonAsync<JsonElement>(Json);
+        var investigationId = created.GetProperty("id").GetGuid();
+        var decision = await client.PostAsJsonAsync("/api/investigations/" + investigationId + "/decisions", new
+        {
+            kind = "reject",
+            comment = "The signal returned to the window.",
+        });
+        var rejected = await decision.Content.ReadFromJsonAsync<JsonElement>(Json);
+        var loaded = await client.GetFromJsonAsync<JsonElement>("/api/investigations/" + investigationId);
+
+        started.StatusCode.Should().Be(HttpStatusCode.Created);
+        decision.StatusCode.Should().Be(HttpStatusCode.OK);
+        AssertNarrative(created);
+        AssertNarrative(rejected.GetProperty("investigation"));
+        AssertNarrative(loaded);
+    }
+
+    [Fact]
     public async Task RejectMovesTheIncidentAndDoesNotCreateACapa()
     {
         var client = _factory.CreateClient();
@@ -231,21 +258,34 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task FaultInjectionOpensTheInjectorChannelAndALargeMagnitudeRaisesAnAlert()
+    public async Task FaultInjectionAcceptsTheFaultWithoutOpeningATicketByDefault()
     {
         var client = _factory.CreateClient();
         var parameter = "gasFlow-" + Guid.NewGuid().ToString("N");
 
-        var response = await client.PostAsJsonAsync("/api/faults", new
-        {
-            toolId = "E-02",
-            chamberId = "A",
-            parameter,
-            shape = "step",
-            magnitude = 4.5,
-            rootCauseCategory = "supplyChainMaterial",
-            confounders = true,
-        });
+        var response = await client.PostAsJsonAsync("/api/faults", FaultBody(parameter));
+        var accepted = await response.Content.ReadFromJsonAsync<JsonElement>(Json);
+        var incidents = await client.GetFromJsonAsync<JsonElement>("/api/incidents");
+        var alerts = await client.GetFromJsonAsync<JsonElement>("/api/alerts?toolId=E-02");
+        var tickets = await client.GetFromJsonAsync<JsonElement>("/api/tickets");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
+        accepted.GetProperty("faultId").GetGuid().Should().NotBeEmpty();
+        accepted.GetProperty("correlationId").GetString().Should().NotBeNullOrWhiteSpace();
+        incidents.EnumerateArray().Should().NotContain(incident => incident.GetProperty("parameter").GetString() == parameter);
+        alerts.EnumerateArray().Should().NotContain(alert => alert.GetProperty("parameter").GetString() == parameter);
+        tickets.EnumerateArray().Should().NotContain(ticket => ticket.GetProperty("title").GetString()!.Contains(parameter, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task FaultInjectionOpensTheInjectorChannelWhenDirectTicketIsEnabled()
+    {
+        await using var factory = new ApiFactory().WithWebHostBuilder(builder =>
+            builder.UseSetting("Mps:Injector:DirectTicket", "true"));
+        var client = factory.CreateClient();
+        var parameter = "gasFlow-" + Guid.NewGuid().ToString("N");
+
+        var response = await client.PostAsJsonAsync("/api/faults", FaultBody(parameter));
         var accepted = await response.Content.ReadFromJsonAsync<JsonElement>(Json);
         var incidents = await client.GetFromJsonAsync<JsonElement>("/api/incidents");
         var alerts = await client.GetFromJsonAsync<JsonElement>("/api/alerts?toolId=E-02");
@@ -287,6 +327,37 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         message.GetProperty("channel").GetString().Should().Be("operatorReport");
         await connection.StopAsync();
     }
+
+    private static void AssertNarrative(JsonElement investigation)
+    {
+        var evidence = investigation.GetProperty("evidence");
+        evidence.GetArrayLength().Should().BeGreaterThan(0);
+        var item = evidence[0];
+        item.GetProperty("whyItMatters").GetString().Should().Be(FakeInvestigationWorkflow.StandInWhyItMatters);
+        item.GetProperty("signalId").GetString().Should().Be(FakeInvestigationWorkflow.StandInSignalId);
+        var matrix = investigation.GetProperty("evidenceMatrix");
+        matrix.GetArrayLength().Should().Be(4);
+        var evidenceId = item.GetProperty("id").GetGuid();
+        matrix.EnumerateArray().Should().Contain(entry =>
+            entry.GetProperty("category").GetString() == "processDrift"
+            && entry.GetProperty("stance").GetString() == "supports"
+            && entry.GetProperty("evidenceId").GetGuid() == evidenceId
+            && entry.GetProperty("whyItMatters").GetString() == FakeInvestigationWorkflow.StandInWhyItMatters);
+        matrix.EnumerateArray().Should().Contain(entry =>
+            entry.GetProperty("category").GetString() == "engineeringChange"
+            && entry.GetProperty("stance").GetString() == "rulesOut");
+    }
+
+    private static object FaultBody(string parameter) => new
+    {
+        toolId = "E-02",
+        chamberId = "A",
+        parameter,
+        shape = "step",
+        magnitude = 4.5,
+        rootCauseCategory = "supplyChainMaterial",
+        confounders = true,
+    };
 
     private static async Task<JsonElement> OpenIncidentAsync(HttpClient client, string toolId, string parameter)
     {

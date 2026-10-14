@@ -12,6 +12,7 @@ public sealed record TelemetryFrame
         string chamberId,
         string parameter,
         string unit,
+        string sensorId,
         DateTimeOffset simulatedAt,
         double value,
         string recipeId,
@@ -23,6 +24,7 @@ public sealed record TelemetryFrame
         ChamberId = Require(chamberId, nameof(chamberId));
         Parameter = Require(parameter, nameof(parameter));
         Unit = Require(unit, nameof(unit));
+        SensorId = Require(sensorId, nameof(sensorId));
         RecipeId = Require(recipeId, nameof(recipeId));
         StepId = Require(stepId, nameof(stepId));
         RunId = Require(runId, nameof(runId));
@@ -43,6 +45,9 @@ public sealed record TelemetryFrame
     public string Parameter { get; }
 
     public string Unit { get; }
+
+    /// <summary>Catalog id from <c>data/fleet</c>. Tool-scoped points use the tool id as <see cref="ChamberId"/>.</summary>
+    public string SensorId { get; }
 
     public DateTimeOffset SimulatedAt { get; }
 

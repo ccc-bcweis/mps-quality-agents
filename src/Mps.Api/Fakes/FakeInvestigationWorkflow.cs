@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Application.Evidence;
 using Mps.Application.Persistence;
 using Mps.Application.Workflow;
 using Mps.Domain.Evidence;
@@ -14,14 +15,21 @@ namespace Mps.Api.Fakes;
 /// </summary>
 public sealed class FakeInvestigationWorkflow : IInvestigationWorkflow
 {
+    public const string StandInWhyItMatters = "This chart point sits outside the process window, which can change the result on the affected lot.";
+
+    public const string StandInSignalId = "spc.stand-in";
+
     private readonly IInvestigationLog _investigations;
+    private readonly IInvestigationNarrativeLog _narratives;
     private readonly TimeProvider _time;
 
-    public FakeInvestigationWorkflow(IInvestigationLog investigations, TimeProvider time)
+    public FakeInvestigationWorkflow(IInvestigationLog investigations, IInvestigationNarrativeLog narratives, TimeProvider time)
     {
         ArgumentNullException.ThrowIfNull(investigations);
+        ArgumentNullException.ThrowIfNull(narratives);
         ArgumentNullException.ThrowIfNull(time);
         _investigations = investigations;
+        _narratives = narratives;
         _time = time;
     }
 
@@ -53,7 +61,23 @@ public sealed class FakeInvestigationWorkflow : IInvestigationWorkflow
             [hypothesis],
             null,
             "inv-" + incidentId.ToString());
+        _narratives.Stage(snapshot.Id, StandInNarrative(snapshot));
         return Task.FromResult(snapshot);
+    }
+
+    private static InvestigationNarrative StandInNarrative(InvestigationSnapshot snapshot)
+    {
+        var evidenceId = snapshot.Evidence[0].Id.Value;
+        var ids = snapshot.Evidence.Select(item => item.Id.Value).ToHashSet();
+        return InvestigationNarrative.Create(
+            [new EvidenceNote(evidenceId, StandInWhyItMatters, StandInSignalId)],
+            [
+                new EvidenceMatrixEntry(RootCauseCategory.EngineeringChange, evidenceId, EvidenceStance.RulesOut, "Nothing in this stand-in points to a recipe or document change."),
+                new EvidenceMatrixEntry(RootCauseCategory.EquipmentCalibrationOrAlignment, evidenceId, EvidenceStance.Neutral, "Calibration was not checked by the stand-in."),
+                new EvidenceMatrixEntry(RootCauseCategory.SupplyChainMaterial, evidenceId, EvidenceStance.RulesOut, "No material lot is cited by the stand-in."),
+                new EvidenceMatrixEntry(RootCauseCategory.ProcessDrift, evidenceId, EvidenceStance.Supports, StandInWhyItMatters),
+            ],
+            ids);
     }
 
     public async Task<InvestigationSnapshot> ResumeWithHumanInputAsync(
