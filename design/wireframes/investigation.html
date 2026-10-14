@@ -43,7 +43,7 @@
       <div>
         <div class="crumbs"><a href="tickets.html">TKT-1044</a> · E-02 · S1 success path</div>
         <h1>Investigation INV-881</h1>
-        <p>Investigation Agent (read-only tools) → evidence gate → Resolution Agent (no tools). Violet = probabilistic. Cyan = deterministic.</p>
+        <p>Same steps as the G4 swimlane. Violet agent badge on triage, hypotheses, tool calls, ranking, and the CAPA draft. Cyan is deterministic. The human gate is still ahead.</p>
       </div>
       <div class="btn-row">
         <a class="btn" href="approval.html">Review recommendation</a>
@@ -52,6 +52,107 @@
     <div class="banner-callout ok">
       Evidence gate: <strong>sufficient</strong>, no contradiction. Scope = single tool / chamber B. Timing aligns with ECO-4471. Confounder (PM-3381 same week) is present and must be addressed.
     </div>
+    <section class="panel timeline-panel" aria-labelledby="agent-steps-h">
+      <h2 id="agent-steps-h">Agent steps <span class="right">live timeline · S1</span></h2>
+      <p class="step-key">Status chips
+        <span class="chip queued">queued</span>
+        <span class="chip running">running</span>
+        <span class="chip done">done</span>
+        <span class="chip escalated">escalated</span>
+        <span class="step-screen">running is in-flight. This S1 trace has none in flight.</span>
+      </p>
+      <ol class="agent-steps">
+        <li data-status="done" data-actor="rules">
+          <span class="step-n">01</span>
+          <div>
+            <div class="step-top"><span class="step-title">Alerts to ticket</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip">Rules</span> <span class="step-screen">Alerts / Tickets</span></div>
+            <p>SPC and Western Electric open ALT-2044 and TKT-1044. Not an agent.</p>
+          </div>
+        </li>
+        <li data-status="done" data-actor="agent">
+          <span class="step-n">02</span>
+          <div>
+            <div class="step-top"><span class="step-title">Triage</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip ai">Investigation Agent</span> <span class="step-screen">Investigation</span></div>
+            <p>Plans the evidence pack. Does not diagnose.</p>
+          </div>
+        </li>
+        <li data-status="done" data-actor="agent">
+          <span class="step-n">03</span>
+          <div>
+            <div class="step-top"><span class="step-title">Hypothesis generation</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip ai">Investigation Agent</span> <span class="step-screen">Investigation</span></div>
+            <p>Four classes, none picked: engineering change, equipment out of calibration, bad material lot, process drift.</p>
+          </div>
+        </li>
+        <li data-status="done" data-actor="agent">
+          <span class="step-n">04</span>
+          <div>
+            <div class="step-top"><span class="step-title">Evidence tool calls</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip ai">Investigation Agent</span> <span class="step-screen">Investigation</span></div>
+            <p>Read-only MES, QMS, PLM, ERP, CMMS, and document retrieval. Eight calls. Impact.Scope included.</p>
+          </div>
+        </li>
+        <li data-status="done" data-actor="rules">
+          <span class="step-n">05</span>
+          <div>
+            <div class="step-top"><span class="step-title">Evidence gate</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip">Rules</span> <span class="step-screen">Investigation</span></div>
+            <p>Sufficient. No contradiction. Scope is one chamber.</p>
+          </div>
+        </li>
+        <li data-status="done" data-actor="rules">
+          <span class="step-n">06</span>
+          <div>
+            <div class="step-top"><span class="step-title">Escalation path</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip">Rules</span> <span class="step-screen">Investigation</span></div>
+            <p>Checked. Not taken on S1. Missing or contradictory evidence stops here and asserts no root cause.</p>
+          </div>
+        </li>
+        <li data-status="done" data-actor="agent">
+          <span class="step-n">07</span>
+          <div>
+            <div class="step-top"><span class="step-title">Hypothesis ranking</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip ai">Resolution Agent</span> <span class="step-screen">Investigation</span></div>
+            <p>H1 engineering change, 0.78, citations, PM confounder addressed as counterEvidence.</p>
+          </div>
+        </li>
+        <li data-status="done" data-actor="agent">
+          <span class="step-n">08</span>
+          <div>
+            <div class="step-top"><span class="step-title">CAPA draft</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip ai">Resolution Agent</span> <span class="step-screen">Investigation</span></div>
+            <p>actions[] on the same completion. Containment and a CAPA proposal. Not a write.</p>
+          </div>
+        </li>
+        <li data-status="done" data-actor="rules">
+          <span class="step-n">09</span>
+          <div>
+            <div class="step-top"><span class="step-title">Grounding validation</span><span class="chip done">done</span></div>
+            <div class="step-meta"><span class="chip">Rules</span> <span class="step-screen">Investigation</span></div>
+            <p>Every cited ID is in the pack. No uncited claim.</p>
+          </div>
+        </li>
+        <li data-status="queued" data-actor="human">
+          <span class="step-n">10</span>
+          <div>
+            <div class="step-top"><span class="step-title">Human approval</span><span class="chip queued">queued</span></div>
+            <div class="step-meta"><span class="chip warn">Human</span> <span class="step-screen">Approval</span></div>
+            <p>Explicit confirm mints a single-use ApprovalToken. Reject mints nothing.</p>
+          </div>
+        </li>
+        <li data-status="queued" data-actor="rules">
+          <span class="step-n">11</span>
+          <div>
+            <div class="step-top"><span class="step-title">CAPA in mock QMS</span><span class="chip queued">queued</span></div>
+            <div class="step-meta"><span class="chip">Rules</span> <span class="step-screen">CAPA</span></div>
+            <p>Action service calls CreateCapa after the token. Agents never write.</p>
+          </div>
+        </li>
+      </ol>
+      <p class="step-note">S2 reference, <a href="tickets.html">TKT-1042 / INV-880</a>: the evidence gate chip is <span class="chip escalated">escalated</span> (PLM rev C vs MES rev B, calibration record missing). Ranking, the CAPA draft, grounding, and approval stay <span class="chip queued">queued</span>. No root cause is asserted.</p>
+    </section>
     <div class="cols">
       <section class="panel">
         <h2>Evidence pack <span class="right">12 items</span></h2>
