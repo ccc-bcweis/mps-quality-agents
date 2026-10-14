@@ -151,7 +151,8 @@ public sealed class ConsoleApiContractTests
         var result = document.Schema("DecisionResult");
         result.AdditionalPropertiesAllowed.Should().BeFalse();
         result.Required.Should().Equal("investigation");
-        result.Properties["capa"].Reference.Id.Should().Be("Capa");
+        result.Properties["capa"].Nullable.Should().BeTrue();
+        result.Properties["capa"].AllOf.Should().ContainSingle().Which.Reference.Id.Should().Be("Capa");
         result.Required.Should().NotContain("capa");
 
         var capa = document.Schema("Capa");

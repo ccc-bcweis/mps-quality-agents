@@ -69,7 +69,7 @@ public sealed class LayeringTests
     public void ModelGatewayUsesTheAiAbstractionAndNoBusinessModules()
     {
         AssertDependsOn(ModelGateway, "Microsoft.Extensions.AI");
-        AssertDoesNotDependOn(ModelGateway, Layers);
+        AssertDoesNotDependOn(ModelGateway, AllExcept("Mps.ModelGateway"));
     }
 
     [Fact]
