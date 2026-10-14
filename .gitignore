@@ -1,6 +1,7 @@
 # Build
 [Bb]in/
 [Oo]bj/
+StrykerOutput/
 [Ll]og/
 [Ll]ogs/
 TestResults/
