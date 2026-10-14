@@ -5,6 +5,7 @@ toolFamily: Etch
 revision: C
 kind: bulletin
 untrusted: false
+whyItMatters: "A new edge ring changes the heat path from the chuck to the wafer."
 ---
 # Service bulletin for edge ring revision C
 

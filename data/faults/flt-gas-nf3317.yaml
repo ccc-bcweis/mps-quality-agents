@@ -2,6 +2,7 @@
 # Synthetic fault. One gas lot on every etch tool, with an ECO confounder on only E-01. Scenario S4.
 id: FLT-GAS-NF3317
 title: Etch rate step on both etch tools after lot NF-3317
+whyItMatters: Etch rate dropped on both etch tools, so wafers may come out under-etched.
 category: supplyChainMaterial
 scenario: S4-material
 expectedBehavior: recommend
@@ -27,12 +28,14 @@ evidence:
     receivedAt: "2026-10-07T18:00:00Z"
     noticeId: SN-NF-3317
     toolIds: [E-01, E-02]
+    whyItMatters: Both tools started that lot just before the drop.
   supplierNotice:
     noticeId: SN-NF-3317
     supplierName: Cinderwell Specialty Gases
     materialCode: GAS-NF3-O2
     lotId: NF-3317
     summary: Lot NF-3317 moisture is out of spec for the NF3/O2 mix released to etch.
+    whyItMatters: The supplier says the lot is too wet.
     issuedAt: "2026-10-07T20:00:00Z"
   runs:
     recipeId: OXIDE-ETCH
@@ -40,6 +43,7 @@ evidence:
     lotId: W-ETCH-778
     materialCode: WAF-SI-300
     count: 2
+    whyItMatters: Wafers ran after the lot was released.
   confounders:
     - kind: eco
       eco:
@@ -49,3 +53,4 @@ evidence:
         recipeId: OXIDE-ETCH
         effectiveAt: "2026-10-06T12:00:00Z"
         changeSummary: Document-only liner note on E-01. Setpoints were not changed. E-02 is outside this note.
+      whyItMatters: A paperwork change on only one tool cannot explain the other tool.

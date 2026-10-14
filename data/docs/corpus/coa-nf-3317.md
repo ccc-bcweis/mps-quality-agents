@@ -5,6 +5,7 @@ toolFamily: Etch
 revision: A
 kind: coa
 untrusted: false
+whyItMatters: "A wet gas lot can slow the etch on every tool that used it."
 ---
 # Certificate of analysis for lot NF-3317
 

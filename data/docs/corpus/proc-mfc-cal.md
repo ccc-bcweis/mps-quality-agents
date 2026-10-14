@@ -5,6 +5,7 @@ toolFamily: Strip
 revision: B
 kind: procedure
 untrusted: false
+whyItMatters: "An overdue flow controller can report the wrong gas flow."
 ---
 # O2 mass flow controller calibration procedure
 
