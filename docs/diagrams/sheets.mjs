@@ -621,8 +621,8 @@ export function drawCicd(sheet) {
   ], 'review');
   sheet.node('bryan', revCol.x, bobY + 194, revCol.w, 170, [
     'Bryan',
-    'Lane-merge approval',
     'Azure deploy go',
+    'Does not approve merges',
   ], 'review');
 
   const ciOut = ciCol.x + ciCol.w + 16;
