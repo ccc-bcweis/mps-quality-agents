@@ -27,3 +27,26 @@ All intellectual property in this build (design, specification, plan, code, data
 
 ## License
 MIT
+
+## Task ID key
+
+Board and plan task IDs are project-specific shorthand (not an industry standard): a prefix for the work stream plus a sequence number.
+
+| Prefix | Work stream |
+|---|---|
+| F | Foundation (skeleton, contracts, CI, Docker, VS Code, Bicep) |
+| DS | Design (brand, logos, wireframes, prototypes) |
+| D | Data and simulation (fleet specs, telemetry, faults, mock enterprise systems, documents, ROI data) |
+| A | Agents (model gateway, evidence gate, Investigation/Resolution agents, workflow) |
+| P | Platform API (SPC alerts, intake, lifecycle, approval/CAPA, telemetry) |
+| U | UI screens |
+| T | Independent tests (contract, integration, mutation) |
+| E | AI evaluation |
+| SEC | Security and red-team testing |
+| I | Integration |
+| Z | Azure deployment |
+| G | Diagrams |
+| K | Deck and documentation |
+| R | Rehearsal |
+| M | Meetings/coordination |
+| ...x | Stretch item (e.g. S3x) |
