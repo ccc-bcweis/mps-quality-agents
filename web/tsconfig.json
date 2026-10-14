@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "msw": ["node_modules/msw"],
+      "msw/node": ["node_modules/msw/lib/node/index.d.ts"],
+      "msw/browser": ["node_modules/msw/lib/browser/index.d.ts"]
+    }
+  },
+  "include": ["src", "../contracts/msw/handlers.ts", "vite.config.ts"]
+}

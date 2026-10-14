@@ -1,0 +1,112 @@
+// Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+
+using Mps.Agents.Evidence;
+using Mps.Agents.Impact;
+using Mps.Domain.Enterprise;
+using Mps.Domain.Evidence;
+using Mps.Domain.Impact;
+
+namespace Mps.Agents.Ranking;
+
+/// <summary>
+/// Features and citations the ranker uses. The resolution prompt carries this JSON.
+/// </summary>
+public sealed class ResolutionRequest
+{
+    public string ScopeKind { get; set; } = "tool";
+
+    public string ScopeKey { get; set; } = string.Empty;
+
+    public string SignalShape { get; set; } = "unknown";
+
+    public string[] EcoIds { get; set; } = [];
+
+    public string[] EcoEvidenceIds { get; set; } = [];
+
+    public string[] PmSummaries { get; set; } = [];
+
+    public string[] OverdueInstruments { get; set; } = [];
+
+    public string[] OverdueEvidenceIds { get; set; } = [];
+
+    public string[] AlignmentSummaries { get; set; } = [];
+
+    public string[] AlignmentEvidenceIds { get; set; } = [];
+
+    public string[] LotIds { get; set; } = [];
+
+    public string[] LotEvidenceIds { get; set; } = [];
+
+    public string[] NoticeIds { get; set; } = [];
+
+    public string[] SignalEvidenceIds { get; set; } = [];
+
+    public static ResolutionRequest From(EvidencePack pack, ImpactFeatures features)
+    {
+        ArgumentNullException.ThrowIfNull(pack);
+        ArgumentNullException.ThrowIfNull(features);
+        return new ResolutionRequest
+        {
+            ScopeKind = ScopeName(features.Kind),
+            ScopeKey = features.Key,
+            SignalShape = ShapeName(features.Shape),
+            EcoIds = pack.Ecos.Select(eco => eco.EcoId).ToArray(),
+            EcoEvidenceIds = Ids(pack, pack.Ecos.Select(eco => eco.EcoId)),
+            PmSummaries = pack.WorkOrders.Where(order => !IsAlignment(order)).Select(DescribeOrder).ToArray(),
+            OverdueInstruments = pack.Calibrations.Where(record => record.IsOverdue).Select(record => record.Instrument).ToArray(),
+            OverdueEvidenceIds = Ids(pack, pack.Calibrations.Where(record => record.IsOverdue).Select(record => record.CalibrationId)),
+            AlignmentSummaries = pack.WorkOrders.Where(IsAlignment).Select(DescribeOrder).ToArray(),
+            AlignmentEvidenceIds = Ids(pack, pack.WorkOrders.Where(IsAlignment).Select(order => order.WorkOrderId)),
+            LotIds = pack.MaterialLots.Select(lot => lot.LotId).ToArray(),
+            LotEvidenceIds = Ids(pack, pack.MaterialLots.Select(lot => lot.LotId)),
+            NoticeIds = pack.SupplierNotices.Select(notice => notice.NoticeId).ToArray(),
+            SignalEvidenceIds = pack.Items
+                .Where(item => item.Source is EvidenceSource.Spc or EvidenceSource.Telemetry)
+                .Select(item => item.Id.ToString())
+                .ToArray(),
+        };
+    }
+
+    private static string[] Ids(EvidencePack pack, IEnumerable<string> externalRefs)
+    {
+        var wanted = new HashSet<string>(externalRefs, StringComparer.OrdinalIgnoreCase);
+        return pack.Items
+            .Where(item => item.ExternalRef is not null && wanted.Contains(item.ExternalRef))
+            .Select(item => item.Id.ToString())
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    private static bool IsAlignment(WorkOrder order)
+    {
+        return order.Kind.Contains("align", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string DescribeOrder(WorkOrder order)
+    {
+        return order.WorkOrderId + " " + order.Kind + ": " + order.Summary;
+    }
+
+    private static string ScopeName(ImpactScopeKind kind)
+    {
+        return kind switch
+        {
+            ImpactScopeKind.Chamber => "chamber",
+            ImpactScopeKind.Recipe => "recipe",
+            ImpactScopeKind.MaterialLot => "materialLot",
+            _ => "tool",
+        };
+    }
+
+    private static string ShapeName(Mps.Agents.Impact.SignalShape shape)
+    {
+        return shape switch
+        {
+            Mps.Agents.Impact.SignalShape.Step => "step",
+            Mps.Agents.Impact.SignalShape.Ramp => "ramp",
+            Mps.Agents.Impact.SignalShape.Oscillation => "oscillation",
+            Mps.Agents.Impact.SignalShape.Intermittent => "intermittent",
+            _ => "unknown",
+        };
+    }
+}
