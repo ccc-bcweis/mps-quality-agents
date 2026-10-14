@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.meridian-precision.example/events/capa-created.schema.json",
+  "title": "CapaCreated",
+  "description": "A CAPA was opened. approvalTokenId is required. The stage is open.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "occurredAt", "correlationId", "payload"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": { "const": "capaCreated" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string", "minLength": 1 },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "incidentId", "summary", "approvalTokenId", "actionHash", "stage", "openedAt"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "incidentId": { "type": "string", "format": "uuid" },
+        "summary": { "type": "string", "minLength": 1 },
+        "approvalTokenId": { "type": "string", "format": "uuid" },
+        "actionHash": { "type": "string", "minLength": 1 },
+        "stage": { "const": "open" },
+        "openedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

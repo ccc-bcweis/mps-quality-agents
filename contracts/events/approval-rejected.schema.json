@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.meridian-precision.example/events/approval-rejected.schema.json",
+  "title": "ApprovalRejected",
+  "description": "A human rejected the recommendation. No approval token and no CAPA are created.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "occurredAt", "correlationId", "payload"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": { "const": "approvalRejected" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string", "minLength": 1 },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["investigationId"],
+      "properties": {
+        "investigationId": { "type": "string", "format": "uuid" },
+        "comment": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

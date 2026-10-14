@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Mps.Architecture.Tests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Mps.Agents\Mps.Agents.csproj" />
+    <ProjectReference Include="..\..\src\Mps.Api\Mps.Api.csproj" />
+    <ProjectReference Include="..\..\src\Mps.Application\Mps.Application.csproj" />
+    <ProjectReference Include="..\..\src\Mps.Connectors\Mps.Connectors.csproj" />
+    <ProjectReference Include="..\..\src\Mps.Domain\Mps.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Mps.MockEnterprise\Mps.MockEnterprise.csproj" />
+    <ProjectReference Include="..\..\src\Mps.ModelGateway\Mps.ModelGateway.csproj" />
+    <ProjectReference Include="..\..\src\Mps.Orchestration\Mps.Orchestration.csproj" />
+    <ProjectReference Include="..\..\src\Mps.Simulator\Mps.Simulator.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="FluentAssertions" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

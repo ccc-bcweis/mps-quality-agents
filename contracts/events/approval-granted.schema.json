@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.meridian-precision.example/events/approval-granted.schema.json",
+  "title": "ApprovalGranted",
+  "description": "A human approved the action. The server issued a single-use approval token. This event does not carry the token signature.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "occurredAt", "correlationId", "payload"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": { "const": "approvalGranted" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string", "minLength": 1 },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["investigationId", "approverId", "approvalTokenId", "actionHash", "capaId"],
+      "properties": {
+        "investigationId": { "type": "string", "format": "uuid" },
+        "approverId": { "type": "string", "minLength": 1 },
+        "approvalTokenId": { "type": "string", "format": "uuid" },
+        "actionHash": { "type": "string", "minLength": 1 },
+        "capaId": { "type": "string", "format": "uuid" }
+      }
+    }
+  }
+}

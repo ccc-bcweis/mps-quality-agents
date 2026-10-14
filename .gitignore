@@ -1,0 +1,40 @@
+# Build
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+TestResults/
+coverage/
+*.trx
+*.cobertura.xml
+
+# User / IDE
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Secrets. .env.example is the committed template.
+.env
+.env.*
+!.env.example
+
+# Local SQLite
+*.db
+*.db-shm
+*.db-wal
+
+# Node (UI lane)
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Bicep compile output
+infra/**/*.json
+!infra/**/*.parameters.json
+
+# OS
+Thumbs.db
+Desktop.ini

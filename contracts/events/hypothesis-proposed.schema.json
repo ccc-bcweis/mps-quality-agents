@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.meridian-precision.example/events/hypothesis-proposed.schema.json",
+  "title": "HypothesisProposed",
+  "description": "A ranked root-cause hypothesis. Confidence is 0 to 1 and at least one evidence id is required.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "occurredAt", "correlationId", "payload"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": { "const": "hypothesisProposed" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string", "minLength": 1 },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["investigationId", "hypothesis"],
+      "properties": {
+        "investigationId": { "type": "string", "format": "uuid" },
+        "hypothesis": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "category", "cause", "confidence", "evidenceIds", "counterEvidence", "actions"],
+          "properties": {
+            "id": { "type": "string", "format": "uuid" },
+            "category": {
+              "enum": ["engineeringChange", "equipmentCalibrationOrAlignment", "supplyChainMaterial", "processDrift"]
+            },
+            "cause": { "type": "string", "minLength": 1 },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+            "evidenceIds": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "format": "uuid" }
+            },
+            "counterEvidence": { "type": "array", "items": { "type": "string" } },
+            "actions": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  }
+}

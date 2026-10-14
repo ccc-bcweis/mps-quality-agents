@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.meridian-precision.example/events/incident-opened.schema.json",
+  "title": "IncidentOpened",
+  "description": "Every intake channel becomes one incident. The stage at open is ticketOpened.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "occurredAt", "correlationId", "payload"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": { "const": "incidentOpened" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string", "minLength": 1 },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "toolId", "parameter", "channel", "severity", "summary", "stage", "openedAt"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "toolId": { "type": "string", "minLength": 1 },
+        "chamberId": { "type": ["string", "null"] },
+        "parameter": { "type": "string", "minLength": 1 },
+        "channel": {
+          "enum": ["iotSpcAlert", "operatorReport", "qmsNonconformance", "supplierQualityNotice", "faultInjector"]
+        },
+        "severity": { "enum": ["low", "medium", "high", "critical"] },
+        "summary": { "type": "string", "minLength": 1 },
+        "stage": { "const": "ticketOpened" },
+        "openedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}
