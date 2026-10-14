@@ -5,6 +5,7 @@ using Mps.Application.Errors;
 using Mps.Application.Faults;
 using Mps.Application.Intake;
 using Mps.Application.Lifecycle;
+using Mps.Application.Metrics;
 using Mps.Application.Persistence;
 using Mps.Domain.Capa;
 using Mps.Domain.Hypotheses;
@@ -166,11 +167,28 @@ public static class QualityEndpoints
                 cancellationToken).ConfigureAwait(false);
             return Results.Json(new FaultAcceptedResponse(accepted.FaultId, accepted.CorrelationId), statusCode: StatusCodes.Status202Accepted);
         });
-        app.MapGet("/api/metrics", (IConfiguration configuration) =>
+        app.MapGet("/api/metrics", async (
+            IMetricsLog metrics,
+            MetricsPolicy policy,
+            IConfiguration configuration,
+            TimeProvider time,
+            CancellationToken cancellationToken) =>
         {
-            var mode = ContractMapper.ModeFrom(configuration["LLM_MODE"]);
-            var cap = configuration.GetValue("Metrics:SpendCapUsd", 2d);
-            return Results.Ok(new MetricsResponse(mode, null, null, null, 0, null, null, 0d, cap));
+            var rollup = await metrics.RollupAsync(
+                time.GetUtcNow(),
+                policy.SpendCapUsd,
+                ContractMapper.ModeFrom(configuration["LLM_MODE"]),
+                cancellationToken).ConfigureAwait(false);
+            return Results.Ok(new MetricsResponse(
+                rollup.Mode,
+                rollup.CompletionRate,
+                rollup.GroundingScore,
+                rollup.CategoryAccuracy,
+                rollup.ToolFailureCount,
+                rollup.LatencyP95Ms,
+                rollup.CostPerInvestigationUsd,
+                rollup.SpendTodayUsd,
+                rollup.SpendCapUsd));
         });
     }
 }

@@ -2,6 +2,7 @@
 
 using Mps.Application.Errors;
 using Mps.Application.Lifecycle;
+using Mps.Application.Metrics;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
 using Mps.Application.Writes;
@@ -41,6 +42,7 @@ public sealed class HumanDecisionService : IHumanDecisionService
     private readonly IQualityNotifier _notifier;
     private readonly TimeProvider _time;
     private readonly ApprovalPolicy _policy;
+    private readonly IMetricsLog _metrics;
 
     public HumanDecisionService(
         IInvestigationLog investigations,
@@ -50,7 +52,8 @@ public sealed class HumanDecisionService : IHumanDecisionService
         IQmsCapaWriter writer,
         IQualityNotifier notifier,
         TimeProvider time,
-        ApprovalPolicy policy)
+        ApprovalPolicy policy,
+        IMetricsLog metrics)
     {
         ArgumentNullException.ThrowIfNull(investigations);
         ArgumentNullException.ThrowIfNull(incidents);
@@ -60,6 +63,7 @@ public sealed class HumanDecisionService : IHumanDecisionService
         ArgumentNullException.ThrowIfNull(notifier);
         ArgumentNullException.ThrowIfNull(time);
         ArgumentNullException.ThrowIfNull(policy);
+        ArgumentNullException.ThrowIfNull(metrics);
         _investigations = investigations;
         _incidents = incidents;
         _capas = capas;
@@ -68,6 +72,7 @@ public sealed class HumanDecisionService : IHumanDecisionService
         _notifier = notifier;
         _time = time;
         _policy = policy;
+        _metrics = metrics;
     }
 
     public async Task<HumanDecisionOutcome> DecideAsync(
@@ -90,9 +95,16 @@ public sealed class HumanDecisionService : IHumanDecisionService
         switch (kind)
         {
             case HumanDecisionKind.Approve:
-                return await ApproveAsync(snapshot, stored, comment, approverId, cancellationToken).ConfigureAwait(false);
+                using (QualityDiagnostics.ActivitySource.StartActivity("decision.approve"))
+                {
+                    return await ApproveAsync(snapshot, stored, comment, approverId, cancellationToken).ConfigureAwait(false);
+                }
+
             case HumanDecisionKind.Reject:
-                return await RejectAsync(snapshot, stored, _time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+                using (QualityDiagnostics.ActivitySource.StartActivity("decision.reject"))
+                {
+                    return await RejectAsync(snapshot, stored, _time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+                }
             case HumanDecisionKind.RequestInfo:
                 return await RequestInfoAsync(snapshot, stored, comment, _time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
             default:
@@ -231,6 +243,8 @@ public sealed class HumanDecisionService : IHumanDecisionService
             var failed = Copy(snapshot, InvestigationStage.Failed, snapshot.EscalationReason);
             await _investigations.UpdateAsync(failed, cancellationToken).ConfigureAwait(false);
             await _notifier.InvestigationChangedAsync(failed, cancellationToken).ConfigureAwait(false);
+            await RecordAsync(snapshot.Id.Value, completed: false, succeeded: false, toolSuccesses: 0, toolFailures: write.Approval.Attempts, cancellationToken)
+                .ConfigureAwait(false);
             return new HumanDecisionOutcome(failed, null);
         }
 
@@ -245,6 +259,13 @@ public sealed class HumanDecisionService : IHumanDecisionService
         await _notifier.InvestigationChangedAsync(approved, cancellationToken).ConfigureAwait(false);
         await _notifier.IncidentChangedAsync(stored.Incident, cancellationToken).ConfigureAwait(false);
         await _notifier.CapaChangedAsync(capa, "capaChanged", cancellationToken).ConfigureAwait(false);
+        await RecordAsync(
+            snapshot.Id.Value,
+            completed: true,
+            succeeded: true,
+            toolSuccesses: 1,
+            toolFailures: Math.Max(0, write.Approval.Attempts - 1),
+            cancellationToken).ConfigureAwait(false);
         var saved = await _capas.GetAsync(capa.Id, cancellationToken).ConfigureAwait(false)
             ?? new StoredCapa(capa, write.ExternalId);
         return new HumanDecisionOutcome(approved, saved);
@@ -374,8 +395,30 @@ public sealed class HumanDecisionService : IHumanDecisionService
         await _investigations.UpdateAsync(updated, cancellationToken).ConfigureAwait(false);
         await _notifier.InvestigationChangedAsync(updated, cancellationToken).ConfigureAwait(false);
         await _notifier.IncidentChangedAsync(stored.Incident, cancellationToken).ConfigureAwait(false);
+        await RecordAsync(snapshot.Id.Value, completed: true, succeeded: true, toolSuccesses: 0, toolFailures: 0, cancellationToken)
+            .ConfigureAwait(false);
         return new HumanDecisionOutcome(updated, null);
     }
+
+    private Task RecordAsync(
+        Guid investigationId,
+        bool completed,
+        bool succeeded,
+        int toolSuccesses,
+        int toolFailures,
+        CancellationToken cancellationToken) =>
+        _metrics.RecordAsync(
+            new InvestigationObservation(
+                investigationId,
+                _time.GetUtcNow(),
+                completed,
+                succeeded,
+                null,
+                toolSuccesses,
+                toolFailures,
+                null,
+                0d),
+            cancellationToken);
 
     private async Task<HumanDecisionOutcome> RequestInfoAsync(
         InvestigationSnapshot snapshot,

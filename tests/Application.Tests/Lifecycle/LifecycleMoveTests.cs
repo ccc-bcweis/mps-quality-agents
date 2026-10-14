@@ -2,6 +2,7 @@
 
 using Mps.Application.Errors;
 using Mps.Application.Lifecycle;
+using Mps.Application.Metrics;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
 using Mps.Application.Tests.Fakes;
@@ -139,7 +140,9 @@ public sealed class LifecycleMoveTests
             investigations,
             new StubWorkflow(),
             NullQualityNotifier.Instance,
-            TimeProvider.System);
+            TimeProvider.System,
+            NullMetricsLog.Instance,
+            new MetricsPolicy(0d, 2d));
 
         var started = await service.StartAsync(incident.Id, CancellationToken.None);
         var again = () => service.StartAsync(incident.Id, CancellationToken.None);
@@ -171,7 +174,9 @@ public sealed class LifecycleMoveTests
             new InMemoryInvestigationLog(),
             workflow,
             NullQualityNotifier.Instance,
-            TimeProvider.System);
+            TimeProvider.System,
+            NullMetricsLog.Instance,
+            new MetricsPolicy(0d, 2d));
 
         var act = () => service.StartAsync(incident.Id, CancellationToken.None);
 

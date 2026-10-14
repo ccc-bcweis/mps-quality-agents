@@ -5,6 +5,7 @@ using System.Globalization;
 using Mps.Application.Decisions;
 using Mps.Application.Errors;
 using Mps.Application.Lifecycle;
+using Mps.Application.Metrics;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
 using Mps.Application.Tests.Fakes;
@@ -186,6 +187,7 @@ public sealed class ApprovalDecisionTests
         harness.Approvals.Approvals.Single().Outcome.Should().Be(ApprovalOutcomes.Failed);
         harness.Approvals.Approvals.Single().Attempts.Should().Be(3);
         harness.Approvals.Approvals.Single().FailureDetail.Should().Be("QMS unavailable.");
+        harness.Metrics.Observations.Sum(item => item.ToolFailures).Should().Be(3);
         again.Investigation.Stage.Should().Be(InvestigationStage.Failed);
         again.Capa.Should().BeNull();
     }
@@ -245,6 +247,7 @@ public sealed class ApprovalDecisionTests
         var investigations = new InMemoryInvestigationLog();
         var capas = new InMemoryCapaLog();
         var approvals = new InMemoryApprovalLog();
+        var metrics = new InMemoryMetricsLog();
         var clock = time ?? new FixedClock(Now);
         var qms = writer ?? new ScriptedCapaWriter();
         var incident = IncidentRestorer.Restore(
@@ -288,8 +291,9 @@ public sealed class ApprovalDecisionTests
             qms,
             NullQualityNotifier.Instance,
             clock,
-            new ApprovalPolicy(Key, TimeSpan.FromMinutes(15)));
-        return new Harness(service, qms, approvals, capas, incident, snapshot.Id);
+            new ApprovalPolicy(Key, TimeSpan.FromMinutes(15)),
+            metrics);
+        return new Harness(service, qms, approvals, capas, metrics, incident, snapshot.Id);
     }
 
     private sealed record Harness(
@@ -297,6 +301,7 @@ public sealed class ApprovalDecisionTests
         ScriptedCapaWriter Writer,
         InMemoryApprovalLog Approvals,
         InMemoryCapaLog Capas,
+        InMemoryMetricsLog Metrics,
         Incident Incident,
         InvestigationId InvestigationId);
 
@@ -353,6 +358,25 @@ public sealed class ApprovalDecisionTests
             }
 
             return Task.FromResult(_steps.Dequeue().Invoke(capa));
+        }
+    }
+
+    private sealed class InMemoryMetricsLog : IMetricsLog
+    {
+        public List<InvestigationObservation> Observations { get; } = [];
+
+        public Task RecordAsync(InvestigationObservation observation, CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(observation);
+            _ = cancellationToken;
+            Observations.Add(observation);
+            return Task.CompletedTask;
+        }
+
+        public Task<MetricsRollup> RollupAsync(DateTimeOffset now, double spendCapUsd, string mode, CancellationToken cancellationToken)
+        {
+            _ = cancellationToken;
+            return Task.FromResult(MetricsCalculator.Compute(Observations, now, spendCapUsd, mode));
         }
     }
 }

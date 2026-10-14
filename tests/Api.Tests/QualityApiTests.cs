@@ -23,6 +23,41 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
     public QualityApiTests(ApiFactory factory) => _factory = factory;
 
     [Fact]
+    public async Task MetricsReportCompletionGroundingLatencyAndCost()
+    {
+        await using var factory = new ApiFactory();
+        var client = factory.CreateClient();
+        var opened = await OpenIncidentAsync(client, "D-02", "filmThickness");
+        var incidentId = opened.GetProperty("id").GetGuid();
+        var started = await client.PostAsync("/api/incidents/" + incidentId + "/investigations", null);
+        var investigationId = (await started.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("id").GetGuid();
+
+        var before = await client.GetFromJsonAsync<JsonElement>("/api/metrics");
+        var approved = await client.PostAsJsonAsync("/api/investigations/" + investigationId + "/decisions", new
+        {
+            kind = "approve",
+            approverId = "eng-17",
+            comment = "Hold the lot.",
+        });
+        var after = await client.GetFromJsonAsync<JsonElement>("/api/metrics");
+
+        started.StatusCode.Should().Be(HttpStatusCode.Created);
+        before.GetProperty("mode").GetString().Should().Be("replay");
+        before.GetProperty("completionRate").GetDouble().Should().Be(0d);
+        before.GetProperty("groundingScore").GetDouble().Should().Be(1d);
+        before.GetProperty("categoryAccuracy").ValueKind.Should().Be(JsonValueKind.Null);
+        before.GetProperty("toolFailureCount").GetInt32().Should().Be(0);
+        before.GetProperty("latencyP95Ms").GetDouble().Should().BeGreaterThanOrEqualTo(0d);
+        before.GetProperty("costPerInvestigationUsd").ValueKind.Should().Be(JsonValueKind.Null);
+        before.GetProperty("spendTodayUsd").GetDouble().Should().Be(0d);
+        before.GetProperty("spendCapUsd").GetDouble().Should().Be(2d);
+        approved.StatusCode.Should().Be(HttpStatusCode.OK);
+        after.GetProperty("completionRate").GetDouble().Should().Be(1d);
+        after.GetProperty("costPerInvestigationUsd").GetDouble().Should().Be(0d);
+        after.GetProperty("categoryAccuracy").ValueKind.Should().Be(JsonValueKind.Null);
+    }
+
+    [Fact]
     public async Task HealthReportsOk()
     {
         var client = _factory.CreateClient();

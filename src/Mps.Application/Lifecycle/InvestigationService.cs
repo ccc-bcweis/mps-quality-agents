@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
 using Mps.Application.Errors;
+using Mps.Application.Metrics;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
 using Mps.Application.Workflow;
@@ -24,24 +25,32 @@ public sealed class InvestigationService : IInvestigationService
     private readonly IInvestigationWorkflow _workflow;
     private readonly IQualityNotifier _notifier;
     private readonly TimeProvider _time;
+    private readonly IMetricsLog _metrics;
+    private readonly MetricsPolicy _metricsPolicy;
 
     public InvestigationService(
         IIncidentLog incidents,
         IInvestigationLog investigations,
         IInvestigationWorkflow workflow,
         IQualityNotifier notifier,
-        TimeProvider time)
+        TimeProvider time,
+        IMetricsLog metrics,
+        MetricsPolicy metricsPolicy)
     {
         ArgumentNullException.ThrowIfNull(incidents);
         ArgumentNullException.ThrowIfNull(investigations);
         ArgumentNullException.ThrowIfNull(workflow);
         ArgumentNullException.ThrowIfNull(notifier);
         ArgumentNullException.ThrowIfNull(time);
+        ArgumentNullException.ThrowIfNull(metrics);
+        ArgumentNullException.ThrowIfNull(metricsPolicy);
         _incidents = incidents;
         _investigations = investigations;
         _workflow = workflow;
         _notifier = notifier;
         _time = time;
+        _metrics = metrics;
+        _metricsPolicy = metricsPolicy;
     }
 
     public async Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken)
@@ -59,6 +68,8 @@ public sealed class InvestigationService : IInvestigationService
             throw new LifecycleConflictException($"Cannot start an investigation from {stored.Incident.Stage}.");
         }
 
+        var startedAt = _time.GetUtcNow();
+        using var activity = QualityDiagnostics.ActivitySource.StartActivity("investigation.start");
         var started = await _workflow.StartAsync(incidentId, cancellationToken).ConfigureAwait(false);
         if (started.IncidentId != incidentId)
         {
@@ -77,6 +88,19 @@ public sealed class InvestigationService : IInvestigationService
         await _investigations.AddAsync(aligned, cancellationToken).ConfigureAwait(false);
         await _notifier.InvestigationChangedAsync(aligned, cancellationToken).ConfigureAwait(false);
         await _notifier.IncidentChangedAsync(stored.Incident, cancellationToken).ConfigureAwait(false);
+        var elapsed = (_time.GetUtcNow() - startedAt).TotalMilliseconds;
+        await _metrics.RecordAsync(
+            new InvestigationObservation(
+                aligned.Id.Value,
+                _time.GetUtcNow(),
+                false,
+                false,
+                GroundingScore.For(aligned.Evidence, aligned.Hypotheses),
+                1,
+                aligned.Stage == InvestigationStage.Failed ? 1 : 0,
+                elapsed < 0d ? 0d : elapsed,
+                _metricsPolicy.CostPerInvestigationUsd),
+            cancellationToken).ConfigureAwait(false);
         return aligned;
     }
 

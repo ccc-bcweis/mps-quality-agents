@@ -13,6 +13,7 @@ using Mps.Application.Decisions;
 using Mps.Application.Faults;
 using Mps.Application.Intake;
 using Mps.Application.Lifecycle;
+using Mps.Application.Metrics;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
 using Mps.Application.Spc;
@@ -28,6 +29,7 @@ public static class QualityHost
         ArgumentNullException.ThrowIfNull(builder);
         var connectionString = builder.Configuration.GetConnectionString("Mps") ?? "Data Source=mps.db";
         builder.Services.AddProblemDetails();
+        builder.AddQualityTelemetry();
         builder.Services.AddExceptionHandler<ApiExceptionHandler>();
         builder.Services.AddSignalR();
         builder.Services.ConfigureHttpJsonOptions(options => ApplyJson(options.SerializerOptions));
@@ -54,6 +56,10 @@ public static class QualityHost
         builder.Services.AddScoped<IApprovalLog>(services => services.GetRequiredService<EfQualityStore>());
         builder.Services.AddScoped<ITicketingPort>(services => services.GetRequiredService<EfQualityStore>());
         builder.Services.AddSingleton(ApprovalPolicyLoader.Load(builder.Configuration));
+        builder.Services.AddSingleton(new MetricsPolicy(
+            builder.Configuration.GetValue("Metrics:CostPerInvestigationUsd", 0d),
+            builder.Configuration.GetValue("Metrics:SpendCapUsd", 2d)));
+        builder.Services.AddScoped<IMetricsLog, EfMetricsLog>();
         builder.Services.AddSingleton<IQmsCapaWriter, FakeQmsCapaWriter>();
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddSingleton<IQualityNotifier, SignalRQualityNotifier>();

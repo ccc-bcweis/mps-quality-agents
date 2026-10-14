@@ -16,6 +16,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
+        builder.UseSetting("Otel:Enabled", "false");
         builder.ConfigureServices(services =>
         {
             var descriptors = services.Where(service =>

@@ -31,6 +31,8 @@ public sealed class QualityDbContext : DbContext
 
     public DbSet<ApprovalRow> Approvals => Set<ApprovalRow>();
 
+    public DbSet<MetricSampleRow> MetricSamples => Set<MetricSampleRow>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
@@ -76,6 +78,11 @@ public sealed class QualityDbContext : DbContext
         modelBuilder.Entity<ApprovalRow>(entity =>
         {
             entity.HasKey(row => row.TokenId);
+            entity.HasIndex(row => row.InvestigationId);
+        });
+        modelBuilder.Entity<MetricSampleRow>(entity =>
+        {
+            entity.HasKey(row => row.Id);
             entity.HasIndex(row => row.InvestigationId);
         });
     }
