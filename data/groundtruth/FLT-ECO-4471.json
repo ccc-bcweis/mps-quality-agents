@@ -1,0 +1,43 @@
+{
+  "faultId": "FLT-ECO-4471",
+  "scenario": "S1",
+  "category": "engineeringChange",
+  "expectedBehavior": "recommend",
+  "assertCategory": true,
+  "cause": "Edge ring revision C from ECO-4471 changed the thermal boundary on E-02 chamber A.",
+  "tools": [
+    "E-02"
+  ],
+  "parameter": "escTemperature",
+  "chamberId": "E-02-A",
+  "evidenceRecordIds": [
+    "ECO-4471",
+    "CFG-E-02",
+    "RUN-FLT-ECO-4471-E-02-00",
+    "RUN-FLT-ECO-4471-E-02-01",
+    "RUN-FLT-ECO-4471-E-02-02",
+    "RUN-FLT-ECO-4471-E-02-03"
+  ],
+  "confounderRecordIds": [
+    "WO-PM-8821"
+  ],
+  "missingRecordIds": [],
+  "contradiction": null,
+  "counterEvidence": [
+    "Scheduled PM WO-PM-8821 was performed the same week and does not line up with the oscillation onset."
+  ],
+  "signals": [
+    {
+      "toolId": "E-02",
+      "chamberId": "E-02-A",
+      "parameter": "escTemperature",
+      "shape": "oscillation",
+      "magnitudeKind": "sigma",
+      "magnitude": 3.5,
+      "onset": "2026-09-28T14:00:00Z",
+      "periodSeconds": 45,
+      "rampSeconds": 600,
+      "dutyCycle": 0.5
+    }
+  ]
+}

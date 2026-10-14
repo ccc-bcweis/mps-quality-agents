@@ -21,4 +21,8 @@ internal static class RepoPaths
     }
 
     public static string FleetDirectory() => Path.Combine(Root(), "data", "fleet");
+
+    public static string FaultDirectory() => Path.Combine(Root(), "data", "faults");
+
+    public static string GroundTruthDirectory() => Path.Combine(Root(), "data", "groundtruth");
 }
