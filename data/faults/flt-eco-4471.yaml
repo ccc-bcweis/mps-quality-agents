@@ -1,0 +1,49 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Synthetic fault. Engineering change with a same-week PM confounder. Scenario S1.
+id: FLT-ECO-4471
+title: ESC temperature oscillation after edge-ring change
+category: engineeringChange
+scenario: S1
+expectedBehavior: recommend
+assertCategory: true
+tools: [E-02]
+chamberId: E-02-A
+parameter: escTemperature
+shape: oscillation
+magnitude:
+  kind: sigma
+  value: 3.5
+onset: "2026-09-28T14:00:00Z"
+periodSeconds: 45
+cause: Edge ring revision C from ECO-4471 changed the thermal boundary on E-02 chamber A.
+counterEvidence:
+  - Scheduled PM WO-PM-8821 was performed the same week and does not line up with the oscillation onset.
+actions:
+  - Compare chamber A ESC traces with chamber B on E-02.
+  - Confirm edge ring revision C against the ECO effective time before recommending a CAPA.
+evidence:
+  eco:
+    ecoId: ECO-4471
+    title: Edge ring revision C on etch E-02
+    toolId: E-02
+    recipeId: OXIDE-ETCH
+    effectiveAt: "2026-09-28T06:00:00Z"
+    changeSummary: Replace the chamber A edge ring with revision C. OXIDE-ETCH setpoints are unchanged.
+  config:
+    configId: CFG-E-02
+    toolId: E-02
+    revision: C
+    partName: Edge ring
+  runs:
+    recipeId: OXIDE-ETCH
+    recipeRevision: C
+    lotId: W-E02-441
+    materialCode: WAF-SI-300
+    count: 4
+  confounders:
+    - kind: pm
+      workOrderId: WO-PM-8821
+      toolId: E-02
+      chamberId: E-02-A
+      performedAt: "2026-09-26T22:00:00Z"
+      summary: Scheduled chamber PM on E-02 chamber A the same week as ECO-4471. The ESC loop was not calibrated.

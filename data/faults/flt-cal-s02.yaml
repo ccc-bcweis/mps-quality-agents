@@ -1,0 +1,51 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Synthetic fault. Overdue MFC calibration with a supplier-lot confounder.
+id: FLT-CAL-S02
+title: O2 flow step from an overdue MFC on strip S-02
+category: equipmentCalibrationOrAlignment
+scenario: S4-calibration
+expectedBehavior: recommend
+assertCategory: true
+tools: [S-02]
+chamberId: S-02-A
+parameter: o2Flow
+shape: step
+magnitude:
+  kind: sigma
+  value: 4
+onset: "2026-10-06T11:00:00Z"
+cause: The O2 mass flow controller on S-02 chamber A is overdue and was not completed.
+counterEvidence:
+  - Supplier notice SN-N2H2-190 arrived the day before and describes a density shift that is still inside the widened spec.
+actions:
+  - Cite the overdue O2 MFC calibration and the single-chamber scope.
+  - Address notice SN-N2H2-190 as a confounder, not the cause.
+evidence:
+  calibration:
+    calibrationId: CAL-S02-O2-MFC
+    toolId: S-02
+    instrument: O2 mass flow controller
+    dueAt: "2026-09-20T00:00:00Z"
+    isOverdue: true
+  runs:
+    recipeId: ASH-STD
+    recipeRevision: B
+    lotId: W-S02-118
+    materialCode: WAF-SI-300
+    count: 3
+  confounders:
+    - kind: supplierLot
+      material:
+        lotId: N2H2-190
+        materialCode: GAS-N2H2
+        supplierName: Cinderwell Specialty Gases
+        receivedAt: "2026-10-05T16:00:00Z"
+        noticeId: SN-N2H2-190
+        toolIds: [S-02]
+      notice:
+        noticeId: SN-N2H2-190
+        supplierName: Cinderwell Specialty Gases
+        materialCode: GAS-N2H2
+        lotId: N2H2-190
+        summary: Certificate density is 0.4 percent low and still inside the widened spec. This is not a moisture failure.
+        issuedAt: "2026-10-05T18:00:00Z"

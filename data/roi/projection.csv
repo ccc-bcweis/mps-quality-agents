@@ -1,0 +1,4 @@
+seed,scenario,investigationHours,hypothesisDays,repeatRate,capaCycleDays,mttrDays,laborSavingsUsd,repeatScrapSavingsUsd,downtimeSavingsUsd,grossSavingsUsd,runCostUsd,netSavingsUsd,paybackMonths,downtimeHoursAvoided
+20261014,baseline,22.00,4.00,0.1800,62.00,9.50,0,0,0,0,0,0,,0.00
+20261014,conservative,15.40,2.00,0.1530,49.60,7.50,877800,1256499,4560626,6694925,185600,6509325,0.33,380.05
+20261014,expected,12.10,1.20,0.1350,40.30,6.70,1316700,2094165,6384876,9795741,185600,9610141,0.23,532.07

@@ -1,0 +1,69 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Synthetic Meridian Precision Systems fleet. Fictional model MPS-E7.
+family: etch
+model: MPS-E7
+recipes:
+  - id: OXIDE-ETCH
+    name: Oxide main etch
+    steps:
+      - id: stabilize
+        name: Stabilize
+        windows:
+          - { parameter: chamberPressure, unit: mTorr, minimum: 35, maximum: 55, nominal: 45 }
+          - { parameter: escTemperature, unit: C, minimum: 46, maximum: 54, nominal: 50 }
+          - { parameter: wallTemperature, unit: C, minimum: 58, maximum: 62, nominal: 60 }
+          - { parameter: arFlow, unit: sccm, minimum: 80, maximum: 150, nominal: 110 }
+      - id: main-etch
+        name: Main etch
+        windows:
+          - { parameter: chamberPressure, unit: mTorr, minimum: 30, maximum: 50, nominal: 40 }
+          - { parameter: escTemperature, unit: C, minimum: 48, maximum: 56, nominal: 52 }
+          - { parameter: wallTemperature, unit: C, minimum: 58, maximum: 62, nominal: 60 }
+          - { parameter: rfSourcePower, unit: W, minimum: 1400, maximum: 1800, nominal: 1600 }
+          - { parameter: rfBiasPower, unit: W, minimum: 280, maximum: 420, nominal: 350 }
+          - { parameter: cf4Flow, unit: sccm, minimum: 40, maximum: 70, nominal: 55 }
+          - { parameter: chf3Flow, unit: sccm, minimum: 15, maximum: 35, nominal: 25 }
+          - { parameter: o2Flow, unit: sccm, minimum: 8, maximum: 20, nominal: 12 }
+          - { parameter: arFlow, unit: sccm, minimum: 100, maximum: 180, nominal: 140 }
+          - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.03 }
+          - { parameter: edgeRingHeight, unit: mm, minimum: 1.85, maximum: 2.15, nominal: 2.00 }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.6 }
+      - id: endpoint
+        name: Endpoint
+        windows:
+          - { parameter: etchRate, unit: nm/min, minimum: 280, maximum: 420, nominal: 350 }
+          - { parameter: endpointTime, unit: s, minimum: 40, maximum: 90, nominal: 60 }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 12, nominal: 4 }
+  - id: POLY-ETCH
+    name: Polysilicon etch
+    steps:
+      - id: stabilize
+        name: Stabilize
+        windows:
+          - { parameter: chamberPressure, unit: mTorr, minimum: 25, maximum: 45, nominal: 35 }
+          - { parameter: escTemperature, unit: C, minimum: 44, maximum: 54, nominal: 49 }
+      - id: main-etch
+        name: Main etch
+        windows:
+          - { parameter: rfSourcePower, unit: W, minimum: 1200, maximum: 1600, nominal: 1400 }
+          - { parameter: rfBiasPower, unit: W, minimum: 220, maximum: 360, nominal: 280 }
+          - { parameter: cf4Flow, unit: sccm, minimum: 30, maximum: 60, nominal: 45 }
+          - { parameter: o2Flow, unit: sccm, minimum: 4, maximum: 16, nominal: 8 }
+      - id: endpoint
+        name: Endpoint
+        windows:
+          - { parameter: etchRate, unit: nm/min, minimum: 180, maximum: 320, nominal: 240 }
+          - { parameter: endpointTime, unit: s, minimum: 30, maximum: 80, nominal: 50 }
+tools:
+  - id: E-01
+    name: Etch E-01
+    bay: Bay-1
+    chambers:
+      - { id: E-01-A, name: Chamber A }
+      - { id: E-01-B, name: Chamber B }
+  - id: E-02
+    name: Etch E-02
+    bay: Bay-2
+    chambers:
+      - { id: E-02-A, name: Chamber A }
+      - { id: E-02-B, name: Chamber B }
