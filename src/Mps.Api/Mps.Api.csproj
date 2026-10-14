@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>Mps.Api</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Mps.Application\Mps.Application.csproj" />
+    <ProjectReference Include="..\Mps.Orchestration\Mps.Orchestration.csproj" />
+  </ItemGroup>
+</Project>
