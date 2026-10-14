@@ -1,0 +1,29 @@
+{
+  "stryker-config": {
+    "solution": "MPS.sln",
+    "project": "Mps.Domain.csproj",
+    "test-projects": [
+      "tests/Domain.Tests/Domain.Tests.csproj"
+    ],
+    "mutate": [
+      "!**/LayerAnchor.cs"
+    ],
+    "reporters": [
+      "html",
+      "cleartext",
+      "progress"
+    ],
+    "thresholds": {
+      "high": 80,
+      "low": 60,
+      "break": 60
+    },
+    "since": {
+      "enabled": false
+    },
+    "configuration": "Release",
+    "concurrency": 4,
+    "test-case-filter": "FullyQualifiedName~Mps.Domain.Tests",
+    "report-file-name": "domain-mutation-report"
+  }
+}

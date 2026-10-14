@@ -8,4 +8,11 @@
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- GB-5 contract and integration tests. Versions stay on the net8 line. -->
+    <PackageVersion Include="JsonSchema.Net" Version="7.4.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.32" />
+    <PackageVersion Include="Microsoft.OpenApi.Readers" Version="1.6.31" />
+  </ItemGroup>
 </Project>
