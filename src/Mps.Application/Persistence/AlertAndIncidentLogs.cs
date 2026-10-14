@@ -31,6 +31,11 @@ public interface IIncidentLog
     Task SaveAsync(StoredIncident incident, DateTimeOffset at, CancellationToken cancellationToken);
 }
 
+public interface ITicketLog
+{
+    Task<IReadOnlyList<Ticket>> ListAsync(CancellationToken cancellationToken);
+}
+
 /// <summary>
 /// An incident plus the flags the lifecycle needs that the domain entity does not store.
 /// Critical severity sets <see cref="EscalationRequired"/>. Entering Escalated sets <see cref="HasEscalated"/>.
