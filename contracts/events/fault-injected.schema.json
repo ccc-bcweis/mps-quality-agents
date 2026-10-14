@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.meridian-precision.example/events/fault-injected.schema.json",
+  "title": "FaultInjected",
+  "description": "The Fault Injector accepted a synthetic fault. Ground truth stays off agent tools.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "occurredAt", "correlationId", "payload"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": { "const": "faultInjected" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string", "minLength": 1 },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["faultId", "toolId", "parameter", "shape", "magnitude", "rootCauseCategory"],
+      "properties": {
+        "faultId": { "type": "string", "format": "uuid" },
+        "toolId": { "type": "string", "minLength": 1 },
+        "chamberId": { "type": ["string", "null"] },
+        "parameter": { "type": "string", "minLength": 1 },
+        "shape": { "enum": ["step", "ramp", "oscillation", "intermittent"] },
+        "magnitude": { "type": "number" },
+        "rootCauseCategory": {
+          "enum": ["engineeringChange", "equipmentCalibrationOrAlignment", "supplyChainMaterial", "processDrift"]
+        },
+        "confounders": { "type": "boolean" }
+      }
+    }
+  }
+}

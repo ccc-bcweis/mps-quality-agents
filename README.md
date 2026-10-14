@@ -1,6 +1,6 @@
 # MPS Quality Agents
 
-**Status: planning. No application code yet.**
+**Status: foundation.** The API serves `GET /health`. Agents, the console, and Azure resources are still to be built.
 
 This repo is a **StatusNeo proposal demo** for a fictional customer, **Meridian Precision Systems (MPS)**, a semiconductor process-equipment maker (thin-film deposition, plasma etch, photoresist strip, wafer clean). The demo is an agentic **Manufacturing Quality & Engineering Issue Resolution** workflow. A simulated tool fleet streams sensor telemetry, and SPC (Western Electric) alerts open tickets. An Investigation Agent and a Resolution Agent work out the root cause from grounded evidence in mock MES/QMS/PLM/ERP/maintenance systems and documents. A CAPA is created **only after explicit human approval**, with full traceability, evaluation and cost tracking.
 
@@ -15,15 +15,55 @@ All companies, equipment, people and data in this repo are **fictional and synth
 ## Planned stack
 .NET 8 / C#, Microsoft Agent Framework (with a LangGraph-compatible adapter), React + TypeScript, Azure (Container Apps, Azure OpenAI, Entra ID, Key Vault, App Insights), promptfoo + Microsoft.Extensions.AI.Evaluation, Stryker.NET, OWASP ZAP.
 
-## Run locally (once code lands)
+## Clone and run
+
+```powershell
+git clone https://github.com/ccc-bcweis/mps-quality-agents
+cd mps-quality-agents
+Copy-Item .env.example .env
+docker compose up
 ```
-git clone https://github.com/ccc-bcweis/mps-quality-agents && cd mps-quality-agents
-cp .env.example .env      # REPLAY mode by default; add a model key for LIVE mode
-docker compose up         # or open in VS Code and press F5
+
+- API health: http://localhost:8080/health
+- Web placeholder: http://localhost:5173
+- Aspire dashboard: http://localhost:18888
+
+The web service is a static placeholder until the UI lane lands. Replay mode is the default. A model key belongs only in the untracked `.env`.
+
+Without Docker, from this folder:
+
+```powershell
+dotnet run --project src/Mps.Api
+dotnet test
 ```
+
+In VS Code, F5 runs the **API** configuration and opens `/health`. The dev container is `.devcontainer/devcontainer.json` (.NET 8 and Node 22).
 
 ## Ownership
 All intellectual property in this build (design, specification, plan, code, data, documents and presentation materials) is owned by **Bryan C. Weis / Common Consulting Company**. It is a fictional demonstration built with AI assistance. All companies, equipment and data in it are fictional and synthetic. It is released under the MIT License (see LICENSE). The license grants usage rights but doesn't transfer ownership.
 
 ## License
 MIT
+
+## Task ID key
+
+Board and plan task IDs are project-specific shorthand (not an industry standard): a prefix for the work stream plus a sequence number.
+
+| Prefix | Work stream |
+|---|---|
+| F | Foundation (skeleton, contracts, CI, Docker, VS Code, Bicep) |
+| DS | Design (brand, logos, wireframes, prototypes) |
+| D | Data and simulation (fleet specs, telemetry, faults, mock enterprise systems, documents, ROI data) |
+| A | Agents (model gateway, evidence gate, Investigation/Resolution agents, workflow) |
+| P | Platform API (SPC alerts, intake, lifecycle, approval/CAPA, telemetry) |
+| U | UI screens |
+| T | Independent tests (contract, integration, mutation) |
+| E | AI evaluation |
+| SEC | Security and red-team testing |
+| I | Integration |
+| Z | Azure deployment |
+| G | Diagrams |
+| K | Deck and documentation |
+| R | Rehearsal |
+| M | Meetings/coordination |
+| ...x | Stretch item (e.g. S3x) |

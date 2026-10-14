@@ -1,0 +1,330 @@
+openapi: 3.0.3
+info:
+  title: MPS mock enterprise APIs
+  version: 0.1.0
+  description: |
+    Synthetic MES, QMS, PLM, ERP, CMMS, and ticketing HTTP APIs.
+    Send header `X-Mock-Fault` with `500`, `timeout`, or `409` to inject a fault on a write.
+    Ground truth is not on this API.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: http://localhost:8081
+    description: Local mock enterprise
+paths:
+  /mes/runs:
+    get:
+      operationId: getRuns
+      parameters:
+        - $ref: "#/components/parameters/ToolId"
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/Until"
+      responses:
+        "200":
+          description: Process runs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProcessRun"
+  /mes/lots:
+    get:
+      operationId: getLots
+      parameters:
+        - $ref: "#/components/parameters/ToolId"
+      responses:
+        "200":
+          description: Lots touched by the tool.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LotReference"
+  /qms/ncrs:
+    get:
+      operationId: searchNcrs
+      parameters:
+        - $ref: "#/components/parameters/ToolId"
+      responses:
+        "200":
+          description: Nonconformances.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ncr"
+  /qms/capas:
+    post:
+      operationId: createCapa
+      parameters:
+        - $ref: "#/components/parameters/MockFault"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [capaId, incidentId, approvalTokenId, summary]
+              properties:
+                capaId:
+                  type: string
+                  format: uuid
+                incidentId:
+                  type: string
+                  format: uuid
+                approvalTokenId:
+                  type: string
+                  format: uuid
+                summary:
+                  type: string
+      responses:
+        "201":
+          description: CAPA stored.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [externalId]
+                properties:
+                  externalId:
+                    type: string
+        "409":
+          description: Idempotent duplicate.
+        "500":
+          description: Injected fault.
+  /plm/ecos:
+    get:
+      operationId: getEcos
+      parameters:
+        - $ref: "#/components/parameters/ToolId"
+      responses:
+        "200":
+          description: Engineering change orders.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Eco"
+  /plm/config:
+    get:
+      operationId: getConfig
+      parameters:
+        - $ref: "#/components/parameters/ToolId"
+      responses:
+        "200":
+          description: Current configuration revision.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigRevision"
+  /erp/lots:
+    get:
+      operationId: getMaterialLots
+      parameters:
+        - $ref: "#/components/parameters/ToolId"
+      responses:
+        "200":
+          description: Material lots.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MaterialLot"
+  /erp/notices:
+    get:
+      operationId: getSupplierNotices
+      parameters:
+        - name: materialCode
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Supplier notices.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SupplierNotice"
+  /cmms/work-orders:
+    get:
+      operationId: getWorkOrders
+      parameters:
+        - $ref: "#/components/parameters/ToolId"
+      responses:
+        "200":
+          description: Maintenance work orders.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkOrder"
+  /cmms/calibrations:
+    get:
+      operationId: getCalibrations
+      parameters:
+        - $ref: "#/components/parameters/ToolId"
+      responses:
+        "200":
+          description: Calibration records.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Calibration"
+  /ticketing/tickets:
+    post:
+      operationId: openTicket
+      parameters:
+        - $ref: "#/components/parameters/MockFault"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [incidentId, toolId, title]
+              properties:
+                incidentId:
+                  type: string
+                  format: uuid
+                toolId:
+                  type: string
+                title:
+                  type: string
+      responses:
+        "201":
+          description: Ticket opened.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [number]
+                properties:
+                  number:
+                    type: string
+                    pattern: "^TKT-.+"
+components:
+  parameters:
+    ToolId:
+      name: toolId
+      in: query
+      required: true
+      schema:
+        type: string
+    From:
+      name: from
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+    Until:
+      name: until
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+    MockFault:
+      name: X-Mock-Fault
+      in: header
+      required: false
+      schema:
+        type: string
+        enum: ["500", timeout, "409"]
+  schemas:
+    ProcessRun:
+      type: object
+      required: [runId, toolId, recipeId, recipeRevision, lotId, startedAt]
+      properties:
+        runId: { type: string }
+        toolId: { type: string }
+        recipeId: { type: string }
+        recipeRevision: { type: string }
+        lotId: { type: string }
+        startedAt: { type: string, format: date-time }
+    LotReference:
+      type: object
+      required: [lotId, materialCode, toolId]
+      properties:
+        lotId: { type: string }
+        materialCode: { type: string }
+        toolId: { type: string }
+    Ncr:
+      type: object
+      required: [ncrId, toolId, title, openedAt]
+      properties:
+        ncrId: { type: string }
+        toolId: { type: string }
+        title: { type: string }
+        openedAt: { type: string, format: date-time }
+        lotId: { type: string, nullable: true }
+    Eco:
+      type: object
+      required: [ecoId, title, effectiveAt, changeSummary]
+      properties:
+        ecoId: { type: string }
+        title: { type: string }
+        toolId: { type: string, nullable: true }
+        recipeId: { type: string, nullable: true }
+        effectiveAt: { type: string, format: date-time }
+        changeSummary: { type: string }
+    ConfigRevision:
+      type: object
+      required: [configId, toolId, revision, partName]
+      properties:
+        configId: { type: string }
+        toolId: { type: string }
+        revision: { type: string }
+        partName: { type: string }
+    MaterialLot:
+      type: object
+      required: [lotId, materialCode, supplierName, receivedAt]
+      properties:
+        lotId: { type: string }
+        materialCode: { type: string }
+        supplierName: { type: string }
+        receivedAt: { type: string, format: date-time }
+        noticeId: { type: string, nullable: true }
+    SupplierNotice:
+      type: object
+      required: [noticeId, supplierName, materialCode, lotId, summary, issuedAt]
+      properties:
+        noticeId: { type: string }
+        supplierName: { type: string }
+        materialCode: { type: string }
+        lotId: { type: string }
+        summary: { type: string }
+        issuedAt: { type: string, format: date-time }
+    WorkOrder:
+      type: object
+      required: [workOrderId, toolId, kind, performedAt, summary]
+      properties:
+        workOrderId: { type: string }
+        toolId: { type: string }
+        chamberId: { type: string, nullable: true }
+        kind: { type: string }
+        performedAt: { type: string, format: date-time }
+        summary: { type: string }
+    Calibration:
+      type: object
+      required: [calibrationId, toolId, instrument, dueAt, isOverdue]
+      properties:
+        calibrationId: { type: string }
+        toolId: { type: string }
+        instrument: { type: string }
+        dueAt: { type: string, format: date-time }
+        completedAt: { type: string, format: date-time, nullable: true }
+        isOverdue: { type: boolean }

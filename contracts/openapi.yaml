@@ -1,0 +1,736 @@
+openapi: 3.0.3
+info:
+  title: Meridian Precision Systems Quality API
+  version: 0.1.0
+  description: |
+    Console API for the fictional Meridian Precision Systems quality-investigation demo.
+    Every intake channel becomes one incident. A CAPA is created only after a human approval,
+    and the server issues the approval token. Clients do not send token signatures.
+    The fleet stream is SignalR at `/hubs/fleet` and is not a REST operation.
+    All names and data are synthetic.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: http://localhost:8080
+    description: Local API
+tags:
+  - name: health
+  - name: fleet
+  - name: incidents
+  - name: investigations
+  - name: capas
+  - name: faults
+  - name: metrics
+paths:
+  /health:
+    get:
+      tags: [health]
+      operationId: getHealth
+      summary: Liveness
+      responses:
+        "200":
+          description: The process is up.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+  /api/tools:
+    get:
+      tags: [fleet]
+      operationId: listTools
+      summary: List the simulated tool fleet
+      responses:
+        "200":
+          description: Tools.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tool"
+  /api/tools/{toolId}:
+    get:
+      tags: [fleet]
+      operationId: getTool
+      summary: Tool detail, including chambers
+      parameters:
+        - $ref: "#/components/parameters/ToolId"
+      responses:
+        "200":
+          description: The tool.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tool"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/alerts:
+    get:
+      tags: [fleet]
+      operationId: listAlerts
+      summary: SPC alerts
+      parameters:
+        - $ref: "#/components/parameters/ToolIdQuery"
+      responses:
+        "200":
+          description: Alerts.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+  /api/tickets:
+    get:
+      tags: [incidents]
+      operationId: listTickets
+      summary: Intake tickets
+      responses:
+        "200":
+          description: Tickets.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ticket"
+  /api/incidents:
+    get:
+      tags: [incidents]
+      operationId: listIncidents
+      summary: Normalized incidents
+      responses:
+        "200":
+          description: Incidents.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Incident"
+    post:
+      tags: [incidents]
+      operationId: openIncident
+      summary: Operator or engineer report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenIncidentRequest"
+      responses:
+        "201":
+          description: Incident opened, or linked to an existing open incident on the same tool and parameter.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Incident"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /api/incidents/{incidentId}:
+    get:
+      tags: [incidents]
+      operationId: getIncident
+      summary: One incident
+      parameters:
+        - $ref: "#/components/parameters/IncidentId"
+      responses:
+        "200":
+          description: The incident.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Incident"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/investigations/{investigationId}:
+    get:
+      tags: [investigations]
+      operationId: getInvestigation
+      summary: Evidence, hypotheses, and stage
+      parameters:
+        - $ref: "#/components/parameters/InvestigationId"
+      responses:
+        "200":
+          description: The investigation snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Investigation"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/incidents/{incidentId}/investigations:
+    post:
+      tags: [investigations]
+      operationId: startInvestigation
+      summary: Start investigation for an incident
+      parameters:
+        - $ref: "#/components/parameters/IncidentId"
+      responses:
+        "201":
+          description: Investigation started.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Investigation"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /api/investigations/{investigationId}/decisions:
+    post:
+      tags: [investigations]
+      operationId: submitDecision
+      summary: Approve, reject, or request more information
+      description: |
+        Approve requires approverId. The server issues a single-use approval token bound to the
+        action hash and creates the CAPA. A client-supplied signature is ignored.
+      parameters:
+        - $ref: "#/components/parameters/InvestigationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HumanDecisionRequest"
+      responses:
+        "200":
+          description: Decision recorded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: Approval rejected by the token rules.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/capas:
+    get:
+      tags: [capas]
+      operationId: listCapas
+      summary: CAPA records
+      responses:
+        "200":
+          description: CAPAs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Capa"
+  /api/capas/{capaId}:
+    get:
+      tags: [capas]
+      operationId: getCapa
+      summary: One CAPA
+      parameters:
+        - $ref: "#/components/parameters/CapaId"
+      responses:
+        "200":
+          description: The CAPA.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Capa"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/capas/{capaId}/advance:
+    post:
+      tags: [capas]
+      operationId: advanceCapa
+      summary: Move a CAPA one legal stage forward
+      parameters:
+        - $ref: "#/components/parameters/CapaId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdvanceCapaRequest"
+      responses:
+        "200":
+          description: Updated CAPA.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Capa"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /api/faults:
+    post:
+      tags: [faults]
+      operationId: injectFault
+      summary: Inject a simulated fault
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FaultInjectionRequest"
+      responses:
+        "202":
+          description: Fault accepted. An alert follows from the simulator.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FaultInjectionAccepted"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /api/metrics:
+    get:
+      tags: [metrics]
+      operationId: getMetrics
+      summary: Investigation health, latency, and spend
+      responses:
+        "200":
+          description: Current metrics.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricsSummary"
+components:
+  parameters:
+    ToolId:
+      name: toolId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    ToolIdQuery:
+      name: toolId
+      in: query
+      required: false
+      schema:
+        type: string
+    IncidentId:
+      name: incidentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    InvestigationId:
+      name: investigationId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    CapaId:
+      name: capaId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    BadRequest:
+      description: The request failed validation.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    NotFound:
+      description: No such record.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Conflict:
+      description: The lifecycle rejected the transition, or the write was a duplicate.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    Problem:
+      type: object
+      description: RFC 9457 problem details.
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+    Health:
+      type: object
+      additionalProperties: false
+      required: [status, service]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        service:
+          type: string
+    ToolFamily:
+      type: string
+      enum: [deposition, etch, strip, clean]
+    Tool:
+      type: object
+      additionalProperties: false
+      required: [id, name, family, model, bay, chambers]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        family:
+          $ref: "#/components/schemas/ToolFamily"
+        model:
+          type: string
+          description: Fictional model, for example MPS-E7.
+        bay:
+          type: string
+        chambers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Chamber"
+    Chamber:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    Severity:
+      type: string
+      enum: [low, medium, high, critical]
+    IncidentChannel:
+      type: string
+      enum: [iotSpcAlert, operatorReport, qmsNonconformance, supplierQualityNotice, faultInjector]
+    IncidentStage:
+      type: string
+      enum:
+        - ticketOpened
+        - investigating
+        - recommendationReady
+        - escalated
+        - awaitingApproval
+        - approved
+        - rejected
+        - closed
+    Alert:
+      type: object
+      additionalProperties: false
+      required: [id, toolId, parameter, severity, rule, raisedAt, correlationId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        toolId:
+          type: string
+        chamberId:
+          type: string
+          nullable: true
+        parameter:
+          type: string
+        severity:
+          $ref: "#/components/schemas/Severity"
+        rule:
+          type: string
+        raisedAt:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+    Ticket:
+      type: object
+      additionalProperties: false
+      required: [id, number, incidentId, toolId, title, openedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        number:
+          type: string
+          pattern: "^TKT-.+"
+        incidentId:
+          type: string
+          format: uuid
+        toolId:
+          type: string
+        title:
+          type: string
+        openedAt:
+          type: string
+          format: date-time
+    Incident:
+      type: object
+      additionalProperties: false
+      required: [id, toolId, parameter, channel, severity, summary, correlationId, openedAt, stage]
+      properties:
+        id:
+          type: string
+          format: uuid
+        toolId:
+          type: string
+        chamberId:
+          type: string
+          nullable: true
+        parameter:
+          type: string
+        channel:
+          $ref: "#/components/schemas/IncidentChannel"
+        severity:
+          $ref: "#/components/schemas/Severity"
+        summary:
+          type: string
+        correlationId:
+          type: string
+        openedAt:
+          type: string
+          format: date-time
+        stage:
+          $ref: "#/components/schemas/IncidentStage"
+    OpenIncidentRequest:
+      type: object
+      additionalProperties: false
+      required: [toolId, parameter, summary]
+      properties:
+        toolId:
+          type: string
+        chamberId:
+          type: string
+          nullable: true
+        parameter:
+          type: string
+        summary:
+          type: string
+          maxLength: 4000
+        severity:
+          $ref: "#/components/schemas/Severity"
+    EvidenceSource:
+      type: string
+      enum: [telemetry, spc, mes, qms, plm, erp, cmms, document, ticketing]
+    EvidenceItem:
+      type: object
+      additionalProperties: false
+      required: [id, source, title, excerpt, observedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        source:
+          $ref: "#/components/schemas/EvidenceSource"
+        title:
+          type: string
+        excerpt:
+          type: string
+        observedAt:
+          type: string
+          format: date-time
+        toolId:
+          type: string
+          nullable: true
+        externalRef:
+          type: string
+          nullable: true
+    RootCauseCategory:
+      type: string
+      enum: [engineeringChange, equipmentCalibrationOrAlignment, supplyChainMaterial, processDrift]
+    Hypothesis:
+      type: object
+      additionalProperties: false
+      required: [id, category, cause, confidence, evidenceIds, counterEvidence, actions]
+      properties:
+        id:
+          type: string
+          format: uuid
+        category:
+          $ref: "#/components/schemas/RootCauseCategory"
+        cause:
+          type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        evidenceIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            format: uuid
+        counterEvidence:
+          type: array
+          items:
+            type: string
+        actions:
+          type: array
+          items:
+            type: string
+    InvestigationStage:
+      type: string
+      enum:
+        - started
+        - evidenceGathered
+        - recommendationReady
+        - escalated
+        - awaitingApproval
+        - approved
+        - rejected
+        - failed
+    Investigation:
+      type: object
+      additionalProperties: false
+      required: [id, incidentId, stage, evidence, hypotheses, correlationId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        incidentId:
+          type: string
+          format: uuid
+        stage:
+          $ref: "#/components/schemas/InvestigationStage"
+        evidence:
+          type: array
+          items:
+            $ref: "#/components/schemas/EvidenceItem"
+        hypotheses:
+          type: array
+          items:
+            $ref: "#/components/schemas/Hypothesis"
+        escalationReason:
+          type: string
+          nullable: true
+        correlationId:
+          type: string
+    HumanDecisionKind:
+      type: string
+      enum: [approve, reject, requestInfo]
+    HumanDecisionRequest:
+      type: object
+      additionalProperties: false
+      required: [kind]
+      properties:
+        kind:
+          $ref: "#/components/schemas/HumanDecisionKind"
+        comment:
+          type: string
+          nullable: true
+          maxLength: 4000
+        approverId:
+          type: string
+          description: Required when kind is approve. The server issues the token.
+    DecisionResult:
+      type: object
+      additionalProperties: false
+      required: [investigation]
+      properties:
+        investigation:
+          $ref: "#/components/schemas/Investigation"
+        capa:
+          $ref: "#/components/schemas/Capa"
+          nullable: true
+    CapaStage:
+      type: string
+      enum: [open, containment, rootCauseConfirmed, correctiveAction, verification, closed]
+    Capa:
+      type: object
+      additionalProperties: false
+      required: [id, incidentId, summary, approvalTokenId, actionHash, stage, openedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        incidentId:
+          type: string
+          format: uuid
+        summary:
+          type: string
+        approvalTokenId:
+          type: string
+          format: uuid
+        actionHash:
+          type: string
+        stage:
+          $ref: "#/components/schemas/CapaStage"
+        openedAt:
+          type: string
+          format: date-time
+    AdvanceCapaRequest:
+      type: object
+      additionalProperties: false
+      required: [stage]
+      properties:
+        stage:
+          $ref: "#/components/schemas/CapaStage"
+    FaultShape:
+      type: string
+      enum: [step, ramp, oscillation, intermittent]
+    FaultInjectionRequest:
+      type: object
+      additionalProperties: false
+      required: [toolId, parameter, shape, magnitude, rootCauseCategory]
+      properties:
+        toolId:
+          type: string
+        chamberId:
+          type: string
+          nullable: true
+        parameter:
+          type: string
+        shape:
+          $ref: "#/components/schemas/FaultShape"
+        magnitude:
+          type: number
+          description: Sigma multiple or percent, as labeled by the simulator.
+        rootCauseCategory:
+          $ref: "#/components/schemas/RootCauseCategory"
+        confounders:
+          type: boolean
+          default: false
+    FaultInjectionAccepted:
+      type: object
+      additionalProperties: false
+      required: [faultId, correlationId]
+      properties:
+        faultId:
+          type: string
+          format: uuid
+        correlationId:
+          type: string
+    MetricsSummary:
+      type: object
+      additionalProperties: false
+      required: [mode, spendTodayUsd, spendCapUsd]
+      properties:
+        mode:
+          type: string
+          enum: [replay, live]
+        completionRate:
+          type: number
+          nullable: true
+        groundingScore:
+          type: number
+          nullable: true
+        categoryAccuracy:
+          type: number
+          nullable: true
+        toolFailureCount:
+          type: integer
+        latencyP95Ms:
+          type: number
+          nullable: true
+        costPerInvestigationUsd:
+          type: number
+          nullable: true
+        spendTodayUsd:
+          type: number
+        spendCapUsd:
+          type: number

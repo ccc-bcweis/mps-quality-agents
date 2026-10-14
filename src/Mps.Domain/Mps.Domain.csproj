@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Mps.Domain</RootNamespace>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.meridian-precision.example/events/event.schema.json",
+  "title": "LifecycleEvent",
+  "description": "Any lifecycle event. Each alternative is one document in this folder. JSON Schema draft 2020-12.",
+  "oneOf": [
+    { "$ref": "alert-raised.schema.json" },
+    { "$ref": "ticket-opened.schema.json" },
+    { "$ref": "incident-opened.schema.json" },
+    { "$ref": "investigation-started.schema.json" },
+    { "$ref": "evidence-gathered.schema.json" },
+    { "$ref": "hypothesis-proposed.schema.json" },
+    { "$ref": "investigation-escalated.schema.json" },
+    { "$ref": "approval-granted.schema.json" },
+    { "$ref": "approval-rejected.schema.json" },
+    { "$ref": "capa-created.schema.json" },
+    { "$ref": "capa-advanced.schema.json" },
+    { "$ref": "fault-injected.schema.json" }
+  ]
+}

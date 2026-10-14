@@ -1,0 +1,32 @@
+# Manual stub only. workflow_dispatch never runs on push or pull_request.
+# Environment azure-demo needs a required reviewer, which Bob configures in GitHub.
+# Build, push, what-if, and deploy stay commented until Z1.
+
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    environment: azure-demo
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Azure login
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # TODO Z1: build the API image and push it to the registry.
+      # TODO Z1: bicep what-if for infra/main.bicep against resource group rg-mps-demo.
+      # TODO Z1: deploy infra/main.bicep. Keep this workflow on workflow_dispatch only.

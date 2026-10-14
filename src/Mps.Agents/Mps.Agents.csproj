@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Mps.Agents</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Mps.Application\Mps.Application.csproj" />
+    <ProjectReference Include="..\Mps.ModelGateway\Mps.ModelGateway.csproj" />
+  </ItemGroup>
+</Project>
