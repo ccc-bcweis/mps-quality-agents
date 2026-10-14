@@ -1,0 +1,40 @@
+{
+  "faultId": "FLT-DRIFT-E01",
+  "scenario": "S5",
+  "category": "processDrift",
+  "expectedBehavior": "recommend",
+  "assertCategory": true,
+  "cause": "Chamber A etch rate has ramped since the last clean as RF hours accumulated. No discrete change lines up with the onset.",
+  "tools": [
+    "E-01"
+  ],
+  "parameter": "etchRate",
+  "chamberId": "E-01-A",
+  "evidenceRecordIds": [
+    "CFG-E-01",
+    "WO-CLN-E01-220",
+    "RUN-FLT-DRIFT-E01-E-01-00",
+    "RUN-FLT-DRIFT-E01-E-01-01",
+    "RUN-FLT-DRIFT-E01-E-01-02"
+  ],
+  "confounderRecordIds": [],
+  "missingRecordIds": [],
+  "contradiction": null,
+  "counterEvidence": [
+    "There is no ECO, overdue calibration, or supplier notice at the ramp onset."
+  ],
+  "signals": [
+    {
+      "toolId": "E-01",
+      "chamberId": "E-01-A",
+      "parameter": "etchRate",
+      "shape": "ramp",
+      "magnitudeKind": "sigma",
+      "magnitude": -3.5,
+      "onset": "2026-09-01T00:00:00Z",
+      "periodSeconds": 30,
+      "rampSeconds": 2592000,
+      "dutyCycle": 0.5
+    }
+  ]
+}

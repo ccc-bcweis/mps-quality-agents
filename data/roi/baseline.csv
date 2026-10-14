@@ -1,0 +1,2 @@
+seed,label,scope,revenueUsd,copqRate,copqUsd,laborUsd,scrapUsd,warrantyUsd,downtimeUsd,incidents,mttrDays,hypothesisDays,repeatRate,capaCycleDays,investigationHours,engineerUsdPerHour,downtimeUsdPerHour,downtimeHours,repeatIncidents,aiUsdPerInvestigation,platformUsdPerYear,downtimeCapture,runCostUsd
+20261014,"illustrative, synthetic",3-plant MPS,1200000000,0.0800,96000000,2926000,46537000,20476280,26060720,1400,9.50,4.00,0.1800,62.00,22.00,95,12000,2171.73,252.00,4,180000,0.3500,185600

@@ -1,0 +1,40 @@
+{
+  "faultId": "FLT-CONTRA-D01",
+  "scenario": "S2",
+  "category": "equipmentCalibrationOrAlignment",
+  "expectedBehavior": "escalate",
+  "assertCategory": false,
+  "cause": "The hidden pressure-instrument record is absent, and the showerhead revision in PLM does not match the MES run header.",
+  "tools": [
+    "D-01"
+  ],
+  "parameter": "chamberPressure",
+  "chamberId": "D-01-A",
+  "evidenceRecordIds": [
+    "CFG-D-01",
+    "RUN-FLT-CONTRA-D01-D-01-00",
+    "RUN-FLT-CONTRA-D01-D-01-01",
+    "RUN-FLT-CONTRA-D01-D-01-02",
+    "RUN-FLT-CONTRA-D01-D-01-03"
+  ],
+  "confounderRecordIds": [],
+  "missingRecordIds": [
+    "CAL-D01-MANOMETER"
+  ],
+  "contradiction": "PLM config says showerhead revision C. MES run headers say recipe revision B.",
+  "counterEvidence": [],
+  "signals": [
+    {
+      "toolId": "D-01",
+      "chamberId": "D-01-A",
+      "parameter": "chamberPressure",
+      "shape": "step",
+      "magnitudeKind": "sigma",
+      "magnitude": 4,
+      "onset": "2026-10-02T09:00:00Z",
+      "periodSeconds": 30,
+      "rampSeconds": 600,
+      "dutyCycle": 0.5
+    }
+  ]
+}

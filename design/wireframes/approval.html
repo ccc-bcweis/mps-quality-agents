@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="replay">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Approval APR-330 · MPS Fab Ops Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="assets/console.css"/>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="mode-banner">
+    <span class="mode-pill" data-mode-label>REPLAY MODE</span>
+    <span class="mode-note" data-mode-note>Recorded responses. No live model calls.</span>
+    <button type="button" class="mode-toggle" data-mode-toggle>Switch to LIVE AI</button>
+    <div class="spend" title="Hard daily spend cap enforced by the model gateway">
+      <span class="spend-label">Today's spend</span>
+      <div class="spend-track"><div class="spend-fill" data-spend-fill></div></div>
+      <span class="spend-val" data-spend-val>$0.00 of $2.00</span>
+    </div>
+  </div>
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <img src="../brand/logo-concept-1.svg" width="32" height="32" alt="Meridian Precision Systems mark"/>
+      <div>
+        <strong>Meridian Precision Systems</strong>
+        <span>Fab Ops Console · Austin Demo Fab</span>
+      </div>
+    </a>
+    <div class="topbar-meta">
+      <span><span class="led"></span>Sim 14:32 · 1 s = 1 min</span>
+      <span>Plant <b>AUS-1</b></span>
+      <span>Engineer <b>dev-user</b></span>
+    </div>
+  </header>
+  <nav class="nav"><a href="index.html">Fleet</a><a href="tool.html">Tool</a><a href="alerts.html">Alerts</a><a href="tickets.html">Tickets</a><a href="investigation.html">Investigation</a><a href="approval.html" aria-current="page">Approval</a><a href="capa.html">CAPA</a><a href="injector.html">Injector</a><a href="roi.html">ROI</a><a href="metrics.html">Metrics</a></nav>
+  <ol class="lifecycle"><li class="is-done"><span class="pip"></span>Alert</li><li class="is-done"><span class="pip"></span>Ticket</li><li class="is-done"><span class="pip"></span>Investigation</li><li class="is-done"><span class="pip"></span>Recommendation</li><li class="is-current"><span class="pip"></span>Approval</li><li class="is-todo"><span class="pip"></span>CAPA</li></ol>
+  <main id="main" class="page">
+
+    <div class="page-head">
+      <div>
+        <div class="crumbs"><a href="investigation.html">INV-881</a> · human-gated write</div>
+        <h1>Approval APR-330</h1>
+        <p>The model never holds write authority. Approve issues a single-use HMAC ApprovalToken bound to the action hash.</p>
+      </div>
+    </div>
+    <div class="grid grid-2">
+      <div class="panel">
+        <h2>Recommended action</h2>
+        <p><span class="chip">category</span> engineering change · ECO-4471 edge ring rev C</p>
+        <ul>
+          <li>Containment: hold lots <code>L-4419</code>, <code>L-4420</code> at MES.</li>
+          <li>Corrective: apply SB-441 gap spec or revert ring to rev B on E-02 Ch B.</li>
+          <li>CAPA: verification of ECO thermal impact on ESC; owner Process Eng.</li>
+        </ul>
+        <p class="mono" style="font-size:11px;color:var(--mps-muted)">actionHash 9f2c…e1 · expires 30 min · bound to INV-881</p>
+        <div class="btn-row">
+          <button class="btn btn-ok" type="button" data-open="confirm">Approve CAPA + containment</button>
+          <button class="btn btn-danger" type="button" data-open="reject">Reject</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Enforcement <span class="right tag-rules">deterministic</span></h2>
+        <table class="data">
+          <tbody>
+            <tr><td>No token</td><td>403</td></tr>
+            <tr><td>Tampered / expired / reused</td><td>rejected</td></tr>
+            <tr><td>Hash mismatch</td><td>rejected</td></tr>
+            <tr><td>Agent write tool</td><td>not registered (architecture test)</td></tr>
+            <tr><td>QMS 500</td><td>retry then Failed — demo path on CAPA screen</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+  <footer class="site-footer">
+    <span class="sn" title="Placeholder — official StatusNeo artwork not in this repo">Powered by StatusNeo</span>
+    <span>Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · MIT · Fictional demonstration; all companies and data are synthetic.</span>
+  </footer>
+  
+  <div class="overlay" id="confirm">
+    <div class="modal" role="dialog" aria-labelledby="c-title">
+      <h2 id="c-title">Confirm approval</h2>
+      <p>This creates CAPA-2201 in mock QMS and holds two lots. Type <strong>APPROVE</strong> is required in the React app; this prototype skips the typed confirm.</p>
+      <div class="btn-row">
+        <a class="btn btn-ok" href="capa.html">Issue token and create CAPA</a>
+        <button class="btn" type="button" data-close>Cancel</button>
+      </div>
+    </div>
+  </div>
+  <div class="overlay" id="reject">
+    <div class="modal" role="dialog" aria-labelledby="r-title">
+      <h2 id="r-title">Reject recommendation</h2>
+      <label class="field"><span>Reason (becomes an eval regression candidate)</span>
+        <textarea>Confounder not convincing — request more ESC thermal data.</textarea>
+      </label>
+      <div class="btn-row">
+        <a class="btn btn-danger" href="investigation.html">Reject and return</a>
+        <button class="btn" type="button" data-close>Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/console.js"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Synthetic fault. Slow etch-rate ramp after a clean. No discrete confounder.
+id: FLT-DRIFT-E01
+title: Etch rate ramp with RF hours on E-01
+category: processDrift
+scenario: S5
+expectedBehavior: recommend
+assertCategory: true
+tools: [E-01]
+chamberId: E-01-A
+parameter: etchRate
+shape: ramp
+magnitude:
+  kind: sigma
+  value: -3.5
+onset: "2026-09-01T00:00:00Z"
+rampSeconds: 2592000
+cause: Chamber A etch rate has ramped since the last clean as RF hours accumulated. No discrete change lines up with the onset.
+counterEvidence:
+  - There is no ECO, overdue calibration, or supplier notice at the ramp onset.
+actions:
+  - Recommend a chamber clean.
+  - Do not open a CAPA for a discrete part, calibration, or material change.
+evidence:
+  workOrder:
+    workOrderId: WO-CLN-E01-220
+    toolId: E-01
+    chamberId: E-01-A
+    kind: clean
+    performedAt: "2026-08-20T04:00:00Z"
+    summary: Last chamber clean. Chamber A is past 420 RF-hours since that clean.
+  config:
+    configId: CFG-E-01
+    toolId: E-01
+    revision: B
+    partName: Liner
+  runs:
+    recipeId: OXIDE-ETCH
+    recipeRevision: B
+    lotId: W-E01-090
+    materialCode: WAF-SI-300
+    count: 3

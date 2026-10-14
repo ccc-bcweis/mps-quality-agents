@@ -1,0 +1,56 @@
+{
+  "faultId": "FLT-GAS-NF3317",
+  "scenario": "S4-material",
+  "category": "supplyChainMaterial",
+  "expectedBehavior": "recommend",
+  "assertCategory": true,
+  "cause": "Gas lot NF-3317 of the NF3/O2 mix is out of spec for moisture and was released to both etch tools.",
+  "tools": [
+    "E-01",
+    "E-02"
+  ],
+  "parameter": "etchRate",
+  "chamberId": null,
+  "evidenceRecordIds": [
+    "NF-3317",
+    "SN-NF-3317",
+    "RUN-FLT-GAS-NF3317-E-01-00",
+    "RUN-FLT-GAS-NF3317-E-01-01",
+    "RUN-FLT-GAS-NF3317-E-02-00",
+    "RUN-FLT-GAS-NF3317-E-02-01"
+  ],
+  "confounderRecordIds": [
+    "ECO-4502"
+  ],
+  "missingRecordIds": [],
+  "contradiction": null,
+  "counterEvidence": [
+    "ECO-4502 is a liner note on E-01 only. E-02 shows the same etch-rate step and is outside that ECO."
+  ],
+  "signals": [
+    {
+      "toolId": "E-01",
+      "chamberId": null,
+      "parameter": "etchRate",
+      "shape": "step",
+      "magnitudeKind": "percent",
+      "magnitude": -12,
+      "onset": "2026-10-08T08:00:00Z",
+      "periodSeconds": 30,
+      "rampSeconds": 600,
+      "dutyCycle": 0.5
+    },
+    {
+      "toolId": "E-02",
+      "chamberId": null,
+      "parameter": "etchRate",
+      "shape": "step",
+      "magnitudeKind": "percent",
+      "magnitude": -12,
+      "onset": "2026-10-08T08:00:00Z",
+      "periodSeconds": 30,
+      "rampSeconds": 600,
+      "dutyCycle": 0.5
+    }
+  ]
+}

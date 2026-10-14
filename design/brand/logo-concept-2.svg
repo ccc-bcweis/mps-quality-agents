@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">MPS logo concept 2 — Four Films</title>
+  <desc id="desc">Four stacked process films (deposition, etch, strip, clean) folded into an M. Each layer is a family; the cut face reads as a wafer edge.</desc>
+  <rect width="64" height="64" rx="8" fill="#0E1116"/>
+  <!-- film stack, isometric M -->
+  <g fill="none" stroke-linejoin="round" stroke-linecap="round">
+    <!-- layer 4 clean (top) -->
+    <path d="M12 28 L22 18 L32 26 L42 18 L52 28 L42 24 L32 32 L22 24 Z" fill="#10B981" fill-opacity="0.22" stroke="#10B981" stroke-width="1.35"/>
+    <!-- layer 3 strip -->
+    <path d="M12 34 L22 24 L32 32 L42 24 L52 34 L42 30 L32 38 L22 30 Z" fill="#F59E0B" fill-opacity="0.18" stroke="#F59E0B" stroke-width="1.35"/>
+    <!-- layer 2 etch -->
+    <path d="M12 40 L22 30 L32 38 L42 30 L52 40 L42 36 L32 44 L22 36 Z" fill="#67E8F9" fill-opacity="0.16" stroke="#67E8F9" stroke-width="1.35"/>
+    <!-- layer 1 deposition (base) -->
+    <path d="M12 46 L22 36 L32 44 L42 36 L52 46 L42 42 L32 50 L22 42 Z" fill="#22D3EE" fill-opacity="0.20" stroke="#22D3EE" stroke-width="1.5"/>
+  </g>
+  <!-- wafer-edge tick on the lowest film -->
+  <circle cx="32" cy="47.2" r="1.4" fill="#22D3EE"/>
+  <!-- process pips -->
+  <g>
+    <rect x="10" y="54.2" width="8" height="2.2" rx="0.6" fill="#22D3EE"/>
+    <rect x="22" y="54.2" width="8" height="2.2" rx="0.6" fill="#67E8F9"/>
+    <rect x="34" y="54.2" width="8" height="2.2" rx="0.6" fill="#F59E0B"/>
+    <rect x="46" y="54.2" width="8" height="2.2" rx="0.6" fill="#10B981"/>
+  </g>
+</svg>
