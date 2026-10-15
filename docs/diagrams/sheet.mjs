@@ -68,6 +68,42 @@ function intersects(a, b) {
   return a.x < b.x + b.w - 0.4 && a.x + a.w > b.x + 0.4 && a.y < b.y + b.h - 0.4 && a.y + a.h > b.y + 0.4;
 }
 
+// Label boxes. Inflate by 1.5 pt so two labels cannot touch.
+// A clip box means the glyphs must sit inside it, or the label is clipped.
+// Obstacles are drawing ink the words must not cover.
+export function collectLabelIssues(labels, obstacles = []) {
+  const errors = [];
+  for (const label of labels) {
+    if (label.clip && !contains(label.clip, label.box, 1)) {
+      errors.push(`${label.id}: text escapes its clip (${label.text})`);
+    }
+  }
+  const boxes = labels.map((label) => ({
+    x: label.box.x - 1.5,
+    y: label.box.y - 1.5,
+    w: label.box.w + 3,
+    h: label.box.h + 3,
+    id: label.id,
+  }));
+  for (let i = 0; i < boxes.length; i += 1) {
+    for (let j = i + 1; j < boxes.length; j += 1) {
+      if (intersects(boxes[i], boxes[j])) {
+        errors.push(`text overlap: ${boxes[i].id} and ${boxes[j].id}`);
+      }
+    }
+    for (const obstacle of obstacles) {
+      if (intersects(boxes[i], obstacle)) {
+        errors.push(`text ${boxes[i].id} overlaps drawing ${obstacle.id}`);
+      }
+    }
+  }
+  return errors;
+}
+
+export function glyphPath(font, text, x, baseline, size) {
+  return commandsToPath(font.getPath(text, x, baseline, size).commands);
+}
+
 function contains(outer, inner, pad = 0) {
   return (
     inner.x >= outer.x + pad - 0.4 &&
@@ -122,6 +158,7 @@ export class Sheet {
     this.under = [];
     this.shapes = [];
     this.chromeShapes = [];
+    this.occupied = [];
     this.errors = [];
     this._chrome = false;
     this._figure = true;
@@ -168,13 +205,19 @@ export class Sheet {
     return box;
   }
 
+  // Drawing ink. Labels must not cover these boxes.
+  occupy(id, x, y, w, h) {
+    if (!(w > 0) || !(h > 0)) this.errors.push(`${id}: occupied box is empty`);
+    this.occupied.push({ id, x, y, w, h });
+  }
+
   /** One line. x is the left of the glyphs unless align is set against `clip`. */
   text(id, text, x, baseline, { size = 14, weight = 'regular', fill = INK, align = 'left', clip = null } = {}) {
     const w = this.width(weight, text, size);
     let left = x;
     if (align === 'center') left = x - w / 2;
     if (align === 'right') left = x - w;
-    const box = this.addText({ id, text, x: left, baseline, size, weight, fill });
+    const box = this.addText({ id, text, x: left, baseline, size, weight, fill, clip });
     if (clip && !contains(clip, box, 1)) {
       this.errors.push(`${id}: text escapes its clip (${text})`);
     }
@@ -709,11 +752,17 @@ export class Sheet {
       h: t.box.h + 3,
       id: t.id,
     }));
-    for (let i = 0; i < textBoxes.length; i += 1) {
-      for (let j = i + 1; j < textBoxes.length; j += 1) {
-        if (intersects(textBoxes[i], textBoxes[j])) {
-          this.errors.push(`text overlap: ${textBoxes[i].id} and ${textBoxes[j].id}`);
-        }
+    this.errors.push(
+      ...collectLabelIssues(
+        this.texts.map((t) => ({ id: t.id, text: t.text, box: t.box, clip: t.clip })),
+        this.occupied,
+      ),
+    );
+    if (this.meta.strictLabels) {
+      for (const t of this.texts) {
+        if (!t.figure) continue;
+        if (!t.clip) this.errors.push(`${t.id}: label has no clip box`);
+        if (!contains(this.area, t.box, 0)) this.errors.push(`${t.id}: label is clipped by the diagram area`);
       }
     }
 
