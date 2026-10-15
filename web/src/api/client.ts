@@ -163,6 +163,7 @@ export const api = {
   listScenarios: () => apiSend<ScriptedScenario[]>("/api/injector/scenarios"),
   runScenario: (scenarioId: string) =>
     apiSend<ScenarioRun>(`/api/injector/scenarios/${encodeURIComponent(scenarioId)}`, { method: "POST" }),
+  stopScenario: () => apiSend<{ removed: number }>("/api/injector/stop", { method: "POST" }),
   getMetrics: () => apiSend<MetricsSummary>("/api/metrics"),
   getTrace: (eventId: string) => apiSend<CausalTrace>(`/api/trace/${encodeURIComponent(eventId)}`),
 };

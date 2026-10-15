@@ -27,7 +27,9 @@ public sealed record AlertResponse(
     string Rule,
     DateTimeOffset RaisedAt,
     string CorrelationId,
-    string SiteId);
+    string SiteId,
+    string Status = "active",
+    DateTimeOffset? ClearedAt = null);
 
 public sealed record TicketResponse(
     Guid Id,
@@ -180,6 +182,8 @@ public sealed class FaultBody
     public RootCauseCategory? RootCauseCategory { get; set; }
 
     public bool Confounders { get; set; }
+
+    public double? DurationMinutes { get; set; }
 }
 
 public sealed record ThroughputResponse(double WaferStartsPerHour, double WaferOutsPerHour, int Wip, double YieldPct, double UptimePct);

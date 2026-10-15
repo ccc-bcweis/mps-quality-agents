@@ -65,7 +65,12 @@ export function AlertsPage() {
     const matched = tickets.find((item) => item.incidentId === incident?.id);
     return {
       id: alert.id,
-      status: <Chip tone={severityTone(alert.severity)}>{severityWord(alert.severity)}</Chip>,
+      status: (
+        <>
+          <Chip tone={severityTone(alert.severity)}>{severityWord(alert.severity)}</Chip>
+          {alert.status === "cleared" ? <> <Chip tone="nominal">Cleared</Chip></> : null}
+        </>
+      ),
       toolName: toolPlainName(tools, alert.toolId),
       toolId: alert.toolId,
       time: formatStamp(alert.raisedAt),
@@ -102,6 +107,10 @@ export function AlertsPage() {
           <h2 className="mb-2 text-mps-title font-semibold">Alert</h2>
           <p>
             <Chip tone={severityTone(selected.severity)}>{severityWord(selected.severity)}</Chip> · {toolPlainName(tools, selected.toolId)} · {formatStamp(selected.raisedAt)}
+            {" · "}
+            {selected.status === "cleared"
+              ? `Cleared ${selected.clearedAt ? formatStamp(selected.clearedAt) : ""}`.trim()
+              : "Active until 8 readings in a row are back in control"}
           </p>
           <p className="mt-2">
             <Explain text={ruleLabel(selected.rule)} /> · {selected.parameter}

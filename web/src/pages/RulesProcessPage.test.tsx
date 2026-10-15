@@ -21,6 +21,9 @@ describe("rules and process", () => {
     expect(screen.getByText(/Open a ticket, set the priority to critical/)).toBeInTheDocument();
     expect(screen.getByText(/A critical signal can affect the wafers or the tool/)).toBeInTheDocument();
     expect(screen.queryByText("rule-critical-human")).not.toBeInTheDocument();
+    expect(screen.getByText("When 8 readings in a row stay inside two sigma after an alert.")).toBeInTheDocument();
+    expect(screen.getByText(/Remove the fault on that tool so its readings return to nominal/)).toBeInTheDocument();
+    expect(screen.getByText(/Close the incident and its ticket\. The investigation keeps its Approved result\./)).toBeInTheDocument();
     expect(screen.queryByText("TKT-1038")).not.toBeInTheDocument();
     expect(screen.queryByText("TKT-1044")).not.toBeInTheDocument();
 

@@ -81,7 +81,7 @@ public sealed record FaultSignal
     /// <summary>Same fault with its period and ramp shortened by <paramref name="pace"/>, so it develops that many times faster.</summary>
     public FaultSignal Paced(double pace) =>
         pace is > 0 and not 1d && double.IsFinite(pace)
-            ? new FaultSignal(ToolId, ChamberId, Parameter, Shape, MagnitudeKind, Magnitude, Onset, PeriodSeconds / pace, RampSeconds / pace, DutyCycle)
+            ? new FaultSignal(ToolId, ChamberId, Parameter, Shape, MagnitudeKind, Magnitude, Onset, PeriodSeconds / pace, RampSeconds / pace, DutyCycle) { EndsAt = EndsAt }
             : this;
 
     public string ToolId { get; }
@@ -104,9 +104,18 @@ public sealed record FaultSignal
 
     public double DutyCycle { get; }
 
+    /// <summary>When the fault stops. Null means it lasts until something removes it.</summary>
+    public DateTimeOffset? EndsAt { get; private init; }
+
+    /// <summary>Same fault ending <paramref name="duration"/> after onset. Null or non-positive keeps it open-ended.</summary>
+    public FaultSignal Lasting(TimeSpan? duration) =>
+        duration is { } span && span > TimeSpan.Zero
+            ? new FaultSignal(ToolId, ChamberId, Parameter, Shape, MagnitudeKind, Magnitude, Onset, PeriodSeconds, RampSeconds, DutyCycle) { EndsAt = Onset + span }
+            : this;
+
     public bool AppliesTo(string toolId, string chamberId, string parameter, DateTimeOffset at)
     {
-        if (at < Onset)
+        if (at < Onset || (EndsAt is { } end && at >= end))
         {
             return false;
         }

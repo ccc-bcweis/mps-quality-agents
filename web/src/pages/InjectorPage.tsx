@@ -25,6 +25,7 @@ export function InjectorPage() {
   const [magnitude, setMagnitude] = useState("2.4");
   const [category, setCategory] = useState<RootCauseCategory>("equipmentCalibrationOrAlignment");
   const [confounders, setConfounders] = useState(true);
+  const [duration, setDuration] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -77,6 +78,7 @@ export function InjectorPage() {
         magnitude: magnitudeValue,
         rootCauseCategory: category,
         confounders,
+        ...(Number(duration) > 0 ? { durationMinutes: Number(duration) } : {}),
       };
       await api.injectFault(body);
       navigate(tracePath(toolId, parameter));
@@ -163,6 +165,10 @@ export function InjectorPage() {
               <option value="on">on</option>
               <option value="off">off</option>
             </select>
+          </label>
+          <label className="mb-3 block text-mps-label text-mps-muted">
+            Duration (minutes, optional — blank runs until stopped)
+            <input className={field} inputMode="decimal" value={duration} onChange={(event) => setDuration(event.target.value)} />
           </label>
           <div className="flex flex-wrap gap-2">
             <button className={btnPrimary} type="submit" disabled={pending}>

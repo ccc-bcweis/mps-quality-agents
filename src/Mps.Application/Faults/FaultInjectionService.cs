@@ -20,7 +20,8 @@ public sealed record FaultInjectionRequest(
     string? CorrelationId = null,
     bool PublishCommand = true,
     Guid? FaultId = null,
-    bool Scripted = false);
+    bool Scripted = false,
+    double? DurationMinutes = null);
 
 public sealed record FaultAccepted(Guid FaultId, string CorrelationId, Guid IncidentId);
 
@@ -128,6 +129,7 @@ public sealed class FaultInjectionService : IFaultInjectionService
                         magnitude = request.Magnitude,
                         rootCauseCategory = category,
                         scripted = request.Scripted,
+                        durationMinutes = request.DurationMinutes is > 0 ? request.DurationMinutes : null,
                         body = new { faultId, correlationId },
                     }),
                 cancellationToken).ConfigureAwait(false);

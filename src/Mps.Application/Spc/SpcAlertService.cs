@@ -55,6 +55,7 @@ public sealed class SpcAlertService
     public async Task<SpcAlertOutcome> RaiseAsync(SpcSample sample, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(sample);
+        await ClearRecoveredAsync(sample, cancellationToken).ConfigureAwait(false);
         var violations = WesternElectricEvaluator.Evaluate(
             sample.ToolId,
             sample.ChamberId,
@@ -121,6 +122,82 @@ public sealed class SpcAlertService
                 repeatCount: history.Count),
             cancellationToken).ConfigureAwait(false);
         return new SpcAlertOutcome(violations, alert, intake.Incident, intake.Ticket, debounced: false, decision);
+    }
+
+    /// <summary>Clears active alerts on this signal once the last readings have stayed in control long enough.</summary>
+    private async Task ClearRecoveredAsync(SpcSample sample, CancellationToken cancellationToken)
+    {
+        if (sample.Points.Count < AlertClearing.InControlReadings)
+        {
+            return;
+        }
+
+        var history = await _alerts.ListBySignalAsync(sample.ToolId, sample.Parameter, sample.ChamberId, cancellationToken)
+            .ConfigureAwait(false);
+        var active = history.Where(alert => alert.IsActive).ToArray();
+        if (active.Length == 0)
+        {
+            return;
+        }
+
+        foreach (var alert in active)
+        {
+            var run = InControlRun(sample, alert.RaisedAt);
+            if (run.Count < AlertClearing.InControlReadings)
+            {
+                continue;
+            }
+
+            var at = run.Last;
+            await _alerts.ClearAsync(alert.Id, at, cancellationToken).ConfigureAwait(false);
+            alert.Clear(at);
+            if (_events is not null)
+            {
+                await _events.PublishAsync(
+                    new LifecycleEvent(
+                        LifecycleTypes.AlertCleared,
+                        alert.CorrelationId,
+                        null,
+                        _hints?.FindStep(alert.CorrelationId, "alert"),
+                        "spc",
+                        null,
+                        sample.ToolId.ToString(),
+                        sample.ChamberId,
+                        at,
+                        new
+                        {
+                            alertId = alert.Id.Value,
+                            parameter = sample.Parameter,
+                            readings = run.Count,
+                            why = $"{run.Count} readings in a row inside +/-{AlertClearing.ZoneSigma:0} sigma",
+                        }),
+                    cancellationToken).ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>Trailing readings after <paramref name="after"/> that sit inside the clearing zone.</summary>
+    internal static (int Count, DateTimeOffset Last) InControlRun(SpcSample sample, DateTimeOffset after)
+    {
+        var count = 0;
+        var last = DateTimeOffset.MinValue;
+        for (var index = sample.Points.Count - 1; index >= 0; index--)
+        {
+            var point = sample.Points[index];
+            if (point.At <= after || Math.Abs(sample.Baseline.Z(point.Value)) >= AlertClearing.ZoneSigma)
+            {
+                break;
+            }
+
+            if (count == 0)
+            {
+                last = point.At;
+            }
+
+            count++;
+        }
+
+        return (count, last);
     }
 
     private async Task PublishRuleAsync(

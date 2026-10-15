@@ -16,7 +16,7 @@ namespace Mps.Api.Live;
 /// One seeded simulator for every tool at every plant, plus the decimated series the UI and the agents read.
 /// Fault onset is the simulator clock, so a prime of nominal history stays nominal.
 /// </summary>
-public sealed class PlantSimulation
+public sealed class PlantSimulation : Mps.Application.Lifecycle.IPlantFaultControl
 {
     private readonly object _gate = new();
     private readonly SimulationOptions _options;
@@ -163,11 +163,11 @@ public sealed class PlantSimulation
         }
     }
 
-    public bool TryApplyFreeForm(string toolId, string? chamberId, string parameter, string shape, double magnitude)
+    public bool TryApplyFreeForm(string toolId, string? chamberId, string parameter, string shape, double magnitude, TimeSpan? duration = null)
     {
         lock (_gate)
         {
-            return Runtime.TryApplyFreeForm(toolId, chamberId, parameter, shape, magnitude, FaultPace);
+            return Runtime.TryApplyFreeForm(toolId, chamberId, parameter, shape, magnitude, FaultPace, duration);
         }
     }
 
@@ -176,6 +176,24 @@ public sealed class PlantSimulation
         lock (_gate)
         {
             Runtime.Simulator.Inject(fault.Paced(FaultPace));
+        }
+    }
+
+    /// <summary>Removes the injected faults on one tool. Records and history stay.</summary>
+    public int ClearTool(string toolId)
+    {
+        lock (_gate)
+        {
+            return Runtime.Simulator.RemoveFaults(fault => string.Equals(fault.ToolId, toolId, StringComparison.Ordinal));
+        }
+    }
+
+    /// <summary>Removes every injected fault, so all telemetry returns to nominal. Records and history stay.</summary>
+    public int ClearAll()
+    {
+        lock (_gate)
+        {
+            return Runtime.Simulator.RemoveFaults(_ => true);
         }
     }
 

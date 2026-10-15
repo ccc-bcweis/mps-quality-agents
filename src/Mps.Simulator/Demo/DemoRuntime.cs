@@ -49,7 +49,7 @@ public sealed class DemoRuntime
         Simulator.InjectAtSimulatedNow(scenario.Signals);
     }
 
-    public bool TryApplyFreeForm(string toolId, string? chamberId, string parameter, string shape, double magnitude, double pace = 1d)
+    public bool TryApplyFreeForm(string toolId, string? chamberId, string parameter, string shape, double magnitude, double pace = 1d, TimeSpan? duration = null)
     {
         if (string.IsNullOrWhiteSpace(toolId) || string.IsNullOrWhiteSpace(parameter) || string.IsNullOrWhiteSpace(shape))
         {
@@ -81,7 +81,7 @@ public sealed class DemoRuntime
         var chamber = string.IsNullOrWhiteSpace(chamberId) ? tool.Chambers[0].Id : chamberId.Trim();
         Simulator.InjectAtSimulatedNow(onset =>
         [
-            new FaultSignal(tool.Id, chamber, name, parsed, MagnitudeKind.Sigma, magnitude, onset, periodSeconds: 1200d, rampSeconds: 7200d).Paced(pace),
+            new FaultSignal(tool.Id, chamber, name, parsed, MagnitudeKind.Sigma, magnitude, onset, periodSeconds: 1200d, rampSeconds: 7200d).Paced(pace).Lasting(duration),
         ]);
         return true;
     }

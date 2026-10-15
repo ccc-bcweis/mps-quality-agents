@@ -102,7 +102,8 @@ public sealed class PlantCommandSubscriber : IHostedService, IDisposable
         }
 
         var chamberId = envelope.ChamberId ?? PayloadReader.String(envelope.Payload, "chamberId");
-        _plant.TryApplyFreeForm(toolId, chamberId, parameter, shape, magnitude.Value);
+        var minutes = PayloadReader.Number(envelope.Payload, "durationMinutes");
+        _plant.TryApplyFreeForm(toolId, chamberId, parameter, shape, magnitude.Value, minutes is > 0 ? TimeSpan.FromMinutes(minutes.Value) : null);
         return ValueTask.CompletedTask;
     }
 }

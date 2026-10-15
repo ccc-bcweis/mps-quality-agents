@@ -155,4 +155,21 @@ describe("harness collapse, replay, and soft reset", () => {
     }
     expect(within(harness).getByRole("combobox", { name: "Sample every" })).toBeInTheDocument();
   });
+
+  it("stops the running scenario and keeps the records", async () => {
+    let calls = 0;
+    server.use(
+      http.post("/api/injector/stop", () => {
+        calls += 1;
+        return HttpResponse.json({ removed: 2 });
+      }),
+    );
+    const user = userEvent.setup();
+    renderConsole("/");
+    const harness = await screen.findByRole("banner", { name: "StatusNeo demo harness" });
+    await user.click(within(harness).getByRole("button", { name: "Expand harness" }));
+    await user.click(within(harness).getByRole("button", { name: "Stop scenario" }));
+    expect(await within(harness).findByText(/Scenario stopped\. 2 faults removed; telemetry returns to nominal\./)).toBeInTheDocument();
+    expect(calls).toBe(1);
+  });
 });

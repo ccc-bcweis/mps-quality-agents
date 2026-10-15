@@ -680,6 +680,25 @@ paths:
                 $ref: "#/components/schemas/ScenarioRun"
         "404":
           $ref: "#/components/responses/NotFound"
+  /api/injector/stop:
+    post:
+      tags: [faults]
+      operationId: stopScenario
+      summary: Stop the running scenario and injected faults
+      description: |
+        Removes every injected fault so telemetry returns to nominal. Alerts, tickets and other records stay.
+      responses:
+        "200":
+          description: Faults removed.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [removed]
+                properties:
+                  removed:
+                    type: integer
   /api/audit:
     get:
       tags: [audit]
@@ -1094,6 +1113,14 @@ components:
           type: string
         siteId:
           type: string
+        status:
+          type: string
+          enum: [active, cleared]
+          description: Active until the signal stays in control for 8 readings in a row.
+        clearedAt:
+          type: string
+          format: date-time
+          nullable: true
           description: Plant that owns the tool. Derived from the tool id.
     Ticket:
       type: object
@@ -1533,6 +1560,10 @@ components:
         confounders:
           type: boolean
           default: false
+        durationMinutes:
+          type: number
+          minimum: 0
+          description: Optional. The fault ends this many minutes after onset. Omit or 0 for no end.
     FaultInjectionAccepted:
       type: object
       additionalProperties: false

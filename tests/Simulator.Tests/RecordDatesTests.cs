@@ -54,3 +54,17 @@ public sealed class FaultPaceTests
         Assert.Same(fault, fault.Paced(1d));
     }
 }
+
+public sealed class FaultDurationTests
+{
+    [Fact]
+    public void LastingEndsTheFaultAfterTheDurationAndPacingKeepsTheEnd()
+    {
+        var onset = new DateTimeOffset(2026, 10, 15, 12, 0, 0, TimeSpan.Zero);
+        var fault = new FaultSignal("E-02", "A", "escTemperature", FaultShape.Step, MagnitudeKind.Sigma, 4d, onset).Lasting(TimeSpan.FromMinutes(5));
+        Assert.Equal(onset.AddMinutes(5), fault.EndsAt);
+        Assert.True(fault.AppliesTo("E-02", "A", "escTemperature", onset.AddMinutes(4)));
+        Assert.False(fault.AppliesTo("E-02", "A", "escTemperature", onset.AddMinutes(5)));
+        Assert.Equal(fault.EndsAt, fault.Paced(6d).EndsAt);
+    }
+}
