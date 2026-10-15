@@ -1,7 +1,10 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Microsoft.EntityFrameworkCore;
+
 using Mps.Api.Auth;
 using Mps.Api.Demo;
+using Mps.Api.Persistence;
 using Mps.Application.Decisions;
 using Mps.Application.Errors;
 using Mps.Application.Faults;
@@ -42,10 +45,10 @@ public static class QualityEndpoints
             var site = world.Find(siteId);
             return site is null ? Results.NotFound() : Results.Ok(SiteResponses.ToDetail(site));
         });
-        app.MapGet("/api/tools", async (IFleetCatalog fleet, CancellationToken cancellationToken) =>
+        app.MapGet("/api/tools", async (string? siteId, IFleetCatalog fleet, CancellationToken cancellationToken) =>
         {
             var tools = await fleet.ListAsync(cancellationToken).ConfigureAwait(false);
-            return Results.Ok(tools.Select(ContractMapper.ToResponse).ToArray());
+            return Results.Ok(tools.Where(tool => SiteQuery.MatchesTool(siteId, tool)).Select(ContractMapper.ToResponse).ToArray());
         });
         app.MapGet("/api/tools/{toolId}", async (string toolId, IFleetCatalog fleet, CancellationToken cancellationToken) =>
         {
@@ -54,21 +57,21 @@ public static class QualityEndpoints
                 ? Results.NotFound()
                 : Results.Ok(ContractMapper.ToResponse(tool));
         });
-        app.MapGet("/api/alerts", async (string? toolId, IAlertLog alerts, CancellationToken cancellationToken) =>
+        app.MapGet("/api/alerts", async (string? toolId, string? siteId, IAlertLog alerts, CancellationToken cancellationToken) =>
         {
             ToolId? filter = string.IsNullOrWhiteSpace(toolId) ? null : new ToolId(toolId);
             var rows = await alerts.ListAsync(filter, cancellationToken).ConfigureAwait(false);
-            return Results.Ok(rows.Select(ContractMapper.ToResponse).ToArray());
+            return Results.Ok(rows.Where(row => SiteQuery.Matches(siteId, row.ToolId.ToString())).Select(ContractMapper.ToResponse).ToArray());
         });
-        app.MapGet("/api/tickets", async (ITicketLog tickets, CancellationToken cancellationToken) =>
+        app.MapGet("/api/tickets", async (string? siteId, ITicketLog tickets, CancellationToken cancellationToken) =>
         {
             var rows = await tickets.ListAsync(cancellationToken).ConfigureAwait(false);
-            return Results.Ok(rows.Select(ContractMapper.ToResponse).ToArray());
+            return Results.Ok(rows.Where(row => SiteQuery.Matches(siteId, row.ToolId.ToString())).Select(ContractMapper.ToResponse).ToArray());
         });
-        app.MapGet("/api/incidents", async (IIncidentLog incidents, CancellationToken cancellationToken) =>
+        app.MapGet("/api/incidents", async (string? siteId, IIncidentLog incidents, CancellationToken cancellationToken) =>
         {
             var rows = await incidents.ListAsync(cancellationToken).ConfigureAwait(false);
-            return Results.Ok(rows.Select(row => ContractMapper.ToResponse(row.Incident)).ToArray());
+            return Results.Ok(rows.Where(row => SiteQuery.Matches(siteId, row.Incident.ToolId.ToString())).Select(row => ContractMapper.ToResponse(row.Incident)).ToArray());
         });
         app.MapPost("/api/incidents", async (OpenIncidentBody? body, IIntakeService intake, CancellationToken cancellationToken) =>
         {
@@ -135,6 +138,7 @@ public static class QualityEndpoints
             IHumanDecisionService decisions,
             IInvestigationService investigations,
             IInvestigationNarrativeLog narratives,
+            QualityDbContext db,
             CancellationToken cancellationToken) =>
         {
             if (body?.Kind is null)
@@ -160,22 +164,30 @@ public static class QualityEndpoints
             var narrative = await narratives.GetAsync(id, cancellationToken).ConfigureAwait(false);
             return Results.Ok(new DecisionResponse(
                 ContractMapper.ToResponse(outcome.Investigation, narrative),
-                outcome.Capa is null ? null : ContractMapper.ToResponse(outcome.Capa.Capa)));
+                outcome.Capa is null ? null : await WithApprovalAsync(db, ContractMapper.ToResponse(outcome.Capa.Capa), cancellationToken).ConfigureAwait(false)));
         });
-        app.MapGet("/api/capas", async (ICapaLifecycleService capas, CancellationToken cancellationToken) =>
+        app.MapGet("/api/capas", async (string? siteId, ICapaLifecycleService capas, IIncidentLog incidents, QualityDbContext db, CancellationToken cancellationToken) =>
         {
             var rows = await capas.ListAsync(cancellationToken).ConfigureAwait(false);
-            return Results.Ok(rows.Select(row => ContractMapper.ToResponse(row.Capa)).ToArray());
+            if (!string.IsNullOrWhiteSpace(siteId))
+            {
+                var known = await incidents.ListAsync(cancellationToken).ConfigureAwait(false);
+                var tools = known.ToDictionary(row => row.Incident.Id.Value, row => row.Incident.ToolId.ToString());
+                rows = rows.Where(row => tools.TryGetValue(row.Capa.IncidentId.Value, out var toolId) && SiteQuery.Matches(siteId, toolId)).ToArray();
+            }
+
+            return Results.Ok(await WithApprovalsAsync(db, rows, cancellationToken).ConfigureAwait(false));
         });
-        app.MapGet("/api/capas/{capaId:guid}", async (Guid capaId, ICapaLifecycleService capas, CancellationToken cancellationToken) =>
+        app.MapGet("/api/capas/{capaId:guid}", async (Guid capaId, ICapaLifecycleService capas, QualityDbContext db, CancellationToken cancellationToken) =>
         {
             var stored = await capas.GetAsync(new CapaId(capaId), cancellationToken).ConfigureAwait(false);
-            return Results.Ok(ContractMapper.ToResponse(stored.Capa));
+            return Results.Ok(await WithApprovalAsync(db, ContractMapper.ToResponse(stored.Capa), cancellationToken).ConfigureAwait(false));
         });
         app.MapPost("/api/capas/{capaId:guid}/advance", async (
             Guid capaId,
             AdvanceCapaBody? body,
             ICapaLifecycleService capas,
+            QualityDbContext db,
             CancellationToken cancellationToken) =>
         {
             if (body?.Stage is null)
@@ -184,7 +196,7 @@ public static class QualityEndpoints
             }
 
             var stored = await capas.AdvanceAsync(new CapaId(capaId), body.Stage.Value, cancellationToken).ConfigureAwait(false);
-            return Results.Ok(ContractMapper.ToResponse(stored.Capa));
+            return Results.Ok(await WithApprovalAsync(db, ContractMapper.ToResponse(stored.Capa), cancellationToken).ConfigureAwait(false));
         });
         app.MapGet("/api/admin/session", (HttpContext http, IConfiguration configuration) =>
         {
@@ -255,6 +267,10 @@ public static class QualityEndpoints
             runtime.TryApplyFreeForm(body.ToolId ?? string.Empty, body.ChamberId, body.Parameter ?? string.Empty, body.Shape ?? string.Empty, body.Magnitude.Value);
             return Results.Json(new FaultAcceptedResponse(accepted.FaultId, accepted.CorrelationId), statusCode: StatusCodes.Status202Accepted);
         });
+        app.MapGet("/api/audit", async (QualityDbContext db, CancellationToken cancellationToken) =>
+        {
+            return Results.Ok(await AuditLog.ReadAsync(db, cancellationToken).ConfigureAwait(false));
+        });
         app.MapGet("/api/metrics", async (
             IMetricsLog metrics,
             MetricsPolicy policy,
@@ -279,6 +295,38 @@ public static class QualityEndpoints
                 await LiveSpendAsync(services, time, rollup.SpendTodayUsd, cancellationToken).ConfigureAwait(false),
                 rollup.SpendCapUsd));
         });
+    }
+
+    private static async Task<CapaResponse> WithApprovalAsync(QualityDbContext db, CapaResponse capa, CancellationToken cancellationToken)
+    {
+        var approval = await db.Approvals.AsNoTracking()
+            .Where(row => row.TokenId == capa.ApprovalTokenId)
+            .OrderByDescending(row => row.IssuedAt)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return ContractMapper.WithApproval(capa, approval);
+    }
+
+    private static async Task<CapaResponse[]> WithApprovalsAsync(
+        QualityDbContext db,
+        IReadOnlyList<StoredCapa> rows,
+        CancellationToken cancellationToken)
+    {
+        var tokens = rows.Select(row => row.Capa.ApprovalTokenId.Value).ToArray();
+        var approvals = tokens.Length == 0
+            ? []
+            : await db.Approvals.AsNoTracking()
+                .Where(row => tokens.Contains(row.TokenId))
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+        var byToken = approvals
+            .GroupBy(row => row.TokenId)
+            .ToDictionary(group => group.Key, group => group.OrderByDescending(item => item.IssuedAt).First());
+        return rows.Select(row =>
+        {
+            byToken.TryGetValue(row.Capa.ApprovalTokenId.Value, out var approval);
+            return ContractMapper.WithApproval(ContractMapper.ToResponse(row.Capa), approval);
+        }).ToArray();
     }
 
     private static DemoCaller Caller(HttpContext http, IConfiguration configuration)
