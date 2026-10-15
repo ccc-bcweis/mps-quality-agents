@@ -336,6 +336,16 @@ export const handlers = [
         shape: "ramp",
         summary: "Etch rate on E-01 chamber A ramps slowly as the chamber seasons after a clean.",
       },
+      {
+        id: "SC-6",
+        title: "Oscilloscope RF oscillation on E-01",
+        rootCauseCategory: "equipmentCalibrationOrAlignment",
+        toolIds: ["E-01"],
+        chamberId: "E-01-A",
+        parameter: "rfSourcePower",
+        shape: "oscillation",
+        summary: "An oscilloscope printout shows source RF power oscillating out of spec on E-01 chamber A.",
+      },
     ]),
   ),
   http.post("/api/injector/scenarios/:scenarioId", () =>

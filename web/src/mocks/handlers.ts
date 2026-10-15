@@ -219,7 +219,7 @@ export const handlers = [
       id: crypto.randomUUID(),
       toolId: scenarioId === "SC-1" ? "E-02" : "E-01",
       chamberId: scenarioId === "SC-1" ? "E-02-A" : "E-01-A",
-      parameter: "escTemperature",
+      parameter: scenarioId === "SC-6" ? "rfSourcePower" : "escTemperature",
       severity: "high",
       rule: "westernElectric1",
       raisedAt,

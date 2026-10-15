@@ -6,6 +6,10 @@ using System.Net.Http.Json;
 using System.Text.Json;
 
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+
+using Mps.Simulator.Demo;
+using Mps.Simulator.Telemetry;
 
 namespace Mps.Api.Tests;
 
@@ -66,6 +70,26 @@ public sealed class PrintoutEndpointTests
         first.GetProperty("value").GetDouble().Should().Be(68d);
         first.GetProperty("outOfSpec").GetBoolean().Should().BeTrue();
         second.ToString().Should().Be(first.ToString());
+    }
+
+    [Fact]
+    public async Task OscilloscopeScenarioAppliesThePrintoutOnce()
+    {
+        await using var factory = new ApiFactory();
+        var client = factory.CreateClient();
+
+        var response = await client.PostAsync("/api/injector/scenarios/SC-6", null);
+        var incidents = await client.GetFromJsonAsync<JsonElement>("/api/incidents");
+        var alerts = await client.GetFromJsonAsync<JsonElement>("/api/alerts");
+        var runtime = factory.Services.GetRequiredService<DemoRuntime>();
+
+        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
+        incidents.EnumerateArray().Should().ContainSingle();
+        incidents[0].GetProperty("summary").GetString().Should().StartWith("Manual measurement");
+        alerts.EnumerateArray().Should().ContainSingle(alert => alert.GetProperty("rule").GetString() == "manualMeasurement");
+        runtime.Simulator.ActiveFaults.Should().ContainSingle();
+        runtime.Simulator.ActiveFaults[0].Parameter.Should().Be("rfSourcePower");
+        runtime.Simulator.ActiveFaults[0].Shape.Should().Be(FaultShape.Oscillation);
     }
 
     [Fact]
