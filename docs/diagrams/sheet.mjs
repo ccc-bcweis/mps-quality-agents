@@ -30,6 +30,8 @@ export const TONES = {
   review: { zone: '#FFF1E6', stroke: '#C2410C', bar: '#EA580C', title: '#9A3412' },
   deploy: { zone: '#E8F0FE', stroke: '#1D4ED8', bar: '#2563EB', title: '#1E3A8A' },
   ok: { zone: '#E7F8EF', stroke: '#047857', bar: '#059669', title: '#065F46' },
+  manual: { zone: '#FEE2E2', stroke: '#B91C1C', bar: '#DC2626', title: '#991B1B' },
+  risk: { zone: '#FEF3C7', stroke: '#B45309', bar: '#D97706', title: '#92400E' },
   later: { zone: '#F8FAFC', stroke: '#64748B', bar: '#94A3B8', title: '#334155', dash: true },
   lane: { zone: '#F8FAFC', stroke: '#334155', bar: '#0B1B33', title: '#0B1B33' },
   neutral: { zone: '#FFFFFF', stroke: '#334155', bar: '#0B1B33', title: '#0B1B33' },
@@ -236,8 +238,12 @@ export class Sheet {
       return line;
     });
     let textBox = { x, y, w, h };
-    if (opts.badge) {
-      const reserved = this.badge(id, { x, y, w, h }, opts.badge, tone);
+    if (opts.badges && opts.badges.length) {
+      const reserved = this.badgeRow(id, { x, y, w, h }, opts.badges);
+      textBox = { x, y: y + reserved, w, h: h - reserved };
+    } else if (opts.badge) {
+      const badgeTone = opts.badgeTone ? TONES[opts.badgeTone] : tone;
+      const reserved = this.badge(id, { x, y, w, h }, opts.badge, badgeTone);
       textBox = { x, y: y + reserved, w, h: h - reserved };
     }
     this.layoutInBox(id, specs, textBox, opts.align || 'center');
@@ -285,6 +291,43 @@ export class Sheet {
       size,
       weight,
       fill: tone.title,
+    });
+    return 6 + ph + 6;
+  }
+
+  // Several badges on one row, centered. Each entry is { label, tone }.
+  // Returns the reserved height so the title cannot collide with the badges.
+  badgeRow(id, box, badges) {
+    const size = 14;
+    const weight = 'bold';
+    const font = this.fontOf(weight);
+    const th = this.em(font, size);
+    const padX = 7;
+    const padY = 3;
+    const ph = th + padY * 2;
+    const gap = 8;
+    const widths = badges.map((b) => this.width(weight, b.label, size) + padX * 2);
+    const total = widths.reduce((sum, w) => sum + w, 0) + gap * Math.max(0, badges.length - 1);
+    if (total > box.w - 8) {
+      this.errors.push(`${id}: badges are ${total.toFixed(1)} pt wide in a ${box.w.toFixed(1)} pt card`);
+    }
+    let x = box.x + (box.w - total) / 2;
+    const y = box.y + 6;
+    badges.forEach((b, i) => {
+      const tone = TONES[b.tone];
+      const pw = widths[i];
+      this.roundRect(x, y, pw, ph, 4, { fill: tone.zone, stroke: tone.stroke, 'stroke-width': 1.2 });
+      const baseline = y + padY + this.asc(font, size);
+      this.addText({
+        id: `${id}-badge${i}`,
+        text: b.label,
+        x: x + padX,
+        baseline,
+        size,
+        weight,
+        fill: tone.title,
+      });
+      x += pw + gap;
     });
     return 6 + ph + 6;
   }

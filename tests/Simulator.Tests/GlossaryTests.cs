@@ -122,7 +122,7 @@ public sealed partial class GlossaryTests
 
     private static readonly HashSet<string> StopWords = new(StringComparer.Ordinal)
     {
-        "AGENT", "ALARM", "APPROVE", "REASONER", "WATCH", "AMBIENT", "APPLY", "APPROVAL", "ARCH", "ASH", "BATH", "BIAS", "BRAND", "BUDGET", "BUILD", "CALLS", "CENTER",
+        "AGENT", "ERROR", "MANUAL", "MX", "RISK", "ALARM", "APPROVE", "REASONER", "WATCH", "AMBIENT", "APPLY", "APPROVAL", "ARCH", "ASH", "BATH", "BIAS", "BRAND", "BUDGET", "BUILD", "CALLS", "CENTER",
         "CHAMBER", "CHUCK", "CON", "CONTRA", "DET", "DETERMINISTIC", "DRAFT", "DRIFT", "ENDPOINT", "ETCH", "GAS", "GET",
         "GROUND", "GUESTS", "HEATER", "HIGH", "HUMAN", "IMPACT", "INTAKE", "LICENSE", "LIVE", "MAIN", "MAN", "MANOMETER",
         "MOCK", "MODE", "NITRIDE", "NOT", "OK", "OUTPUT", "OXIDE", "PARTICLES", "PENDING", "PLAN", "PLATEN", "POLY", "POST",
