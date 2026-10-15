@@ -6,4 +6,7 @@
     <ProjectReference Include="..\Mps.Application\Mps.Application.csproj" />
     <ProjectReference Include="..\Mps.Domain\Mps.Domain.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PdfPig" />
+  </ItemGroup>
 </Project>

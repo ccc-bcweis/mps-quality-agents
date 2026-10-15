@@ -130,8 +130,8 @@ public sealed class ScriptedScenario
 public sealed record ScenarioPoint(string ToolId, string ChamberId, string Parameter, DateTimeOffset At, double Value);
 
 /// <summary>
-/// SC-1 through SC-4. One scenario for each root-cause class. The sample window starts at the demo clock origin
-/// so the series does not depend on when the presenter presses the button.
+/// SC-1 through SC-4 cover each root-cause class. SC-6 replays the oscilloscope printout on E-01.
+/// The sample window starts at the demo clock origin so the series does not depend on when the presenter presses the button.
 /// </summary>
 public static class ScriptedScenarioCatalog
 {
@@ -186,6 +186,18 @@ public static class ScriptedScenarioCatalog
             -3.5d,
             confounders: false,
             rampSeconds: 600d),
+        new(
+            "SC-6",
+            "Oscilloscope RF oscillation on E-01",
+            RootCauseCategory.EquipmentCalibrationOrAlignment,
+            "An oscilloscope printout shows source RF power oscillating out of spec on E-01 chamber A.",
+            ["E-01"],
+            "rfSourcePower",
+            FaultShape.Oscillation,
+            MagnitudeKind.Sigma,
+            4d,
+            confounders: false,
+            periodSeconds: 30d),
     ];
 
     public static IReadOnlyList<ScriptedScenario> All => Definitions;

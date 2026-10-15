@@ -96,6 +96,7 @@ public sealed class ResolutionRequest
             EvidenceSource.Erp => "erp",
             EvidenceSource.Cmms => "cmms",
             EvidenceSource.Ticketing => "ticketing",
+            EvidenceSource.ManualMeasurement => "manualMeasurement",
             _ => "document",
         };
     }

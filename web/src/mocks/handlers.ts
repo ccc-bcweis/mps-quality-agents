@@ -4,7 +4,7 @@
 
 import { http, HttpResponse } from "msw";
 import { handlers as contractHandlers } from "../../../contracts/msw/handlers";
-import type { Alert, FaultInjectionRequest, Incident, Investigation, OpenIncidentRequest, ScenarioRun, Ticket } from "../api/types";
+import type { Alert, FaultInjectionRequest, Incident, Investigation, OpenIncidentRequest, PrintoutConfirmRequest, PrintoutInspection, ScenarioRun, Ticket } from "../api/types";
 import { telemetryForTool } from "../fleet/telemetry";
 import { latestInvestigationForIncident } from "../investigation/ticketRoute";
 import { incidents, investigationFor, investigations, tools } from "./demoData";
@@ -58,6 +58,100 @@ function newestFirst<T>(rows: T[], time: (row: T) => string): T[] {
 }
 
 const FAMILIES = new Set(["deposition", "etch", "strip", "clean"]);
+
+async function uploadName(request: Request): Promise<string> {
+  // Read the raw body. request.formData() can hang under jsdom on Node 22,
+  // and the multipart header already carries the filename.
+  // Under jsdom on Node 22 the multipart body stream never ends, so give up after a short wait.
+  const body = await Promise.race([
+    request.arrayBuffer(),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 750)),
+  ]);
+  if (body === null) return "oscilloscope-e01.pdf";
+  const text = new TextDecoder("latin1").decode(body);
+  // jsdom's fetch stringifies FormData, so the unit test cannot carry a filename.
+  // That test uploads the oscilloscope sample. A browser sends the real name.
+  if (text === "[object FormData]") return "oscilloscope-e01.pdf";
+  const named = /filename="([^"]+)"/i.exec(text) ?? /filename=([^;\r\n]+)/i.exec(text);
+  return (named?.[1] ?? "").trim().toLowerCase();
+}
+
+function catalogParameterFor(toolId: string, parameter: string): string {
+  const etch = toolId.startsWith("E-") || toolId.includes("-E-");
+  return etch && parameter === "rfPower" ? "rfSourcePower" : parameter;
+}
+
+function inspectionForFile(name: string): PrintoutInspection | null {
+  if (name.includes("oscilloscope")) {
+    return {
+      toolId: "E-01",
+      chamberId: "E-01-A",
+      observedAt: "2026-10-12T14:22:00Z",
+      instrument: "oscilloscope",
+      parameter: "rfPower",
+      value: 2140,
+      unit: "W",
+      specMinimum: 1000,
+      specMaximum: 2000,
+      shape: "oscillation",
+      operatorInitials: "KL",
+      parseMethod: "text",
+      outOfSpec: true,
+    };
+  }
+  if (name.includes("rf-power-meter")) {
+    return {
+      toolId: "E-02",
+      chamberId: "E-02-A",
+      observedAt: "2026-10-12T15:05:00Z",
+      instrument: "rfPowerMeter",
+      parameter: "rfBiasPower",
+      value: 510,
+      unit: "W",
+      specMinimum: 200,
+      specMaximum: 500,
+      shape: "step",
+      operatorInitials: "MR",
+      parseMethod: "text",
+      outOfSpec: true,
+    };
+  }
+  if (name.includes("particle-counter")) {
+    return {
+      toolId: "D-01",
+      chamberId: "D-01-A",
+      observedAt: "2026-10-11T18:10:00Z",
+      instrument: "particleCounter",
+      parameter: "particlesAdders",
+      value: 3,
+      unit: "count",
+      specMinimum: 0,
+      specMaximum: 10,
+      shape: null,
+      operatorInitials: "BN",
+      parseMethod: "text",
+      outOfSpec: false,
+    };
+  }
+  if (name.includes("thermocouple")) {
+    return {
+      toolId: "E-01",
+      chamberId: "E-01-A",
+      observedAt: "2026-10-12T09:40:00Z",
+      instrument: "thermocoupleLogger",
+      parameter: "escTemperature",
+      value: 68,
+      unit: "C",
+      specMinimum: 40,
+      specMaximum: 60,
+      shape: "ramp",
+      operatorInitials: "JL",
+      parseMethod: name.endsWith(".png") ? "model" : "text",
+      outOfSpec: true,
+    };
+  }
+  return null;
+}
 
 export const handlers = [
   http.get("/api/sites", () => HttpResponse.json(siteSummaries())),
@@ -263,6 +357,71 @@ export const handlers = [
     return HttpResponse.json({ faultId, correlationId }, { status: 202 });
   }),
 
+  http.post("/api/printouts/inspect", async ({ request }) => {
+    const name = await uploadName(request);
+    const reading = inspectionForFile(name);
+    if (!reading) return problem("The printout could not be read.", 400);
+    return HttpResponse.json(reading);
+  }),
+
+  http.post("/api/printouts/confirm", async ({ request }) => {
+    const body = (await request.json()) as PrintoutConfirmRequest;
+    const outOfSpec = body.value < body.specMinimum || body.value > body.specMaximum;
+    const catalogParameter = catalogParameterFor(body.toolId, body.parameter);
+    const correlationId = `corr-printout-${crypto.randomUUID().slice(0, 8)}`;
+    const incidentId = crypto.randomUUID();
+    const raisedAt = body.observedAt || new Date().toISOString();
+    const summary = `Manual measurement: ${body.instrument} on ${body.toolId}, ${body.parameter} ${body.value} ${body.unit}.`;
+    const incident: Incident = {
+      id: incidentId,
+      toolId: body.toolId,
+      chamberId: body.chamberId ?? null,
+      parameter: catalogParameter,
+      channel: "operatorReport",
+      severity: outOfSpec ? "high" : "low",
+      summary,
+      correlationId,
+      openedAt: raisedAt,
+      stage: "ticketOpened",
+    };
+    const ticket: Ticket = {
+      id: crypto.randomUUID(),
+      number: `TKT-${1300 + mockExtras().tickets.length}`,
+      incidentId,
+      toolId: body.toolId,
+      title: summary,
+      openedAt: raisedAt,
+    };
+    mockExtras().incidents.push(incident);
+    mockExtras().tickets.push(ticket);
+    let alertId: string | null = null;
+    if (outOfSpec) {
+      alertId = crypto.randomUUID();
+      const alert: Alert = {
+        id: alertId,
+        toolId: body.toolId,
+        chamberId: body.chamberId ?? null,
+        parameter: catalogParameter,
+        severity: "high",
+        rule: "manualMeasurement",
+        raisedAt,
+        correlationId,
+      };
+      mockExtras().alerts.push(alert);
+    }
+    return HttpResponse.json({
+      evidenceId: crypto.randomUUID(),
+      incidentId,
+      faultId: outOfSpec ? crypto.randomUUID() : null,
+      correlationId: outOfSpec ? correlationId : null,
+      alertId,
+      appliedToSimulation: outOfSpec,
+      outOfSpec,
+      printedParameter: body.parameter,
+      catalogParameter,
+    });
+  }),
+
   http.post("/api/injector/scenarios/:scenarioId", ({ params }) => {
     const scenarioId = String(params.scenarioId);
     const toolId = scenarioId === "SC-1" ? "E-02" : "E-01";
@@ -274,7 +433,7 @@ export const handlers = [
       id: crypto.randomUUID(),
       toolId,
       chamberId: `${toolId}-A`,
-      parameter: "escTemperature",
+      parameter: scenarioId === "SC-6" ? "rfSourcePower" : "escTemperature",
       severity: "high",
       rule: "westernElectric1",
       raisedAt,

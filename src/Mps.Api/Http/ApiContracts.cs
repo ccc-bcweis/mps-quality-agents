@@ -214,3 +214,43 @@ public sealed record SiteParameterStatsResponse(
 public sealed record ParameterComparisonResponse(string Parameter, string Unit, IReadOnlyList<SiteParameterStatsResponse> Sites);
 
 public sealed record FamilyComparisonResponse(ToolFamily Family, string ReferenceSiteId, IReadOnlyList<ParameterComparisonResponse> Parameters);
+
+public sealed record PrintoutInspectionResponse(
+    string ToolId,
+    string? ChamberId,
+    DateTimeOffset ObservedAt,
+    string Instrument,
+    string Parameter,
+    double Value,
+    string Unit,
+    double SpecMinimum,
+    double SpecMaximum,
+    string? Shape,
+    string? OperatorInitials,
+    string ParseMethod,
+    bool OutOfSpec);
+
+public sealed class PrintoutConfirmBody
+{
+    public string? ToolId { get; set; }
+
+    public string? ChamberId { get; set; }
+
+    public DateTimeOffset? ObservedAt { get; set; }
+
+    public string? Instrument { get; set; }
+
+    public string? Parameter { get; set; }
+
+    public double? Value { get; set; }
+
+    public string? Unit { get; set; }
+
+    public double? SpecMinimum { get; set; }
+
+    public double? SpecMaximum { get; set; }
+
+    public string? Shape { get; set; }
+
+    public string? OperatorInitials { get; set; }
+}

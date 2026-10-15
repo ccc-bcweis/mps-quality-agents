@@ -11,6 +11,7 @@ export const SOURCE_LABEL: Record<EvidenceSource, string> = {
   erp: "Materials system",
   cmms: "Maintenance system",
   document: "Service document",
+  manualMeasurement: "Bench reading",
   ticketing: "Tickets",
 };
 

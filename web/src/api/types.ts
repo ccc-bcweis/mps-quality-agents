@@ -27,7 +27,8 @@ export type EvidenceSource =
   | "erp"
   | "cmms"
   | "document"
-  | "ticketing";
+  | "ticketing"
+  | "manualMeasurement";
 export type RootCauseCategory =
   | "engineeringChange"
   | "equipmentCalibrationOrAlignment"
@@ -114,6 +115,48 @@ export type OpenIncidentRequest = {
   parameter: string;
   summary: string;
   severity?: Severity;
+};
+
+export type PrintoutInspection = {
+  toolId: string;
+  chamberId?: string | null;
+  observedAt: string;
+  instrument: string;
+  parameter: string;
+  value: number;
+  unit: string;
+  specMinimum: number;
+  specMaximum: number;
+  shape?: string | null;
+  operatorInitials?: string | null;
+  parseMethod: "text" | "model";
+  outOfSpec: boolean;
+};
+
+export type PrintoutConfirmRequest = {
+  toolId: string;
+  chamberId?: string | null;
+  observedAt: string;
+  instrument: string;
+  parameter: string;
+  value: number;
+  unit: string;
+  specMinimum: number;
+  specMaximum: number;
+  shape?: string | null;
+  operatorInitials?: string | null;
+};
+
+export type PrintoutConfirmation = {
+  evidenceId: string;
+  incidentId: string;
+  faultId?: string | null;
+  correlationId?: string | null;
+  alertId?: string | null;
+  appliedToSimulation: boolean;
+  outOfSpec: boolean;
+  printedParameter: string;
+  catalogParameter: string;
 };
 
 export type EvidenceItem = {
