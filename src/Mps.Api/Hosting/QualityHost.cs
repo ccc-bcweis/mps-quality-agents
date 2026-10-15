@@ -84,6 +84,7 @@ public static class QualityHost
             services.GetRequiredService<ScriptedScenarioContext>()));
         builder.Services.AddSingleton<IChatClient>(services => services.GetRequiredService<Gateway>());
         builder.Services.AddScoped<DemoResetService>();
+        builder.Services.AddSingleton<ScenarioEvidenceBoard>();
         builder.Services.AddScoped<ScenarioTrigger>();
         builder.Services.AddScoped<IQualityNotifier, SignalRQualityNotifier>();
         builder.Services.AddScoped<IIntakeService, IntakeService>();
