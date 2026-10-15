@@ -239,3 +239,91 @@ export type MetricsSummary = {
   spendTodayUsd: number;
   spendCapUsd: number;
 };
+
+export type ToolStatus = "nominal" | "warning" | "alarm";
+
+export type SiteRole = "Front-end wafer fab" | "Strip, clean, and pilot line";
+
+/** Wafers moving through a plant or a bay. Contract Throughput. */
+export type Throughput = {
+  waferStartsPerHour: number;
+  waferOutsPerHour: number;
+  wip: number;
+  yieldPct: number;
+  uptimePct: number;
+};
+
+export type SiteBaySummary = {
+  id: string;
+  name: string;
+  toolCount: number;
+};
+
+export type SiteSummary = {
+  id: string;
+  name: string;
+  role: SiteRole;
+  location: string;
+  timezone: string;
+  bays: SiteBaySummary[];
+  kpis: Throughput;
+};
+
+export type PlacedTool = {
+  id: string;
+  name: string;
+  family: ToolFamily;
+  model: string;
+  status: ToolStatus;
+  x: number;
+  y: number;
+  siteId: string;
+};
+
+export type SiteBayDetail = {
+  id: string;
+  name: string;
+  tools: PlacedTool[];
+  kpis: Throughput;
+};
+
+export type WaferFlow = {
+  fromBayId: string;
+  toBayId: string;
+  label: string;
+};
+
+export type SiteDetail = {
+  id: string;
+  name: string;
+  role: SiteRole;
+  location: string;
+  timezone: string;
+  bays: SiteBayDetail[];
+  flows: WaferFlow[];
+  kpis: Throughput;
+};
+
+export type SiteParameterStats = {
+  siteId: string;
+  siteName: string;
+  mean: number;
+  sigma: number;
+  alarmRate: number;
+  uptimePct: number;
+  yieldPct: number;
+  discrepancy: boolean;
+  reason: string | null;
+};
+
+export type ParameterComparison = {
+  parameter: string;
+  unit: string;
+  sites: SiteParameterStats[];
+};
+
+export type FamilyComparison = {
+  family: ToolFamily;
+  referenceSiteId: string;
+  parameters: ParameterComparison[];
+};

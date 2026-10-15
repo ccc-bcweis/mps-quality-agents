@@ -1,0 +1,582 @@
+[
+  {
+    "id": "northwater",
+    "name": "Northwater Fab",
+    "role": "Front-end wafer fab",
+    "location": "Cedar Reach, Valecrest",
+    "timezone": "America/Denver",
+    "bays": [
+      {
+        "id": "Bay-1",
+        "name": "Bay 1",
+        "tools": [
+          {
+            "id": "D-01",
+            "name": "Deposition D-01",
+            "family": "deposition",
+            "model": "MPS-D7",
+            "status": "nominal",
+            "x": 18,
+            "y": 23.8,
+            "siteId": "northwater"
+          },
+          {
+            "id": "E-01",
+            "name": "Etch E-01",
+            "family": "etch",
+            "model": "MPS-E7",
+            "status": "nominal",
+            "x": 46.8,
+            "y": 19.4,
+            "siteId": "northwater"
+          },
+          {
+            "id": "S-01",
+            "name": "Strip S-01",
+            "family": "strip",
+            "model": "MPS-S7",
+            "status": "nominal",
+            "x": 73.4,
+            "y": 23.4,
+            "siteId": "northwater"
+          },
+          {
+            "id": "C-01",
+            "name": "Clean C-01",
+            "family": "clean",
+            "model": "MPS-C7",
+            "status": "nominal",
+            "x": 14.1,
+            "y": 53.5,
+            "siteId": "northwater"
+          }
+        ],
+        "kpis": {
+          "waferStartsPerHour": 19.2,
+          "waferOutsPerHour": 18.7,
+          "wip": 46,
+          "yieldPct": 97.4,
+          "uptimePct": 95.1
+        }
+      },
+      {
+        "id": "Bay-2",
+        "name": "Bay 2",
+        "tools": [
+          {
+            "id": "D-02",
+            "name": "Deposition D-02",
+            "family": "deposition",
+            "model": "MPS-D7",
+            "status": "nominal",
+            "x": 15.5,
+            "y": 21.2,
+            "siteId": "northwater"
+          },
+          {
+            "id": "E-02",
+            "name": "Etch E-02",
+            "family": "etch",
+            "model": "MPS-E7",
+            "status": "nominal",
+            "x": 44.1,
+            "y": 19.1,
+            "siteId": "northwater"
+          },
+          {
+            "id": "S-02",
+            "name": "Strip S-02",
+            "family": "strip",
+            "model": "MPS-S7",
+            "status": "nominal",
+            "x": 75,
+            "y": 24.1,
+            "siteId": "northwater"
+          },
+          {
+            "id": "C-02",
+            "name": "Clean C-02",
+            "family": "clean",
+            "model": "MPS-C7",
+            "status": "nominal",
+            "x": 14.7,
+            "y": 55.2,
+            "siteId": "northwater"
+          }
+        ],
+        "kpis": {
+          "waferStartsPerHour": 20.6,
+          "waferOutsPerHour": 19.9,
+          "wip": 50,
+          "yieldPct": 96.6,
+          "uptimePct": 95.8
+        }
+      },
+      {
+        "id": "Bay-3",
+        "name": "Bay 3 deposition",
+        "tools": [
+          {
+            "id": "D-03",
+            "name": "Deposition D-03",
+            "family": "deposition",
+            "model": "MPS-D7",
+            "status": "alarm",
+            "x": 13.8,
+            "y": 20.6,
+            "siteId": "northwater"
+          },
+          {
+            "id": "D-04",
+            "name": "Deposition D-04",
+            "family": "deposition",
+            "model": "MPS-D7",
+            "status": "nominal",
+            "x": 44.4,
+            "y": 21.1,
+            "siteId": "northwater"
+          }
+        ],
+        "kpis": {
+          "waferStartsPerHour": 9.7,
+          "waferOutsPerHour": 9.4,
+          "wip": 24,
+          "yieldPct": 96.9,
+          "uptimePct": 97.2
+        }
+      },
+      {
+        "id": "Bay-4",
+        "name": "Bay 4 etch",
+        "tools": [
+          {
+            "id": "E-03",
+            "name": "Etch E-03",
+            "family": "etch",
+            "model": "MPS-E7",
+            "status": "nominal",
+            "x": 14.2,
+            "y": 20.6,
+            "siteId": "northwater"
+          },
+          {
+            "id": "E-04",
+            "name": "Etch E-04",
+            "family": "etch",
+            "model": "MPS-E7",
+            "status": "nominal",
+            "x": 45.8,
+            "y": 21.1,
+            "siteId": "northwater"
+          }
+        ],
+        "kpis": {
+          "waferStartsPerHour": 8.4,
+          "waferOutsPerHour": 8.2,
+          "wip": 20,
+          "yieldPct": 97.2,
+          "uptimePct": 94.2
+        }
+      }
+    ],
+    "flows": [
+      {
+        "fromBayId": "Bay-3",
+        "toBayId": "Bay-1",
+        "label": "Deposited wafers move to bay 1 for etch."
+      },
+      {
+        "fromBayId": "Bay-3",
+        "toBayId": "Bay-2",
+        "label": "Deposited wafers move to bay 2 for etch."
+      },
+      {
+        "fromBayId": "Bay-1",
+        "toBayId": "Bay-4",
+        "label": "Bay 1 wafers finish etch in bay 4."
+      },
+      {
+        "fromBayId": "Bay-2",
+        "toBayId": "Bay-4",
+        "label": "Bay 2 wafers finish etch in bay 4."
+      }
+    ],
+    "kpis": {
+      "waferStartsPerHour": 57.9,
+      "waferOutsPerHour": 56.2,
+      "wip": 140,
+      "yieldPct": 97,
+      "uptimePct": 95.6
+    }
+  },
+  {
+    "id": "ironwood",
+    "name": "Ironwood Fab",
+    "role": "Front-end wafer fab",
+    "location": "Ironwood Bench, Eastmere",
+    "timezone": "America/Chicago",
+    "bays": [
+      {
+        "id": "I-Bay-1",
+        "name": "Deposition 1",
+        "tools": [
+          {
+            "id": "I-D-01",
+            "name": "Deposition I-D-01",
+            "family": "deposition",
+            "model": "MPS-D7",
+            "status": "alarm",
+            "x": 13.4,
+            "y": 22.5,
+            "siteId": "ironwood"
+          },
+          {
+            "id": "I-D-02",
+            "name": "Deposition I-D-02",
+            "family": "deposition",
+            "model": "MPS-D7",
+            "status": "nominal",
+            "x": 48.4,
+            "y": 21,
+            "siteId": "ironwood"
+          }
+        ],
+        "kpis": {
+          "waferStartsPerHour": 10.5,
+          "waferOutsPerHour": 10.1,
+          "wip": 25,
+          "yieldPct": 95.9,
+          "uptimePct": 97.4
+        }
+      },
+      {
+        "id": "I-Bay-2",
+        "name": "Etch",
+        "tools": [
+          {
+            "id": "I-E-01",
+            "name": "Etch I-E-01",
+            "family": "etch",
+            "model": "MPS-E7",
+            "status": "warning",
+            "x": 15.1,
+            "y": 22.2,
+            "siteId": "ironwood"
+          },
+          {
+            "id": "I-E-02",
+            "name": "Etch I-E-02",
+            "family": "etch",
+            "model": "MPS-E7",
+            "status": "warning",
+            "x": 43.8,
+            "y": 23.1,
+            "siteId": "ironwood"
+          },
+          {
+            "id": "I-E-03",
+            "name": "Etch I-E-03",
+            "family": "etch",
+            "model": "MPS-E7",
+            "status": "warning",
+            "x": 76.8,
+            "y": 21.2,
+            "siteId": "ironwood"
+          }
+        ],
+        "kpis": {
+          "waferStartsPerHour": 15.6,
+          "waferOutsPerHour": 14.9,
+          "wip": 38,
+          "yieldPct": 95.4,
+          "uptimePct": 92.5
+        }
+      },
+      {
+        "id": "I-Bay-3",
+        "name": "Deposition 2",
+        "tools": [
+          {
+            "id": "I-D-03",
+            "name": "Deposition I-D-03",
+            "family": "deposition",
+            "model": "MPS-D7",
+            "status": "nominal",
+            "x": 17.6,
+            "y": 22.9,
+            "siteId": "ironwood"
+          },
+          {
+            "id": "I-D-04",
+            "name": "Deposition I-D-04",
+            "family": "deposition",
+            "model": "MPS-D7",
+            "status": "nominal",
+            "x": 48.7,
+            "y": 23.5,
+            "siteId": "ironwood"
+          }
+        ],
+        "kpis": {
+          "waferStartsPerHour": 11.2,
+          "waferOutsPerHour": 10.8,
+          "wip": 27,
+          "yieldPct": 96.6,
+          "uptimePct": 97.4
+        }
+      },
+      {
+        "id": "I-Bay-4",
+        "name": "Etch finish",
+        "tools": [
+          {
+            "id": "I-E-04",
+            "name": "Etch I-E-04",
+            "family": "etch",
+            "model": "MPS-E7",
+            "status": "warning",
+            "x": 15.8,
+            "y": 21.8,
+            "siteId": "ironwood"
+          },
+          {
+            "id": "I-S-01",
+            "name": "Strip I-S-01",
+            "family": "strip",
+            "model": "MPS-S7",
+            "status": "nominal",
+            "x": 44.7,
+            "y": 19.8,
+            "siteId": "ironwood"
+          },
+          {
+            "id": "I-C-01",
+            "name": "Clean I-C-01",
+            "family": "clean",
+            "model": "MPS-C7",
+            "status": "nominal",
+            "x": 74.2,
+            "y": 24.7,
+            "siteId": "ironwood"
+          }
+        ],
+        "kpis": {
+          "waferStartsPerHour": 16.9,
+          "waferOutsPerHour": 16.1,
+          "wip": 40,
+          "yieldPct": 95.4,
+          "uptimePct": 94.4
+        }
+      }
+    ],
+    "flows": [
+      {
+        "fromBayId": "I-Bay-1",
+        "toBayId": "I-Bay-2",
+        "label": "Wafers leave deposition for etch."
+      },
+      {
+        "fromBayId": "I-Bay-3",
+        "toBayId": "I-Bay-2",
+        "label": "The second deposition bay feeds the same etch line."
+      },
+      {
+        "fromBayId": "I-Bay-2",
+        "toBayId": "I-Bay-4",
+        "label": "Etch finishes, then a short strip and clean."
+      }
+    ],
+    "kpis": {
+      "waferStartsPerHour": 54.2,
+      "waferOutsPerHour": 51.9,
+      "wip": 130,
+      "yieldPct": 95.7,
+      "uptimePct": 95.1
+    }
+  },
+  {
+    "id": "lumen",
+    "name": "Lumen Pilot Works",
+    "role": "Strip, clean, and pilot line",
+    "location": "Lumen Yard, Westfold",
+    "timezone": "America/Los_Angeles",
+    "bays": [
+      {
+        "id": "P-Bay-1",
+        "name": "Strip",
+        "tools": [
+          {
+            "id": "P-S-01",
+            "name": "Strip P-S-01",
+            "family": "strip",
+            "model": "MPS-S7",
+            "status": "nominal",
+            "x": 13.8,
+            "y": 21.3,
+            "siteId": "lumen"
+          },
+          {
+            "id": "P-S-02",
+            "name": "Strip P-S-02",
+            "family": "strip",
+            "model": "MPS-S7",
+            "status": "nominal",
+            "x": 46.8,
+            "y": 23.8,
+            "siteId": "lumen"
+          },
+          {
+            "id": "P-S-03",
+            "name": "Strip P-S-03",
+            "family": "strip",
+            "model": "MPS-S7",
+            "status": "nominal",
+            "x": 78.6,
+            "y": 21.2,
+            "siteId": "lumen"
+          }
+        ],
+        "kpis": {
+          "waferStartsPerHour": 14,
+          "waferOutsPerHour": 13.6,
+          "wip": 33,
+          "yieldPct": 96.9,
+          "uptimePct": 94.4
+        }
+      },
+      {
+        "id": "P-Bay-2",
+        "name": "Clean",
+        "tools": [
+          {
+            "id": "P-C-01",
+            "name": "Clean P-C-01",
+            "family": "clean",
+            "model": "MPS-C7",
+            "status": "nominal",
+            "x": 13.1,
+            "y": 20.4,
+            "siteId": "lumen"
+          },
+          {
+            "id": "P-C-02",
+            "name": "Clean P-C-02",
+            "family": "clean",
+            "model": "MPS-C7",
+            "status": "nominal",
+            "x": 44.2,
+            "y": 21.8,
+            "siteId": "lumen"
+          },
+          {
+            "id": "P-C-03",
+            "name": "Clean P-C-03",
+            "family": "clean",
+            "model": "MPS-C7",
+            "status": "nominal",
+            "x": 73.1,
+            "y": 23.2,
+            "siteId": "lumen"
+          }
+        ],
+        "kpis": {
+          "waferStartsPerHour": 16,
+          "waferOutsPerHour": 15.4,
+          "wip": 38,
+          "yieldPct": 96.3,
+          "uptimePct": 95.8
+        }
+      },
+      {
+        "id": "P-Bay-3",
+        "name": "Pilot deposition",
+        "tools": [
+          {
+            "id": "P-D-01",
+            "name": "Deposition P-D-01",
+            "family": "deposition",
+            "model": "MPS-D7",
+            "status": "nominal",
+            "x": 13.8,
+            "y": 24.7,
+            "siteId": "lumen"
+          },
+          {
+            "id": "P-D-02",
+            "name": "Deposition P-D-02",
+            "family": "deposition",
+            "model": "MPS-D7",
+            "status": "nominal",
+            "x": 48,
+            "y": 23.3,
+            "siteId": "lumen"
+          }
+        ],
+        "kpis": {
+          "waferStartsPerHour": 9.5,
+          "waferOutsPerHour": 9.3,
+          "wip": 23,
+          "yieldPct": 97.6,
+          "uptimePct": 97.2
+        }
+      },
+      {
+        "id": "P-Bay-4",
+        "name": "Pilot etch",
+        "tools": [
+          {
+            "id": "P-E-01",
+            "name": "Etch P-E-01",
+            "family": "etch",
+            "model": "MPS-E7",
+            "status": "nominal",
+            "x": 14,
+            "y": 22.8,
+            "siteId": "lumen"
+          },
+          {
+            "id": "P-E-02",
+            "name": "Etch P-E-02",
+            "family": "etch",
+            "model": "MPS-E7",
+            "status": "nominal",
+            "x": 48,
+            "y": 20.2,
+            "siteId": "lumen"
+          }
+        ],
+        "kpis": {
+          "waferStartsPerHour": 8,
+          "waferOutsPerHour": 7.9,
+          "wip": 19,
+          "yieldPct": 98.3,
+          "uptimePct": 97
+        }
+      }
+    ],
+    "flows": [
+      {
+        "fromBayId": "P-Bay-3",
+        "toBayId": "P-Bay-4",
+        "label": "Pilot wafers move from deposition to etch."
+      },
+      {
+        "fromBayId": "P-Bay-4",
+        "toBayId": "P-Bay-1",
+        "label": "Pilot wafers move to strip."
+      },
+      {
+        "fromBayId": "P-Bay-1",
+        "toBayId": "P-Bay-2",
+        "label": "Strip wafers move to clean."
+      }
+    ],
+    "kpis": {
+      "waferStartsPerHour": 47.5,
+      "waferOutsPerHour": 46.1,
+      "wip": 113,
+      "yieldPct": 97.1,
+      "uptimePct": 95.9
+    }
+  }
+]
