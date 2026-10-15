@@ -22,6 +22,12 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
         Converters = { new ToolIdConverter() },
     };
 
+    /// <summary>
+    /// Changes (ECOs, work orders, NCRs) are read further back than the signal window, because a change made
+    /// weeks before onset is still a candidate cause. The seed is anchored to mid-October 2026.
+    /// </summary>
+    public static readonly TimeSpan ChangeLookback = TimeSpan.FromDays(30);
+
     private readonly Seed _seed;
     private readonly Dictionary<string, HashSet<string>> _materialTools = new(StringComparer.Ordinal);
 
@@ -54,10 +60,10 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
         Done<LotReference>((_seed.Lots ?? []).Where(lot => lot.ToolId == toolId));
 
     public Task<IReadOnlyList<NcrRecord>> SearchNcrsAsync(ToolId toolId, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken) =>
-        Done<NcrRecord>((_seed.Ncrs ?? []).Where(ncr => ncr.ToolId == toolId.Value && In(ncr.OpenedAt, from, until)));
+        Done<NcrRecord>((_seed.Ncrs ?? []).Where(ncr => ncr.ToolId == toolId.Value && In(ncr.OpenedAt, from.Add(-ChangeLookback), until)));
 
     public Task<IReadOnlyList<EcoRecord>> GetEcosAsync(ToolId toolId, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken) =>
-        Done<EcoRecord>((_seed.Ecos ?? []).Where(eco => eco.ToolId == toolId.Value && In(eco.EffectiveAt, from, until)));
+        Done<EcoRecord>((_seed.Ecos ?? []).Where(eco => eco.ToolId == toolId.Value && In(eco.EffectiveAt, from.Add(-ChangeLookback), until)));
 
     public Task<ConfigRevision> GetConfigAsync(ToolId toolId, CancellationToken cancellationToken)
     {
@@ -75,7 +81,7 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
             (string.IsNullOrWhiteSpace(materialCode) || notice.MaterialCode == materialCode) && In(notice.IssuedAt, from.AddDays(-60), until)));
 
     public Task<IReadOnlyList<WorkOrder>> GetWorkOrdersAsync(ToolId toolId, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken) =>
-        Done<WorkOrder>((_seed.WorkOrders ?? []).Where(order => order.ToolId == toolId && In(order.PerformedAt, from, until)));
+        Done<WorkOrder>((_seed.WorkOrders ?? []).Where(order => order.ToolId == toolId && In(order.PerformedAt, from.Add(-ChangeLookback), until)));
 
     public Task<IReadOnlyList<CalibrationRecord>> GetCalibrationsAsync(ToolId toolId, CancellationToken cancellationToken) =>
         Done<CalibrationRecord>((_seed.Calibrations ?? []).Where(record => record.ToolId == toolId));
