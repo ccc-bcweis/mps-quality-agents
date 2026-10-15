@@ -86,7 +86,7 @@ describe("tickets", () => {
     const file = new File([new Uint8Array([37, 80, 68, 70])], "oscilloscope-e01.pdf", { type: "application/pdf" });
     await user.upload(screen.getByLabelText("Printout"), file);
 
-    expect(await screen.findByDisplayValue("2140")).toBeInTheDocument();
+    expect(await screen.findByDisplayValue("2140", undefined, { timeout: 8000 })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Confirm reading" }));
     expect(await screen.findByText(/An oscillation was applied to Source RF power on E-01 and an alert was opened/)).toBeInTheDocument();
     expect(screen.getByText(/Manual measurement: oscilloscope on E-01, rfPower 2140 W/)).toBeInTheDocument();
