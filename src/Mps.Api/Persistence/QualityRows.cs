@@ -14,6 +14,8 @@ public sealed class ToolRow
 
     public string Bay { get; set; } = string.Empty;
 
+    public string SiteId { get; set; } = "northwater";
+
     public List<ChamberRow> Chambers { get; set; } = [];
 }
 

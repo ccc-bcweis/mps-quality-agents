@@ -505,7 +505,8 @@ public sealed class EfQualityStore :
             Enum.Parse<ToolFamily>(row.Family),
             row.Model,
             row.Bay,
-            row.Chambers.OrderBy(chamber => chamber.ChamberId).Select(chamber => new Chamber(chamber.ChamberId, chamber.Name)).ToArray());
+            row.Chambers.OrderBy(chamber => chamber.ChamberId).Select(chamber => new Chamber(chamber.ChamberId, chamber.Name)).ToArray(),
+            string.IsNullOrWhiteSpace(row.SiteId) ? "northwater" : row.SiteId);
 
     private static Alert ToAlert(AlertRow row) =>
         new(

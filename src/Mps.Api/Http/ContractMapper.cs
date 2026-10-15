@@ -6,6 +6,7 @@ using Mps.Domain.Capa;
 using Mps.Domain.Equipment;
 using Mps.Domain.Incidents;
 using Mps.Domain.Investigations;
+using Mps.Simulator.Sites;
 
 namespace Mps.Api.Http;
 
@@ -18,7 +19,8 @@ public static class ContractMapper
             tool.Family,
             tool.Model,
             tool.Bay,
-            tool.Chambers.Select(chamber => new ChamberResponse(chamber.Id, chamber.Name)).ToArray());
+            tool.Chambers.Select(chamber => new ChamberResponse(chamber.Id, chamber.Name)).ToArray(),
+            string.IsNullOrWhiteSpace(tool.SiteId) ? SiteIds.Northwater : tool.SiteId);
 
     public static AlertResponse ToResponse(Alert alert) =>
         new(

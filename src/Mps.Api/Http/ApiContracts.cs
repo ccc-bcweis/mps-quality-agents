@@ -12,7 +12,7 @@ namespace Mps.Api.Http;
 
 public sealed record HealthResponse(string Status, string Service);
 
-public sealed record ToolResponse(string Id, string Name, ToolFamily Family, string Model, string Bay, IReadOnlyList<ChamberResponse> Chambers);
+public sealed record ToolResponse(string Id, string Name, ToolFamily Family, string Model, string Bay, IReadOnlyList<ChamberResponse> Chambers, string SiteId);
 
 public sealed record ChamberResponse(string Id, string Name);
 
@@ -149,3 +149,47 @@ public sealed class FaultBody
 
     public bool Confounders { get; set; }
 }
+
+public sealed record ThroughputResponse(double WaferStartsPerHour, double WaferOutsPerHour, int Wip, double YieldPct, double UptimePct);
+
+public sealed record SiteBaySummaryResponse(string Id, string Name, int ToolCount);
+
+public sealed record SiteSummaryResponse(
+    string Id,
+    string Name,
+    string Role,
+    string Location,
+    string Timezone,
+    IReadOnlyList<SiteBaySummaryResponse> Bays,
+    ThroughputResponse Kpis);
+
+public sealed record PlacedToolResponse(string Id, string Name, ToolFamily Family, string Model, string Status, double X, double Y, string SiteId);
+
+public sealed record SiteBayDetailResponse(string Id, string Name, IReadOnlyList<PlacedToolResponse> Tools, ThroughputResponse Kpis);
+
+public sealed record WaferFlowResponse(string FromBayId, string ToBayId, string Label);
+
+public sealed record SiteDetailResponse(
+    string Id,
+    string Name,
+    string Role,
+    string Location,
+    string Timezone,
+    IReadOnlyList<SiteBayDetailResponse> Bays,
+    IReadOnlyList<WaferFlowResponse> Flows,
+    ThroughputResponse Kpis);
+
+public sealed record SiteParameterStatsResponse(
+    string SiteId,
+    string SiteName,
+    double Mean,
+    double Sigma,
+    double AlarmRate,
+    double UptimePct,
+    double YieldPct,
+    bool Discrepancy,
+    string? Reason);
+
+public sealed record ParameterComparisonResponse(string Parameter, string Unit, IReadOnlyList<SiteParameterStatsResponse> Sites);
+
+public sealed record FamilyComparisonResponse(ToolFamily Family, string ReferenceSiteId, IReadOnlyList<ParameterComparisonResponse> Parameters);

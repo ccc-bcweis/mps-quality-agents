@@ -6,6 +6,7 @@ using Mps.Simulator.Faults;
 using Mps.Simulator.Fleet;
 using Mps.Simulator.Roi;
 using Mps.Simulator.Seed;
+using Mps.Simulator.Sites;
 
 var seed = EnterpriseSeedGenerator.DemoSeed;
 var fleetDirectory = Path.Combine("data", "fleet");
@@ -47,7 +48,10 @@ catch (Exception exception) when (exception is InvalidOperationException or Form
 }
 
 var fleet = FleetCatalogLoader.Load(fleetDirectory);
-var catalog = FaultCatalogLoader.Load(faultDirectory, fleet);
+var knownTools = File.Exists(Path.Combine(fleetDirectory, "sites.yaml"))
+    ? SiteLayoutLoader.Load(Path.Combine(fleetDirectory, "sites.yaml")).Families
+    : null;
+var catalog = FaultCatalogLoader.Load(faultDirectory, fleet, knownTools);
 SeedJson.Write(EnterpriseSeedGenerator.Generate(fleet, catalog, seed), output);
 Console.WriteLine($"Wrote {output}");
 if (roiDirectory is not null)

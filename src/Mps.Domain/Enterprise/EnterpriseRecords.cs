@@ -7,7 +7,7 @@ namespace Mps.Domain.Enterprise;
 
 public sealed record ProcessRun
 {
-    public ProcessRun(string runId, ToolId toolId, string recipeId, string recipeRevision, string lotId, DateTimeOffset startedAt)
+    public ProcessRun(string runId, ToolId toolId, string recipeId, string recipeRevision, string lotId, DateTimeOffset startedAt, string? siteId = null)
     {
         if (toolId.IsEmpty)
         {
@@ -20,6 +20,7 @@ public sealed record ProcessRun
         RecipeRevision = RequiredText.Value(recipeRevision, "Recipe revision is required.");
         LotId = RequiredText.Value(lotId, "Lot id is required.");
         StartedAt = startedAt;
+        SiteId = string.IsNullOrWhiteSpace(siteId) ? null : siteId.Trim();
     }
 
     public string RunId { get; }
@@ -33,11 +34,13 @@ public sealed record ProcessRun
     public string LotId { get; }
 
     public DateTimeOffset StartedAt { get; }
+
+    public string? SiteId { get; }
 }
 
 public sealed record LotReference
 {
-    public LotReference(string lotId, string materialCode, ToolId toolId)
+    public LotReference(string lotId, string materialCode, ToolId toolId, string? siteId = null)
     {
         if (toolId.IsEmpty)
         {
@@ -47,6 +50,7 @@ public sealed record LotReference
         LotId = RequiredText.Value(lotId, "Lot id is required.");
         MaterialCode = RequiredText.Value(materialCode, "Material code is required.");
         ToolId = toolId;
+        SiteId = string.IsNullOrWhiteSpace(siteId) ? null : siteId.Trim();
     }
 
     public string LotId { get; }
@@ -54,6 +58,8 @@ public sealed record LotReference
     public string MaterialCode { get; }
 
     public ToolId ToolId { get; }
+
+    public string? SiteId { get; }
 }
 
 public sealed record NcrRecord

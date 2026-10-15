@@ -1,0 +1,54 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Synthetic fault. One precursor lot reaches deposition tools at two plants. Scenario SC-5.
+id: FLT-SC5-MX4419
+title: Film thickness step on two plants after lot MX4419
+whyItMatters: Film thickness dropped on deposition tools at two plants, so both lines may ship thin film.
+category: supplyChainMaterial
+scenario: SC-5
+expectedBehavior: recommend
+assertCategory: true
+tools: [D-03, I-D-01]
+parameter: filmThickness
+shape: step
+magnitude:
+  kind: percent
+  value: -8
+onset: "2026-10-09T06:00:00Z"
+cause: Precursor lot MX4419 from Marrowgate Process Gases is out of spec and was released to D-03 at Northwater Fab and I-D-01 at Ironwood Fab.
+counterEvidence:
+  - A chamber clean on D-03 the same week cannot explain the matching step on I-D-01 at the other plant.
+actions:
+  - Cite lot MX4419 and notice SN-MX4419.
+  - Name both plants, because the lot was consumed at each one.
+evidence:
+  materialLot:
+    lotId: MX4419
+    materialCode: precursorBlend
+    supplierName: Marrowgate Process Gases
+    receivedAt: "2026-10-08T16:00:00Z"
+    noticeId: SN-MX4419
+    toolIds: [D-03, I-D-01]
+    whyItMatters: Both plants started that precursor lot just before the film got thinner.
+  supplierNotice:
+    noticeId: SN-MX4419
+    supplierName: Marrowgate Process Gases
+    materialCode: precursorBlend
+    lotId: MX4419
+    summary: Lot MX4419 of the precursor blend is out of spec and was released to two plants.
+    whyItMatters: The supplier says the shared lot is off spec.
+    issuedAt: "2026-10-08T18:00:00Z"
+  runs:
+    recipeId: PECVD-OXIDE
+    recipeRevision: A
+    lotId: W-OXIDE-4419
+    materialCode: WAF-SI-300
+    count: 2
+    whyItMatters: Wafers ran after the lot was released at each plant.
+  confounders:
+    - kind: pm
+      workOrderId: WO-PM-D03-4419
+      toolId: D-03
+      chamberId: D-03-A
+      performedAt: "2026-10-08T02:00:00Z"
+      summary: Scheduled chamber clean on D-03 the same week as lot MX4419. Ironwood was not in that work order.
+      whyItMatters: A clean on only one plant cannot explain the same film step at the other plant.

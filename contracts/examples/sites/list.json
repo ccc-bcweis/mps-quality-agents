@@ -1,0 +1,110 @@
+[
+  {
+    "id": "northwater",
+    "name": "Northwater Fab",
+    "role": "Front-end wafer fab",
+    "location": "Cedar Reach, Valecrest",
+    "timezone": "America/Denver",
+    "bays": [
+      {
+        "id": "Bay-1",
+        "name": "Bay 1",
+        "toolCount": 4
+      },
+      {
+        "id": "Bay-2",
+        "name": "Bay 2",
+        "toolCount": 4
+      },
+      {
+        "id": "Bay-3",
+        "name": "Bay 3 deposition",
+        "toolCount": 2
+      },
+      {
+        "id": "Bay-4",
+        "name": "Bay 4 etch",
+        "toolCount": 2
+      }
+    ],
+    "kpis": {
+      "waferStartsPerHour": 57.9,
+      "waferOutsPerHour": 56.2,
+      "wip": 140,
+      "yieldPct": 97,
+      "uptimePct": 95.6
+    }
+  },
+  {
+    "id": "ironwood",
+    "name": "Ironwood Fab",
+    "role": "Front-end wafer fab",
+    "location": "Ironwood Bench, Eastmere",
+    "timezone": "America/Chicago",
+    "bays": [
+      {
+        "id": "I-Bay-1",
+        "name": "Deposition 1",
+        "toolCount": 2
+      },
+      {
+        "id": "I-Bay-2",
+        "name": "Etch",
+        "toolCount": 3
+      },
+      {
+        "id": "I-Bay-3",
+        "name": "Deposition 2",
+        "toolCount": 2
+      },
+      {
+        "id": "I-Bay-4",
+        "name": "Etch finish",
+        "toolCount": 3
+      }
+    ],
+    "kpis": {
+      "waferStartsPerHour": 54.2,
+      "waferOutsPerHour": 51.9,
+      "wip": 130,
+      "yieldPct": 95.7,
+      "uptimePct": 95.1
+    }
+  },
+  {
+    "id": "lumen",
+    "name": "Lumen Pilot Works",
+    "role": "Strip, clean, and pilot line",
+    "location": "Lumen Yard, Westfold",
+    "timezone": "America/Los_Angeles",
+    "bays": [
+      {
+        "id": "P-Bay-1",
+        "name": "Strip",
+        "toolCount": 3
+      },
+      {
+        "id": "P-Bay-2",
+        "name": "Clean",
+        "toolCount": 3
+      },
+      {
+        "id": "P-Bay-3",
+        "name": "Pilot deposition",
+        "toolCount": 2
+      },
+      {
+        "id": "P-Bay-4",
+        "name": "Pilot etch",
+        "toolCount": 2
+      }
+    ],
+    "kpis": {
+      "waferStartsPerHour": 47.5,
+      "waferOutsPerHour": 46.1,
+      "wip": 113,
+      "yieldPct": 97.1,
+      "uptimePct": 95.9
+    }
+  }
+]

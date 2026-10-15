@@ -31,7 +31,7 @@ public sealed record Chamber
 /// </summary>
 public sealed class Tool
 {
-    public Tool(ToolId id, string name, ToolFamily family, string model, string bay, IReadOnlyList<Chamber> chambers)
+    public Tool(ToolId id, string name, ToolFamily family, string model, string bay, IReadOnlyList<Chamber> chambers, string? siteId = null)
     {
         if (id.IsEmpty)
         {
@@ -50,6 +50,7 @@ public sealed class Tool
         Model = RequiredText.Value(model, "Tool model is required.");
         Bay = RequiredText.Value(bay, "Bay is required.");
         Chambers = chambers.ToArray();
+        SiteId = string.IsNullOrWhiteSpace(siteId) ? null : siteId.Trim();
     }
 
     public ToolId Id { get; }
@@ -61,6 +62,8 @@ public sealed class Tool
     public string Model { get; }
 
     public string Bay { get; }
+
+    public string? SiteId { get; }
 
     public IReadOnlyList<Chamber> Chambers { get; }
 }
