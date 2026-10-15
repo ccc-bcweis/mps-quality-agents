@@ -11,6 +11,7 @@ import { PlainMetrics } from "../components/PlainMetrics";
 import { ToolSchematic } from "../components/ToolSchematic";
 import { btn, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
+import { visibleProblem } from "../history/copy";
 import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
 import { chartSpec } from "../fleet/chartSpec";
@@ -41,7 +42,10 @@ export function ToolPage() {
         }
       })
       .catch((reason: unknown) => {
-        if (!cancelled) setError(reason instanceof ApiProblem ? reason.title : "Tool was not found.");
+        if (!cancelled) {
+          const title = reason instanceof ApiProblem ? reason.title : "Tool was not found.";
+          setError(visibleProblem(title) ?? "Tool was not found.");
+        }
       });
     return () => {
       cancelled = true;

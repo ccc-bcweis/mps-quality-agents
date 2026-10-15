@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { formatUsd } from "../api/labels";
 import { useConsole } from "../context/ConsoleContext";
+import { visibleProblem } from "../history/copy";
 import { Term } from "./Term";
 
 const ENGINE_TIP = "This does not change the plant data. It only changes how the AI answers.";
@@ -13,8 +14,8 @@ export function ModeBanner() {
   const hot = ratio >= 0.8;
   const status = capReached
     ? "Daily spend cap reached. Live calls stay off and the console stays in replay."
-    : metricsError
-      ? metricsError
+    : visibleProblem(metricsError)
+      ? visibleProblem(metricsError)
       : bannerMode === "mockReasoner"
         ? "No saved answer for the last injection. A fixed reasoner is answering."
         : localPreview && serverMode

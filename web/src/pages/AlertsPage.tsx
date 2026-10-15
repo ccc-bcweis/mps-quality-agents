@@ -1,39 +1,50 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { formatStamp, ruleLabel, severityTone, severityWord } from "../api/labels";
-import type { Alert, Incident, Ticket } from "../api/types";
+import type { Alert, Incident, Ticket, Tool } from "../api/types";
 import { CaseBriefs } from "../components/CaseBriefs";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
+import { HistoryNote, RecordList } from "../components/RecordList";
 import { panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
+import { MISSING_ALERT, visibleProblem } from "../history/copy";
+import { byNewestTime, toolPlainName } from "../history/order";
 import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
 
 export function AlertsPage() {
   useSetLifecycle("alert");
+  const { alertId } = useParams();
   const [params] = useSearchParams();
   const { siteId } = useSite();
   const { localAlerts } = useConsole();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [tools, setTools] = useState<Tool[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
   const injected = params.get("injected") === "1";
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([api.listAlerts(undefined, siteId), api.listTickets(siteId), api.listIncidents(siteId)])
-      .then(([nextAlerts, nextTickets, nextIncidents]) => {
+    setReady(false);
+    Promise.all([api.listAlerts(undefined, siteId), api.listTickets(siteId), api.listIncidents(siteId), api.listTools()])
+      .then(([nextAlerts, nextTickets, nextIncidents, nextTools]) => {
         if (cancelled) return;
         setAlerts(nextAlerts);
         setTickets(nextTickets);
         setIncidents(nextIncidents);
+        setTools(nextTools);
       })
       .catch((reason: unknown) => {
         if (!cancelled) setError(reason instanceof ApiProblem ? reason.title : "Alerts did not load.");
+      })
+      .finally(() => {
+        if (!cancelled) setReady(true);
       });
     return () => {
       cancelled = true;
@@ -42,8 +53,34 @@ export function AlertsPage() {
 
   const merged = [...localAlerts, ...alerts]
     .filter((alert, index, all) => all.findIndex((item) => item.correlationId === alert.correlationId) === index)
-    .filter((alert) => toolInPlant(siteId, alert.toolId));
-  const fresh = merged.filter((alert) => alert.correlationId.startsWith("corr-inject"));
+    .filter((alert) => toolInPlant(siteId, alert.toolId))
+    .sort(byNewestTime((alert) => alert.raisedAt));
+  const fresh = merged.filter((alert) => alert.correlationId.startsWith("corr-inject") || alert.correlationId.startsWith("corr-scenario"));
+  const selected = alertId ? merged.find((alert) => alert.id === alertId) : undefined;
+  const missing = Boolean(alertId) && ready && !selected;
+  const problem = visibleProblem(error);
+
+  const rows = merged.map((alert) => {
+    const incident = incidents.find((item) => item.correlationId === alert.correlationId);
+    const matched = tickets.find((item) => item.incidentId === incident?.id);
+    return {
+      id: alert.id,
+      status: <Chip tone={severityTone(alert.severity)}>{severityWord(alert.severity)}</Chip>,
+      toolName: toolPlainName(tools, alert.toolId),
+      toolId: alert.toolId,
+      time: formatStamp(alert.raisedAt),
+      detail: (
+        <>
+          <Explain text={ruleLabel(alert.rule)} />
+          <div className="mt-1">
+            {matched ? <Link to={`/tickets/${matched.id}`}>{matched.number}</Link> : "—"}
+            {" · "}
+            <Link to={`/alerts/${alert.id}`}>Open</Link>
+          </div>
+        </>
+      ),
+    };
+  });
 
   return (
     <div>
@@ -58,48 +95,23 @@ export function AlertsPage() {
           Injected fault accepted. {fresh.length === 0 ? "Waiting for the alert." : `${fresh.length} new alert${fresh.length === 1 ? "" : "s"} on this list.`}
         </p>
       ) : null}
-      {error ? <p className="mb-3 text-mps-alarm-text">{error}</p> : null}
-      <div className={panel}>
-        <h2 className="mb-2 text-mps-title font-semibold">
-          Active <span className="float-right font-mono text-mps-micro font-normal text-mps-nominal">rules engine · not a model</span>
-        </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="font-mono text-mps-micro uppercase text-mps-muted">
-                <th className="py-1 font-medium">Tool</th>
-                <th className="py-1 font-medium">Parameter</th>
-                <th className="py-1 font-medium">Rule</th>
-                <th className="py-1 font-medium">Severity</th>
-                <th className="py-1 font-medium">Raised</th>
-                <th className="py-1 font-medium">Ticket</th>
-              </tr>
-            </thead>
-            <tbody>
-              {merged.map((alert) => {
-                const incident = incidents.find((item) => item.correlationId === alert.correlationId);
-                const matched = tickets.find((item) => item.incidentId === incident?.id);
-                return (
-                  <tr key={alert.id} className="border-t border-mps-line">
-                    <td className="py-1.5 font-mono">
-                      <Link to={`/tools/${alert.toolId}`}>{alert.toolId}</Link>
-                    </td>
-                    <td className="py-1.5 font-mono">{alert.parameter}</td>
-                    <td className="py-1.5">
-                      <Explain text={ruleLabel(alert.rule)} />
-                    </td>
-                    <td className="py-1.5">
-                      <Chip tone={severityTone(alert.severity)}>{severityWord(alert.severity)}</Chip>
-                    </td>
-                    <td className="py-1.5 font-mono text-mps-micro">{formatStamp(alert.raisedAt)}</td>
-                    <td className="py-1.5 font-mono">{matched ? <Link to="/tickets">{matched.number}</Link> : "—"}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {problem ? <p className="mb-3 text-mps-alarm-text">{problem}</p> : null}
+      {missing ? <HistoryNote text={MISSING_ALERT} /> : null}
+      {selected ? (
+        <section className={`${panel} mb-3`}>
+          <h2 className="mb-2 text-mps-title font-semibold">Alert</h2>
+          <p>
+            <Chip tone={severityTone(selected.severity)}>{severityWord(selected.severity)}</Chip> · {toolPlainName(tools, selected.toolId)} · {formatStamp(selected.raisedAt)}
+          </p>
+          <p className="mt-2">
+            <Explain text={ruleLabel(selected.rule)} /> · {selected.parameter}
+          </p>
+          <p className="mt-2">
+            <Link to="/alerts">All alerts</Link>
+          </p>
+        </section>
+      ) : null}
+      {!alertId || missing ? <RecordList label="Alerts" rows={rows} empty="No alerts yet." /> : null}
       <CaseBriefs
         incidentIds={incidents.filter((incident) => merged.some((alert) => alert.correlationId === incident.correlationId)).map((incident) => incident.id)}
         intro="Evidence linked to these alerts"

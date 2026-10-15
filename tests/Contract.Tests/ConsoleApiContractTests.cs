@@ -25,6 +25,7 @@ public sealed class ConsoleApiContractTests
         "/api/incidents/{incidentId}",
         "/api/incidents/{incidentId}/investigation",
         "/api/incidents/{incidentId}/investigations",
+        "/api/investigations",
         "/api/investigations/{investigationId}",
         "/api/investigations/{investigationId}/decisions",
         "/api/capas",
@@ -73,6 +74,7 @@ public sealed class ConsoleApiContractTests
         Expect(OperationType.Get, "/api/incidents/{incidentId}", "getIncident", "200");
         Expect(OperationType.Get, "/api/incidents/{incidentId}/investigation", "getLatestInvestigation", "200");
         Expect(OperationType.Post, "/api/incidents/{incidentId}/investigations", "startInvestigation", "201");
+        Expect(OperationType.Get, "/api/investigations", "listInvestigations", "200");
         Expect(OperationType.Get, "/api/investigations/{investigationId}", "getInvestigation", "200");
         Expect(OperationType.Post, "/api/investigations/{investigationId}/decisions", "submitDecision", "200");
         Expect(OperationType.Get, "/api/capas", "listCapas", "200");
@@ -90,6 +92,29 @@ public sealed class ConsoleApiContractTests
         OpenApiDocs.Console.Paths.Keys.Should().NotContain(path =>
             path.Contains("groundtruth", StringComparison.OrdinalIgnoreCase)
             || path.Contains("ground-truth", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void HistoryListsAcceptAnOptionalSiteFilter()
+    {
+        var document = OpenApiDocs.Console;
+        foreach (var path in new[] { "/api/alerts", "/api/tickets", "/api/investigations", "/api/capas" })
+        {
+            var operation = document.Operation(path, OperationType.Get);
+            var site = operation.Parameters
+                .Select(document.Parameter)
+                .Should()
+                .ContainSingle(parameter => parameter.Name == "siteId")
+                .Subject;
+            site.In.Should().Be(ParameterLocation.Query);
+            site.Required.Should().BeFalse();
+        }
+
+        document.Operation("/api/alerts", OperationType.Get)
+            .Parameters.Select(document.Parameter)
+            .Select(parameter => parameter.Name)
+            .Should()
+            .Equal("toolId", "siteId");
     }
 
     [Fact]

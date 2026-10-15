@@ -8,8 +8,11 @@ import { AgentTimeline } from "../components/AgentTimeline";
 import { EvidenceMatrix } from "../components/EvidenceMatrix";
 import { EvidencePack } from "../components/EvidencePack";
 import { Explain } from "../components/Explain";
+import { HistoryNote } from "../components/RecordList";
 import { btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
+import { hiddenMissingTitle, MISSING_INVESTIGATION, visibleProblem } from "../history/copy";
+import { InvestigationHistory } from "../history/InvestigationHistory";
 import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
 import { placeLabel, plainNarrative } from "../investigation/format";
@@ -18,6 +21,19 @@ import { INVESTIGATION_POLL_MS } from "../investigation/timeline";
 import { parameterLabel } from "../sites/parameters";
 
 type LoadResult = "ready" | "missing" | "failed";
+
+function InvestigationList({ note }: { note: string | null }) {
+  return (
+    <div>
+      <div className="mb-4">
+        <h1 className="text-mps-display font-semibold">Investigation</h1>
+        <p className="max-w-3xl text-mps-secondary">Past investigations, newest first. Open one to read the evidence.</p>
+      </div>
+      {note ? <HistoryNote text={note} /> : null}
+      <InvestigationHistory detail="investigation" />
+    </div>
+  );
+}
 
 function plantToolId(investigation: Investigation | null, incident: Incident | null): string | null {
   if (incident?.toolId) return incident.toolId;
@@ -29,10 +45,12 @@ export function InvestigationPage() {
   const { siteId } = useSite();
   const routeInvestigationId = params.investigationId ?? "";
   const routeIncidentId = params.incidentId ?? "";
+  const listing = routeInvestigationId.length === 0 && routeIncidentId.length === 0;
   const [investigation, setInvestigation] = useState<Investigation | null>(null);
   const [incident, setIncident] = useState<Incident | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const [ready, setReady] = useState(listing);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const view = investigation
@@ -48,7 +66,8 @@ export function InvestigationPage() {
     setInvestigation(null);
     setIncident(null);
     setError(null);
-    setReady(false);
+    setNote(null);
+    setReady(listing);
     setStartError(null);
 
     if (!routeIncidentId && !routeInvestigationId) {
@@ -85,9 +104,10 @@ export function InvestigationPage() {
     };
 
     const run = async () => {
+      if (listing) return;
       if (routeIncidentId) {
         const result = await loadIncident(routeIncidentId);
-        if (result === "missing" && !cancelled) setError("No such record.");
+        if (result === "missing" && !cancelled) setNote(MISSING_INVESTIGATION);
         return;
       }
 
@@ -103,7 +123,7 @@ export function InvestigationPage() {
       } catch (reason: unknown) {
         if (reason instanceof ApiProblem && reason.status === 404) {
           const result = await loadIncident(routeInvestigationId);
-          if (result === "missing" && !cancelled) setError(reason.title);
+          if (result === "missing" && !cancelled) setNote(MISSING_INVESTIGATION);
           return;
         }
         applyError(reason);
@@ -117,7 +137,7 @@ export function InvestigationPage() {
     return () => {
       cancelled = true;
     };
-  }, [routeIncidentId, routeInvestigationId]);
+  }, [listing, routeIncidentId, routeInvestigationId]);
 
   const liveId = investigation?.id ?? "";
   useEffect(() => {
@@ -153,15 +173,9 @@ export function InvestigationPage() {
     }
   }
 
-  if (!routeIncidentId && !routeInvestigationId) {
-    return (
-      <div>
-        <h1 className="text-mps-display font-semibold">Investigation</h1>
-        <p className="max-w-3xl text-mps-secondary">No investigation is open. Faults show up here after a scenario or a manual injection.</p>
-      </div>
-    );
+  if (listing || note || hiddenMissingTitle(error)) {
+    return <InvestigationList note={note ?? (hiddenMissingTitle(error) ? MISSING_INVESTIGATION : null)} />;
   }
-
   if (!ready) return <p className="text-mps-muted">Loading investigation…</p>;
   const homeTool = plantToolId(investigation, incident);
   if (homeTool && !toolInPlant(siteId, homeTool)) {
@@ -200,12 +214,12 @@ export function InvestigationPage() {
             {starting ? "Starting…" : "Start investigation"}
           </button>
         )}
-        {startError ? <p className="mt-3 text-mps-alarm-text">{startError}</p> : null}
+        {visibleProblem(startError) ? <p className="mt-3 text-mps-alarm-text">{visibleProblem(startError)}</p> : null}
       </div>
     );
   }
 
-  return <p className="text-mps-alarm-text">{error ?? "Investigation did not load."}</p>;
+  return <p className="text-mps-alarm-text">{visibleProblem(error) ?? "Investigation did not load."}</p>;
 }
 
 function InvestigationDetail({ investigation }: { investigation: Investigation }) {

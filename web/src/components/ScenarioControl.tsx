@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import type { ScriptedScenario } from "../api/types";
 import { useConsole } from "../context/ConsoleContext";
+import { visibleProblem } from "../history/copy";
 import { pollUntil } from "../poll";
 
 const harnessBtn =
@@ -92,9 +93,9 @@ export function ScenarioControl() {
         {pending ? "Running…" : "Run scenario"}
       </button>
       {selected ? <p className="basis-full text-mps-body text-sn-gold-wash">{selected.summary}</p> : null}
-      {error ? (
+      {visibleProblem(error) ? (
         <p className="basis-full text-mps-body text-mps-alarm-text" role="alert">
-          {error}
+          {visibleProblem(error)}
         </p>
       ) : null}
     </div>

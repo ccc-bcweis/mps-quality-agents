@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Meridian Precision Systems Quality API
-  version: 1.2.0
+  version: 1.3.0
   description: |
     Console API for the fictional Meridian Precision Systems quality-investigation demo.
     Every intake channel becomes one incident. A CAPA is created only after a human approval,
@@ -13,6 +13,10 @@ info:
     contracts-v1.2 adds GET /api/incidents/{incidentId}/investigation (ADR-001 addendum).
     It returns the latest investigation for that incident, or 404 when none exists.
     The path is additive. Earlier clients stay compatible.
+    contracts-v1.3 adds GET /api/investigations. The list is every investigation, newest first.
+    The same version adds an optional siteId query on the alert, ticket, investigation, and CAPA lists.
+    When siteId is set, the list keeps records for tools at that plant. An unknown plant returns an empty list.
+    The paths and the query are additive. Earlier clients stay compatible.
     GET /api/audit is additive and read-only. It returns the audit trail and correlation traces.
     List routes accept an optional siteId query. Omit it to return every plant.
     EvidenceItem gains optional value, unit, specLow, specHigh, toolName, and chamberName.
@@ -140,7 +144,10 @@ paths:
     get:
       tags: [fleet]
       operationId: listAlerts
-      summary: SPC alerts
+      summary: SPC alerts, newest first
+      description: |
+        Optional toolId keeps one tool. Optional siteId keeps tools at that plant.
+        An unknown plant returns an empty list. Omit both to list every alert.
       parameters:
         - $ref: "#/components/parameters/ToolIdQuery"
         - $ref: "#/components/parameters/SiteIdQuery"
@@ -157,7 +164,9 @@ paths:
     get:
       tags: [incidents]
       operationId: listTickets
-      summary: Intake tickets
+      summary: Intake tickets, newest first
+      description: |
+        Optional siteId keeps tickets for tools at that plant. An unknown plant returns an empty list.
       parameters:
         - $ref: "#/components/parameters/SiteIdQuery"
       responses:
@@ -240,6 +249,27 @@ paths:
                 $ref: "#/components/schemas/Investigation"
         "404":
           $ref: "#/components/responses/NotFound"
+  /api/investigations:
+    get:
+      tags: [investigations]
+      operationId: listInvestigations
+      summary: All investigations, newest first
+      description: |
+        Additive in contracts-v1.3. Returns every investigation. A later start sorts
+        before an earlier start on the same incident, and a newer incident sorts before an older one.
+        Optional siteId keeps investigations whose incident tool is at that plant.
+        An unknown plant returns an empty list.
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
+      responses:
+        "200":
+          description: Investigations, newest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Investigation"
   /api/investigations/{investigationId}:
     get:
       tags: [investigations]
@@ -526,6 +556,13 @@ components:
       schema:
         type: string
         minLength: 1
+    SiteIdQuery:
+      name: siteId
+      in: query
+      required: false
+      description: Plant id. When set, the list keeps records for tools at that plant. An unknown plant returns an empty list.
+      schema:
+        type: string
     ScenarioId:
       name: scenarioId
       in: path
@@ -533,13 +570,6 @@ components:
       schema:
         type: string
         minLength: 1
-    SiteIdQuery:
-      name: siteId
-      in: query
-      required: false
-      description: When set, only records for this plant are returned. Omit it to return every plant.
-      schema:
-        type: string
     FamilyQuery:
       name: family
       in: query

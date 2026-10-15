@@ -18,6 +18,9 @@ public interface IInvestigationService
     Task<InvestigationSnapshot> GetAsync(InvestigationId investigationId, CancellationToken cancellationToken);
 
     Task<InvestigationSnapshot> GetLatestByIncidentAsync(IncidentId incidentId, CancellationToken cancellationToken);
+
+    /// <summary>Every investigation, newest first.</summary>
+    Task<IReadOnlyList<InvestigationSnapshot>> ListAsync(CancellationToken cancellationToken);
 }
 
 public sealed class InvestigationService : IInvestigationService
@@ -119,6 +122,9 @@ public sealed class InvestigationService : IInvestigationService
         return await _investigations.FindLatestByIncidentAsync(incidentId, cancellationToken).ConfigureAwait(false)
             ?? throw new ResourceNotFoundException("Investigation was not found.");
     }
+
+    public Task<IReadOnlyList<InvestigationSnapshot>> ListAsync(CancellationToken cancellationToken) =>
+        _investigations.ListAsync(cancellationToken);
 
     public static IncidentStage Map(InvestigationStage stage) => stage switch
     {

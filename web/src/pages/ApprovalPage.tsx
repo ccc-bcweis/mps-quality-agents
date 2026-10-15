@@ -8,10 +8,13 @@ import { AgentTimeline } from "../components/AgentTimeline";
 import { ApprovalDialog, type DecisionMode } from "../components/ApprovalDialog";
 import { EvidencePack } from "../components/EvidencePack";
 import { Explain } from "../components/Explain";
+import { HistoryNote } from "../components/RecordList";
 import { Term } from "../components/Term";
 import { btnDanger, btnOk, panel } from "../components/ui";
 import { plainNarrative } from "../investigation/format";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
+import { hiddenMissingTitle, MISSING_INVESTIGATION, visibleProblem } from "../history/copy";
+import { InvestigationHistory } from "../history/InvestigationHistory";
 import { lifecycleForInvestigation } from "../lifecycle";
 
 /** Matches HumanDecisionService.MinOverrideJustification (ADR-005). */
@@ -23,6 +26,7 @@ export function ApprovalPage() {
   const { rememberCapa } = useConsole();
   const [investigation, setInvestigation] = useState<Investigation | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [missing, setMissing] = useState(false);
   const [mode, setMode] = useState<DecisionMode | null>(null);
   const [approverId, setApproverId] = useState("dev-user");
   const [pending, setPending] = useState(false);
@@ -32,13 +36,24 @@ export function ApprovalPage() {
   useEffect(() => {
     if (!investigationId) return undefined;
     let cancelled = false;
+    setInvestigation(null);
+    setError(null);
+    setMissing(false);
+    if (!investigationId) return () => {
+      cancelled = true;
+    };
     api
       .getInvestigation(investigationId)
       .then((next) => {
         if (!cancelled) setInvestigation(next);
       })
       .catch((reason: unknown) => {
-        if (!cancelled) setError(reason instanceof ApiProblem ? reason.title : "Investigation did not load.");
+        if (cancelled) return;
+        if (reason instanceof ApiProblem && (reason.status === 404 || hiddenMissingTitle(reason.title))) {
+          setMissing(true);
+          return;
+        }
+        setError(reason instanceof ApiProblem ? reason.title : "Investigation did not load.");
       });
     return () => {
       cancelled = true;
@@ -71,15 +86,28 @@ export function ApprovalPage() {
     }
   }
 
+  const problem = visibleProblem(error);
   const escalated = investigation?.stage === "escalated";
   const justified = note.trim().length >= OVERRIDE_MIN;
   const top = investigation?.hypotheses.slice().sort((a, b) => b.confidence - a.confidence)[0];
 
-  if (!investigationId) {
+  if (!investigation) {
+    if (investigationId && !missing && !error) return <p className="text-mps-muted">Loading approval…</p>;
     return (
       <div>
-        <h1 className="text-mps-display font-semibold">Approval</h1>
-        <p className="max-w-3xl text-mps-secondary">No approval is waiting.</p>
+        <div className="mb-4">
+          <h1 className="text-mps-display font-semibold">Approval</h1>
+          <p className="max-w-3xl text-mps-secondary">
+            <Explain text="Past investigations, newest first. Open one to approve, reject, or ask for more evidence. The model never holds write authority." />
+          </p>
+        </div>
+        {missing ? <HistoryNote text={MISSING_INVESTIGATION} /> : null}
+        {problem ? (
+          <p className="mb-3 text-mps-alarm-text" role="alert">
+            {problem}
+          </p>
+        ) : null}
+        <InvestigationHistory detail="approval" />
       </div>
     );
   }
@@ -95,9 +123,9 @@ export function ApprovalPage() {
           <Explain text="The model never holds write authority. Approve records the approver name and creates the CAPA." />
         </p>
       </div>
-      {error ? (
+      {problem ? (
         <p className="mb-3 text-mps-alarm-text" role="alert">
-          {error}
+          {problem}
         </p>
       ) : null}
       <div className="grid gap-3 lg:grid-cols-2">

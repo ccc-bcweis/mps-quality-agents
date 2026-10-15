@@ -35,7 +35,9 @@ export function AppRoutes() {
           <Route path="/" element={<FleetPage />} />
           <Route path="/tools/:toolId" element={<ToolPage />} />
           <Route path="/alerts" element={<AlertsPage />} />
+          <Route path="/alerts/:alertId" element={<AlertsPage />} />
           <Route path="/tickets" element={<TicketsPage />} />
+          <Route path="/tickets/:ticketId" element={<TicketsPage />} />
           <Route path="/investigations" element={<InvestigationPage />} />
           <Route path="/investigations/incident/:incidentId" element={<InvestigationPage />} />
           <Route path="/investigations/:investigationId" element={<InvestigationPage />} />

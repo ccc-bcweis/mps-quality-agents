@@ -2,14 +2,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import { approvalSentence } from "../api/labels";
-import type { Capa, CapaStage, Investigation } from "../api/types";
+import { approvalSentence, CAPA_STAGE_LABEL, formatStamp } from "../api/labels";
+import type { Capa, CapaStage, Incident, Investigation, Tool } from "../api/types";
 import { AgentTimeline } from "../components/AgentTimeline";
 import { EvidencePack } from "../components/EvidencePack";
 import { Explain } from "../components/Explain";
+import { HistoryNote, RecordList } from "../components/RecordList";
 import { Term } from "../components/Term";
 import { btn, panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
+import { hiddenMissingTitle, MISSING_CAPA, visibleProblem } from "../history/copy";
+import { byNewestTime, toolPlainName } from "../history/order";
 import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
 import { formatLocalWhen } from "../investigation/format";
@@ -23,18 +26,45 @@ export function CapaPage() {
   const capasRef = useRef(capas);
   capasRef.current = capas;
   const [capa, setCapa] = useState<Capa | null>(null);
+  const [listed, setListed] = useState<Capa[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [tools, setTools] = useState<Tool[]>([]);
   const [homeTool, setHomeTool] = useState<string | null>(null);
   const [investigation, setInvestigation] = useState<Investigation | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [missing, setMissing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [capaTools, setCapaTools] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let cancelled = false;
-    const remembered = capaId ? capasRef.current.find((item) => item.id === capaId) ?? null : capasRef.current[0] ?? null;
+    Promise.all([api.listCapas(), api.listIncidents(), api.listTools()])
+      .then(([nextCapas, nextIncidents, nextTools]) => {
+        if (cancelled) return;
+        setListed(nextCapas);
+        setIncidents(nextIncidents);
+        setTools(nextTools);
+      })
+      .catch((reason: unknown) => {
+        if (!cancelled) setError(reason instanceof ApiProblem ? reason.title : "Corrective actions did not load.");
+      })
+      .finally(() => {
+        if (!cancelled) setReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const remembered = capaId ? capasRef.current.find((item) => item.id === capaId) ?? null : null;
+    setMissing(false);
     if (!capaId) {
-      setCapa(remembered);
-      if (!remembered) setError(null);
+      setCapa(null);
+      setError(null);
       return () => {
         cancelled = true;
       };
@@ -45,6 +75,7 @@ export function CapaPage() {
         if (!cancelled) {
           setCapa(next);
           rememberCapa(next);
+          setMissing(false);
         }
       })
       .catch((reason: unknown) => {
@@ -52,14 +83,41 @@ export function CapaPage() {
         if (remembered) {
           setCapa(remembered);
           setError(null);
+          setMissing(false);
           return;
         }
-        setError(reason instanceof ApiProblem ? reason.title : "CAPA was not found.");
+        setCapa(null);
+        if (reason instanceof ApiProblem && (reason.status === 404 || hiddenMissingTitle(reason.title))) {
+          setMissing(true);
+          setError(null);
+          return;
+        }
+        setMissing(false);
+        setError(reason instanceof ApiProblem ? reason.title : "The corrective action did not load.");
       });
     return () => {
       cancelled = true;
     };
   }, [capaId, rememberCapa]);
+
+  useEffect(() => {
+    const unknown = [...listed, ...capas]
+      .map((item) => item.incidentId)
+      .filter((id, index, all) => all.indexOf(id) === index && !incidents.some((row) => row.id === id) && !(id in capaTools));
+    if (unknown.length === 0) return undefined;
+    let cancelled = false;
+    Promise.all(unknown.map((id) => api.getIncident(id).then((incident) => [id, incident.toolId] as const).catch(() => null))).then((pairs) => {
+      if (cancelled) return;
+      setCapaTools((prev) => {
+        const next = { ...prev };
+        for (const pair of pairs) if (pair) next[pair[0]] = pair[1];
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [listed, capas, incidents, capaTools]);
 
   useEffect(() => {
     if (!capa) {
@@ -122,6 +180,63 @@ export function CapaPage() {
   const currentIndex = CAPA_STAGES.findIndex((item) => item.id === current);
   const upcoming = capa ? nextCapaStage(capa.stage) : null;
 
+  const merged = [...listed, ...capas.filter((item) => !listed.some((row) => row.id === item.id))].sort(
+    byNewestTime((item) => item.openedAt),
+  );
+  const showList = !capa;
+  const toolFor = (item: Capa) => incidents.find((row) => row.id === item.incidentId)?.toolId ?? capaTools[item.incidentId];
+  const visible = merged.filter((item) => {
+    const toolId = toolFor(item);
+    return !toolId || toolInPlant(siteId, toolId);
+  });
+  const elsewhere = merged.length - visible.length;
+  const problem = visibleProblem(error);
+  const rows = visible.map((item) => {
+    const toolId = toolFor(item);
+    return {
+      id: item.id,
+      status: CAPA_STAGE_LABEL[item.stage],
+      toolName: toolPlainName(tools, toolId),
+      toolId,
+      time: formatStamp(item.openedAt),
+      detail: (
+        <>
+          <div>{item.summary}</div>
+          <Link to={`/capas/${item.id}`}>Open</Link>
+        </>
+      ),
+    };
+  });
+
+  if (showList) {
+    return (
+      <div>
+        <div className="mb-4">
+          <h1 className="text-mps-display font-semibold">
+            <Term id="CAPA" spellOut={false} />
+          </h1>
+          <p className="max-w-3xl text-mps-secondary">Past corrective and preventive actions, newest first.</p>
+        </div>
+        {missing && ready ? <HistoryNote text={MISSING_CAPA} /> : null}
+        {elsewhere > 0 ? (
+          <HistoryNote text={`${elsewhere} corrective action${elsewhere === 1 ? " is" : "s are"} at another plant. Choose All sites to see ${elsewhere === 1 ? "it" : "them"}.`} />
+        ) : null}
+        {problem ? (
+          <p className="mb-3 text-mps-alarm-text" role="alert">
+            <Explain text={problem} spellOut={false} />
+          </p>
+        ) : null}
+        {rows.length === 0 ? (
+          <p className="text-mps-muted">
+            <Explain text="No CAPA yet. Approve a recommendation to create one. The server list is empty until that token is issued." spellOut={false} />
+          </p>
+        ) : (
+          <RecordList label="Corrective actions" rows={rows} empty="No corrective actions yet." />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="mb-4">
@@ -135,9 +250,9 @@ export function CapaPage() {
           <Explain text="A CAPA is the record of the fix. Stages after Open move one step at a time. A failed verification does not move backward. The frozen mock rejects advance with 409 until the API implements the transition." />
         </p>
       </div>
-      {error ? (
+      {problem ? (
         <p className="mb-3 text-mps-alarm-text" role="alert">
-          <Explain text={error} spellOut={false} />
+          <Explain text={problem} spellOut={false} />
         </p>
       ) : null}
       {notice ? <p className="mb-3 text-mps-ok">{notice}</p> : null}
