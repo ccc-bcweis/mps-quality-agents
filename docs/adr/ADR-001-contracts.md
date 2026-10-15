@@ -51,3 +51,12 @@ scenarios: SC-1 SC-2 SC-3 SC-4
 - `contracts/msw/handlers.ts` covers the new operations. No request or response field on an existing operation changed.
 - (lane T1) `GET /api/incidents/{incidentId}/investigation` returns the latest investigation for that incident. 404 when the incident does not exist or no investigation was started. A ticket opens by its incident id; a ticket id or number is not an investigation id.
 - `HumanDecisionKind` gains `override` (ADR-005).
+
+## Addendum: evidence reading fields (2026-10-15, GB-EV)
+
+Optional fields on `EvidenceItem`. Required fields are unchanged. OpenAPI `info.version` stays 1.2.0.
+
+- `value`, `unit`, `specLow`, `specHigh` describe a sensor or chart point. `unit` is the catalog unit (`C`, `Torr`, `mTorr`).
+- `toolName` and `chamberName` are plain names (`Etch tool E-02`, `Chamber B`). `toolId` and `externalRef` stay for the audit trail.
+- The evidence pack factory stores the measured value and the plain names. The contract mapper fills unit and spec from the family parameter catalog when the external reference names the parameter.
+- The event schema is unchanged. These fields are on the console investigation response only.

@@ -55,7 +55,13 @@ public sealed record EvidenceResponse(
     string? ToolId,
     string? ExternalRef,
     string? WhyItMatters,
-    string? SignalId);
+    string? SignalId,
+    double? Value = null,
+    string? Unit = null,
+    double? SpecLow = null,
+    double? SpecHigh = null,
+    string? ToolName = null,
+    string? ChamberName = null);
 
 public sealed record EvidenceMatrixResponse(
     RootCauseCategory Category,

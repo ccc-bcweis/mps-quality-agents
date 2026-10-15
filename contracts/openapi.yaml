@@ -13,6 +13,8 @@ info:
     contracts-v1.2 adds GET /api/incidents/{incidentId}/investigation (ADR-001 addendum).
     It returns the latest investigation for that incident, or 404 when none exists.
     The path is additive. Earlier clients stay compatible.
+    EvidenceItem gains optional value, unit, specLow, specHigh, toolName, and chamberName.
+    Clients that ignore unknown fields stay compatible.
     All names and data are synthetic.
   license:
     name: MIT
@@ -738,6 +740,30 @@ components:
           type: string
           nullable: true
           description: Sensor id from the fleet sensor catalog (data/fleet), when the evidence is a signal.
+        value:
+          type: number
+          nullable: true
+          description: Measured value when this evidence is a sensor or chart point. Absent for records that are not a reading.
+        unit:
+          type: string
+          nullable: true
+          description: Unit for value, such as C or Torr.
+        specLow:
+          type: number
+          nullable: true
+          description: Low end of the spec window for value.
+        specHigh:
+          type: number
+          nullable: true
+          description: High end of the spec window for value.
+        toolName:
+          type: string
+          nullable: true
+          description: Plain tool name, such as Etch tool E-02. The tool id stays on toolId.
+        chamberName:
+          type: string
+          nullable: true
+          description: Plain chamber name, such as Chamber B.
     EvidenceStance:
       type: string
       enum: [supports, rulesOut, neutral]
