@@ -35,3 +35,19 @@ Parallel lanes need one shape for incidents, evidence, approvals, and the consol
 - `EvidenceItem.whyItMatters` (nullable, <=240 chars) and `EvidenceItem.signalId` (fleet sensor id) per ADR-003 / UX3.
 - `EvidenceStance`, `EvidenceMatrixEntry`, optional `Investigation.evidenceMatrix` (UX3).
 - All additions are optional, so v1 clients remain compatible. Spec version 0.2.0.
+
+## Addendum: contracts-v1.2 (2026-10-14, GB-3)
+
+Additive console paths. Existing operations are unchanged. OpenAPI `info.version` is 0.3.0. Bob tags `contracts-v1.2`.
+
+- `GET /api/admin/session` returns `mode` (`local` or `azure`), `isAdmin`, and `displayName`. It is not admin-gated.
+- `POST /api/admin/reset` is admin-only. Local mode with no Easy Auth principal header is the local dev user and is an admin. A present header requires a role claim of `admin`, including in local mode, so a non-admin can be rejected without switching mode. Azure mode without a valid admin principal is 403. The body restores fleet state, tickets, investigations, approvals, CAPAs, and the simulated clock from `Mps:Demo:Seed` (default 4242). The same seed is used locally and in Azure. A second call returns that same baseline.
+- `GET /api/injector/scenarios` lists the named scenarios. `POST /api/injector/scenarios/{scenarioId}` runs one and returns the seeded telemetry. One scenario covers each root-cause class: engineering change, equipment calibration, supply-chain material, and process drift. `POST /api/faults` remains the free-form injector.
+
+```
+header: X-MS-CLIENT-PRINCIPAL
+scenarios: SC-1 SC-2 SC-3 SC-4
+```
+- `contracts/msw/handlers.ts` covers the new operations. No request or response field on an existing operation changed.
+- (lane T1) `GET /api/incidents/{incidentId}/investigation` returns the latest investigation for that incident. 404 when the incident does not exist or no investigation was started. A ticket opens by its incident id; a ticket id or number is not an investigation id.
+- `HumanDecisionKind` gains `override` (ADR-005).

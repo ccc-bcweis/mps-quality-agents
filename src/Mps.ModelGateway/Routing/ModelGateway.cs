@@ -1,5 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 
 using Microsoft.Extensions.AI;
@@ -24,6 +26,8 @@ public sealed class ModelGateway : IChatClient
     private readonly MockReasonerChatClient _mockClient;
     private readonly IChatClient? _azureClient;
     private readonly IChatClient? _openAiClient;
+    private readonly IScriptedReplayCatalog _scripted;
+    private readonly IScenarioHint? _scenarioHint;
     private readonly TimeProvider _time;
     private readonly SemaphoreSlim _mutex = new(1, 1);
     private int _consecutiveFailures;
@@ -35,7 +39,9 @@ public sealed class ModelGateway : IChatClient
         IMockReasoner reasoner,
         TimeProvider timeProvider,
         IChatClient? azureClient = null,
-        IChatClient? openAiClient = null)
+        IChatClient? openAiClient = null,
+        IScriptedReplayCatalog? scriptedReplay = null,
+        IScenarioHint? scenarioHint = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(ledger);
@@ -62,6 +68,11 @@ public sealed class ModelGateway : IChatClient
             throw new ArgumentOutOfRangeException(nameof(options), "Circuit breaker threshold must be at least 1.");
         }
 
+        if (options.Temperature is { } temperature && !float.IsFinite(temperature))
+        {
+            throw new ArgumentOutOfRangeException(nameof(options), "Temperature must be finite.");
+        }
+
         _options = options;
         _ledger = ledger;
         _catalog = catalog;
@@ -69,6 +80,8 @@ public sealed class ModelGateway : IChatClient
         _mockClient = new MockReasonerChatClient(reasoner);
         _azureClient = azureClient;
         _openAiClient = openAiClient;
+        _scripted = scriptedReplay ?? new InMemoryScriptedReplayCatalog();
+        _scenarioHint = scenarioHint;
         _time = timeProvider;
     }
 
@@ -81,10 +94,21 @@ public sealed class ModelGateway : IChatClient
         cancellationToken.ThrowIfCancellationRequested();
         var snapshot = Copy(messages);
         var hash = PromptHasher.Hash(snapshot, options);
+        var scenarioId = ReadScenarioId(options) ?? _scenarioHint?.CurrentScenarioId;
 
         await _mutex.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (TryScripted(scenarioId, hash, out var scripted))
+            {
+                return await RecordAsync(
+                    new ServedCall(scripted, ModelRoutes.Replay, LiveRefused: false, FellBack: false),
+                    snapshot,
+                    options,
+                    hash,
+                    cancellationToken).ConfigureAwait(false);
+            }
+
             var today = DateOnly.FromDateTime(_time.GetUtcNow().UtcDateTime);
             var decision = await DecideAsync(today, cancellationToken).ConfigureAwait(false);
             var served = await DispatchAsync(decision, snapshot, options, cancellationToken).ConfigureAwait(false);
@@ -206,7 +230,7 @@ public sealed class ModelGateway : IChatClient
         {
             try
             {
-                return await client.GetResponseAsync(messages, options, cancellationToken).ConfigureAwait(false);
+                return await client.GetResponseAsync(messages, Pin(options), cancellationToken).ConfigureAwait(false);
             }
             catch (HttpRequestException) when (!cancellationToken.IsCancellationRequested)
             {
@@ -283,6 +307,54 @@ public sealed class ModelGateway : IChatClient
         served.Response.AdditionalProperties[GatewayMetadata.PromptHash] = hash;
         served.Response.AdditionalProperties[GatewayMetadata.CostUsd] = cost;
         return served.Response;
+    }
+
+    private bool TryScripted(string? scenarioId, string hash, [NotNullWhen(true)] out ChatResponse? response)
+    {
+        response = null;
+        if (!_options.ScriptedReplay || string.IsNullOrWhiteSpace(scenarioId))
+        {
+            return false;
+        }
+
+        if (!_scripted.TryGet(scenarioId, hash, out var turn))
+        {
+            return false;
+        }
+
+        response = turn.ToChatResponse();
+        response.AdditionalProperties ??= new AdditionalPropertiesDictionary();
+        response.AdditionalProperties[GatewayMetadata.ScriptedReplay] = true;
+        response.AdditionalProperties[GatewayMetadata.ScenarioId] = scenarioId.Trim();
+        return true;
+    }
+
+    private ChatOptions Pin(ChatOptions? options)
+    {
+        var pinned = options?.Clone() ?? new ChatOptions();
+        pinned.Temperature = _options.Temperature ?? pinned.Temperature;
+        if (_options.Temperature is null)
+        {
+            pinned.Temperature = null;
+        }
+        pinned.Seed = _options.Seed;
+        return pinned;
+    }
+
+    private static string? ReadScenarioId(ChatOptions? options)
+    {
+        if (options?.AdditionalProperties is null)
+        {
+            return null;
+        }
+
+        if (!options.AdditionalProperties.TryGetValue(GatewayMetadata.ScenarioId, out var value) || value is null)
+        {
+            return null;
+        }
+
+        var text = value as string ?? Convert.ToString(value, CultureInfo.InvariantCulture);
+        return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
     }
 
     private static List<ChatMessage> Copy(IEnumerable<ChatMessage> messages)

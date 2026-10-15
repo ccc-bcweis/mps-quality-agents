@@ -4,7 +4,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
 
+using Mps.Api.Demo;
 using Mps.Api.Fakes;
 using Mps.Api.Http;
 using Mps.Api.Hubs;
@@ -20,6 +22,8 @@ using Mps.Application.Persistence;
 using Mps.Application.Spc;
 using Mps.Application.Workflow;
 using Mps.Application.Writes;
+
+using Gateway = Mps.ModelGateway.Routing.ModelGateway;
 
 namespace Mps.Api.Hosting;
 
@@ -65,6 +69,17 @@ public static class QualityHost
         builder.Services.AddScoped<IMetricsLog, EfMetricsLog>();
         builder.Services.AddSingleton<IQmsCapaWriter, FakeQmsCapaWriter>();
         builder.Services.AddSingleton(TimeProvider.System);
+        builder.Services.AddSingleton<ScriptedScenarioContext>();
+        builder.Services.AddSingleton(services => DemoRuntimeLoader.Load(
+            services.GetRequiredService<IConfiguration>(),
+            services.GetRequiredService<TimeProvider>()));
+        builder.Services.AddSingleton(services => ModelGatewayRegistration.Create(
+            services.GetRequiredService<IConfiguration>(),
+            services.GetRequiredService<TimeProvider>(),
+            services.GetRequiredService<ScriptedScenarioContext>()));
+        builder.Services.AddSingleton<IChatClient>(services => services.GetRequiredService<Gateway>());
+        builder.Services.AddScoped<DemoResetService>();
+        builder.Services.AddScoped<ScenarioTrigger>();
         builder.Services.AddScoped<IQualityNotifier, SignalRQualityNotifier>();
         builder.Services.AddScoped<IIntakeService, IntakeService>();
         builder.Services.AddScoped(services =>

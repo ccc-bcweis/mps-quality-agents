@@ -28,6 +28,70 @@ public sealed class ApprovalDecisionTests
     private static readonly byte[] Key = ApprovalPolicy.DemoSigningKey();
 
     [Fact]
+    public async Task AnEscalatedInvestigationCannotBeApprovedDirectly()
+    {
+        var harness = await HarnessAsync(escalated: true);
+
+        var act = () => harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.Approve, null, "qe-1", CancellationToken.None);
+
+        await act.Should().ThrowAsync<LifecycleConflictException>().WithMessage("*escalated*");
+        harness.Writer.Calls.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task OverrideNeedsAWrittenJustification()
+    {
+        var harness = await HarnessAsync(escalated: true);
+
+        var act = () => harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.Override, "ok", "qe-1", CancellationToken.None);
+
+        await act.Should().ThrowAsync<IntakeValidationException>().WithMessage("*justification*");
+        harness.Writer.Calls.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task OverrideWithJustificationCreatesACapaAndRecordsWhy()
+    {
+        var harness = await HarnessAsync(escalated: true);
+
+        var outcome = await harness.Service.DecideAsync(
+            harness.InvestigationId,
+            HumanDecisionKind.Override,
+            "Engineer confirmed the pressure gauge drift on the floor.",
+            "qe-1",
+            CancellationToken.None);
+
+        outcome.Capa.Should().NotBeNull();
+        var approval = await harness.Approvals.FindByInvestigationAsync(harness.InvestigationId, CancellationToken.None);
+        approval.Should().NotBeNull();
+        System.Text.Json.JsonSerializer.Serialize(approval).Should().Contain("Override of escalation by qe-1");
+    }
+
+    [Fact]
+    public async Task OverrideIsOnlyForEscalatedInvestigations()
+    {
+        var harness = await HarnessAsync();
+
+        var act = () => harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.Override, "A long enough justification text.", "qe-1", CancellationToken.None);
+
+        await act.Should().ThrowAsync<LifecycleConflictException>();
+    }
+
+    [Fact]
+    public async Task RequestMoreEvidenceSupersedesTheEscalatedRun()
+    {
+        var harness = await HarnessAsync(escalated: true);
+
+        var outcome = await harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.RequestInfo, "Pull the gas lot certificate.", null, CancellationToken.None);
+
+        outcome.Superseded.Should().BeTrue();
+        outcome.Capa.Should().BeNull();
+        outcome.Investigation.Stage.Should().Be(InvestigationStage.Rejected);
+        outcome.Investigation.EscalationReason.Should().Contain("more evidence");
+        harness.Incident.Stage.Should().Be(IncidentStage.Investigating);
+    }
+
+    [Fact]
     public async Task ApproveWithoutAnApproverDoesNotWrite()
     {
         var harness = await HarnessAsync();
@@ -307,7 +371,7 @@ public sealed class ApprovalDecisionTests
         harness.Approvals.Approvals.Single().Attempts.Should().Be(2);
     }
 
-    private static async Task<Harness> HarnessAsync(TimeProvider? time = null, ScriptedCapaWriter? writer = null)
+    private static async Task<Harness> HarnessAsync(TimeProvider? time = null, ScriptedCapaWriter? writer = null, bool escalated = false)
     {
         var incidents = new InMemoryIncidentLog();
         var investigations = new InMemoryInvestigationLog();
@@ -326,13 +390,13 @@ public sealed class ApprovalDecisionTests
             "ESC temperature drifted.",
             "corr-approve",
             Now,
-            IncidentStage.RecommendationReady);
+            escalated ? IncidentStage.Escalated : IncidentStage.RecommendationReady);
         await incidents.AddAsync(new StoredIncident(incident, false, false), CancellationToken.None);
         var evidenceId = EvidenceId.New();
         var snapshot = new InvestigationSnapshot(
             InvestigationId.New(),
             incident.Id,
-            InvestigationStage.RecommendationReady,
+            escalated ? InvestigationStage.Escalated : InvestigationStage.RecommendationReady,
             [
                 new EvidenceItem(evidenceId, EvidenceSource.Spc, "SPC chart", "Point outside the window.", Now, "E-02", null),
             ],
@@ -346,7 +410,7 @@ public sealed class ApprovalDecisionTests
                     [],
                     ["Hold the affected lot."]),
             ],
-            null,
+            escalated ? "Gas lot notices conflict." : null,
             "corr-approve");
         await investigations.AddAsync(snapshot, CancellationToken.None);
         var service = new HumanDecisionService(

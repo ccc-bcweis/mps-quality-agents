@@ -3,13 +3,16 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { CATEGORY_LABEL } from "../api/labels";
-import type { Investigation } from "../api/types";
+import type { HumanDecisionKind, Investigation } from "../api/types";
 import { ApprovalDialog, type DecisionMode } from "../components/ApprovalDialog";
 import { Explain } from "../components/Explain";
 import { Term } from "../components/Term";
 import { btnDanger, btnOk, panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
 import { lifecycleForInvestigation } from "../lifecycle";
+
+/** Matches HumanDecisionService.MinOverrideJustification (ADR-005). */
+export const OVERRIDE_MIN = 20;
 
 export function ApprovalPage() {
   const { investigationId = "" } = useParams();
@@ -20,6 +23,7 @@ export function ApprovalPage() {
   const [mode, setMode] = useState<DecisionMode | null>(null);
   const [approverId, setApproverId] = useState("dev-user");
   const [pending, setPending] = useState(false);
+  const [note, setNote] = useState("");
   useSetLifecycle(investigation?.stage === "approved" ? "capa" : "approval", investigation ? lifecycleForInvestigation(investigation.stage).escalated : false);
 
   useEffect(() => {
@@ -37,17 +41,21 @@ export function ApprovalPage() {
     };
   }, [investigationId]);
 
-  async function decide(kind: "approve" | "reject" | "requestInfo", comment?: string) {
+  async function decide(kind: HumanDecisionKind, comment?: string) {
     setPending(true);
     setError(null);
     try {
       const result = await api.submitDecision(investigationId, {
         kind,
-        approverId: kind === "approve" ? approverId.trim() : undefined,
+        approverId: kind === "approve" || kind === "override" ? approverId.trim() : undefined,
         comment: comment ?? null,
       });
       setInvestigation(result.investigation);
       setMode(null);
+      if (kind === "requestInfo" && result.investigation.id !== investigationId) {
+        navigate(`/investigations/${result.investigation.id}`);
+        return;
+      }
       if (result.capa) {
         rememberCapa(result.capa);
         navigate(`/capas/${result.capa.id}`);
@@ -59,6 +67,8 @@ export function ApprovalPage() {
     }
   }
 
+  const escalated = investigation?.stage === "escalated";
+  const justified = note.trim().length >= OVERRIDE_MIN;
   const top = investigation?.hypotheses.slice().sort((a, b) => b.confidence - a.confidence)[0];
 
   return (
@@ -97,16 +107,50 @@ export function ApprovalPage() {
               <Explain text="No recommendation is ready. An escalation does not create a CAPA." spellOut={false} />
             </p>
           )}
+          {escalated ? (
+            <div className="mt-4 rounded border border-mps-line p-3" data-testid="escalation-gate">
+              <h3 className="font-semibold">The agents escalated this case</h3>
+              <p className="mt-1 text-mps-secondary">
+                <Explain text="An escalated case cannot go straight to a CAPA. Ask the agents to look again with more evidence, or override with a written reason. The reason is kept in the audit trail." />
+              </p>
+              {investigation?.escalationReason ? <p className="mt-2 italic">{investigation.escalationReason}</p> : null}
+              <label className="mt-3 block">
+                <span className="text-mps-secondary">Note or justification</span>
+                <textarea
+                  aria-label="Note or justification"
+                  className="mt-1 block w-full rounded border border-mps-line bg-transparent p-2"
+                  rows={3}
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                />
+              </label>
+              <label className="mt-2 block">
+                <span className="text-mps-secondary">Approver id</span>
+                <input aria-label="Approver id" className="mt-1 block w-full rounded border border-mps-line bg-transparent p-2" value={approverId} onChange={(event) => setApproverId(event.target.value)} />
+              </label>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" className={btnOk} disabled={pending} onClick={() => void decide("requestInfo", note.trim() || "More evidence requested.")}>
+                  Request more evidence
+                </button>
+                <button type="button" className={btnDanger} disabled={pending || !justified || !approverId.trim()} onClick={() => void decide("override", note.trim())}>
+                  Override with justification
+                </button>
+              </div>
+              {!justified ? <p className="mt-2 font-mono text-mps-micro text-mps-muted">Override needs at least {OVERRIDE_MIN} characters of justification.</p> : null}
+            </div>
+          ) : null}
           <div className="mt-4 flex flex-wrap gap-2">
-            <button type="button" className={btnOk} disabled={pending || !top} onClick={() => setMode("approve")}>
+            <button type="button" className={btnOk} disabled={pending || !top || escalated} onClick={() => setMode("approve")}>
               Approve <Term id="CAPA" spellOut={false} /> + containment
             </button>
             <button type="button" className={btnDanger} disabled={pending || !investigation} onClick={() => setMode("reject")}>
               Reject
             </button>
-            <button type="button" className="text-mps-nominal underline" disabled={pending || !investigation} onClick={() => void decide("requestInfo", "Need another evidence source.")}>
-              Request info
-            </button>
+            {!escalated ? (
+              <button type="button" className="text-mps-nominal underline" disabled={pending || !investigation} onClick={() => void decide("requestInfo", "Need another evidence source.")}>
+                Request info
+              </button>
+            ) : null}
           </div>
           {investigation ? <p className="mt-3 font-mono text-mps-micro text-mps-muted">Stage {investigation.stage}</p> : null}
         </section>

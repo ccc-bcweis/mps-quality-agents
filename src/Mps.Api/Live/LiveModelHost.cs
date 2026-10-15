@@ -51,6 +51,11 @@ public static class LiveModelHost
                 InputUsdPerMillionTokens = config.GetValue("Mps:Model:InputUsdPerMillionTokens", 0.75m),
                 OutputUsdPerMillionTokens = config.GetValue("Mps:Model:OutputUsdPerMillionTokens", 4.50m),
                 LiveRetryCount = 0,
+                ScriptedReplay = config.GetValue("Mps:Model:ScriptedReplay", false),
+                Seed = config.GetValue("Mps:Model:Seed", (long)config.GetValue("Mps:Demo:Seed", 4242)),
+
+                // gpt-5.x mini rejects a temperature; set Mps:Model:Temperature only for models that accept it.
+                Temperature = config.GetValue<float?>("Mps:Model:Temperature"),
             };
             var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
             {
@@ -65,7 +70,9 @@ public static class LiveModelHost
                 new InMemoryReplayCatalog(),
                 new QualityMockReasoner(),
                 services1.GetRequiredService<TimeProvider>(),
-                azure);
+                azure,
+                scriptedReplay: Mps.ModelGateway.Replay.ScriptedReplayFiles.Load(Mps.Api.Demo.DemoRuntimeLoader.FindReplayDirectory()),
+                scenarioHint: services1.GetRequiredService<Mps.Api.Demo.ScriptedScenarioContext>());
         });
         services.AddSingleton(_ => WhyItMattersCatalog.Load(dataDirectory));
         services.AddSingleton(_ => new SeedEnterpriseTools(Path.Combine(dataDirectory, "seed", "enterprise.json")));

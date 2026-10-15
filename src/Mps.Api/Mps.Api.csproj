@@ -3,10 +3,15 @@
     <RootNamespace>Mps.Api</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Mps.Agents\Mps.Agents.csproj" />
     <ProjectReference Include="..\Mps.Application\Mps.Application.csproj" />
+    <ProjectReference Include="..\Mps.ModelGateway\Mps.ModelGateway.csproj" />
     <ProjectReference Include="..\Mps.Orchestration\Mps.Orchestration.csproj" />
     <ProjectReference Include="..\Mps.Connectors\Mps.Connectors.csproj" />
     <ProjectReference Include="..\Mps.Simulator\Mps.Simulator.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\data\fleet\*.yaml" Link="data\fleet\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Identity" />

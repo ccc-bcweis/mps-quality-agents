@@ -5,12 +5,13 @@
 **Date:** 2026-10-14
 **Copyright (c) 2026 Bryan C. Weis and Common Consulting Company**
 
-This note is the consultative reading behind the two plotter sheets. It describes how a quality investigation moves at Meridian today, and how the assisted investigation changes that path. Meridian Precision Systems is fictional. The MX-400 etch is a fictional etch tool used as the worked example. Every duration and every hand-off count below is simulated.
+This note is the consultative reading behind the plotter sheets. It describes how a quality investigation moves at Meridian today, and how the assisted investigation changes that path. Meridian Precision Systems is fictional. The MX-400 etch is a fictional etch tool used as the worked example. Every duration and every hand-off count below is simulated.
 
 The sheets:
 
 - Current process, full swimlane: `docs/diagrams/print/as-is-flow-archD.pdf`
-- Assisted process, full swimlane: `docs/diagrams/print/investigation-flow-archD.pdf`
+- To-be process, same lanes plus the agent platform (G6): `docs/diagrams/print/to-be-flow-archD.pdf`
+- Assisted process, screen order (G4): `docs/diagrams/print/investigation-flow-archD.pdf`
 - Side by side, with benefits: `docs/diagrams/print/as-is-vs-to-be-archD.pdf`
 
 ## Current-state findings
@@ -50,7 +51,7 @@ The pattern is the same at each step. A fact leaves one system, crosses a person
 
 ## Future state
 
-The assisted path is the investigation already drawn on the G4 sheet. Statistical process control opens the ticket from the rules. Nobody retypes the alarm. The engineer opens the ticket. An investigation agent plans the evidence pack and does not name a cause. Read-only calls bring back the manufacturing, quality, product-lifecycle, planning, and maintenance records, plus the documents, as one pack. Each evidence item carries one plain sentence on why it matters.
+The assisted path drawn on the same lanes as the current process is the G6 sheet. The G4 sheet is the same path in screen order. Statistical process control opens the ticket from the rules. Nobody retypes the alarm. The engineer opens the ticket. An investigation agent plans the evidence pack and does not name a cause. Read-only calls bring back the manufacturing, quality, product-lifecycle, planning, and maintenance records, plus the documents, as one pack. Each evidence item carries one plain sentence on why it matters.
 
 Four cause classes are checked on every incident: an engineering change, equipment out of spec, supply-chain material, and process drift. A resolution agent ranks one cause and names the signal that rules a class out. A grounding check rejects a claim that cites nothing in the pack. The engineer approves or rejects with a signed token. Only then does the action service write the corrective and preventive action. The agent draft is not a write.
 

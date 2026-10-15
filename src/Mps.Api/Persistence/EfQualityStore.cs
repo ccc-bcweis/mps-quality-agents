@@ -206,6 +206,7 @@ public sealed class EfQualityStore :
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         var row = ToInvestigationRow(snapshot);
+        row.Sequence = await NextInvestigationSequenceAsync(snapshot.IncidentId, cancellationToken).ConfigureAwait(false);
         if (_stagedNarratives.Remove(snapshot.Id.Value, out var narrative))
         {
             ApplyNarrative(row, narrative);
@@ -289,6 +290,27 @@ public sealed class EfQualityStore :
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
         return row is null ? null : ToSnapshot(row);
+    }
+
+    public async Task<InvestigationSnapshot?> FindLatestByIncidentAsync(IncidentId incidentId, CancellationToken cancellationToken)
+    {
+        var rows = await _db.Investigations.AsNoTracking()
+            .Where(item => item.IncidentId == incidentId.Value)
+            .OrderBy(item => item.Sequence)
+            .ThenBy(item => item.Id)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return TicketInvestigationMap.Latest(incidentId, rows.Select(ToSnapshot).ToArray());
+    }
+
+    private async Task<int> NextInvestigationSequenceAsync(IncidentId incidentId, CancellationToken cancellationToken)
+    {
+        var current = await _db.Investigations
+            .Where(item => item.IncidentId == incidentId.Value)
+            .Select(item => (int?)item.Sequence)
+            .MaxAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return (current ?? 0) + 1;
     }
 
     public async Task AddAsync(CapaAction capa, string externalId, CancellationToken cancellationToken)

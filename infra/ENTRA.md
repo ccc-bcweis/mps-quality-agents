@@ -5,7 +5,7 @@ Easy Auth fronts the single container. The sign-in app requires user assignment,
 After the first deploy, an owner of the sign-in app runs:
 
 ```bash
-deploy/entra-setup.sh <signin-app-id> <container-app-fqdn>
+deploy/entra-setup.sh <signin-app-id> <container-app-fqdn> [admin-upn]
 ```
 
 That script is idempotent. It sets:
@@ -15,3 +15,5 @@ That script is idempotent. It sets:
 - A pre-authorization for the Azure CLI on that scope, so an assigned user can run `deploy/smoke-live.sh` with `az` tokens. Bicep lists `api://<signin-app-id>` as the second allowed audience.
 
 The Azure CLI token is still bound to the signed-in user and to app assignment. Unassigned users cannot get a token.
+
+The script also creates the `admin` app role and assigns it to `admin-upn`. Easy Auth passes app roles in the principal header, and `POST /api/admin/reset` requires `admin`. A user must sign out and back in to pick up a new role.
