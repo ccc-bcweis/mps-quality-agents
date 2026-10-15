@@ -3,7 +3,7 @@
 **Issue:** G7
 **Copyright (c) 2026 Bryan C. Weis and Common Consulting Company**
 
-Plan view of the demo floor at Plant A, Cindervane. It is a building drawing. It is not the console tool schematic, and it is not the Azure physical architecture in [`physical.md`](physical.md).
+Plan view of the demo floor at Plant A, Northwater Fab. It is a building drawing. It is not the console tool schematic, and it is not the Azure physical architecture in [`physical.md`](physical.md).
 
 The picture is illustrative. It is not a survey, and it is not a real building.
 
@@ -22,7 +22,7 @@ The rail is one loop between the bays. A stocker at each end holds wafer carrier
 
 The right side of the sheet is a larger plan of each tool type: deposition (MPS-D7), etch (MPS-E7), strip (MPS-S7), and clean (MPS-C7). Each plan names the chambers, the load ports, the wafer handler, and the gas box or chemical rack.
 
-Plant B, Lowspindle, runs a similar mix. Plant C, Rookspur, runs photoresist strip, wafer clean, and a pilot line. Those plants are named on the sheet and drawn on [`mps-sites.svg`](mps-sites.svg). The names are proposals for Lane S1.
+Plant B, Ironwood Fab, runs a similar mix, and its etch runs hotter. Plant C, Lumen Pilot Works, runs photoresist strip, wafer clean, and a pilot line. Those plants are named on the sheet and drawn on [`mps-sites.svg`](mps-sites.svg). The names are the ones locked for the three fictional plants. Scenario SC-5, a supplier lot shared by Northwater and Ironwood, is not a room on this floor.
 
 ## Files
 

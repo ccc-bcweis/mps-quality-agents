@@ -77,7 +77,10 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
         Done<LotReference>((_seed.Lots ?? []).Where(lot => lot.ToolId == toolId));
 
     public Task<IReadOnlyList<NcrRecord>> SearchNcrsAsync(ToolId toolId, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken) =>
-        Done<NcrRecord>((_seed.Ncrs ?? []).Where(ncr => ncr.ToolId == toolId.Value && In(ncr.OpenedAt, from.Add(-ChangeLookback), until)));
+        Done(Merge(
+            (_seed.Ncrs ?? []).Where(ncr => ncr.ToolId == toolId.Value && In(ncr.OpenedAt, from.Add(-ChangeLookback), until)),
+            (Overlay?.Ncrs ?? []).Where(ncr => ncr.ToolId == toolId.Value),
+            ncr => ncr.NcrId));
 
     public Task<IReadOnlyList<EcoRecord>> GetEcosAsync(ToolId toolId, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken) =>
         Done(Merge(
