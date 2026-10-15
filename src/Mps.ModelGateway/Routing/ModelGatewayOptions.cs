@@ -29,4 +29,20 @@ public sealed class ModelGatewayOptions
     /// When a replay lookup misses, store the mock reasoner response under that prompt hash.
     /// </summary>
     public bool RecordReplayMisses { get; set; }
+
+    /// <summary>
+    /// When true, a recorded turn for the scenario id plus the prompt hash is served before a live call.
+    /// A miss falls through to the live route.
+    /// </summary>
+    public bool ScriptedReplay { get; set; }
+
+    /// <summary>
+    /// Temperature sent on every live call. The demo pins this to 0.
+    /// </summary>
+    public float Temperature { get; set; }
+
+    /// <summary>
+    /// Provider seed sent on every live call when the adapter supports it. The OpenAI seed parameter is this value.
+    /// </summary>
+    public long Seed { get; set; } = 4242;
 }
