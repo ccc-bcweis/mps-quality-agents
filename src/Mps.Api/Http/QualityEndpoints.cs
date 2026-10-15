@@ -31,6 +31,7 @@ public static class QualityEndpoints
     {
         ArgumentNullException.ThrowIfNull(app);
         app.MapGet("/health", () => Results.Ok(new HealthResponse("ok", LayerAnchor.Name)));
+        MetadataEndpoints.Map(app);
         app.MapGet("/api/sites", (SiteWorld world) => Results.Ok(world.Sites.Select(SiteResponses.ToSummary).ToArray()));
         app.MapGet("/api/sites/compare", (string? family, SiteWorld world) =>
         {

@@ -42,6 +42,11 @@ public sealed class ConsoleApiContractTests
         "/api/injector/scenarios",
         "/api/injector/scenarios/{scenarioId}",
         "/api/metrics",
+        "/api/metadata/company",
+        "/api/metadata/sites",
+        "/api/metadata/tools/{toolId}",
+        "/api/metadata/rules",
+        "/api/metadata/process-maps",
     ];
 
     [Fact]
@@ -95,6 +100,11 @@ public sealed class ConsoleApiContractTests
         Expect(OperationType.Get, "/api/injector/scenarios", "listScenarios", "200");
         Expect(OperationType.Post, "/api/injector/scenarios/{scenarioId}", "runScenario", "202");
         Expect(OperationType.Get, "/api/metrics", "getMetrics", "200");
+        Expect(OperationType.Get, "/api/metadata/company", "getCompanyMetadata", "200");
+        Expect(OperationType.Get, "/api/metadata/sites", "listMetadataSites", "200");
+        Expect(OperationType.Get, "/api/metadata/tools/{toolId}", "getMetadataTool", "200");
+        Expect(OperationType.Get, "/api/metadata/rules", "listBusinessRules", "200");
+        Expect(OperationType.Get, "/api/metadata/process-maps", "listProcessMaps", "200");
 
         OpenApiDocs.Console.Paths["/api/capas"].Operations.Should().NotContainKey(OperationType.Post);
         OpenApiDocs.Console.Paths.Keys.Should().NotContain(path =>
