@@ -55,17 +55,14 @@ public static class QualityEndpoints
             var site = world.Find(siteId);
             return site is null ? Results.NotFound() : Results.Ok(SiteResponses.ToDetail(site));
         });
-        app.MapGet("/api/tools", async (string? siteId, IFleetCatalog fleet, PlantSimulation plant, CancellationToken cancellationToken) =>
+        app.MapGet("/api/tools", (string? siteId, PlantSimulation plant) =>
         {
-            if (!string.IsNullOrWhiteSpace(siteId))
-            {
-                var site = plant.World.Sites.FirstOrDefault(item => string.Equals(item.Id, siteId.Trim(), StringComparison.OrdinalIgnoreCase));
-                var placed = site is null ? [] : plant.ToolsForSite(site.Id);
-                return Results.Ok(placed.Select(ContractMapper.ToResponse).ToArray());
-            }
-
-            var tools = await fleet.ListAsync(cancellationToken).ConfigureAwait(false);
-            return Results.Ok(tools.Where(tool => SiteQuery.MatchesTool(siteId, tool)).Select(ContractMapper.ToResponse).ToArray());
+            // All sites is the union of every plant's floor, the same set the live stream reports.
+            var all = string.IsNullOrWhiteSpace(siteId) || string.Equals(siteId.Trim(), "all", StringComparison.OrdinalIgnoreCase);
+            var tools = plant.World.Sites
+                .Where(item => all || string.Equals(item.Id, siteId!.Trim(), StringComparison.OrdinalIgnoreCase))
+                .SelectMany(item => plant.ToolsForSite(item.Id));
+            return Results.Ok(tools.Select(ContractMapper.ToResponse).ToArray());
         });
         app.MapGet("/api/tools/{toolId}", async (string toolId, IFleetCatalog fleet, CancellationToken cancellationToken) =>
         {
@@ -357,7 +354,7 @@ public static class QualityEndpoints
             return Results.Ok(baseline);
         });
         app.MapGet("/api/demo/data-mode", (ConsoleDataMode mode) => Results.Ok(mode.Snapshot()));
-        app.MapPost("/api/demo/data-mode", async (HttpContext http, IConfiguration configuration, ConsoleDataMode mode, ReplayStore store, CancellationToken cancellationToken) =>
+        app.MapPost("/api/demo/data-mode", async (HttpContext http, IConfiguration configuration, ConsoleDataMode mode, ReplayStore store, Mps.Api.Live.PlantSimulation plant, CancellationToken cancellationToken) =>
         {
             var caller = Caller(http, configuration);
             if (!caller.IsAdmin)
@@ -391,7 +388,7 @@ public static class QualityEndpoints
                 return Results.NotFound();
             }
 
-            mode.UseReplay(scenario.Id, messages);
+            mode.UseReplay(scenario.Id, ReplayRebase.OntoNow(messages, plant.SimulatedNow));
             return Results.Ok(mode.Snapshot());
         });
         app.MapPost("/api/admin/replay/{scenarioId}", async (string scenarioId, HttpContext http, IConfiguration configuration, ScenarioReplayRecorder recorder, ScenarioTrigger trigger, Mps.Api.Live.PlantSimulation plant, Mps.Api.Bus.TelemetryPublisher publisher, CancellationToken cancellationToken) =>
@@ -617,7 +614,9 @@ public static class QualityEndpoints
     }
 
     private static bool MatchesSite(string? requested, string actual) =>
-        string.IsNullOrWhiteSpace(requested) || string.Equals(requested.Trim(), actual, StringComparison.OrdinalIgnoreCase);
+        string.IsNullOrWhiteSpace(requested)
+        || string.Equals(requested.Trim(), "all", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(requested.Trim(), actual, StringComparison.OrdinalIgnoreCase);
 
     private static async Task<string> SiteForIncidentAsync(IIncidentLog incidents, IncidentId incidentId, CancellationToken cancellationToken)
     {

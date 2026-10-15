@@ -44,8 +44,8 @@ describe("harness collapse, replay, and soft reset", () => {
     expect(within(harness).getByRole("button", { name: "Collapse harness" })).toHaveAttribute("aria-expanded", "true");
     expect(within(harness).getByRole("combobox", { name: "Scenario" })).toBeInTheDocument();
     const controls = harness.querySelector("[data-region='harness-controls']");
-    expect(controls?.className).toContain("max-h-[190px]");
-    expect(controls?.className).toContain("overflow-y-auto");
+    expect(controls?.className).not.toMatch(/overflow-(y-)?auto|max-h-/);
+    expect(controls?.className).toContain("lg:grid-cols-2");
     first.unmount();
     renderConsole("/");
     const again = await screen.findByRole("button", { name: "Collapse harness" });
@@ -121,5 +121,25 @@ describe("harness collapse, replay, and soft reset", () => {
     expect(screen.getByRole("heading", { name: "Fleet overview" })).toBeInTheDocument();
     release();
     expect(await screen.findByText("Demo baseline restored. Seed 4242.")).toBeInTheDocument();
+  });
+
+  it("keeps the chosen scenario and shows the running one across tab changes and a remount", async () => {
+    const user = userEvent.setup();
+    const first = renderConsole("/alerts");
+    let harness = await expandHarness();
+    await within(harness).findByRole("option", { name: /SC-4/ });
+    await user.selectOptions(within(harness).getByRole("combobox", { name: "Scenario" }), "SC-4");
+    await user.click(screen.getByRole("link", { name: "Tickets" }));
+    await screen.findByRole("heading", { name: "Tickets" });
+    expect(screen.getByRole("combobox", { name: "Scenario" })).toHaveValue("SC-4");
+    await user.click(screen.getByRole("button", { name: "Run scenario" }));
+    await waitFor(() => expect(screen.getByRole("status", { name: "Harness status" })).toHaveTextContent("Running SC-4"));
+    first.unmount();
+
+    renderConsole("/");
+    harness = await expandHarness();
+    await within(harness).findByRole("option", { name: /SC-4/ });
+    expect(within(harness).getByRole("combobox", { name: "Scenario" })).toHaveValue("SC-4");
+    expect(screen.getByRole("status", { name: "Harness status" })).toHaveTextContent("Running SC-4");
   });
 });

@@ -8,7 +8,7 @@ import { renderConsole } from "../test/render";
 describe("sites overview", () => {
   it("puts Sites before Fleet and shows the Northwater floor", async () => {
     const user = userEvent.setup();
-    renderConsole("/sites");
+    renderConsole("/sites?site=northwater");
 
     const nav = await screen.findByRole("navigation", { name: "Console" });
     const labels = within(nav).getAllByRole("link").map((link) => link.textContent ?? "");
@@ -41,8 +41,7 @@ describe("sites overview", () => {
     expect(quiet).toHaveAttribute("data-status", "nominal");
     expect(quiet).toHaveTextContent("Nominal");
 
-    expect(screen.getByText(/12 degrees hotter/)).toBeInTheDocument();
-    expect(screen.getByText(/4\.9 degrees hotter/)).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Cross-plant comparison" })).not.toBeInTheDocument();
     expect(screen.queryByText("escTemperature")).not.toBeInTheDocument();
 
     const wip = within(throughput).getByText(matchCopy(/work in process \(WIP\)/));
@@ -59,15 +58,11 @@ describe("sites overview", () => {
     const watch = await screen.findByRole("link", { name: /Etch I-E-01/ });
     expect(watch).toHaveAttribute("data-status", "warning");
     expect(watch).toHaveTextContent("Watch");
-
-    await user.selectOptions(screen.getByLabelText("Tool family"), "deposition");
-    expect(await screen.findByText(/No parameter on this family sits apart/)).toBeInTheDocument();
-    expect(screen.queryByText(/12 degrees hotter/)).not.toBeInTheDocument();
   });
 
   it("opens the tool schematic from a tool on the floor", async () => {
     const user = userEvent.setup();
-    renderConsole("/sites");
+    renderConsole("/sites?site=northwater");
     await user.click(await screen.findByRole("link", { name: /Deposition D-01/ }));
     expect(await screen.findByRole("heading", { name: /Tool D-01/ })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: /thin-film deposition schematic/i })).toBeInTheDocument();

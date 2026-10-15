@@ -92,21 +92,25 @@ public sealed class PrintoutEndpointTests
         runtime.Simulator.ActiveFaults[0].Shape.Should().Be(FaultShape.Oscillation);
     }
 
-    [Fact]
-    public async Task ParticleCounterConfirmDoesNotInject()
+    [Theory]
+    [InlineData("oscilloscope-e01.pdf", "application/pdf", "E-01")]
+    [InlineData("rf-power-meter-e02.pdf", "application/pdf", "E-02")]
+    [InlineData("particle-counter-d01.pdf", "application/pdf", "D-01")]
+    [InlineData("thermocouple-logger-e01.pdf", "application/pdf", "E-01")]
+    public async Task EverySamplePrintoutIsOutOfSpecAndConfirmRaisesAnAlert(string fileName, string mediaType, string toolId)
     {
         await using var factory = new ApiFactory();
         var client = factory.CreateClient();
-        var inspection = await InspectAsync(client, "particle-counter-d01.pdf", "application/pdf");
+        var inspection = await InspectAsync(client, fileName, mediaType);
         var confirmed = await client.PostAsJsonAsync("/api/printouts/confirm", ConfirmBody(inspection));
         var body = await confirmed.Content.ReadFromJsonAsync<JsonElement>(Json);
         var alerts = await client.GetFromJsonAsync<JsonElement>("/api/alerts");
 
-        inspection.GetProperty("outOfSpec").GetBoolean().Should().BeFalse();
+        inspection.GetProperty("toolId").GetString().Should().Be(toolId);
+        inspection.GetProperty("outOfSpec").GetBoolean().Should().BeTrue();
         confirmed.StatusCode.Should().Be(HttpStatusCode.OK);
-        body.GetProperty("faultId").ValueKind.Should().Be(JsonValueKind.Null);
-        body.GetProperty("appliedToSimulation").GetBoolean().Should().BeFalse();
-        alerts.GetArrayLength().Should().Be(0);
+        body.GetProperty("appliedToSimulation").GetBoolean().Should().BeTrue();
+        alerts.EnumerateArray().Should().Contain(alert => alert.GetProperty("toolId").GetString() == toolId);
     }
 
     private static async Task<JsonElement> InspectAsync(HttpClient client, string fileName, string mediaType)

@@ -10,9 +10,8 @@ import { Explain } from "../components/Explain";
 import { HistoryNote, RecordList } from "../components/RecordList";
 import { btnPrimary, field, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
-import type { FleetSensor } from "../fleet/sensors";
 import { fleetSensors } from "virtual:fleet-sensors";
-import { sensorLabel, slotWord } from "../fleet/schematic";
+import { sensorOptionLabel, sensorsFor } from "../fleet/sensorOptions";
 import { MISSING_TICKET, visibleProblem } from "../history/copy";
 import { byNewestTime, toolPlainName } from "../history/order";
 import { plainTool } from "../investigation/format";
@@ -117,7 +116,7 @@ export function TicketsPage() {
       time: formatStamp(ticket.openedAt),
       detail: (
         <>
-          <Link to={path}>{ticket.title}</Link>
+          <Link to={`/tickets/${encodeURIComponent(ticket.id)}`}>{ticket.title}</Link>
           <div className="mt-1 font-mono text-mps-micro">
             <Link to={path}>{ticket.number}</Link>
             {stage && !isClosedStage(stage) ? <span> · {stage === "ticketOpened" ? "Start" : "Open"}</span> : null}
@@ -150,13 +149,10 @@ export function TicketsPage() {
             {" · "}
             <Link to="/tickets">All tickets</Link>
           </p>
+          <CaseBriefs incidentIds={[selectedTicket.incidentId]} intro="Evidence for this ticket" />
         </section>
       ) : null}
       {!ticketId || missing ? <RecordList label="Tickets" rows={rows} empty="No tickets yet." /> : null}
-      <CaseBriefs
-        incidentIds={incidents.filter((incident) => !isClosedStage(incident.stage)).map((incident) => incident.id)}
-        intro="Evidence linked to these tickets"
-      />
       <div className="mt-3 grid gap-3 xl:grid-cols-2">
         <form className={`${panel} grid min-w-0 gap-3`} onSubmit={onSubmit}>
           <h2 className="text-mps-title font-semibold">Operator report</h2>
@@ -300,7 +296,7 @@ export function TicketsPage() {
   );
 
   function chooseTool(next: string) {
-    const current = fleetSensors.find((sensor) => sensor.id === sensorId);
+    const current = sensorsFor(toolId).find((sensor) => sensor.id === sensorId) ?? fleetSensors.find((sensor) => sensor.id === sensorId);
     const nextSensors = sensorsFor(next);
     const kept = nextSensors.find((sensor) => (sensor.parameter ?? sensor.id) === (current?.parameter ?? current?.id));
     setToolId(next);
@@ -357,23 +353,6 @@ export function TicketsPage() {
       setUploadPending(false);
     }
   }
-}
-
-function sensorsFor(toolId: string): FleetSensor[] {
-  return fleetSensors
-    .filter((sensor) => sensor.toolId === toolId)
-    .slice()
-    .sort((left, right) => sensorOptionLabel(left).localeCompare(sensorOptionLabel(right)));
-}
-
-function sensorOptionLabel(sensor: FleetSensor): string {
-  const named = sensor.parameter ? parameterLabel(sensor.parameter) : sensorLabel(sensor.schematicAnchor);
-  const plain = !sensor.parameter || named === sensor.parameter ? sensorLabel(sensor.schematicAnchor) : named;
-  return `${slotWord(sensor.schematicAnchor)} · ${plain} (${sensor.unit}), spec ${specNumber(sensor.limits.minimum)}-${specNumber(sensor.limits.maximum)}`;
-}
-
-function specNumber(value: number): string {
-  return String(value);
 }
 
 function instrumentChoices(current: string): { id: string; label: string }[] {

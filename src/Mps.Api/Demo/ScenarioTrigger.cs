@@ -72,7 +72,7 @@ public sealed class ScenarioTrigger
                 _plant.ApplyStream(scenario);
             }
 
-            var telemetry = ScriptedScenarioCatalog.Sample(scenario, _plant.Runtime.Fleet, _plant.Runtime.Seed);
+            var telemetry = Rebase(ScriptedScenarioCatalog.Sample(scenario, _plant.Runtime.Fleet, _plant.Runtime.Seed), _plant.SimulatedNow);
             FaultAccepted? first = null;
             foreach (var toolId in scenario.ToolIds)
             {
@@ -128,7 +128,7 @@ public sealed class ScenarioTrigger
             return null;
         }
 
-        var telemetry = ScriptedScenarioCatalog.Sample(scenario, _plant.Runtime.Fleet, _plant.Runtime.Seed);
+        var telemetry = Rebase(ScriptedScenarioCatalog.Sample(scenario, _plant.Runtime.Fleet, _plant.Runtime.Seed), _plant.SimulatedNow);
         var points = telemetry.Select(point => new ScenarioPointResponse(point.ToolId, point.ChamberId, point.Parameter, point.At, point.Value)).ToArray();
         return new ScenarioRun(
             scenario.Id,
@@ -160,6 +160,18 @@ public sealed class ScenarioTrigger
                 new { scenarioId = scenario.Id }),
             cancellationToken).ConfigureAwait(false);
         return new CommandAmbient.Opened(correlationId, eventId);
+    }
+
+    /// <summary>Catalog samples start at the demo origin. Shift them so the first point is the plant's current time.</summary>
+    internal static IReadOnlyList<ScenarioPoint> Rebase(IReadOnlyList<ScenarioPoint> points, DateTimeOffset now)
+    {
+        if (points.Count == 0)
+        {
+            return points;
+        }
+
+        var shift = now - points.Min(point => point.At);
+        return points.Select(point => point with { At = point.At + shift }).ToArray();
     }
 
     private static string? FindSample(string fileName)

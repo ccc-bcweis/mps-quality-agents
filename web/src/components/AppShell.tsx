@@ -11,7 +11,6 @@ import { Explain } from "./Explain";
 import { GlossaryScope } from "./GlossaryScope";
 import { HarnessBar } from "./HarnessBar";
 import { Led } from "./Chip";
-import { LifecycleBar } from "./LifecycleBar";
 import { Term } from "./Term";
 
 export type ShellOutletContext = {
@@ -52,7 +51,7 @@ export function ConsoleFrame() {
   const location = useLocation();
   const navigate = useNavigate();
   const { session } = useOutletContext<ShellOutletContext>();
-  const { lifecycle, dataMode, dataScenarioId } = useConsole();
+  const { dataMode, dataScenarioId } = useConsole();
   const { siteId, setSiteId } = useSite();
   const [healthOn, setHealthOn] = useState(false);
 
@@ -147,7 +146,6 @@ export function ConsoleFrame() {
           );
         })}
       </nav>
-      <LifecycleBar current={lifecycle.current} escalated={lifecycle.escalated} />
       {dataMode === "replay" ? (
         <p
           role="status"

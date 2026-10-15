@@ -120,11 +120,6 @@ export function ToolPage() {
             {tool.chambers.map((chamber) => chamber.name).join(", ")} · recipe {story.recipe}. {story.note}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Link className={btn} to="/tools/D-01">
-            Open D-01
-          </Link>
-        </div>
       </div>
       {streaming ? (
         <p

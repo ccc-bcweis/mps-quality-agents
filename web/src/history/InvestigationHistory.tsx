@@ -5,6 +5,7 @@ import { api, ApiProblem } from "../api/client";
 import { formatStamp, INVESTIGATION_STAGE_LABEL } from "../api/labels";
 import type { Incident, Investigation, Tool } from "../api/types";
 import { RecordList } from "../components/RecordList";
+import { useSite } from "../context/SiteContext";
 import { visibleProblem } from "./copy";
 import { byNewestTime, toolPlainName } from "./order";
 
@@ -14,10 +15,11 @@ export function InvestigationHistory({ detail }: { detail: "investigation" | "ap
   const [tools, setTools] = useState<Tool[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const { siteId } = useSite();
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([api.listInvestigations(), api.listIncidents(), api.listTools()])
+    Promise.all([api.listInvestigations(siteId), api.listIncidents(siteId), api.listTools(siteId)])
       .then(([nextInvestigations, nextIncidents, nextTools]) => {
         if (cancelled) return;
         setInvestigations(nextInvestigations);
@@ -33,7 +35,7 @@ export function InvestigationHistory({ detail }: { detail: "investigation" | "ap
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [siteId]);
 
   const problem = visibleProblem(error);
   if (!ready) return <p className="text-mps-muted">Loading investigations…</p>;

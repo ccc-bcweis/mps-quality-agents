@@ -9,6 +9,5 @@ describe("capa", () => {
     renderConsole("/capas");
     expect(await screen.findByRole("heading", { name: "CAPA" })).toBeInTheDocument();
     expect(screen.getByText(matchCopy(/No CAPA yet/))).toBeInTheDocument();
-    expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("CAPA");
   });
 });

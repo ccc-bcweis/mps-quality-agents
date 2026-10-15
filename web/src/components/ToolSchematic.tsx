@@ -85,6 +85,7 @@ function SensorButton({
       type="button"
       data-anchor={sensor.schematicAnchor}
       data-sensor-id={sensor.id}
+      title={`Sensor ${sensor.id}`}
       data-status={reading.status}
       aria-pressed={selected}
       className={`flex min-w-0 flex-col justify-center rounded border bg-mps-panel/95 px-1.5 py-0.5 text-left text-[11px] leading-tight focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mps-nominal ${TONE[reading.status]} ${selected ? "ring-2 ring-mps-nominal" : ""} ${className}`}
@@ -98,7 +99,7 @@ function SensorButton({
       <span className="block break-words font-mono text-[12px] leading-tight">
         {formatValue(reading.value, reading.unit)} <Unit unit={reading.unit} />
       </span>
-      <span className="block break-words font-mono text-[11px] leading-tight text-mps-muted">{sensor.id}</span>
+      <span className="sr-only">{sensor.id}</span>
     </button>
   );
 }
@@ -234,7 +235,7 @@ export function ToolSchematic({
         <ul className="mt-2 text-mps-body text-mps-secondary">
           {unbound.map((sensor) => (
             <li key={sensor.id}>
-              {sensorLabel(sensor.schematicAnchor)} ({sensor.schematicAnchor}) is not on the drawing.
+              {sensorLabel(sensor.schematicAnchor)} is not on the drawing.
             </li>
           ))}
         </ul>

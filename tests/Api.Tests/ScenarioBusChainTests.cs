@@ -88,6 +88,17 @@ public sealed class ScenarioBusChainTests
             await spc.DrainAsync();
 
             var rule = RuleOnTheChain(store, fault.EventId, scenario.Id);
+            rule.OccurredAt.Should().BeCloseTo(plant.SimulatedNow, TimeSpan.FromHours(3), scenario.Id + " rule time is on the plant clock");
+            fault.OccurredAt.Should().BeOnOrBefore(rule.OccurredAt, scenario.Id);
+            var alertRows = await client.GetFromJsonAsync<JsonElement>("/api/alerts", Json);
+            var ticketRows = await client.GetFromJsonAsync<JsonElement>("/api/tickets", Json);
+            var firstAlert = alertRows.EnumerateArray().Select(row => row.GetProperty("raisedAt").GetDateTimeOffset()).Min();
+            foreach (var ticketRow in ticketRows.EnumerateArray())
+            {
+                var opened = ticketRow.GetProperty("openedAt").GetDateTimeOffset();
+                opened.Should().BeOnOrAfter(firstAlert, scenario.Id + " ticket after alert");
+                opened.Should().BeCloseTo(plant.SimulatedNow, TimeSpan.FromHours(3), scenario.Id + " ticket on the plant clock");
+            }
 
             var trace = await client.GetFromJsonAsync<JsonElement>("/api/trace/" + rule.EventId, Json);
             var summary = trace.GetProperty("tree").GetProperty("summary").GetString()!;
@@ -141,6 +152,9 @@ public sealed class ScenarioBusChainTests
                 continue;
             }
 
+            // Causal order on one clock: reading, then alert, rule, ticket, investigation.
+            var times = new[] { reading.OccurredAt, alert.OccurredAt, rule.OccurredAt, ticket.OccurredAt, investigation.OccurredAt };
+            times.Should().BeInAscendingOrder(scenarioId + " events must line up reading <= alert <= rule <= ticket <= investigation");
             return rule;
         }
 
@@ -165,6 +179,7 @@ public sealed class ScenarioBusChainTests
             return 300;
         }
 
-        return 120;
+        // A quiet baseline means an oscillation needs a few recipe steps that use the parameter before a rule trips.
+        return scenario.Shape == FaultShape.Oscillation ? 1200 : 120;
     }
 }

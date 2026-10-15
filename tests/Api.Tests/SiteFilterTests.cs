@@ -32,7 +32,18 @@ public sealed class SiteFilterTests
         var northTickets = await client.GetFromJsonAsync<JsonElement>("/api/tickets?siteId=northwater");
         var ironTickets = await client.GetFromJsonAsync<JsonElement>("/api/tickets?siteId=lumen");
 
-        allTools.GetArrayLength().Should().Be(8);
+        var lumenTools = await client.GetFromJsonAsync<JsonElement>("/api/tools?siteId=lumen");
+        var allNamed = await client.GetFromJsonAsync<JsonElement>("/api/tools?siteId=all");
+        lumenTools.GetArrayLength().Should().Be(10);
+        lumenTools.EnumerateArray().Should().OnlyContain(tool => tool.GetProperty("siteId").GetString() == "lumen");
+
+        // All sites is the union of the three plants, with no tool listed twice.
+        allTools.GetArrayLength().Should().Be(32);
+        allNamed.GetArrayLength().Should().Be(32);
+        allTools.EnumerateArray().Select(tool => tool.GetProperty("id").GetString()).Should().OnlyHaveUniqueItems();
+        allTools.EnumerateArray().Select(tool => tool.GetProperty("id").GetString()).Should().BeEquivalentTo(
+            northTools.EnumerateArray().Concat(ironTools.EnumerateArray()).Concat(lumenTools.EnumerateArray()).Select(tool => tool.GetProperty("id").GetString()));
+        (await client.GetFromJsonAsync<JsonElement>("/api/incidents?siteId=all")).GetArrayLength().Should().Be(1);
         northTools.GetArrayLength().Should().Be(12);
         northTools.EnumerateArray().Should().OnlyContain(tool => tool.GetProperty("siteId").GetString() == "northwater");
         ironTools.GetArrayLength().Should().Be(10);

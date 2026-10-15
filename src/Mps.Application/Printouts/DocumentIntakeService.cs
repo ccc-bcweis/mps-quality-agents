@@ -150,6 +150,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
             // A hosted bus applies the fault while the command is published. Applying it here as well stacks the signal.
             applied = _events is not null
                 || _simulation.TryApply(reading.ToolId, reading.ChamberId, catalogParameter, shape, magnitude);
+            // Times use the plant clock at confirm, so the reading sorts before its alert and ticket. The printed time stays on the sheet.
             await PublishReadingAsync(reading, catalogParameter, accepted.CorrelationId, cancellationToken).ConfigureAwait(false);
             alert = new Alert(
                 AlertId.New(),
@@ -174,7 +175,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
                 severity,
                 signalSeverity: null,
                 faultCorrelation ?? CommandAmbient.CorrelationId,
-                reading.ObservedAt),
+                _time.GetUtcNow()),
             cancellationToken).ConfigureAwait(false);
 
         var evidence = new EvidenceItem(
@@ -182,7 +183,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
             EvidenceSource.ManualMeasurement,
             Title(reading),
             Excerpt(reading, catalogParameter),
-            reading.ObservedAt,
+            _time.GetUtcNow(),
             reading.ToolId,
             "printout:" + reading.ToolId + ":" + catalogParameter);
         evidence = await StampDocumentAsync(evidence, reading, catalogParameter, intake.Incident.CorrelationId, cancellationToken)
@@ -236,7 +237,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
                 null,
                 reading.ToolId,
                 reading.ChamberId,
-                reading.ObservedAt,
+                _time.GetUtcNow(),
                 new { toolId = reading.ToolId, parameter = catalogParameter, value = reading.Value, unit = reading.Unit }),
             cancellationToken).ConfigureAwait(false);
         return new CommandAmbient.Opened(correlationId, eventId);
@@ -265,7 +266,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
                 null,
                 reading.ToolId,
                 reading.ChamberId,
-                reading.ObservedAt,
+                _time.GetUtcNow(),
                 new
                 {
                     parameter = catalogParameter,
@@ -301,7 +302,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
                 null,
                 reading.ToolId,
                 reading.ChamberId,
-                reading.ObservedAt,
+                _time.GetUtcNow(),
                 new
                 {
                     parameter = catalogParameter,

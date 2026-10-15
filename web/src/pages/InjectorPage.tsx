@@ -5,26 +5,21 @@ import { api, ApiProblem } from "../api/client";
 import { CATEGORY_LABEL } from "../api/labels";
 import type { FaultInjectionRequest, FaultShape, RootCauseCategory, Tool } from "../api/types";
 import { Explain } from "../components/Explain";
-import { btn, btnPrimary, field, panel } from "../components/ui";
+import { btnPrimary, field, panel } from "../components/ui";
+import { PLANTS } from "../sites/selection";
+import { sensorOptionLabel, sensorParameter, sensorsFor } from "../fleet/sensorOptions";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { visibleProblem } from "../history/copy";
 
 const SHAPES: FaultShape[] = ["step", "ramp", "oscillation", "intermittent"];
 const CATEGORIES = Object.keys(CATEGORY_LABEL) as RootCauseCategory[];
 
-const PARAMETERS = [
-  { id: "chamberPressure", label: "Chamber pressure" },
-  { id: "calibrationOffset", label: "Calibration (mass flow controller / manometer)" },
-  { id: "escTemperature", label: "Electrostatic chuck / heater temperature" },
-  { id: "particleAdders", label: "Particle adders" },
-  { id: "gasFlow", label: "Gas / chem flow" },
-];
 
 export function InjectorPage() {
   useSetLifecycle("alert");
   const navigate = useNavigate();
   const [tools, setTools] = useState<Tool[]>([]);
-  const [toolId, setToolId] = useState("S-01");
+  const [toolId, setToolId] = useState("D-01");
   const [parameter, setParameter] = useState("calibrationOffset");
   const [shape, setShape] = useState<FaultShape>("ramp");
   const [magnitude, setMagnitude] = useState("2.4");
@@ -33,12 +28,19 @@ export function InjectorPage() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
+  // The injector is harness equipment: its own plant picker, independent of the console's plant filter.
+  const [siteId, setSiteId] = useState("northwater");
+  const toolSensors = sensorsFor(toolId);
+
+  // Every tool at the selected plant (all three plants on All sites). Keep the choice if it is still listed.
   useEffect(() => {
     let cancelled = false;
     api
-      .listTools()
+      .listTools(siteId)
       .then((next) => {
-        if (!cancelled) setTools(next);
+        if (cancelled) return;
+        setTools(next);
+        setToolId((current) => (next.some((tool) => tool.id === current) || next.length === 0 ? current : next[0].id));
       })
       .catch(() => {
         if (!cancelled) setError("The tool list did not load.");
@@ -46,7 +48,13 @@ export function InjectorPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [siteId]);
+
+  // The parameter list is the chosen tool's own sensors, the same list the Tickets upload panel offers.
+  useEffect(() => {
+    const options = sensorsFor(toolId).map(sensorParameter);
+    if (options.length > 0) setParameter((current) => (options.includes(current) ? current : options[0]));
+  }, [toolId]);
 
   function tracePath(nextToolId: string, nextParameter: string): string {
     return `/tools/${encodeURIComponent(nextToolId)}?streaming=1&parameter=${encodeURIComponent(nextParameter)}`;
@@ -79,28 +87,6 @@ export function InjectorPage() {
     }
   }
 
-  async function presetS4() {
-    setPending(true);
-    setError(null);
-    try {
-      for (const etchTool of ["E-01", "E-02"]) {
-        await api.injectFault({
-          toolId: etchTool,
-          parameter: "gasFlow",
-          shape: "step",
-          magnitude: 2.4,
-          rootCauseCategory: "supplyChainMaterial",
-          confounders: true,
-        });
-      }
-      navigate(tracePath("E-01", "gasFlow"));
-    } catch (reason: unknown) {
-      setError(reason instanceof ApiProblem ? reason.title : "The preset was not accepted.");
-    } finally {
-      setPending(false);
-    }
-  }
-
   return (
     <div>
       <div className="mb-4">
@@ -118,6 +104,16 @@ export function InjectorPage() {
         <form className={panel} onSubmit={onSubmit}>
           <h2 className="mb-2 text-mps-title font-semibold">Inject</h2>
           <label className="mb-3 block text-mps-label text-mps-muted">
+            Site
+            <select className={field} value={siteId} onChange={(event) => setSiteId(event.target.value)}>
+              {PLANTS.filter((plant) => plant.id !== "all").map((plant) => (
+                <option key={plant.id} value={plant.id}>
+                  {plant.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="mb-3 block text-mps-label text-mps-muted">
             Tool
             <select className={field} value={toolId} onChange={(event) => setToolId(event.target.value)}>
               {tools.map((tool) => (
@@ -130,9 +126,9 @@ export function InjectorPage() {
           <label className="mb-3 block text-mps-label text-mps-muted">
             Parameter
             <select className={field} value={parameter} onChange={(event) => setParameter(event.target.value)}>
-              {PARAMETERS.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label}
+              {toolSensors.map((sensor) => (
+                <option key={sensor.id} value={sensorParameter(sensor)}>
+                  {sensorOptionLabel(sensor)}
                 </option>
               ))}
             </select>
@@ -171,9 +167,6 @@ export function InjectorPage() {
           <div className="flex flex-wrap gap-2">
             <button className={btnPrimary} type="submit" disabled={pending}>
               {pending ? "Injecting…" : "Inject"}
-            </button>
-            <button className={btn} type="button" disabled={pending} onClick={() => void presetS4()}>
-              Preset S4: gas lot on etch tools
             </button>
           </div>
         </form>

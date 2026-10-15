@@ -60,8 +60,8 @@ public sealed class SiteEndpointTests : IClassFixture<ApiFactory>
         (await client.GetAsync("/api/sites/compare?family=plasma")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         var tools = await client.GetFromJsonAsync<JsonElement>("/api/tools");
-        tools.GetArrayLength().Should().Be(8);
-        tools.EnumerateArray().Should().OnlyContain(tool => tool.GetProperty("siteId").GetString() == "northwater" && tool.GetProperty("model").GetString()!.StartsWith("MPS-", StringComparison.Ordinal));
+        tools.GetArrayLength().Should().Be(32);
+        tools.EnumerateArray().Should().OnlyContain(tool => !string.IsNullOrEmpty(tool.GetProperty("siteId").GetString()) && tool.GetProperty("model").GetString()!.StartsWith("MPS-", StringComparison.Ordinal));
 
         if (Environment.GetEnvironmentVariable("MPS_EXPORT_SITES") == "1")
         {

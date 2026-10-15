@@ -2,21 +2,15 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import type { FamilyComparison, MetadataSite, SiteDetail, SiteSummary, ToolFamily } from "../api/types";
+import type { MetadataSite, SiteDetail, SiteSummary } from "../api/types";
 import { Term } from "../components/Term";
 import { btn, btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { visibleProblem } from "../history/copy";
 import { useSite } from "../context/SiteContext";
-import { ComparisonPanel } from "../sites/ComparisonPanel";
 import { FloorPlan } from "../sites/FloorPlan";
 import { PlantStructure } from "../sites/PlantStructure";
 import { formatPct } from "../sites/floorLayout";
-import { FAMILY_OPTIONS } from "../sites/parameters";
-
-function isFamily(value: string): value is ToolFamily {
-  return FAMILY_OPTIONS.some((option) => option.id === value);
-}
 
 function RoleLine({ role }: { role: SiteDetail["role"] }) {
   if (role === "Strip, clean, and pilot line") {
@@ -35,19 +29,30 @@ function RoleLine({ role }: { role: SiteDetail["role"] }) {
 
 export function SitesPage() {
   useSetLifecycle("alert");
-  const { setSiteId } = useSite();
+  // One source of truth: the console's selected plant (header dropdown). A ?site= link sets it once.
+  const { siteId, setSiteId } = useSite();
   const [params, setParams] = useSearchParams();
-  const siteId = params.get("site") ?? "northwater";
-  const requestedFamily = params.get("family") ?? "etch";
-  const family: ToolFamily = isFamily(requestedFamily) ? requestedFamily : "etch";
+  const linked = params.get("site");
   const [sites, setSites] = useState<SiteSummary[] | null>(null);
   const [detail, setDetail] = useState<SiteDetail | null>(null);
-  const [comparison, setComparison] = useState<FamilyComparison | null>(null);
   const [listError, setListError] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
-  const [compareError, setCompareError] = useState<string | null>(null);
   const [structure, setStructure] = useState<MetadataSite[] | null>(null);
   const [structureError, setStructureError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!linked) return;
+    setSiteId(linked);
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("site");
+        next.delete("family");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [linked, setSiteId, setParams]);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,6 +88,7 @@ export function SitesPage() {
     let cancelled = false;
     setDetail(null);
     setDetailError(null);
+    if (siteId === "all") return;
     api
       .getSite(siteId)
       .then((next) => {
@@ -96,34 +102,6 @@ export function SitesPage() {
     };
   }, [siteId]);
 
-  useEffect(() => {
-    let cancelled = false;
-    setComparison(null);
-    setCompareError(null);
-    api
-      .compareSites(family)
-      .then((next) => {
-        if (!cancelled) setComparison(next);
-      })
-      .catch((reason: unknown) => {
-        if (!cancelled) setCompareError(reason instanceof ApiProblem ? reason.title : "The comparison did not load.");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [family]);
-
-  function setQuery(key: string, value: string) {
-    setParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        next.set(key, value);
-        return next;
-      },
-      { replace: true },
-    );
-  }
-
   return (
     <div>
       <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">Three plants</p>
@@ -133,6 +111,15 @@ export function SitesPage() {
       </p>
       {visibleProblem(listError) ? <p className="mt-3 text-mps-alarm-text">{visibleProblem(listError)}</p> : null}
       <div role="tablist" aria-label="Plant" className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={siteId === "all"}
+          className={siteId === "all" ? btnPrimary : btn}
+          onClick={() => setSiteId("all")}
+        >
+          All sites
+        </button>
         {(sites ?? []).map((site) => {
           const selected = site.id === siteId;
           return (
@@ -142,10 +129,7 @@ export function SitesPage() {
               role="tab"
               aria-selected={selected}
               className={selected ? btnPrimary : btn}
-              onClick={() => {
-                setSiteId(site.id);
-                setQuery("site", site.id);
-              }}
+              onClick={() => setSiteId(site.id)}
             >
               {site.name}
             </button>
@@ -220,10 +204,21 @@ export function SitesPage() {
             error={structureError}
           />
         </>
-      ) : detailError ? null : (
+      ) : detailError ? null : siteId === "all" ? (
+        <section aria-label="All plants" className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+          {(sites ?? []).map((site) => (
+            <button key={site.id} type="button" className={`${panel} text-left hover:bg-mps-raised`} onClick={() => setSiteId(site.id)}>
+              <span className="block text-mps-title font-semibold">{site.name}</span>
+              <span className="block text-mps-secondary">{site.location}</span>
+              <span className="block text-mps-micro text-mps-muted">
+                {site.bays.length} bays · {site.kpis.waferOutsPerHour.toFixed(1)} wafers out per hour · pick to see the floor
+              </span>
+            </button>
+          ))}
+        </section>
+      ) : (
         <p className="mt-4 text-mps-muted">Loading the plant…</p>
       )}
-      <ComparisonPanel comparison={comparison} family={family} error={compareError} onFamily={(next) => setQuery("family", next)} />
     </div>
   );
 }

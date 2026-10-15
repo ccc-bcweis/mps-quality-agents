@@ -222,7 +222,8 @@ public static class ScriptedScenarioCatalog
             MagnitudeKind.Sigma,
             5d,
             confounders: false,
-            periodSeconds: 30d),
+            // 45 s, not 30 s: the live stream keeps one point every 15 s, and a 30 s period lands on zero crossings.
+            periodSeconds: 45d),
         new(
             "SC-5",
             "Precursor lot on two plants",

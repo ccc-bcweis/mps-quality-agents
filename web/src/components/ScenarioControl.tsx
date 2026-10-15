@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+import { storeRunning } from "./harnessSession";
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
@@ -14,7 +15,10 @@ function CardCopy({ text }: { text: string }) {
   let cursor = 0;
   for (const match of text.matchAll(/foreline pump|edge ring|precursor/gi)) {
     const index = match.index ?? 0;
-    if (index > cursor) nodes.push(<Explain key={`t-${cursor}`} text={text.slice(cursor, index)} />);
+    if (index > cursor)
+      nodes.push(
+        <Explain key={`t-${cursor}`} text={text.slice(cursor, index)} />,
+      );
     const word = match[0];
     const term = lookupTerm(word);
     nodes.push(
@@ -28,7 +32,8 @@ function CardCopy({ text }: { text: string }) {
     );
     cursor = index + word.length;
   }
-  if (cursor < text.length) nodes.push(<Explain key={`t-${cursor}`} text={text.slice(cursor)} />);
+  if (cursor < text.length)
+    nodes.push(<Explain key={`t-${cursor}`} text={text.slice(cursor)} />);
   if (nodes.length === 0) return <Explain text={text} />;
   return <>{nodes}</>;
 }
@@ -40,7 +45,9 @@ export function ScenarioControl({
   scenarioId,
   onScenarioId,
   loadError,
+  part = "all",
 }: {
+  part?: "all" | "controls" | "card";
   scenarios: ScriptedScenario[];
   scenarioId: string;
   onScenarioId: (id: string) => void;
@@ -66,10 +73,17 @@ export function ScenarioControl({
     setError(null);
     try {
       await api.runScenario(selected.id);
+      storeRunning(selected.id);
       const parameter = encodeURIComponent(selected.parameter);
-      navigate(`/tools/${encodeURIComponent(toolId)}?streaming=1&parameter=${parameter}`);
+      navigate(
+        `/tools/${encodeURIComponent(toolId)}?streaming=1&parameter=${parameter}`,
+      );
     } catch (reason: unknown) {
-      setError(reason instanceof ApiProblem ? reason.title : "The scenario was not accepted.");
+      setError(
+        reason instanceof ApiProblem
+          ? reason.title
+          : "The scenario was not accepted.",
+      );
     } finally {
       setPending(false);
     }
@@ -82,29 +96,38 @@ export function ScenarioControl({
 
   return (
     <div className="flex min-w-0 max-w-full basis-full flex-wrap items-center gap-2">
-      <label className="flex min-w-0 items-center gap-2 whitespace-nowrap text-mps-body text-sn-gold-wash">
-        Scenario
-        <select
-          className="w-80 max-w-full rounded border border-sn-gold bg-sn-navy-soft px-2 py-1 font-sans text-mps-body text-sn-gold-wash"
-          aria-label="Scenario"
-          value={scenarioId}
-          disabled={pending || scenarios.length === 0}
-          onChange={(event) => onScenarioId(event.target.value)}
-        >
-          {scenarios.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.id} · {item.title}
-            </option>
-          ))}
-        </select>
-      </label>
-      <button className={harnessBtn} type="button" disabled={pending || !selected} onClick={() => void runScenario()}>
-        {pending ? "Running…" : "Run scenario"}
-      </button>
-      {selected ? (
+      {part !== "card" ? (
+        <>
+          <label className="flex min-w-0 items-center gap-2 whitespace-nowrap text-mps-body text-sn-gold-wash">
+            Scenario
+            <select
+              className="w-72 max-w-full rounded border border-sn-gold bg-sn-navy-soft px-2 py-1 font-sans text-mps-body text-sn-gold-wash"
+              aria-label="Scenario"
+              value={scenarioId}
+              disabled={pending || scenarios.length === 0}
+              onChange={(event) => onScenarioId(event.target.value)}
+            >
+              {scenarios.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.id} · {item.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            className={harnessBtn}
+            type="button"
+            disabled={pending || !selected}
+            onClick={() => void runScenario()}
+          >
+            {pending ? "Running…" : "Run scenario"}
+          </button>
+        </>
+      ) : null}
+      {selected && part !== "controls" ? (
         <section
           aria-label={`${selected.id} scenario card`}
-          className="basis-full min-w-0 max-w-full break-words rounded border border-sn-gold/40 bg-sn-navy-soft px-3 py-2 text-mps-body text-sn-gold-wash"
+          className="basis-full min-w-0 max-w-full break-words rounded border border-sn-gold/40 bg-sn-navy-soft px-3 py-1.5 text-mps-micro leading-snug text-sn-gold-wash"
         >
           <h2 className="break-words text-mps-body font-semibold">
             {selected.id} · {selected.title}
@@ -118,7 +141,9 @@ export function ScenarioControl({
             <CardCopy text={simulate} />
           </p>
           <details className="mt-1 min-w-0 max-w-full break-words">
-            <summary className="cursor-pointer">What the AI should find</summary>
+            <summary className="cursor-pointer">
+              What the AI should find
+            </summary>
             {finding ? (
               <p className="mt-1 break-words">
                 <CardCopy text={finding} />
@@ -132,8 +157,12 @@ export function ScenarioControl({
           </details>
         </section>
       ) : null}
-      {visibleProblem(error) || visibleProblem(loadError) ? (
-        <p className="basis-full text-mps-body text-mps-alarm-text" role="alert">
+      {part !== "card" &&
+      (visibleProblem(error) || visibleProblem(loadError)) ? (
+        <p
+          className="basis-full text-mps-body text-mps-alarm-text"
+          role="alert"
+        >
           {visibleProblem(error) || visibleProblem(loadError)}
         </p>
       ) : null}

@@ -36,14 +36,14 @@
     },
     {
       "FileName": "particle-counter-d01.pdf",
-      "Sha256": "edacc0a1d7d238e34a0bb9f146f515806a9d14de6b8652cc811048d4594f2641",
+      "Sha256": "a3decbdc51714bba325e00a98d4bae6f5ac0546f3a6c435cdc197b00432b193e",
       "Reading": {
         "ToolId": "D-01",
         "ChamberId": "D-01-A",
         "ObservedAt": "2026-10-11T18:10:00Z",
         "Instrument": "particleCounter",
         "Parameter": "particlesAdders",
-        "Value": 3,
+        "Value": 18,
         "Unit": "count",
         "SpecMinimum": 0,
         "SpecMaximum": 10,
