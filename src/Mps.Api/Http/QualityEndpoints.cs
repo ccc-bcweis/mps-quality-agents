@@ -102,6 +102,7 @@ public static class QualityEndpoints
             Guid investigationId,
             DecisionBody? body,
             IHumanDecisionService decisions,
+            IInvestigationService investigations,
             IInvestigationNarrativeLog narratives,
             CancellationToken cancellationToken) =>
         {
@@ -117,6 +118,14 @@ public static class QualityEndpoints
                 body.Comment,
                 body.ApproverId,
                 cancellationToken).ConfigureAwait(false);
+            if (outcome.Superseded)
+            {
+                // Request more evidence: re-run the agents on the same incident with whatever data is now available.
+                var rerun = await investigations.StartAsync(outcome.Investigation.IncidentId, cancellationToken).ConfigureAwait(false);
+                var rerunNarrative = await narratives.GetAsync(rerun.Id, cancellationToken).ConfigureAwait(false);
+                return Results.Ok(new DecisionResponse(ContractMapper.ToResponse(rerun, rerunNarrative), null));
+            }
+
             var narrative = await narratives.GetAsync(id, cancellationToken).ConfigureAwait(false);
             return Results.Ok(new DecisionResponse(
                 ContractMapper.ToResponse(outcome.Investigation, narrative),

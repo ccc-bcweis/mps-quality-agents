@@ -645,7 +645,7 @@ components:
           type: string
     HumanDecisionKind:
       type: string
-      enum: [approve, reject, requestInfo]
+      enum: [approve, reject, requestInfo, override]
     HumanDecisionRequest:
       type: object
       additionalProperties: false
