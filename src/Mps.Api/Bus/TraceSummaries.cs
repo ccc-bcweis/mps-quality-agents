@@ -112,6 +112,12 @@ internal static class TraceSummaries
     {
         using var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(row.PayloadJson) ? "{}" : row.PayloadJson);
         var kind = PayloadReader.String(document.RootElement, "kind");
+        var title = PayloadReader.String(document.RootElement, "title");
+        if (kind == "evidence" && !string.IsNullOrWhiteSpace(title))
+        {
+            return "The investigation read \"" + title + "\" for " + where + " at " + when + ".";
+        }
+
         return kind switch
         {
             "evidence" => "Evidence was attached for " + where + " at " + when + ".",

@@ -97,6 +97,7 @@ public sealed class InvestigationService : IInvestigationService
         var aligned = Stamp(AlignCorrelation(started, stored.Incident.CorrelationId), stored.Incident);
         var opened = await OpenCommandAsync(aligned, stored.Incident, cancellationToken).ConfigureAwait(false);
         using var command = CommandAmbient.Adopt(opened);
+        aligned = await StampRecordsAsync(aligned, stored.Incident, opened, cancellationToken).ConfigureAwait(false);
         var target = Map(aligned.Stage);
         LifecycleMoves.WalkTo(stored, target);
         await _incidents.SaveAsync(stored, _time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
@@ -172,6 +173,53 @@ public sealed class InvestigationService : IInvestigationService
             {
                 evidence[index] = item;
             }
+        }
+
+        return changed ? snapshot.WithEvidence(evidence) : snapshot;
+    }
+
+    /// <summary>
+    /// Enterprise records (change orders, calibrations, lots, maintenance) are read by the investigation, not streamed.
+    /// Each one is recorded on the bus as an evidence step caused by the investigation start, so its trace reaches the root.
+    /// </summary>
+    private async Task<InvestigationSnapshot> StampRecordsAsync(
+        InvestigationSnapshot snapshot,
+        Incident incident,
+        CommandAmbient.Opened? opened,
+        CancellationToken cancellationToken)
+    {
+        var cause = opened?.EventId ?? _hints?.FindStep(snapshot.CorrelationId, "ticket");
+        if (_events is null || cause is null)
+        {
+            return snapshot;
+        }
+
+        var changed = false;
+        var evidence = new EvidenceItem[snapshot.Evidence.Count];
+        for (var index = 0; index < snapshot.Evidence.Count; index++)
+        {
+            var item = snapshot.Evidence[index];
+            if (item.SourceEventIds.Count > 0)
+            {
+                evidence[index] = item;
+                continue;
+            }
+
+            var eventId = await _events.PublishAsync(
+                new LifecycleEvent(
+                    LifecycleTypes.InvestigationStep,
+                    snapshot.CorrelationId,
+                    cause,
+                    cause,
+                    "investigation",
+                    null,
+                    item.ToolId ?? incident.ToolId.ToString(),
+                    incident.ChamberId,
+                    _time.GetUtcNow(),
+                    new { kind = "evidence", source = item.Source.ToString(), title = item.Title, record = item.ExternalRef }),
+                cancellationToken).ConfigureAwait(false);
+            evidence[index] = eventId is null ? item : item.WithSourceEventIds([eventId]);
+            changed |= eventId is not null;
         }
 
         return changed ? snapshot.WithEvidence(evidence) : snapshot;
