@@ -24,22 +24,17 @@ function loadGlossary(): { source: string; note: string; terms: GlossaryTerm[] }
 
 function loadFleetSensors(): { source: string; note: string; sensors: FleetSensor[] } {
   const dir = path.resolve(root, "../data/fleet");
-  const fallbackPath = path.resolve(root, "src/fleet/sensors.fallback.json");
-  const fallback = () => {
-    const file = JSON.parse(fs.readFileSync(fallbackPath, "utf8")) as { sourceNote?: string; sensors: FleetSensor[] };
-    return {
-      source: "web/src/fleet/sensors.fallback.json",
-      note: file.sourceNote ?? "",
-      sensors: file.sensors,
-    };
-  };
-  if (!fs.existsSync(dir)) return fallback();
-  const parsed = fs
+  if (!fs.existsSync(dir)) {
+    throw new Error("data/fleet is required. The console does not keep a second sensor catalog.");
+  }
+  const sensors = fs
     .readdirSync(dir)
     .filter((name) => name.endsWith(".yaml") || name.endsWith(".yml"))
     .flatMap((name) => parseFleetSensors(fs.readFileSync(path.join(dir, name), "utf8")));
-  if (parsed.length === 0) return fallback();
-  return { source: "data/fleet", note: "", sensors: parsed };
+  if (sensors.length === 0) {
+    throw new Error("data/fleet has no sensors. The console does not keep a second sensor catalog.");
+  }
+  return { source: "data/fleet", note: "", sensors };
 }
 
 function fleetSensorPlugin(): Plugin {

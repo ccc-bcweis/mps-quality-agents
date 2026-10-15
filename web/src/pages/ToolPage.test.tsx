@@ -23,29 +23,40 @@ describe("tool detail", () => {
     const user = userEvent.setup();
     renderConsole("/tools/E-02");
     expect(await screen.findByRole("img", { name: /plasma etch schematic/i })).toBeInTheDocument();
-    const esc = screen.getByRole("button", { name: /ESC temperature/i });
-    expect(esc).toHaveTextContent("53.1 °C osc");
-    expect(esc).toHaveAttribute("data-status", "warning");
-    expect(screen.getByText(/Endpoint time \(endpoint\.time\) is not on the drawing/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /Chamber pressure/i }));
+    const esc = screen.getByRole("button", { name: /E-02-A-TC-ESC/ });
+    expect(esc).toHaveTextContent("53.1");
+    expect(esc).toHaveTextContent("C");
+    expect(esc).toHaveAttribute("data-status", "inSpec");
+    expect(esc).toHaveAttribute("data-anchor", "a.chuck.esc");
+    expect(screen.getByRole("button", { name: /E-02-A-OUT-ENDPOINT/ })).toHaveAttribute("data-anchor", "a.chamber.endpoint");
+    expect(screen.queryByText(/is not on the drawing/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /E-02-A-PT-CHAMBER/ }));
     expect(await screen.findByRole("figure", { name: /SPC chart of Chamber pressure/ })).toBeInTheDocument();
   });
 
   it("marks deposition chamber pressure out of spec", async () => {
     renderConsole("/tools/D-01");
-    const pressure = await screen.findByRole("button", { name: /Chamber pressure/i });
-    expect(pressure).toHaveTextContent("6.52 Torr");
+    const pressure = await screen.findByRole("button", { name: /D-01-A-PT-CHAMBER/ });
+    expect(pressure).toHaveTextContent("6.52");
+    expect(pressure).toHaveTextContent("Torr");
     expect(pressure).toHaveAttribute("data-status", "outOfSpec");
     expect(screen.getByRole("img", { name: /thin-film deposition schematic/i })).toBeInTheDocument();
   });
 
-  it("draws the strip and clean schematics", async () => {
+  it("draws the strip schematic with remote plasma power in watts", async () => {
     renderConsole("/tools/S-01");
     expect(await screen.findByRole("img", { name: /photoresist strip schematic/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Remote plasma/i })).toHaveTextContent("3.1 kW");
+    const remote = screen.getByRole("button", { name: /S-01-A-RF-REMOTE-FWD/ });
+    expect(remote).toHaveTextContent("W");
+    expect(remote.textContent).not.toMatch(/kW/);
+  });
+
+  it("draws the clean schematic without an RF generator", async () => {
     renderConsole("/tools/C-01");
     expect(await screen.findByRole("img", { name: /single-wafer clean schematic/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Megasonic/i })).toHaveTextContent("720 W");
+    const megasonic = screen.getByRole("button", { name: /C-01-A-MEG-PWR/ });
+    expect(megasonic).toHaveTextContent("W");
+    expect(screen.queryByRole("button", { name: /RF FWD/ })).not.toBeInTheDocument();
   });
 
   it("says when a tool id is unknown", async () => {

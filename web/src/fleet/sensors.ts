@@ -1,22 +1,30 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+import type { ToolFamily } from "../api/types";
 
-export type SensorStatus = "inSpec" | "warning" | "outOfSpec";
+export type SensorLimits = {
+  minimum: number;
+  maximum: number;
+  nominal: number;
+  warningMinimum: number;
+  warningMaximum: number;
+};
 
 export type FleetSensor = {
   id: string;
   toolId: string;
+  family: ToolFamily;
   type: string;
   unit: string;
   subsystem: string;
   schematicAnchor: string;
-  label: string;
-  value?: number;
-  display?: string;
-  status?: SensorStatus;
+  chamberId?: string;
+  parameter?: string;
+  tracksSensorId?: string;
+  limits: SensorLimits;
 };
 
+const FAMILIES = new Set<ToolFamily>(["deposition", "etch", "strip", "clean"]);
 const REQUIRED = ["id", "type", "unit", "subsystem", "schematicAnchor"] as const;
-const STATUSES = new Set<SensorStatus>(["inSpec", "warning", "outOfSpec"]);
 
 type Raw = Record<string, string>;
 
@@ -31,6 +39,10 @@ function clean(value: string): string {
   return (comment >= 0 ? trimmed.slice(0, comment) : trimmed).trim();
 }
 
+function isFamily(value: string): value is ToolFamily {
+  return FAMILIES.has(value as ToolFamily);
+}
+
 /** Tool ids under the root `tools:` list. Recipe ids above that list are ignored. */
 export function toolIdsInFleetYaml(yaml: string): string[] {
   const ids: string[] = [];
@@ -42,22 +54,21 @@ export function toolIdsInFleetYaml(yaml: string): string[] {
     }
     if (inTools && /^\S/.test(line) && !line.trim().startsWith("#")) break;
     if (!inTools) continue;
-    const match = line.match(/^\s+-\s+id:\s*(\S+)/);
+    const match = line.match(/^ {2}- id:\s*(\S+)/);
     if (match) ids.push(clean(match[1]));
   }
   return ids;
 }
 
-function sensorLines(yaml: string): string[] | null {
-  const lines = yaml.split(/\r?\n/);
-  const start = lines.findIndex((line) => /^sensors:\s*(#.*)?$/.test(line));
-  if (start < 0) return null;
-  const block: string[] = [];
-  for (const line of lines.slice(start + 1)) {
-    if (line.trim() !== "" && !line.trim().startsWith("#") && !/^\s/.test(line)) break;
-    block.push(line);
+function readFamily(lines: string[]): ToolFamily | null {
+  for (const line of lines) {
+    const match = line.match(/^family:\s*(\S+)/);
+    if (!match) continue;
+    const value = clean(match[1]);
+    if (!isFamily(value)) throw new Error(`Fleet family ${value} is unknown.`);
+    return value;
   }
-  return block;
+  return null;
 }
 
 function parseFlow(body: string): Raw {
@@ -93,48 +104,113 @@ function parseItems(block: string[]): Raw[] {
   });
 }
 
-function expand(raw: Raw, toolIds: string[]): FleetSensor[] {
-  for (const key of REQUIRED) {
-    if (!raw[key]) throw new Error(`Fleet sensor is missing ${key}.`);
+function requireText(raw: Raw, key: string): string {
+  const value = raw[key];
+  if (!value) throw new Error(`Fleet sensor ${raw.id || "(no id)"} is missing ${key}.`);
+  return value;
+}
+
+function requireNumber(raw: Raw, key: string): number {
+  if (raw[key] === undefined || raw[key] === "") {
+    throw new Error(`Fleet sensor ${raw.id || "(no id)"} is missing ${key}.`);
   }
-  if (raw.status && !STATUSES.has(raw.status as SensorStatus)) {
-    throw new Error(`Fleet sensor ${raw.id} has an unknown status.`);
+  const value = Number(raw[key]);
+  if (!Number.isFinite(value)) throw new Error(`Fleet sensor ${raw.id} has a ${key} that is not a number.`);
+  return value;
+}
+
+function toSensor(raw: Raw, toolId: string, family: ToolFamily): FleetSensor {
+  for (const key of REQUIRED) requireText(raw, key);
+  const limits: SensorLimits = {
+    minimum: requireNumber(raw, "minimum"),
+    maximum: requireNumber(raw, "maximum"),
+    nominal: requireNumber(raw, "nominal"),
+    warningMinimum: requireNumber(raw, "warningMinimum"),
+    warningMaximum: requireNumber(raw, "warningMaximum"),
+  };
+  if (limits.minimum > limits.maximum) {
+    throw new Error(`Fleet sensor ${raw.id} has a minimum above its maximum.`);
   }
-  let value: number | undefined;
-  if (raw.value) {
-    value = Number(raw.value);
-    if (Number.isNaN(value)) throw new Error(`Fleet sensor ${raw.id} has a value that is not a number.`);
+  if (limits.nominal < limits.minimum || limits.nominal > limits.maximum) {
+    throw new Error(`Fleet sensor ${raw.id} has a nominal outside the spec.`);
   }
-  const owners = raw.toolId ? [raw.toolId] : toolIds;
-  if (owners.length === 0) throw new Error(`Fleet sensor ${raw.id} has no tool id.`);
-  return owners.map((toolId) => ({
-    id: raw.toolId ? raw.id : `${raw.id}:${toolId}`,
+  if (
+    limits.warningMinimum < limits.minimum ||
+    limits.warningMaximum > limits.maximum ||
+    limits.warningMinimum > limits.nominal ||
+    limits.warningMaximum < limits.nominal
+  ) {
+    throw new Error(`Fleet sensor ${raw.id} has a warning band outside the spec.`);
+  }
+  return {
+    id: raw.id,
     toolId,
+    family,
     type: raw.type,
     unit: raw.unit,
     subsystem: raw.subsystem,
     schematicAnchor: raw.schematicAnchor,
-    label: raw.label || raw.type,
-    value,
-    display: raw.display,
-    status: raw.status as SensorStatus | undefined,
-  }));
+    chamberId: raw.chamberId || undefined,
+    parameter: raw.parameter || undefined,
+    tracksSensorId: raw.tracksSensorId || undefined,
+    limits,
+  };
 }
 
 /**
- * Root `sensors:` list only. A file with no such list contributes nothing.
- * A sensor without toolId is copied onto each tool in that file.
- * Supports a flat block list or a one-line flow mapping. Folded scalars are not supported.
+ * Sensors nested under each tool. A file with no tool `sensors:` list contributes nothing.
+ * One-line flow mappings and flat blocks are both accepted. Folded scalars are not.
  */
 export function parseFleetSensors(yaml: string): FleetSensor[] {
-  const block = sensorLines(yaml);
-  if (!block) return [];
-  const toolIds = toolIdsInFleetYaml(yaml);
-  return parseItems(block).flatMap((raw) => expand(raw, toolIds));
+  const lines = yaml.split(/\r?\n/);
+  const family = readFamily(lines);
+  const sensors: FleetSensor[] = [];
+  let inTools = false;
+  let currentTool: string | null = null;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (/^tools:\s*(#.*)?$/.test(line)) {
+      inTools = true;
+      currentTool = null;
+      continue;
+    }
+    if (inTools && line.trim() !== "" && !line.trim().startsWith("#") && !/^\s/.test(line)) {
+      inTools = false;
+      currentTool = null;
+    }
+    if (!inTools) continue;
+
+    const tool = line.match(/^ {2}- id:\s*(\S+)/);
+    if (tool) {
+      currentTool = clean(tool[1]);
+      continue;
+    }
+    if (!/^ {4}sensors:\s*(#.*)?$/.test(line)) continue;
+    if (!currentTool) throw new Error("A sensors list is outside a tool.");
+    if (!family) throw new Error("Fleet file has sensors but no family.");
+
+    const block: string[] = [];
+    let next = index + 1;
+    for (; next < lines.length; next += 1) {
+      const row = lines[next];
+      if (row.trim() === "" || row.trim().startsWith("#")) {
+        block.push(row);
+        continue;
+      }
+      const indent = row.match(/^( *)/)?.[1].length ?? 0;
+      if (indent <= 4) break;
+      block.push(row);
+    }
+    for (const raw of parseItems(block)) sensors.push(toSensor(raw, currentTool, family));
+    index = next - 1;
+  }
+
+  return sensors;
 }
 
-export function sensorReading(sensor: FleetSensor): string {
-  if (sensor.display) return sensor.display;
-  if (sensor.value !== undefined) return `${sensor.value} ${sensor.unit}`;
-  return "—";
+export function statusFromLimits(value: number, limits: SensorLimits): "inSpec" | "warning" | "outOfSpec" {
+  if (value < limits.minimum || value > limits.maximum) return "outOfSpec";
+  if (value < limits.warningMinimum || value > limits.warningMaximum) return "warning";
+  return "inSpec";
 }

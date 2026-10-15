@@ -40,8 +40,8 @@ export const tools: Tool[] = [
   { id: "D-02", name: "Deposition 02", family: "deposition", model: "MPS-D7", bay: "Bay A", chambers: chambers(["Chamber A", "Chamber B"]) },
   { id: "E-01", name: "Etch 01", family: "etch", model: "MPS-E7", bay: "Bay A", chambers: chambers(["Chamber A", "Chamber B"]) },
   { id: "E-02", name: "Etch 02", family: "etch", model: "MPS-E7", bay: "Bay A", chambers: chambers(["Chamber A", "Chamber B"]) },
-  { id: "S-01", name: "Strip 01", family: "strip", model: "MPS-S7", bay: "Bay B", chambers: chambers(["Chamber A"]) },
-  { id: "S-02", name: "Strip 02", family: "strip", model: "MPS-S7", bay: "Bay B", chambers: chambers(["Chamber A"]) },
+  { id: "S-01", name: "Strip 01", family: "strip", model: "MPS-S7", bay: "Bay B", chambers: chambers(["Chamber A", "Chamber B"]) },
+  { id: "S-02", name: "Strip 02", family: "strip", model: "MPS-S7", bay: "Bay B", chambers: chambers(["Chamber A", "Chamber B"]) },
   { id: "C-01", name: "Clean 01", family: "clean", model: "MPS-C7", bay: "Bay B", chambers: chambers(["Chamber A"]) },
   { id: "C-02", name: "Clean 02", family: "clean", model: "MPS-C7", bay: "Bay B", chambers: chambers(["Chamber A"]) },
 ];
