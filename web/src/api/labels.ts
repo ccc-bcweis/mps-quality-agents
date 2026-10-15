@@ -25,6 +25,7 @@ export const STAGE_LABEL: Record<IncidentStage, string> = {
   approved: "Approved",
   rejected: "Rejected",
   closed: "Closed",
+  closedByDemoReset: "Closed by demo reset",
 };
 
 export const INVESTIGATION_STAGE_LABEL: Record<InvestigationStage, string> = {
@@ -36,6 +37,7 @@ export const INVESTIGATION_STAGE_LABEL: Record<InvestigationStage, string> = {
   approved: "Approved",
   rejected: "Rejected",
   failed: "Failed",
+  closedByDemoReset: "Closed by demo reset",
 };
 
 export const CAPA_STAGE_LABEL: Record<CapaStage, string> = {

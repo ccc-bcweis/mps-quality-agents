@@ -40,6 +40,7 @@ export function lifecycleForIncident(stage: IncidentStage): LifecycleView {
       return { current: "approval", escalated: false };
     case "approved":
     case "closed":
+    case "closedByDemoReset":
       return { current: "capa", escalated: false };
     case "rejected":
       return { current: "approval", escalated: false };
@@ -64,9 +65,15 @@ export function lifecycleForInvestigation(stage: InvestigationStage): LifecycleV
       return { current: "capa", escalated: false };
     case "rejected":
       return { current: "approval", escalated: false };
+    case "closedByDemoReset":
+      return { current: "investigation", escalated: false };
     default:
       return { current: "alert", escalated: false };
   }
+}
+
+export function isClosedStage(stage: IncidentStage): boolean {
+  return stage === "closed" || stage === "closedByDemoReset";
 }
 
 export function nextCapaStage(stage: CapaStage): CapaStage | null {

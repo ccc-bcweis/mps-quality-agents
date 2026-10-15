@@ -294,7 +294,8 @@ public static class QualityEndpoints
             var caller = Caller(http, configuration);
             return Results.Ok(new AdminSessionResponse(caller.Mode, caller.IsAdmin, caller.DisplayName));
         });
-        app.MapPost("/api/admin/reset", async (HttpContext http, IConfiguration configuration, DemoResetService reset, ScenarioEvidenceBoard board, IManualMeasurementLog measurements, CommandGateway commands, CancellationToken cancellationToken) =>
+        app.MapGet("/api/admin/reset/progress", (ResetProgress progress) => Results.Ok(progress.Current));
+        app.MapPost("/api/admin/reset", async (HttpContext http, IConfiguration configuration, DemoResetService reset, CommandGateway commands, CancellationToken cancellationToken) =>
         {
             var caller = Caller(http, configuration);
             if (!caller.IsAdmin)
@@ -322,8 +323,6 @@ public static class QualityEndpoints
             }
 
             commands.Ensure(hard ? LifecycleTypes.ResetHard : LifecycleTypes.ResetSoft, caller);
-            board.Clear();
-            measurements.Clear();
             var baseline = await reset.ResetAsync(hard, cancellationToken).ConfigureAwait(false);
             return Results.Ok(baseline);
         });

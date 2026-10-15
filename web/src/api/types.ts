@@ -17,7 +17,8 @@ export type IncidentStage =
   | "awaitingApproval"
   | "approved"
   | "rejected"
-  | "closed";
+  | "closed"
+  | "closedByDemoReset";
 export type EvidenceSource =
   | "telemetry"
   | "spc"
@@ -42,7 +43,8 @@ export type InvestigationStage =
   | "awaitingApproval"
   | "approved"
   | "rejected"
-  | "failed";
+  | "failed"
+  | "closedByDemoReset";
 export type HumanDecisionKind = "approve" | "reject" | "requestInfo" | "override";
 export type CapaStage =
   | "open"
@@ -107,6 +109,7 @@ export type Incident = {
   correlationId: string;
   openedAt: string;
   stage: IncidentStage;
+  statusLabel?: string | null;
 };
 
 export type OpenIncidentRequest = {
@@ -218,6 +221,7 @@ export type Investigation = {
   hypotheses: Hypothesis[];
   escalationReason?: string | null;
   correlationId: string;
+  statusLabel?: string | null;
 };
 
 export type HumanDecisionRequest = {
@@ -294,6 +298,10 @@ export type DemoResetResult = {
   investigationCount: number;
   approvalCount: number;
   capaCount: number;
+  telemetryCount: number;
+  eventCount: number;
+  resetEventId: string;
+  kind: "hard" | "soft";
 };
 
 export type ScriptedScenario = {

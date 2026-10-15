@@ -33,6 +33,7 @@ public enum IncidentStage
     Approved,
     Rejected,
     Closed,
+    ClosedByDemoReset,
 }
 
 public sealed class Alert
@@ -219,5 +220,18 @@ public sealed class Incident
         }
 
         Stage = next;
+    }
+
+    /// <summary>
+    /// Closes an open incident for a demo reset. A normal close and an incident already closed this way are left unchanged by the caller.
+    /// </summary>
+    public void CloseByDemoReset()
+    {
+        if (Stage == IncidentStage.ClosedByDemoReset)
+        {
+            return;
+        }
+
+        Advance(IncidentStage.ClosedByDemoReset);
     }
 }

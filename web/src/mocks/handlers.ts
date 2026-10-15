@@ -470,6 +470,7 @@ export const handlers = [
         item.toolId === body.toolId &&
         item.parameter === body.parameter &&
         item.stage !== "closed" &&
+        item.stage !== "closedByDemoReset" &&
         item.stage !== "rejected",
     );
     if (open) return HttpResponse.json(open, { status: 201 });
@@ -642,6 +643,10 @@ export const handlers = [
       investigationCount: 0,
       approvalCount: 0,
       capaCount: 0,
+      telemetryCount: 0,
+      eventCount: 1,
+      resetEventId: "reset-event",
+      kind: "hard",
     });
   }),
 

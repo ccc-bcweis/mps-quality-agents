@@ -18,6 +18,7 @@ public enum InvestigationStage
     Approved,
     Rejected,
     Failed,
+    ClosedByDemoReset,
 }
 
 public enum HumanDecisionKind

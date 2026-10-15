@@ -263,6 +263,11 @@ public sealed class HumanDecisionService : IHumanDecisionService
             throw new InvalidOperationException("A stored QMS failure is retried with a new approval token.");
         }
 
+        if (existing.Outcome == ApprovalOutcomes.ClosedByDemoReset)
+        {
+            throw new LifecycleConflictException("This approval was closed by demo reset.");
+        }
+
         EnsureIntact(existing.Token);
         if (!existing.Token.IsConsumed)
         {

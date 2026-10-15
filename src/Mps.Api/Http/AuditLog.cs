@@ -3,6 +3,10 @@
 using Microsoft.EntityFrameworkCore;
 
 using Mps.Api.Persistence;
+using Mps.Application.Persistence;
+using Mps.Domain.Incidents;
+using Mps.Domain.Investigations;
+using Mps.Domain.Lifecycle;
 
 namespace Mps.Api.Http;
 
@@ -62,6 +66,18 @@ public static class AuditLog
                 incident.ToolId,
                 incident.CorrelationId,
                 incident.Id.ToString("D")));
+            if (string.Equals(incident.Stage, nameof(IncidentStage.ClosedByDemoReset), StringComparison.Ordinal))
+            {
+                events.Add(new AuditStamp(
+                    Utc(incident.OpenedAt),
+                    7,
+                    "incident",
+                    DemoReset.StatusLabel + " on " + incident.ToolId + ".",
+                    null,
+                    incident.ToolId,
+                    incident.CorrelationId,
+                    incident.Id.ToString("D")));
+            }
         }
 
         foreach (var ticket in tickets)
@@ -83,11 +99,14 @@ public static class AuditLog
             incidentById.TryGetValue(investigation.IncidentId, out var incident);
             var toolId = incident?.ToolId;
             var where = string.IsNullOrWhiteSpace(toolId) ? "." : " for " + toolId + ".";
+            var investigationSummary = string.Equals(investigation.Stage, nameof(InvestigationStage.ClosedByDemoReset), StringComparison.Ordinal)
+                ? DemoReset.StatusLabel + where
+                : "Investigation started" + where;
             events.Add(new AuditStamp(
                 incident is null ? DateTimeOffset.UnixEpoch : Utc(incident.OpenedAt),
                 4,
                 "investigation",
-                "Investigation started" + where,
+                investigationSummary,
                 null,
                 toolId,
                 investigation.CorrelationId,
@@ -98,7 +117,10 @@ public static class AuditLog
         {
             incidentById.TryGetValue(approval.IncidentId, out var incident);
             var name = string.IsNullOrWhiteSpace(approval.ApproverId) ? "an approver" : approval.ApproverId.Trim();
-            var summary = string.Equals(approval.Decision, "approve", StringComparison.OrdinalIgnoreCase)
+            var summary = string.Equals(approval.Outcome, ApprovalOutcomes.ClosedByDemoReset, StringComparison.Ordinal)
+                || string.Equals(approval.Decision, DemoReset.StatusLabel, StringComparison.Ordinal)
+                ? DemoReset.StatusLabel + "."
+                : string.Equals(approval.Decision, "approve", StringComparison.OrdinalIgnoreCase)
                 ? "Approved by " + name + "."
                 : "Decision recorded by " + name + ".";
             events.Add(new AuditStamp(

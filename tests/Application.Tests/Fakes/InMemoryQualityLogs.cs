@@ -66,7 +66,7 @@ public sealed class InMemoryIncidentLog : IIncidentLog
     {
         _ = cancellationToken;
         var match = _incidents.FirstOrDefault(stored =>
-            stored.Incident.Stage != IncidentStage.Closed
+            stored.Incident.Stage is not (IncidentStage.Closed or IncidentStage.ClosedByDemoReset)
             && stored.Incident.ToolId == toolId
             && string.Equals(stored.Incident.Parameter, parameter, StringComparison.OrdinalIgnoreCase));
         return Task.FromResult(match);

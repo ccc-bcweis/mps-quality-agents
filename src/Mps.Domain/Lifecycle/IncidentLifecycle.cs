@@ -25,6 +25,13 @@ public static class IncidentLifecycle
         (IncidentStage.Approved, IncidentStage.Closed),
         (IncidentStage.Rejected, IncidentStage.Investigating),
         (IncidentStage.Rejected, IncidentStage.Closed),
+        (IncidentStage.TicketOpened, IncidentStage.ClosedByDemoReset),
+        (IncidentStage.Investigating, IncidentStage.ClosedByDemoReset),
+        (IncidentStage.RecommendationReady, IncidentStage.ClosedByDemoReset),
+        (IncidentStage.Escalated, IncidentStage.ClosedByDemoReset),
+        (IncidentStage.AwaitingApproval, IncidentStage.ClosedByDemoReset),
+        (IncidentStage.Approved, IncidentStage.ClosedByDemoReset),
+        (IncidentStage.Rejected, IncidentStage.ClosedByDemoReset),
     };
 
     public static bool CanTransition(IncidentStage from, IncidentStage to) => Allowed.Contains((from, to));

@@ -56,7 +56,7 @@ public sealed class QualityDbContext : DbContext
             entity.HasIndex(row => new { row.ToolId, row.ParameterKey, row.Stage });
             entity.HasIndex(row => new { row.ToolId, row.ParameterKey })
                 .IsUnique()
-                .HasFilter("Stage <> 'Closed'");
+                .HasFilter("Stage <> 'Closed' AND Stage <> 'ClosedByDemoReset'");
         });
         modelBuilder.Entity<TicketRow>(entity =>
         {

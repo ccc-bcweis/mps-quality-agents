@@ -12,6 +12,8 @@ public static class ApprovalOutcomes
     public const string Succeeded = "succeeded";
 
     public const string Failed = "failed";
+
+    public const string ClosedByDemoReset = "closedByDemoReset";
 }
 
 public sealed record StoredApproval(

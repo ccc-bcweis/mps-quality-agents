@@ -139,7 +139,7 @@ public sealed class EfQualityStore :
         var key = ParameterKey(parameter);
         var id = toolId.ToString();
         var row = await _db.Incidents.AsNoTracking()
-            .Where(item => item.ToolId == id && item.ParameterKey == key && item.Stage != nameof(IncidentStage.Closed))
+            .Where(item => item.ToolId == id && item.ParameterKey == key && item.Stage != nameof(IncidentStage.Closed) && item.Stage != nameof(IncidentStage.ClosedByDemoReset))
             .OrderBy(item => item.OpenedAt)
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -284,8 +284,9 @@ public sealed class EfQualityStore :
     {
         var rejected = nameof(InvestigationStage.Rejected);
         var failed = nameof(InvestigationStage.Failed);
+        var closedByReset = nameof(InvestigationStage.ClosedByDemoReset);
         var row = await _db.Investigations.AsNoTracking()
-            .Where(item => item.IncidentId == incidentId.Value && item.Stage != rejected && item.Stage != failed)
+            .Where(item => item.IncidentId == incidentId.Value && item.Stage != rejected && item.Stage != failed && item.Stage != closedByReset)
             .OrderByDescending(item => item.Id)
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);

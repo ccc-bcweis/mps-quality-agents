@@ -92,6 +92,7 @@ public static class QualityHost
             services.GetRequiredService<TimeProvider>(),
             services.GetRequiredService<ScriptedScenarioContext>()));
         builder.Services.AddSingleton<IChatClient>(services => services.GetRequiredService<Gateway>());
+        builder.Services.AddSingleton<ResetProgress>();
         builder.Services.AddScoped<DemoResetService>();
         builder.Services.AddSingleton(ScenarioCardCatalog.Load(Path.Combine(dataDirectory, "scenarios", "catalog.yaml")));
         builder.Services.AddSingleton<ScenarioEvidenceBoard>();

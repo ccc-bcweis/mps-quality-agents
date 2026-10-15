@@ -8,6 +8,7 @@ using Mps.Domain.Equipment;
 using Mps.Domain.Evidence;
 using Mps.Domain.Incidents;
 using Mps.Domain.Investigations;
+using Mps.Domain.Lifecycle;
 using Mps.Simulator.Fleet;
 using Mps.Simulator.Sites;
 
@@ -52,7 +53,8 @@ public static class ContractMapper
             incident.CorrelationId,
             incident.OpenedAt,
             incident.Stage,
-            SiteForTool(incident.ToolId.ToString()));
+            SiteForTool(incident.ToolId.ToString()),
+            incident.Stage == IncidentStage.ClosedByDemoReset ? DemoReset.StatusLabel : null);
 
     public static InvestigationResponse ToResponse(InvestigationSnapshot snapshot) =>
         ToResponse(snapshot, InvestigationNarrative.Empty, string.Empty);
@@ -106,7 +108,8 @@ public static class ContractMapper
                 entry.EvidenceId,
                 entry.Stance,
                 entry.WhyItMatters)).ToArray(),
-            SiteForTool(siteId));
+            SiteForTool(siteId),
+            snapshot.Stage == InvestigationStage.ClosedByDemoReset ? DemoReset.StatusLabel : null);
     }
 
     public static CapaResponse ToResponse(CapaAction capa, string siteId) =>

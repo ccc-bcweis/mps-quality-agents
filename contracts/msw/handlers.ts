@@ -327,6 +327,10 @@ export const handlers = [
       investigationCount: 0,
       approvalCount: 0,
       capaCount: 0,
+      telemetryCount: 0,
+      eventCount: 1,
+      resetEventId: "reset-event",
+      kind: "hard",
     }),
   ),
   http.get("/api/injector/scenarios", () =>

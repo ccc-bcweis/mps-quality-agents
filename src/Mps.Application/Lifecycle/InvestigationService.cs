@@ -76,7 +76,7 @@ public sealed class InvestigationService : IInvestigationService
             throw new LifecycleConflictException("An investigation is already open for this incident.");
         }
 
-        if (stored.Incident.Stage is IncidentStage.Closed or IncidentStage.Approved)
+        if (stored.Incident.Stage is IncidentStage.Closed or IncidentStage.Approved or IncidentStage.ClosedByDemoReset)
         {
             throw new LifecycleConflictException($"Cannot start an investigation from {stored.Incident.Stage}.");
         }
@@ -145,6 +145,7 @@ public sealed class InvestigationService : IInvestigationService
         InvestigationStage.AwaitingApproval => IncidentStage.AwaitingApproval,
         InvestigationStage.Approved => IncidentStage.Approved,
         InvestigationStage.Rejected => IncidentStage.Rejected,
+        InvestigationStage.ClosedByDemoReset => IncidentStage.ClosedByDemoReset,
         _ => throw new LifecycleConflictException($"Investigation stage {stage} is not mapped."),
     };
 
