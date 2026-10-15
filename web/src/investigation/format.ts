@@ -121,6 +121,7 @@ export function whatItShows(item: EvidenceItem): string {
   const parameter = parameterName(item);
   const place = placeLabel(item.toolId, null, item.toolName, item.chamberName);
   if (parameter && place !== "—") return `${parameter} on ${place}`;
+  if (parameter) return parameter;
   return oneSentence(item.excerpt || item.title) || "Recorded evidence";
 }
 
@@ -137,10 +138,10 @@ export function valueVsSpec(item: Pick<EvidenceItem, "value" | "unit" | "specLow
   return unit ? `${valueText}, spec ${spec} ${unit}` : `${valueText}, spec ${spec}`;
 }
 
-export function readableExcerpt(text: string): string {
+export function readableExcerpt(text: string, timeZone?: string): string {
   return text.replace(STAMP, (stamp) => {
-    const iso = stamp.includes("T") ? stamp.replace(/\s*UTC$/, "Z") : `${stamp.replace(" UTC", "Z").replace(" ", "T")}`;
-    const local = formatLocalWhen(iso);
+    const iso = stamp.includes("T") ? stamp.replace(/\s*UTC$/, "Z") : stamp.replace(" UTC", "Z").replace(" ", "T");
+    const local = formatLocalWhen(iso, timeZone);
     return local === "—" ? stamp : local;
   });
 }
@@ -148,8 +149,10 @@ export function readableExcerpt(text: string): string {
 export function formatStepDuration(status: "queued" | "running" | "done" | "escalated", seconds: number): string {
   if (status === "queued") return "Not started";
   if (status === "running") return "Running";
-  const whole = Math.max(1, Math.round(seconds));
-  return whole === 1 ? "1 s" : `${whole} s`;
+  const whole = Math.max(1, Math.round(Number.isFinite(seconds) ? seconds : 1));
+  const clock = whole === 1 ? "1 s" : `${whole} s`;
+  if (status === "escalated") return `Escalated · ${clock}`;
+  return clock;
 }
 
 function parseReading(excerpt: string): { value?: number; unit?: string; low?: number; high?: number } {
