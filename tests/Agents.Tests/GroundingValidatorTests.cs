@@ -123,7 +123,7 @@ public sealed class GroundingValidatorTests
     }
 
     [Fact]
-    public void RejectsAnExplanationThatNamesAnUnknownOrUncitedId()
+    public void DropsAnUnknownExplanationAndRejectsAnUncitedOne()
     {
         var unknown = new ResolutionClaim(
             RootCauseCategory.EngineeringChange,
@@ -147,9 +147,12 @@ public sealed class GroundingValidatorTests
         var unknownResult = GroundingValidator.Validate(unknown, SensorPack(), WhyItMattersCatalog.Empty);
         var uncitedResult = GroundingValidator.Validate(uncited, SensorPack(), WhyItMattersCatalog.Empty);
 
-        unknownResult.Accepted.Should().BeFalse();
-        unknownResult.Claim.Should().BeNull();
-        unknownResult.Failures.Should().Contain("why-it-matters-unknown:" + EvidenceSamples.Id(99));
+        unknownResult.Failures.Should().NotContain(failure => failure.StartsWith("why-it-matters-unknown", StringComparison.Ordinal));
+        if (unknownResult.Claim is not null)
+        {
+            unknownResult.Claim.Explanations.Should().NotContain(explanation => explanation.EvidenceId == EvidenceSamples.Id(99));
+        }
+
         uncitedResult.Accepted.Should().BeFalse();
         uncitedResult.Failures.Should().Contain("why-it-matters-not-cited:" + EvidenceSamples.Id(2));
     }

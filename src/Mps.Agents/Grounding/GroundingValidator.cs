@@ -32,6 +32,22 @@ public static class GroundingValidator
             known[item.Id] = item;
         }
 
+        // A why-it-matters note that names an id outside the pack is not load-bearing: drop it and repair, since cited ids are still checked strictly.
+        var droppedUnknownExplanations = claim.Explanations.Any(explanation => !known.ContainsKey(explanation.EvidenceId));
+        if (droppedUnknownExplanations)
+        {
+            claim = new ResolutionClaim(
+                claim.Category,
+                claim.Cause,
+                claim.Confidence,
+                claim.EvidenceIds,
+                claim.CounterEvidence,
+                claim.Actions,
+                claim.Claims,
+                claim.Explanations.Where(explanation => known.ContainsKey(explanation.EvidenceId)).ToArray(),
+                claim.EvidenceMatrix);
+        }
+
         var failures = new List<string>();
         if (claim.Category is not null && claim.Cause is null)
         {
@@ -116,7 +132,7 @@ public static class GroundingValidator
             return new GroundingResult(false, failures);
         }
 
-        var repaired = false;
+        var repaired = droppedUnknownExplanations;
         var explanations = RepairExplanations(claim, known, catalog, ref repaired);
         var matrix = RepairMatrix(claim, known, catalog, ref repaired);
         if (!CoversAllCategories(matrix))
