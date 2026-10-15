@@ -71,6 +71,7 @@ export type Tool = {
   family: ToolFamily;
   model: string;
   bay: string;
+  siteId?: string;
   chambers: Chamber[];
 };
 

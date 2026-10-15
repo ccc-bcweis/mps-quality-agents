@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { FAMILY_PROCESS } from "../api/labels";
-import type { Alert, Tool } from "../api/types";
+import type { Alert, Ticket, Tool } from "../api/types";
 import { mpsColor } from "../brand/colors";
 import { Chip } from "../components/Chip";
 import { Sparkline } from "../components/Sparkline";
@@ -11,22 +11,25 @@ import { Explain } from "../components/Explain";
 import { PlainMetrics, TileMetrics } from "../components/PlainMetrics";
 import { btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
+import { useSite } from "../context/SiteContext";
 import { bayCaption, statusTone, storyFor } from "../fleet/catalog";
+import { PLANTS, toolInPlant } from "../sites/selection";
 
 export function FleetPage() {
   useSetLifecycle("alert");
+  const { siteId } = useSite();
   const [tools, setTools] = useState<Tool[] | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [tickets, setTickets] = useState<number | null>(null);
+  const [ticketRows, setTicketRows] = useState<Ticket[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([api.listTools(), api.listTickets(), api.listAlerts()])
+    Promise.all([api.listTools(siteId), api.listTickets(siteId), api.listAlerts(undefined, siteId)])
       .then(([nextTools, nextTickets, nextAlerts]) => {
         if (cancelled) return;
         setTools(nextTools);
-        setTickets(nextTickets.length);
+        setTicketRows(nextTickets);
         setAlerts(nextAlerts);
       })
       .catch((reason: unknown) => {
@@ -35,17 +38,22 @@ export function FleetPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [siteId]);
 
-  const rows = tools ?? [];
-  const stories = rows.map((tool) => ({ tool, story: storyFor(tool, alerts) }));
+  const rows = (tools ?? []).filter((tool) => toolInPlant(siteId, tool.id, tool.siteId));
+  const visibleAlerts = alerts.filter((alert) => toolInPlant(siteId, alert.toolId));
+  const tickets = ticketRows === null ? null : ticketRows.filter((ticket) => toolInPlant(siteId, ticket.toolId)).length;
+  const stories = rows.map((tool) => ({ tool, story: storyFor(tool, visibleAlerts) }));
+  const plantName = PLANTS.find((plant) => plant.id === siteId)?.name ?? "All sites";
   const bays = [...new Set(rows.map((tool) => tool.bay))];
 
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">Northwater teaching floor · eight tools</p>
+          <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">
+            {siteId === "all" ? "Northwater teaching floor · eight tools" : plantName}
+          </p>
           <h1 className="text-mps-display font-semibold">Fleet overview</h1>
           <p className="text-mps-secondary">
             <Explain text="Eight tools, four families. SPC windows and Western Electric rules watch chamber pressure, ESC temperature, and RF power. Tiles open tool detail." />
@@ -59,13 +67,14 @@ export function FleetPage() {
       </div>
       {error ? <p className="mb-3 text-mps-alarm-text">{error}</p> : null}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <Kpi label="Tools" value={tools ? String(tools.length) : "—"} note="fleet" />
+        <Kpi label="Tools" value={tools ? String(rows.length) : "—"} note="fleet" />
         <Kpi label="Nominal" value={String(stories.filter((item) => item.story.status === "nominal").length)} note="in window" />
         <Kpi label="Watch" value={String(stories.filter((item) => item.story.status === "watch").length)} note="inside window, rule tripped" tone="warn" />
         <Kpi label="Alarm" value={String(stories.filter((item) => item.story.status === "alarm").length)} note="outside window" tone="alarm" />
         <Kpi label="Open tickets" value={tickets === null ? "—" : String(tickets)} note="queue" />
         <Kpi label="p95 time" value="—" note="investigation, from metrics" />
       </div>
+      {tools && rows.length === 0 ? <p className="mt-4 text-mps-muted">No tools at this plant.</p> : null}
       {rows.length > 0 ? <PlainMetrics toolIds={rows.map((tool) => tool.id)} /> : null}
       {bays.map((bay) => (
         <section key={bay} className="mt-5">

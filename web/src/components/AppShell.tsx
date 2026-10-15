@@ -1,10 +1,12 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { useEffect, useState } from "react";
-import { Link, Outlet, useLocation, useOutletContext } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { api } from "../api/client";
 import type { AdminSession } from "../api/types";
 import { useConsole } from "../context/ConsoleContext";
+import { SiteProvider, useSite } from "../context/SiteContext";
 import { CONSOLE_TABS } from "../shell/navigation";
+import { PLANTS } from "../sites/selection";
 import { Explain } from "./Explain";
 import { GlossaryScope } from "./GlossaryScope";
 import { HarnessBar } from "./HarnessBar";
@@ -48,9 +50,20 @@ function NavLabel({ label }: { label: string }) {
 
 export function ConsoleFrame() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { session } = useOutletContext<ShellOutletContext>();
   const { lifecycle } = useConsole();
+  const { siteId, setSiteId } = useSite();
   const [healthOn, setHealthOn] = useState(false);
+
+  function chooseSite(next: string) {
+    setSiteId(next);
+    if (!location.pathname.startsWith("/sites") || next === "all") return;
+    const params = new URLSearchParams(location.search);
+    if (params.get("site") === next) return;
+    params.set("site", next);
+    navigate({ pathname: "/sites", search: params.toString() }, { replace: true });
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -82,6 +95,21 @@ export function ConsoleFrame() {
           </span>
         </Link>
         <div className="ml-auto flex flex-wrap items-center gap-4 font-mono text-mps-micro text-mps-muted">
+          <label className="flex shrink-0 items-center gap-2 whitespace-nowrap font-sans text-mps-body text-mps-secondary">
+            Plant
+            <select
+              aria-label="Plant"
+              className="shrink-0 whitespace-nowrap rounded border border-mps-line bg-mps-canvas px-2 py-1 font-sans text-mps-body text-mps-text"
+              value={siteId}
+              onChange={(event) => chooseSite(event.target.value)}
+            >
+              {PLANTS.map((plant) => (
+                <option key={plant.id} value={plant.id}>
+                  {plant.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <span className="whitespace-nowrap">
             <Led tone={healthOn ? "nominal" : "off"} /> Sim clock · 1 s = 1 min
           </span>
@@ -168,7 +196,8 @@ export function AppShell() {
   const { revision } = useConsole();
   const outlet: ShellOutletContext = { session };
   return (
-    <GlossaryScope key={location.pathname}>
+    <SiteProvider>
+      <GlossaryScope key={location.pathname}>
       <div className="flex h-full min-h-0 flex-col overflow-hidden bg-sn-navy" data-region="app">
         <a className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-toast focus:bg-mps-panel focus:p-2" href="#main">
           Skip to content
@@ -178,6 +207,7 @@ export function AppShell() {
           <Outlet context={outlet} key={revision} />
         </div>
       </div>
-    </GlossaryScope>
+      </GlossaryScope>
+    </SiteProvider>
   );
 }

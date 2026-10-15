@@ -7,9 +7,14 @@ import { handlers as contractHandlers } from "../../../contracts/msw/handlers";
 import type { Alert, FaultInjectionRequest, Incident, OpenIncidentRequest, ScenarioRun, Ticket } from "../api/types";
 import { telemetryForTool } from "../fleet/telemetry";
 import { latestInvestigationForIncident } from "../investigation/ticketRoute";
+import { toolInPlant } from "../sites/selection";
 import { incidents, investigationFor, investigations, tools } from "./demoData";
 import { familyComparison, siteDetail, siteSummaries, toolRecord } from "./sites/fixtures";
 import { mockExtras, resetMockState } from "./state";
+
+function requestedPlant(request: Request): string {
+  return new URL(request.url).searchParams.get("siteId") ?? "all";
+}
 
 function problem(title: string, status: number) {
   return HttpResponse.json(
@@ -60,7 +65,10 @@ export const handlers = [
     return HttpResponse.json(site);
   }),
 
-  http.get("/api/tools", () => HttpResponse.json(clone(tools))),
+  http.get("/api/tools", ({ request }) => {
+    const plant = requestedPlant(request);
+    return HttpResponse.json(clone(tools.filter((tool) => toolInPlant(plant, tool.id, tool.siteId))));
+  }),
 
   http.get("/api/tools/:toolId", ({ params }) => {
     const toolId = String(params.toolId);
@@ -78,14 +86,22 @@ export const handlers = [
   }),
 
   http.get("/api/alerts", ({ request }) => {
-    const toolId = new URL(request.url).searchParams.get("toolId");
-    const rows = allAlerts().filter((alert) => (toolId ? alert.toolId === toolId : true));
+    const url = new URL(request.url);
+    const toolId = url.searchParams.get("toolId");
+    const plant = url.searchParams.get("siteId") ?? "all";
+    const rows = allAlerts().filter((alert) => (toolId ? alert.toolId === toolId : true) && toolInPlant(plant, alert.toolId));
     return HttpResponse.json(rows);
   }),
 
-  http.get("/api/tickets", () => HttpResponse.json(allTickets())),
+  http.get("/api/tickets", ({ request }) => {
+    const plant = requestedPlant(request);
+    return HttpResponse.json(allTickets().filter((ticket) => toolInPlant(plant, ticket.toolId)));
+  }),
 
-  http.get("/api/incidents", () => HttpResponse.json(allIncidents())),
+  http.get("/api/incidents", ({ request }) => {
+    const plant = requestedPlant(request);
+    return HttpResponse.json(allIncidents().filter((incident) => toolInPlant(plant, incident.toolId)));
+  }),
 
   http.get("/api/incidents/:incidentId", ({ params }) => {
     const incident = knownIncidents().find((item) => item.id === params.incidentId);

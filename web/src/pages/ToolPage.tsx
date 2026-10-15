@@ -11,12 +11,15 @@ import { PlainMetrics } from "../components/PlainMetrics";
 import { ToolSchematic } from "../components/ToolSchematic";
 import { btn, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
+import { useSite } from "../context/SiteContext";
+import { toolInPlant } from "../sites/selection";
 import { chartSpec } from "../fleet/chartSpec";
 import { statusTone, storyFor, windowRows } from "../fleet/catalog";
 import { fleetSensors } from "virtual:fleet-sensors";
 
 export function ToolPage() {
   const { toolId = "" } = useParams();
+  const { siteId } = useSite();
   const [tool, setTool] = useState<Tool | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +33,7 @@ export function ToolPage() {
     setAlerts([]);
     setError(null);
     setSelectedId(null);
-    Promise.all([api.getTool(toolId), api.listAlerts(toolId).catch(() => [] as Alert[])])
+    Promise.all([api.getTool(toolId), api.listAlerts(toolId, siteId).catch(() => [] as Alert[])])
       .then(([next, nextAlerts]) => {
         if (!cancelled) {
           setTool(next);
@@ -43,10 +46,18 @@ export function ToolPage() {
     return () => {
       cancelled = true;
     };
-  }, [toolId]);
+  }, [toolId, siteId]);
 
   if (error) return <p className="text-mps-alarm-text">{error}</p>;
   if (!tool || !story) return <p className="text-mps-muted">Loading {toolId}…</p>;
+  if (!toolInPlant(siteId, tool.id, tool.siteId)) {
+    return (
+      <div>
+        <h1 className="text-mps-display font-semibold">Tool {tool.id}</h1>
+        <p>This tool is at another plant. Choose All sites to open it.</p>
+      </div>
+    );
+  }
 
   const tone = statusTone(story.status);
   const toolSensors = fleetSensors.filter((sensor) => sensor.toolId === tool.id);

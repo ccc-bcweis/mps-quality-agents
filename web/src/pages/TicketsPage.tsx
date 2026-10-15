@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { CHANNEL_LABEL, STAGE_LABEL, severityTone, severityWord } from "../api/labels";
@@ -9,12 +9,15 @@ import { Explain } from "../components/Explain";
 import { Term } from "../components/Term";
 import { btnPrimary, field, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
+import { useSite } from "../context/SiteContext";
 import { pathForIncident, pathForTicket } from "../investigation/ticketRoute";
+import { toolInPlant } from "../sites/selection";
 import { lifecycleForIncident } from "../lifecycle";
 
 export function TicketsPage() {
   useSetLifecycle("ticket");
   const navigate = useNavigate();
+  const { siteId } = useSite();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [tools, setTools] = useState<Tool[]>([]);
@@ -25,13 +28,17 @@ export function TicketsPage() {
   const [severity, setSeverity] = useState<Severity>("medium");
   const [pending, setPending] = useState(false);
 
-  function reload() {
-    return Promise.all([api.listTickets(), api.listIncidents(), api.listTools()]).then(([nextTickets, nextIncidents, nextTools]) => {
-      setTickets(nextTickets);
-      setIncidents(nextIncidents);
-      setTools(nextTools);
-    });
-  }
+  const reload = useCallback(() => {
+    return Promise.all([api.listTickets(siteId), api.listIncidents(siteId), api.listTools(siteId)]).then(
+      ([nextTickets, nextIncidents, nextTools]) => {
+        const visibleTools = nextTools.filter((tool) => toolInPlant(siteId, tool.id, tool.siteId));
+        setTickets(nextTickets.filter((ticket) => toolInPlant(siteId, ticket.toolId)));
+        setIncidents(nextIncidents.filter((incident) => toolInPlant(siteId, incident.toolId)));
+        setTools(visibleTools);
+        setToolId((current) => (visibleTools.some((tool) => tool.id === current) ? current : (visibleTools[0]?.id ?? current)));
+      },
+    );
+  }, [siteId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,7 +48,7 @@ export function TicketsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reload]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();

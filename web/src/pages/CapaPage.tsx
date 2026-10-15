@@ -8,15 +8,19 @@ import { Explain } from "../components/Explain";
 import { Term } from "../components/Term";
 import { btn, panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
+import { useSite } from "../context/SiteContext";
+import { toolInPlant } from "../sites/selection";
 import { CAPA_STAGES, nextCapaStage } from "../lifecycle";
 
 export function CapaPage() {
   useSetLifecycle("capa");
   const { capaId } = useParams();
+  const { siteId } = useSite();
   const { capas, rememberCapa } = useConsole();
   const capasRef = useRef(capas);
   capasRef.current = capas;
   const [capa, setCapa] = useState<Capa | null>(null);
+  const [homeTool, setHomeTool] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -52,6 +56,25 @@ export function CapaPage() {
       cancelled = true;
     };
   }, [capaId, rememberCapa]);
+
+  useEffect(() => {
+    if (!capa) {
+      setHomeTool(null);
+      return undefined;
+    }
+    let cancelled = false;
+    api
+      .getIncident(capa.incidentId)
+      .then((incident) => {
+        if (!cancelled) setHomeTool(incident.toolId);
+      })
+      .catch(() => {
+        if (!cancelled) setHomeTool(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [capa]);
 
   async function advance(stage: CapaStage) {
     if (!capa) return;
@@ -97,6 +120,8 @@ export function CapaPage() {
         <p className="text-mps-muted">
           <Explain text="No CAPA yet. Approve a recommendation to create one." spellOut={false} />
         </p>
+      ) : homeTool && !toolInPlant(siteId, homeTool) ? (
+        <p>This corrective action is at another plant. Choose All sites to open it.</p>
       ) : (
         <>
           <p className="mb-3 rounded border border-mps-ok bg-mps-panel px-3 py-2" role="status">

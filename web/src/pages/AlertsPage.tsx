@@ -8,10 +8,13 @@ import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
 import { panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
+import { useSite } from "../context/SiteContext";
+import { toolInPlant } from "../sites/selection";
 
 export function AlertsPage() {
   useSetLifecycle("alert");
   const [params] = useSearchParams();
+  const { siteId } = useSite();
   const { localAlerts } = useConsole();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -21,7 +24,7 @@ export function AlertsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([api.listAlerts(), api.listTickets(), api.listIncidents()])
+    Promise.all([api.listAlerts(undefined, siteId), api.listTickets(siteId), api.listIncidents(siteId)])
       .then(([nextAlerts, nextTickets, nextIncidents]) => {
         if (cancelled) return;
         setAlerts(nextAlerts);
@@ -34,11 +37,11 @@ export function AlertsPage() {
     return () => {
       cancelled = true;
     };
-  }, [injected, localAlerts]);
+  }, [injected, localAlerts, siteId]);
 
-  const merged = [...localAlerts, ...alerts].filter(
-    (alert, index, all) => all.findIndex((item) => item.correlationId === alert.correlationId) === index,
-  );
+  const merged = [...localAlerts, ...alerts]
+    .filter((alert, index, all) => all.findIndex((item) => item.correlationId === alert.correlationId) === index)
+    .filter((alert) => toolInPlant(siteId, alert.toolId));
   const fresh = merged.filter((alert) => alert.correlationId.startsWith("corr-inject"));
 
   return (
