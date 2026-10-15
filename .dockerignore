@@ -1,15 +1,27 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Build context for the Dockerfiles. Keep eval answers and local secrets out of the image build.
+
 **/.git
+**/.github
 **/.vs
 **/.vscode
 **/.devcontainer
 **/bin
 **/obj
 **/TestResults
+**/node_modules
+**/coverage
 coverage
-.env
-.env.*
-!.env.example
 **/*.user
 **/*.db
 **/*.db-shm
 **/*.db-wal
+web/dist
+.env
+.env.*
+!.env.example
+tests
+docs
+design
+eval
+data/groundtruth

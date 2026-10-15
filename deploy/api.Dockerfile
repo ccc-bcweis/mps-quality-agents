@@ -4,6 +4,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY Directory.Build.props Directory.Packages.props global.json nuget.config MPS.sln ./
 COPY src/ src/
+COPY prompts/ prompts/
 RUN dotnet restore src/Mps.Api/Mps.Api.csproj
 RUN dotnet publish src/Mps.Api/Mps.Api.csproj --configuration Release --no-restore --output /app/publish /p:UseAppHost=false
 

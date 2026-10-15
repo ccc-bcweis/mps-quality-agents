@@ -189,7 +189,10 @@ export function AppShell() {
         })}
       </nav>
       <LifecycleBar current={lifecycle.current} escalated={lifecycle.escalated} />
-      <main id="main" className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-4">
+      <main
+        id="main"
+        className={`mx-auto w-full flex-1 px-4 py-4 ${location.pathname.startsWith("/tools/") ? "max-w-[1680px]" : "max-w-[1200px]"}`}
+      >
         <Outlet />
       </main>
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-mps-line px-4 py-3 text-mps-micro text-mps-muted">

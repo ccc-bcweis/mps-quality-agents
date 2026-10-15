@@ -25,6 +25,9 @@ public enum HumanDecisionKind
     Approve,
     Reject,
     RequestInfo,
+
+    /// <summary>Approve an escalated investigation anyway. Requires a written justification kept on the approval record.</summary>
+    Override,
 }
 
 public sealed class HumanDecision

@@ -42,7 +42,7 @@ export type InvestigationStage =
   | "approved"
   | "rejected"
   | "failed";
-export type HumanDecisionKind = "approve" | "reject" | "requestInfo";
+export type HumanDecisionKind = "approve" | "reject" | "requestInfo" | "override";
 export type CapaStage =
   | "open"
   | "containment"

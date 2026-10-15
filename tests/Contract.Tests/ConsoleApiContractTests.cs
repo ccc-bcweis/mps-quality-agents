@@ -154,7 +154,7 @@ public sealed class ConsoleApiContractTests
         request.Properties.Keys.Should().NotContain("signature");
         request.Properties.Keys.Should().NotContain("approvalToken");
         request.Properties["comment"].MaxLength.Should().Be(4000);
-        document.Schema("HumanDecisionKind").EnumNames().Should().Equal("approve", "reject", "requestInfo");
+        document.Schema("HumanDecisionKind").EnumNames().Should().Equal("approve", "reject", "requestInfo", "override");
 
         var result = document.Schema("DecisionResult");
         result.AdditionalPropertiesAllowed.Should().BeFalse();

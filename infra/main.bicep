@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-// Resource-group deployment. This file does not create the resource group and is not deployed by this lane.
+// Resource-group deployment. This file does not create the resource group.
+// The demo container keeps SQLite. SQL and the Static Web App stay off unless a parameter turns them on.
 
 targetScope = 'resourceGroup'
 
@@ -8,17 +9,32 @@ param location string = resourceGroup().location
 
 @minLength(3)
 @maxLength(12)
-@description('Lowercase letters and digits. Derived names must be globally unique before a real deploy.')
+@description('Lowercase letters and digits. No hyphen: the registry name is this prefix plus acr. Derived names must be globally unique before a real deploy.')
 param namePrefix string = 'mpsdemo'
 
-@description('Container image for the API. The ASP.NET runtime image is a placeholder until Z1.')
+@description('Container image. The workflow passes <acr>/mps-app:<tag> after the first bootstrap deploy.')
 param apiImage string = 'mcr.microsoft.com/dotnet/aspnet:8.0'
 
-@description('Static Web Apps region. eastus2 is supported for this SKU.')
+@description('Create Azure SQL. The demo uses SQLite inside the container, so this stays false.')
+param deploySql bool = false
+
+@description('Create the Static Web App. The console is served from the API container, so this stays false.')
+param deployStaticWeb bool = false
+
+@description('Static Web Apps region. Used only when deployStaticWeb is true. eastus2 is supported for this SKU.')
 param staticWebAppLocation string = 'eastus2'
 
-@description('Azure SQL database name.')
+@description('Azure SQL database name. Used only when deploySql is true.')
 param sqlDatabaseName string = 'mps'
+
+@description('GlobalStandard capacity for gpt-5.4-mini. 20 is about 20,000 tokens per minute.')
+param openAiCapacity int = 20
+
+@description('Entra application (client) id for Container Apps Easy Auth. The workflow passes the azure-demo variable.')
+param entraClientId string = ''
+
+@description('OpenID issuer for Easy Auth, for example https://login.microsoftonline.com/<tenant>/v2.0.')
+param openIdIssuer string = ''
 
 @description('Monthly USD budget. Azure has no weekly grain. 40 stands in for the $10/week alert.')
 param monthlyBudgetUsd int = 40
@@ -38,6 +54,7 @@ var insightsName = '${namePrefix}-ai'
 var vaultName = '${namePrefix}kv'
 var sqlServerName = '${namePrefix}-sql'
 var openAiName = '${namePrefix}-aoai'
+var registryName = '${namePrefix}acr'
 var environmentName = '${namePrefix}-cae'
 var appName = '${namePrefix}-api'
 var webName = '${namePrefix}-web'
@@ -76,7 +93,7 @@ module vault 'modules/key-vault.bicep' = {
   }
 }
 
-module sql 'modules/sql.bicep' = {
+module sql 'modules/sql.bicep' = if (deploySql) {
   name: 'sql'
   params: {
     location: location
@@ -93,6 +110,16 @@ module openai 'modules/openai.bicep' = {
     location: location
     name: openAiName
     principalId: identity.outputs.principalId
+    capacity: openAiCapacity
+  }
+}
+
+module acr 'modules/acr.bicep' = {
+  name: 'acr'
+  params: {
+    location: location
+    name: registryName
+    principalId: identity.outputs.principalId
   }
 }
 
@@ -105,11 +132,16 @@ module apps 'modules/container-apps.bicep' = {
     identityId: identity.outputs.id
     identityClientId: identity.outputs.clientId
     apiImage: apiImage
+    acrLoginServer: acr.outputs.loginServer
+    openAiEndpoint: openai.outputs.endpoint
+    modelDeployment: openai.outputs.deploymentName
+    entraClientId: entraClientId
+    openIdIssuer: openIdIssuer
     appInsightsConnectionString: insights.outputs.connectionString
   }
 }
 
-module web 'modules/static-web-app.bicep' = {
+module web 'modules/static-web-app.bicep' = if (deployStaticWeb) {
   name: 'static-web-app'
   params: {
     name: webName
@@ -129,8 +161,13 @@ module budget 'modules/budget.bicep' = if (!empty(budgetContactEmail)) {
 }
 
 output identityClientId string = identity.outputs.clientId
+output identityPrincipalId string = identity.outputs.principalId
+output appFqdn string = apps.outputs.fqdn
 output apiFqdn string = apps.outputs.fqdn
-output webHostname string = web.outputs.hostname
+output acrName string = acr.outputs.name
+output acrId string = acr.outputs.id
+output acrLoginServer string = acr.outputs.loginServer
 output openAiEndpoint string = openai.outputs.endpoint
+output webHostname string = deployStaticWeb ? web!.outputs.hostname : ''
+output sqlServer string = deploySql ? sql!.outputs.fullyQualifiedDomainName : ''
 output keyVaultUri string = vault.outputs.uri
-output sqlServer string = sql.outputs.fullyQualifiedDomainName

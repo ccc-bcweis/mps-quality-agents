@@ -14,9 +14,9 @@ public sealed class ModelGatewayOptions
     /// </summary>
     public decimal DailySpendCapUsd { get; set; } = 2.00m;
 
-    public decimal InputUsdPerMillionTokens { get; set; } = 0.15m;
+    public decimal InputUsdPerMillionTokens { get; set; } = 0.75m;
 
-    public decimal OutputUsdPerMillionTokens { get; set; } = 0.60m;
+    public decimal OutputUsdPerMillionTokens { get; set; } = 4.50m;
 
     public int LiveRetryCount { get; set; } = 2;
 
@@ -37,9 +37,10 @@ public sealed class ModelGatewayOptions
     public bool ScriptedReplay { get; set; }
 
     /// <summary>
-    /// Temperature sent on every live call. The demo pins this to 0.
+    /// Temperature sent on every live call. The demo pins this to 0. Null sends no temperature,
+    /// which reasoning-class deployments (for example gpt-5.x mini) require.
     /// </summary>
-    public float Temperature { get; set; }
+    public float? Temperature { get; set; } = 0f;
 
     /// <summary>
     /// Provider seed sent on every live call when the adapter supports it. The OpenAI seed parameter is this value.

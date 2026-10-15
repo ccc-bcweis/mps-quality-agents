@@ -68,7 +68,7 @@ public sealed class ModelGateway : IChatClient
             throw new ArgumentOutOfRangeException(nameof(options), "Circuit breaker threshold must be at least 1.");
         }
 
-        if (!float.IsFinite(options.Temperature))
+        if (options.Temperature is { } temperature && !float.IsFinite(temperature))
         {
             throw new ArgumentOutOfRangeException(nameof(options), "Temperature must be finite.");
         }
@@ -332,7 +332,11 @@ public sealed class ModelGateway : IChatClient
     private ChatOptions Pin(ChatOptions? options)
     {
         var pinned = options?.Clone() ?? new ChatOptions();
-        pinned.Temperature = _options.Temperature;
+        pinned.Temperature = _options.Temperature ?? pinned.Temperature;
+        if (_options.Temperature is null)
+        {
+            pinned.Temperature = null;
+        }
         pinned.Seed = _options.Seed;
         return pinned;
     }
