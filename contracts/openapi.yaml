@@ -14,7 +14,9 @@ info:
     It returns the latest investigation for that incident, or 404 when none exists.
     The path is additive. Earlier clients stay compatible.
     contracts-v1.3 adds GET /api/investigations. The list is every investigation, newest first.
-    The path is additive. Earlier clients stay compatible.
+    The same version adds an optional siteId query on the alert, ticket, investigation, and CAPA lists.
+    When siteId is set, the list keeps records for tools at that plant. An unknown plant returns an empty list.
+    The paths and the query are additive. Earlier clients stay compatible.
     All names and data are synthetic.
   license:
     name: MIT
@@ -135,9 +137,13 @@ paths:
     get:
       tags: [fleet]
       operationId: listAlerts
-      summary: SPC alerts
+      summary: SPC alerts, newest first
+      description: |
+        Optional toolId keeps one tool. Optional siteId keeps tools at that plant.
+        An unknown plant returns an empty list. Omit both to list every alert.
       parameters:
         - $ref: "#/components/parameters/ToolIdQuery"
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: Alerts.
@@ -151,7 +157,11 @@ paths:
     get:
       tags: [incidents]
       operationId: listTickets
-      summary: Intake tickets
+      summary: Intake tickets, newest first
+      description: |
+        Optional siteId keeps tickets for tools at that plant. An unknown plant returns an empty list.
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: Tickets.
@@ -238,6 +248,10 @@ paths:
       description: |
         Additive in contracts-v1.3. Returns every investigation. A later start sorts
         before an earlier start on the same incident, and a newer incident sorts before an older one.
+        Optional siteId keeps investigations whose incident tool is at that plant.
+        An unknown plant returns an empty list.
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: Investigations, newest first.
@@ -318,7 +332,12 @@ paths:
     get:
       tags: [capas]
       operationId: listCapas
-      summary: CAPA records
+      summary: CAPA records, newest first
+      description: |
+        Optional siteId keeps corrective actions whose incident tool is at that plant.
+        An unknown plant returns an empty list.
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: CAPAs.
@@ -515,6 +534,13 @@ components:
       schema:
         type: string
         minLength: 1
+    SiteIdQuery:
+      name: siteId
+      in: query
+      required: false
+      description: Plant id. When set, the list keeps records for tools at that plant. An unknown plant returns an empty list.
+      schema:
+        type: string
     ScenarioId:
       name: scenarioId
       in: path

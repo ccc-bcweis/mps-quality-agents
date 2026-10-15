@@ -54,6 +54,7 @@ scenarios: SC-1 SC-2 SC-3 SC-4
 
 ## Addendum: contracts-v1.3 (2026-10-15, GB-HIST)
 
-Additive console path. Existing operations are unchanged. OpenAPI `info.version` is 1.3.0.
+Additive console paths and query parameters. Existing operations are unchanged. OpenAPI `info.version` is 1.3.0.
 
 - `GET /api/investigations` returns every investigation, newest first. A later start on the same incident sorts before the earlier start. A newer incident sorts before an older one. The item shape is the existing `Investigation` schema.
+- `GET /api/alerts`, `GET /api/tickets`, `GET /api/investigations`, and `GET /api/capas` accept an optional `siteId` query. When it is set, the list keeps records for tools at that plant. An unknown plant returns an empty list, not a missing-record error. Omit it and the list is unchanged. Alert lists still accept `toolId`. Both filters apply together.

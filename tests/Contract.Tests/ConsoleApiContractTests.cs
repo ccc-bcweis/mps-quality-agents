@@ -93,6 +93,29 @@ public sealed class ConsoleApiContractTests
     }
 
     [Fact]
+    public void HistoryListsAcceptAnOptionalSiteFilter()
+    {
+        var document = OpenApiDocs.Console;
+        foreach (var path in new[] { "/api/alerts", "/api/tickets", "/api/investigations", "/api/capas" })
+        {
+            var operation = document.Operation(path, OperationType.Get);
+            var site = operation.Parameters
+                .Select(document.Parameter)
+                .Should()
+                .ContainSingle(parameter => parameter.Name == "siteId")
+                .Subject;
+            site.In.Should().Be(ParameterLocation.Query);
+            site.Required.Should().BeFalse();
+        }
+
+        document.Operation("/api/alerts", OperationType.Get)
+            .Parameters.Select(document.Parameter)
+            .Select(parameter => parameter.Name)
+            .Should()
+            .Equal("toolId", "siteId");
+    }
+
+    [Fact]
     public void ProblemResponsesCoverValidationNotFoundAndConflict()
     {
         var document = OpenApiDocs.Console;

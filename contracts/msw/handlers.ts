@@ -65,6 +65,18 @@ const investigation = {
   escalationReason: null,
 };
 
+function requestedSite(request: Request): string | null {
+  const value = new URL(request.url).searchParams.get("siteId");
+  if (!value || value.trim().length === 0) return null;
+  return value.trim().toLowerCase();
+}
+
+/** The contract fixture tools sit at Northwater. Another plant returns an empty list. */
+function allowsNorthwater(request: Request): boolean {
+  const wanted = requestedSite(request);
+  return wanted === null || wanted === "northwater";
+}
+
 export const handlers = [
   http.get("/health", () => HttpResponse.json({ status: "ok", service: "mps-api" })),
   http.get("/api/sites", () =>
@@ -149,8 +161,10 @@ export const handlers = [
   ),
   http.get("/api/tools", () => HttpResponse.json([tool])),
   http.get("/api/tools/:toolId", () => HttpResponse.json(tool)),
-  http.get("/api/alerts", () =>
-    HttpResponse.json([
+  http.get("/api/alerts", ({ request }) =>
+    !allowsNorthwater(request)
+      ? HttpResponse.json([])
+      : HttpResponse.json([
       {
         id: "33333333-3333-4333-8333-333333333333",
         toolId: "E-02",
@@ -163,8 +177,10 @@ export const handlers = [
       },
     ]),
   ),
-  http.get("/api/tickets", () =>
-    HttpResponse.json([
+  http.get("/api/tickets", ({ request }) =>
+    !allowsNorthwater(request)
+      ? HttpResponse.json([])
+      : HttpResponse.json([
       {
         id: "44444444-4444-4444-8444-444444444444",
         number: "TKT-1001",
@@ -196,7 +212,7 @@ export const handlers = [
   http.post("/api/incidents/:incidentId/investigations", () =>
     HttpResponse.json({ ...investigation, stage: "started", hypotheses: [] }, { status: 201 }),
   ),
-  http.get("/api/investigations", () => HttpResponse.json([investigation])),
+  http.get("/api/investigations", ({ request }) => HttpResponse.json(allowsNorthwater(request) ? [investigation] : [])),
   http.get("/api/investigations/:investigationId", () => HttpResponse.json(investigation)),
   http.post("/api/investigations/:investigationId/decisions", async ({ request }) => {
     const body = (await request.json()) as { kind?: string; approverId?: string; comment?: string | null };

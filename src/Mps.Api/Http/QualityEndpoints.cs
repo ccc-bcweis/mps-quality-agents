@@ -54,15 +54,19 @@ public static class QualityEndpoints
                 ? Results.NotFound()
                 : Results.Ok(ContractMapper.ToResponse(tool));
         });
-        app.MapGet("/api/alerts", async (string? toolId, IAlertLog alerts, CancellationToken cancellationToken) =>
+        app.MapGet("/api/alerts", async (string? toolId, string? siteId, IAlertLog alerts, IFleetCatalog fleet, CancellationToken cancellationToken) =>
         {
             ToolId? filter = string.IsNullOrWhiteSpace(toolId) ? null : new ToolId(toolId);
             var rows = await alerts.ListAsync(filter, cancellationToken).ConfigureAwait(false);
+            var tools = await SiteListFilter.ToolIdsAsync(siteId, fleet, cancellationToken).ConfigureAwait(false);
+            rows = SiteListFilter.Matching(rows, tools, alert => alert.ToolId.ToString());
             return Results.Ok(rows.Select(ContractMapper.ToResponse).ToArray());
         });
-        app.MapGet("/api/tickets", async (ITicketLog tickets, CancellationToken cancellationToken) =>
+        app.MapGet("/api/tickets", async (string? siteId, ITicketLog tickets, IFleetCatalog fleet, CancellationToken cancellationToken) =>
         {
             var rows = await tickets.ListAsync(cancellationToken).ConfigureAwait(false);
+            var tools = await SiteListFilter.ToolIdsAsync(siteId, fleet, cancellationToken).ConfigureAwait(false);
+            rows = SiteListFilter.Matching(rows, tools, ticket => ticket.ToolId.ToString());
             return Results.Ok(rows.Select(ContractMapper.ToResponse).ToArray());
         });
         app.MapGet("/api/incidents", async (IIncidentLog incidents, CancellationToken cancellationToken) =>
@@ -119,10 +123,21 @@ public static class QualityEndpoints
             return Results.Created("/api/investigations/" + response.Id.ToString("D"), response);
         });
         app.MapGet("/api/investigations", async (
+            string? siteId,
             IInvestigationService investigations,
+            IIncidentLog incidents,
+            IFleetCatalog fleet,
             CancellationToken cancellationToken) =>
         {
             var rows = await investigations.ListAsync(cancellationToken).ConfigureAwait(false);
+            var tools = await SiteListFilter.ToolIdsAsync(siteId, fleet, cancellationToken).ConfigureAwait(false);
+            if (tools is not null)
+            {
+                var stored = await incidents.ListAsync(cancellationToken).ConfigureAwait(false);
+                var toolByIncident = stored.ToDictionary(item => item.Incident.Id, item => item.Incident.ToolId.ToString());
+                rows = rows.Where(row => toolByIncident.TryGetValue(row.IncidentId, out var toolId) && tools.Contains(toolId)).ToArray();
+            }
+
             return Results.Ok(rows.Select(row => ContractMapper.ToResponse(row)).ToArray());
         });
         app.MapGet("/api/investigations/{investigationId:guid}", async (
@@ -169,9 +184,22 @@ public static class QualityEndpoints
                 ContractMapper.ToResponse(outcome.Investigation, narrative),
                 outcome.Capa is null ? null : ContractMapper.ToResponse(outcome.Capa.Capa)));
         });
-        app.MapGet("/api/capas", async (ICapaLifecycleService capas, CancellationToken cancellationToken) =>
+        app.MapGet("/api/capas", async (
+            string? siteId,
+            ICapaLifecycleService capas,
+            IIncidentLog incidents,
+            IFleetCatalog fleet,
+            CancellationToken cancellationToken) =>
         {
             var rows = await capas.ListAsync(cancellationToken).ConfigureAwait(false);
+            var tools = await SiteListFilter.ToolIdsAsync(siteId, fleet, cancellationToken).ConfigureAwait(false);
+            if (tools is not null)
+            {
+                var stored = await incidents.ListAsync(cancellationToken).ConfigureAwait(false);
+                var toolByIncident = stored.ToDictionary(item => item.Incident.Id, item => item.Incident.ToolId.ToString());
+                rows = rows.Where(row => toolByIncident.TryGetValue(row.Capa.IncidentId, out var toolId) && tools.Contains(toolId)).ToArray();
+            }
+
             return Results.Ok(rows.Select(row => ContractMapper.ToResponse(row.Capa)).ToArray());
         });
         app.MapGet("/api/capas/{capaId:guid}", async (Guid capaId, ICapaLifecycleService capas, CancellationToken cancellationToken) =>

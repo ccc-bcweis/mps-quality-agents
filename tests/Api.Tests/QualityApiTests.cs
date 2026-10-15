@@ -431,6 +431,66 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
             && entry.GetProperty("stance").GetString() == "rulesOut");
     }
 
+    [Fact]
+    public async Task HistoryListsFilterBySiteAndKeepTheNewRecords()
+    {
+        await using var factory = new ApiFactory().WithWebHostBuilder(builder =>
+            builder.UseSetting("Mps:Injector:DirectTicket", "true"));
+        var client = factory.CreateClient();
+        var parameter = "gasFlow-" + Guid.NewGuid().ToString("N");
+
+        var injected = await client.PostAsJsonAsync("/api/faults", new
+        {
+            toolId = "E-02",
+            chamberId = "A",
+            parameter,
+            shape = "step",
+            magnitude = 4.5,
+            rootCauseCategory = "engineeringChange",
+            confounders = false,
+        });
+        var incidents = await client.GetFromJsonAsync<JsonElement>("/api/incidents");
+        var incidentId = incidents.EnumerateArray().Single(row => row.GetProperty("parameter").GetString() == parameter).GetProperty("id").GetGuid();
+        var started = await client.PostAsync("/api/incidents/" + incidentId.ToString("D") + "/investigations", null);
+        var investigationId = (await started.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("id").GetGuid();
+        var approved = await client.PostAsJsonAsync("/api/investigations/" + investigationId.ToString("D") + "/decisions", new
+        {
+            kind = "approve",
+            approverId = "eng-17",
+            comment = "Hold the lot.",
+        });
+
+        var alertsAll = await client.GetAsync("/api/alerts");
+        var alertsNorth = await client.GetAsync("/api/alerts?siteId=Northwater&toolId=E-02");
+        var alertsIron = await client.GetAsync("/api/alerts?toolId=E-02&siteId=ironwood");
+        var alertsMissing = await client.GetAsync("/api/alerts?siteId=no-such-plant");
+        var ticketsNorth = await client.GetFromJsonAsync<JsonElement>("/api/tickets?siteId=northwater");
+        var ticketsIron = await client.GetFromJsonAsync<JsonElement>("/api/tickets?siteId=ironwood");
+        var investigationsNorth = await client.GetFromJsonAsync<JsonElement>("/api/investigations?siteId=northwater");
+        var investigationsIron = await client.GetFromJsonAsync<JsonElement>("/api/investigations?siteId=ironwood");
+        var capasNorth = await client.GetFromJsonAsync<JsonElement>("/api/capas?siteId=northwater");
+        var capasIron = await client.GetFromJsonAsync<JsonElement>("/api/capas?siteId=ironwood");
+
+        injected.StatusCode.Should().Be(HttpStatusCode.Accepted);
+        started.StatusCode.Should().Be(HttpStatusCode.Created);
+        approved.StatusCode.Should().Be(HttpStatusCode.OK);
+        alertsAll.StatusCode.Should().Be(HttpStatusCode.OK);
+        alertsNorth.StatusCode.Should().Be(HttpStatusCode.OK);
+        alertsIron.StatusCode.Should().Be(HttpStatusCode.OK);
+        alertsMissing.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await alertsNorth.Content.ReadFromJsonAsync<JsonElement>(Json)).EnumerateArray()
+            .Should().Contain(row => row.GetProperty("parameter").GetString() == parameter);
+        (await alertsIron.Content.ReadFromJsonAsync<JsonElement>(Json)).EnumerateArray()
+            .Should().NotContain(row => row.GetProperty("parameter").GetString() == parameter);
+        (await alertsMissing.Content.ReadFromJsonAsync<JsonElement>(Json)).GetArrayLength().Should().Be(0);
+        ticketsNorth.EnumerateArray().Should().Contain(row => row.GetProperty("title").GetString()!.Contains(parameter, StringComparison.Ordinal));
+        ticketsIron.EnumerateArray().Should().NotContain(row => row.GetProperty("title").GetString()!.Contains(parameter, StringComparison.Ordinal));
+        investigationsNorth.EnumerateArray().Select(row => row.GetProperty("id").GetGuid()).Should().StartWith(investigationId);
+        investigationsIron.EnumerateArray().Should().NotContain(row => row.GetProperty("id").GetGuid() == investigationId);
+        capasNorth.EnumerateArray().Should().Contain(row => row.GetProperty("incidentId").GetGuid() == incidentId);
+        capasIron.EnumerateArray().Should().NotContain(row => row.GetProperty("incidentId").GetGuid() == incidentId);
+    }
+
     private static object FaultBody(string parameter) => new
     {
         toolId = "E-02",
