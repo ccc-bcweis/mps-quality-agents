@@ -26,7 +26,7 @@ SC-3 supply chain, precursor lot PL-2044
 SC-4 process drift
 ```
 
-Trigger a scenario from the Fault Injector picker or from `POST /api/injector/scenarios/{id}`. The free-form form still posts `POST /api/faults`. Unknown ids return 404.
+Trigger a scenario from the demo harness bar (the scenario picker sits above the console) or from `POST /api/injector/scenarios/{id}`. The free-form fault form is the harness fault-injector panel and still posts `POST /api/faults`. Unknown ids return 404. Which screens are the harness and which are the application: `docs/demo/SCREENS.md`.
 
 The sample window is the first 30 seconds after 2026-09-01T00:00:00Z, so the series does not depend on when the button is pressed.
 

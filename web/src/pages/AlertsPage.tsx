@@ -6,7 +6,7 @@ import { formatStamp, ruleLabel, severityTone, severityWord } from "../api/label
 import type { Alert, Incident, Ticket } from "../api/types";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
-import { btn, panel } from "../components/ui";
+import { panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
 
 export function AlertsPage() {
@@ -48,9 +48,6 @@ export function AlertsPage() {
           <h1 className="text-mps-display font-semibold">Alerts</h1>
           <p className="text-mps-secondary">Spec-window violations and Western Electric rules. Debounced per tool and parameter. The rules engine is deterministic.</p>
         </div>
-        <Link className={btn} to="/injector">
-          Inject a fault
-        </Link>
       </div>
       {injected ? (
         <p className="mb-3 rounded border border-mps-warn bg-mps-panel px-3 py-2 text-mps-secondary" role="status">

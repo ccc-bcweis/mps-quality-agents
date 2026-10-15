@@ -10,8 +10,7 @@ describe("reset demo", () => {
   it("asks what is reset and restores the baseline", async () => {
     const user = userEvent.setup();
     renderConsole("/");
-    await user.click(await screen.findByRole("button", { name: "Account menu" }));
-    await user.click(screen.getByRole("menuitem", { name: "Reset demo" }));
+    await user.click(await screen.findByRole("button", { name: "Reset demo" }));
     const dialog = screen.getByRole("dialog", { name: "Reset the demo?" });
     expect(dialog).toHaveTextContent("Fleet state");
     expect(dialog).toHaveTextContent("Tickets");

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>ROI · MPS Fab Ops Console</title>
+  <title>Return on investment · StatusNeo demo harness</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
@@ -11,37 +11,45 @@
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
-  <div class="mode-banner">
-    <span class="mode-pill" data-mode-label>REPLAY MODE</span>
-    <span class="mode-note" data-mode-note>Recorded responses. No live model calls.</span>
-    <button type="button" class="mode-toggle" data-mode-toggle>Switch to LIVE AI</button>
-    <div class="spend" title="Hard daily spend cap enforced by the model gateway">
-      <span class="spend-label">Today's spend</span>
-      <div class="spend-track"><div class="spend-fill" data-spend-fill></div></div>
-      <span class="spend-val" data-spend-val>$0.00 of $2.00</span>
-    </div>
-  </div>
-  <header class="topbar">
-    <a class="brand" href="index.html">
-      <img src="../brand/logo-concept-1.svg" width="32" height="32" alt="Meridian Precision Systems mark"/>
-      <div>
-        <strong>Meridian Precision Systems</strong>
-        <span>Fab Ops Console · Austin Demo Fab</span>
+  <header class="harness" data-region="harness" aria-label="StatusNeo demo harness">
+    <div class="harness-row">
+      <div class="harness-brand">
+        <span class="sn" title="Placeholder. Official StatusNeo artwork is not in this repo.">Powered by StatusNeo</span>
+        <span class="harness-kicker">Demo harness</span>
       </div>
-    </a>
-    <div class="topbar-meta">
-      <span><span class="led"></span>Sim 14:32 · 1 s = 1 min</span>
-      <span>Plant <b>AUS-1</b></span>
-      <span>Engineer <b>dev-user</b></span>
+      <nav class="harness-nav" aria-label="Demo harness"><a href="injector.html">Fault injector</a><a href="roi.html" aria-current="page">Return on investment</a><a href="metrics.html">Metrics</a></nav>
+      <form class="harness-scenario" action="alerts.html" method="get">
+        <input type="hidden" name="injected" value="1"/>
+        <label>Scenario
+          <select name="scenario" aria-label="Scenario">
+            <option value="SC-1">SC-1 · Edge ring revision C on E-02</option>
+            <option value="SC-2">SC-2 · ESC thermocouple calibration drift</option>
+            <option value="SC-3">SC-3 · Bad precursor gas lot</option>
+            <option value="SC-4">SC-4 · Slow chamber seasoning drift</option>
+          </select>
+        </label>
+        <button type="submit">Run scenario</button>
+      </form>
+      <button type="button" class="harness-reset" data-open="reset-dialog" title="Admin presenters only">Reset demo</button>
+    </div>
+    <div class="mode-banner">
+      <span class="mode-pill" data-mode-label>REPLAY MODE</span>
+      <span class="mode-note" data-mode-note>Recorded responses. No live model calls.</span>
+      <button type="button" class="mode-toggle" data-mode-toggle>Switch to LIVE AI</button>
+      <div class="spend" title="Hard daily spend cap enforced by the model gateway">
+        <span class="spend-label">Today's spend</span>
+        <div class="spend-track"><div class="spend-fill" data-spend-fill></div></div>
+        <span class="spend-val" data-spend-val>$0.00 of $2.00</span>
+      </div>
     </div>
   </header>
-  <nav class="nav"><a href="index.html">Fleet</a><a href="tool.html">Tool</a><a href="alerts.html">Alerts</a><a href="tickets.html">Tickets</a><a href="investigation.html">Investigation</a><a href="approval.html">Approval</a><a href="capa.html">CAPA</a><a href="injector.html">Injector</a><a href="roi.html" aria-current="page">ROI</a><a href="metrics.html">Metrics</a></nav>
-  <ol class="lifecycle"><li class="is-current"><span class="pip"></span>Alert</li><li class="is-todo"><span class="pip"></span>Ticket</li><li class="is-todo"><span class="pip"></span>Investigation</li><li class="is-todo"><span class="pip"></span>Recommendation</li><li class="is-todo"><span class="pip"></span>Approval</li><li class="is-todo"><span class="pip"></span>CAPA</li></ol>
+  <section class="harness-panel" data-region="harness-panel" role="region" aria-label="Demo harness panel">
+    <p class="harness-panel-note">Presenter tool. This is not a Meridian Precision Systems console screen. <a href="index.html">Open the console</a></p>
   <main id="main" class="page">
 
     <div class="page-head">
       <div>
-        <h1>ROI · quality investigation acceleration</h1>
+        <h1>Return on investment</h1>
         <p>Illustrative, synthetic. Assumptions from PLAN §6.5. Not a customer measurement.</p>
       </div>
     </div>
@@ -84,10 +92,27 @@
 
   </main>
   <footer class="site-footer">
-    <span class="sn" title="Placeholder — official StatusNeo artwork not in this repo">Powered by StatusNeo</span>
     <span>Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · MIT · Fictional demonstration; all companies and data are synthetic.</span>
   </footer>
+  </section>
   
+  <div class="overlay" id="reset-dialog" role="presentation">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="reset-title">
+      <h2 id="reset-title">Reset the demo?</h2>
+      <p>This restores the seeded baseline. The same seed is used on this computer and in the hosted demo.</p>
+      <ul>
+        <li>Fleet state</li>
+        <li>Tickets</li>
+        <li>Investigations</li>
+        <li>Approvals and corrective actions</li>
+        <li>Simulated clock</li>
+      </ul>
+      <div class="btn-row">
+        <button type="button" class="btn" data-close>Confirm reset</button>
+        <button type="button" class="btn" data-close>Cancel</button>
+      </div>
+    </div>
+  </div>
   <script src="assets/console.js"></script>
 </body>
 </html>

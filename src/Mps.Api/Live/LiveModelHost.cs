@@ -75,7 +75,10 @@ public static class LiveModelHost
                 scenarioHint: services1.GetRequiredService<Mps.Api.Demo.ScriptedScenarioContext>());
         });
         services.AddSingleton(_ => WhyItMattersCatalog.Load(dataDirectory));
-        services.AddSingleton(_ => new SeedEnterpriseTools(Path.Combine(dataDirectory, "seed", "enterprise.json")));
+        services.AddSingleton(provider => new SeedEnterpriseTools(
+            Path.Combine(dataDirectory, "seed", "enterprise.json"),
+            Path.Combine(dataDirectory, "scenarios", "evidence.json"),
+            provider.GetService<Mps.Api.Demo.ScenarioEvidenceBoard>()));
         services.AddSingleton<DemoSignalTools>();
         services.AddSingleton(_ => new HybridDocumentSearch(Path.Combine(dataDirectory, "index", "embeddings.json")));
         services.AddSingleton<InvestigationSessionStore>();
