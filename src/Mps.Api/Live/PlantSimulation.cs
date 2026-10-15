@@ -1,0 +1,238 @@
+// Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+
+using Mps.Application.Spc;
+using Mps.Domain.Equipment;
+using Mps.Domain.Identity;
+using Mps.Domain.Telemetry;
+using Mps.Simulator.Demo;
+using Mps.Simulator.Fleet;
+using Mps.Simulator.Scenarios;
+using Mps.Simulator.Sites;
+using Mps.Simulator.Telemetry;
+
+namespace Mps.Api.Live;
+
+/// <summary>
+/// One seeded simulator for every tool at every plant, plus the decimated series the UI and the agents read.
+/// Fault onset is the simulator clock, so a prime of nominal history stays nominal.
+/// </summary>
+public sealed class PlantSimulation
+{
+    private readonly object _gate = new();
+    private readonly SimulationOptions _options;
+    private readonly LiveSeriesLog _log;
+    private bool _primed;
+
+    public PlantSimulation(SiteWorld world, TimeProvider time, IConfiguration configuration, SimulationOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(world);
+        ArgumentNullException.ThrowIfNull(time);
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(options);
+        World = world;
+        _options = options;
+        var seed = configuration.GetValue("Mps:Demo:Seed", DemoRuntime.DefaultSeed);
+        var tools = world.Sites
+            .SelectMany(site => site.Tools)
+            .Select(tool => tool.Spec)
+            .GroupBy(tool => tool.Id, StringComparer.Ordinal)
+            .Select(group => group.First())
+            .ToArray();
+        Runtime = new DemoRuntime(new FleetCatalog(tools), seed, time);
+        _log = new LiveSeriesLog(options.MaxPointsPerSeries);
+    }
+
+    public SiteWorld World { get; }
+
+    public DemoRuntime Runtime { get; }
+
+    public LiveSeriesLog Log => _log;
+
+    public DateTimeOffset SimulatedNow => Runtime.Simulator.SimulatedNow;
+
+    public SimulationOptions Options => _options;
+
+    public void EnsurePrimed()
+    {
+        lock (_gate)
+        {
+            EnsurePrimedUnlocked();
+        }
+    }
+
+    public void AdvanceTick()
+    {
+        var seconds = checked(_options.TickSeconds * _options.SimSecondsPerWallSecond);
+        lock (_gate)
+        {
+            EnsurePrimedUnlocked();
+            AppendUnlocked(TimeSpan.FromSeconds(seconds));
+        }
+    }
+
+    public void Advance(TimeSpan simulatedElapsed)
+    {
+        lock (_gate)
+        {
+            AppendUnlocked(simulatedElapsed);
+            _primed = true;
+        }
+    }
+
+    public void Apply(ScriptedScenario scenario)
+    {
+        lock (_gate)
+        {
+            Runtime.Apply(scenario);
+        }
+    }
+
+    public bool TryApplyFreeForm(string toolId, string? chamberId, string parameter, string shape, double magnitude)
+    {
+        lock (_gate)
+        {
+            return Runtime.TryApplyFreeForm(toolId, chamberId, parameter, shape, magnitude);
+        }
+    }
+
+    public void Inject(FaultSignal fault)
+    {
+        lock (_gate)
+        {
+            Runtime.Simulator.Inject(fault);
+        }
+    }
+
+    public void Reset()
+    {
+        lock (_gate)
+        {
+            Runtime.Reset();
+            _log.Clear();
+            _primed = false;
+            if (_options.Enabled)
+            {
+                EnsurePrimedUnlocked();
+            }
+        }
+    }
+
+    public Tool? FindTool(string toolId)
+    {
+        var placed = World.FindTool(toolId);
+        return placed is null ? null : ToDomain(placed);
+    }
+
+    public IReadOnlyList<Tool> ToolsForSite(string siteId)
+    {
+        var site = World.Find(siteId);
+        return site is null ? [] : site.Tools.Select(ToDomain).ToArray();
+    }
+
+    public string DefaultChamber(string toolId)
+    {
+        var tool = Runtime.Fleet.Tools.FirstOrDefault(candidate => string.Equals(candidate.Id, toolId, StringComparison.Ordinal));
+        return tool?.Chambers.Count > 0 ? tool.Chambers[0].Id : toolId + "-A";
+    }
+
+    public OperatingWindow? WindowAt(string toolId, string parameter, DateTimeOffset at)
+    {
+        ToolSpec tool;
+        try
+        {
+            tool = Runtime.Fleet.GetRequired(toolId);
+        }
+        catch (FleetSpecException)
+        {
+            return null;
+        }
+
+        var elapsed = (int)Math.Max(0, (at - Runtime.Simulator.Origin).TotalSeconds);
+        var schedule = RecipeSchedule.Locate(tool, elapsed);
+        if (RecipeSchedule.Parameters(schedule.Recipe).Contains(parameter, StringComparer.Ordinal))
+        {
+            return RecipeSchedule.Resolve(schedule, parameter);
+        }
+
+        var sensor = tool.Sensors.FirstOrDefault(item =>
+            string.Equals(item.Parameter, parameter, StringComparison.Ordinal)
+            || string.Equals(item.Id, parameter, StringComparison.Ordinal));
+        if (sensor is null || sensor.Limits.Maximum <= sensor.Limits.Minimum)
+        {
+            return null;
+        }
+
+        return new OperatingWindow(parameter, sensor.Unit, sensor.Limits.Minimum, sensor.Limits.Maximum, sensor.Limits.Nominal);
+    }
+
+    public IReadOnlyList<TelemetryPoint> ReadParameter(string toolId, string parameter, string? chamberId, DateTimeOffset from, DateTimeOffset until)
+    {
+        var points = _log.WindowForParameter(toolId, parameter, chamberId);
+        if (points.Count == 0)
+        {
+            return [];
+        }
+
+        var inRange = points.Where(point => point.At >= from && point.At <= until).ToArray();
+        var chosen = inRange.Length > 0 ? inRange : points;
+        return chosen.Select(point => new TelemetryPoint(point.At, point.Value)).ToArray();
+    }
+
+    public IReadOnlyList<SpcViolation> Evaluate(string toolId, string parameter, DateTimeOffset from, DateTimeOffset until)
+    {
+        var chamber = Runtime.Simulator.ActiveFaults
+            .LastOrDefault(fault => string.Equals(fault.ToolId, toolId, StringComparison.Ordinal)
+                && string.Equals(fault.Parameter, parameter, StringComparison.Ordinal))
+            ?.ChamberId
+            ?? _log.NewestChamber(toolId, parameter);
+        var points = ReadParameter(toolId, parameter, chamber, from, until);
+        if (points.Count == 0)
+        {
+            return [];
+        }
+
+        var window = WindowAt(toolId, parameter, points[^1].At);
+        if (window is null)
+        {
+            return [];
+        }
+
+        var sigma = Math.Max(window.Sigma, 1e-6);
+        var baseline = new ControlBaseline(window.Nominal, sigma, window.Minimum, window.Maximum);
+        return WesternElectricEvaluator.Evaluate(new ToolId(toolId), chamber ?? DefaultChamber(toolId), parameter, baseline, points);
+    }
+
+    private void EnsurePrimedUnlocked()
+    {
+        if (_primed)
+        {
+            return;
+        }
+
+        if (_options.PrimeSeconds > 0)
+        {
+            AppendUnlocked(TimeSpan.FromSeconds(_options.PrimeSeconds));
+        }
+
+        _primed = true;
+    }
+
+    private void AppendUnlocked(TimeSpan simulatedElapsed)
+    {
+        var frames = Runtime.Simulator.Advance(simulatedElapsed, _options.SampleStrideSeconds);
+        _log.Append(frames);
+    }
+
+    private static Tool ToDomain(PlacedTool placed)
+    {
+        var chambers = placed.Spec.Chambers.Select(chamber => new Chamber(chamber.Id, chamber.Name)).ToArray();
+        return new Tool(
+            new ToolId(placed.Spec.Id),
+            placed.Spec.Name,
+            placed.Spec.Family,
+            placed.Spec.Model,
+            placed.Spec.Bay,
+            chambers,
+            placed.SiteId);
+    }
+}

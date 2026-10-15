@@ -1,9 +1,11 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import { renderConsole } from "../test/render";
 import { matchCopy } from "../test/matchCopy";
+import { server } from "../test/server";
 
 describe("tool detail", () => {
   it("draws an SPC chart and the etch windows for E-02", async () => {
@@ -64,5 +66,53 @@ describe("tool detail", () => {
   it("says when a tool id is unknown", async () => {
     renderConsole("/tools/Z-99");
     expect(await screen.findByText("Tool was not found.")).toBeInTheDocument();
+  });
+
+  it("plots a streaming series and colors the matching sensor", async () => {
+    server.use(
+      http.get("/api/tools/:toolId/live", () =>
+        HttpResponse.json({
+          toolId: "E-01",
+          siteId: "northwater",
+          simulatedNow: "2026-09-01T00:10:00Z",
+          status: "alarm",
+          readings: [
+            {
+              sensorId: "E-01-A-OUT-ETCH",
+              parameter: "etchRate",
+              chamberId: "E-01-A",
+              unit: "nm/min",
+              at: "2026-09-01T00:10:00Z",
+              value: 250,
+              status: "alarm",
+            },
+          ],
+          series: [
+            {
+              parameter: "etchRate",
+              chamberId: "E-01-A",
+              points: Array.from({ length: 12 }, (_, index) => ({
+                at: "2026-09-01T00:00:00Z",
+                value: index < 8 ? 350 : 250,
+              })),
+            },
+          ],
+        }),
+      ),
+    );
+    renderConsole("/tools/E-01?streaming=1&parameter=etchRate");
+    expect(await screen.findByRole("status", { name: "Streaming trace" })).toHaveTextContent(/streaming/i);
+    expect(await screen.findByRole("figure", { name: /SPC chart of Etch rate/ })).toHaveAccessibleName(/beyond 3 sigma/i);
+    const etch = screen.getByRole("button", { name: /E-01-A-OUT-ETCH/ });
+    expect(etch).toHaveAttribute("data-status", "outOfSpec");
+    expect(etch).toHaveTextContent("250");
+    expect(screen.getByRole("heading", { name: /Tool E-01/ })).toBeInTheDocument();
+  });
+
+  it("draws a clone tool from its template sensors", async () => {
+    renderConsole("/tools/D-03");
+    expect(await screen.findByRole("heading", { name: /Tool D-03/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /D-03-A-PT-CHAMBER/ })).toHaveAttribute("data-anchor", "a.chamber.pressure");
+    expect(screen.queryByRole("button", { name: /D-01-A-PT-CHAMBER/ })).not.toBeInTheDocument();
   });
 });

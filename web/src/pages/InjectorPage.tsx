@@ -6,9 +6,8 @@ import { CATEGORY_LABEL } from "../api/labels";
 import type { FaultInjectionRequest, FaultShape, RootCauseCategory, Tool } from "../api/types";
 import { Explain } from "../components/Explain";
 import { btn, btnPrimary, field, panel } from "../components/ui";
-import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
+import { useSetLifecycle } from "../context/ConsoleContext";
 import { visibleProblem } from "../history/copy";
-import { pollUntil } from "../poll";
 
 const SHAPES: FaultShape[] = ["step", "ramp", "oscillation", "intermittent"];
 const CATEGORIES = Object.keys(CATEGORY_LABEL) as RootCauseCategory[];
@@ -24,7 +23,6 @@ const PARAMETERS = [
 export function InjectorPage() {
   useSetLifecycle("alert");
   const navigate = useNavigate();
-  const { noteUnrecordedInjection, rememberLocalAlert, bannerMode } = useConsole();
   const [tools, setTools] = useState<Tool[]>([]);
   const [toolId, setToolId] = useState("S-01");
   const [parameter, setParameter] = useState("calibrationOffset");
@@ -50,31 +48,8 @@ export function InjectorPage() {
     };
   }, []);
 
-  async function waitForAlert(correlationId: string, toolId: string, parameter: string, chamberId?: string | null, alertId?: string) {
-    const found = await pollUntil(
-      () => api.listAlerts(),
-      (rows) => rows.some((alert) => alert.correlationId === correlationId),
-      { timeoutMs: 10_000, intervalMs: 400 },
-    );
-    if (!found) {
-      rememberLocalAlert({
-        id: alertId ?? correlationId,
-        toolId,
-        chamberId: chamberId ?? null,
-        parameter,
-        severity: "high",
-        rule: "westernElectric1",
-        raisedAt: new Date().toISOString(),
-        correlationId,
-      });
-    }
-    if (bannerMode === "live") noteUnrecordedInjection();
-  }
-
-  async function inject(body: FaultInjectionRequest): Promise<string> {
-    const accepted = await api.injectFault(body);
-    await waitForAlert(accepted.correlationId, body.toolId, body.parameter, body.chamberId, accepted.faultId);
-    return accepted.correlationId;
+  function tracePath(nextToolId: string, nextParameter: string): string {
+    return `/tools/${encodeURIComponent(nextToolId)}?streaming=1&parameter=${encodeURIComponent(nextParameter)}`;
   }
 
   async function onSubmit(event: FormEvent) {
@@ -87,17 +62,19 @@ export function InjectorPage() {
     setPending(true);
     setError(null);
     try {
-      await inject({
+      const body: FaultInjectionRequest = {
         toolId,
         parameter,
         shape,
         magnitude: magnitudeValue,
         rootCauseCategory: category,
         confounders,
-      });
-      navigate("/alerts?injected=1");
+      };
+      await api.injectFault(body);
+      navigate(tracePath(toolId, parameter));
     } catch (reason: unknown) {
       setError(reason instanceof ApiProblem ? reason.title : "The fault was not accepted.");
+    } finally {
       setPending(false);
     }
   }
@@ -107,7 +84,7 @@ export function InjectorPage() {
     setError(null);
     try {
       for (const etchTool of ["E-01", "E-02"]) {
-        await inject({
+        await api.injectFault({
           toolId: etchTool,
           parameter: "gasFlow",
           shape: "step",
@@ -116,9 +93,10 @@ export function InjectorPage() {
           confounders: true,
         });
       }
-      navigate("/alerts?injected=1");
+      navigate(tracePath("E-01", "gasFlow"));
     } catch (reason: unknown) {
       setError(reason instanceof ApiProblem ? reason.title : "The preset was not accepted.");
+    } finally {
       setPending(false);
     }
   }
@@ -127,8 +105,8 @@ export function InjectorPage() {
     <div>
       <div className="mb-4">
         <h1 className="text-mps-display font-semibold">Fault injector</h1>
-        <p className="max-w-3xl text-mps-secondary">
-          Throw a new problem. The simulator writes matching records into the mock systems. Agents do not receive the fault object. The category below is held out of the alert. Named scenarios run from the demo harness bar.
+        <p className="max-w-3xl break-words text-mps-secondary">
+          Throw a new problem onto the live trace. Agents do not receive the fault object. The category below is held out of the alert. Named scenarios run from the demo harness bar. This click does not open an alert. The trace has to cross a rule first.
         </p>
       </div>
       {visibleProblem(error) ? (
@@ -203,12 +181,11 @@ export function InjectorPage() {
           <h2 className="mb-2 text-mps-title font-semibold">What happens</h2>
           <ol className="list-decimal space-y-1 pl-5">
             <li>The simulator applies the signal shape on the selected tool and parameter.</li>
-            <li>Ground truth records are written for eval. They are not an agent tool.</li>
+            <li>The tool page shows the streaming trace. Readings move over the next ticks.</li>
             <li>
-              <Explain text="SPC rules raise an alert, then a ticket." />
+              <Explain text="SPC rules open an alert when the points cross the limit, then a ticket." />
             </li>
-            <li>The alert should show on the alerts screen within 10 seconds.</li>
-            <li>In a live preview with no recording, the banner switches to the mock reasoner.</li>
+            <li>The investigation starts from that alert. Nothing is staged on this click.</li>
           </ol>
           <p className="mt-3 font-mono text-mps-micro text-mps-muted">One request carries one tool id. The S4 preset sends E-01 and E-02.</p>
         </section>

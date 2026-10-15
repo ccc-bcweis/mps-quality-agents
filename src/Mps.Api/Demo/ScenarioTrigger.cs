@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Api.Live;
 using Mps.Application.Faults;
 using Mps.Application.Printouts;
 using Mps.Domain.Hypotheses;
-using Mps.Simulator.Demo;
 using Mps.Simulator.Scenarios;
 using Mps.Simulator.Telemetry;
 
@@ -14,24 +14,24 @@ namespace Mps.Api.Demo;
 /// </summary>
 public sealed class ScenarioTrigger
 {
-    private readonly DemoRuntime _runtime;
+    private readonly PlantSimulation _plant;
     private readonly IFaultInjectionService _faults;
     private readonly ScriptedScenarioContext _context;
     private readonly IDocumentIntake _printouts;
     private readonly ScenarioEvidenceBoard? _board;
 
     public ScenarioTrigger(
-        DemoRuntime runtime,
+        PlantSimulation plant,
         IFaultInjectionService faults,
         ScriptedScenarioContext context,
         IDocumentIntake printouts,
         ScenarioEvidenceBoard? board = null)
     {
-        ArgumentNullException.ThrowIfNull(runtime);
+        ArgumentNullException.ThrowIfNull(plant);
         ArgumentNullException.ThrowIfNull(faults);
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(printouts);
-        _runtime = runtime;
+        _plant = plant;
         _faults = faults;
         _context = context;
         _printouts = printouts;
@@ -58,8 +58,8 @@ public sealed class ScenarioTrigger
                 }
             }
 
-            var telemetry = ScriptedScenarioCatalog.Sample(scenario, _runtime.Fleet, _runtime.Seed);
-            _runtime.Apply(scenario);
+            var telemetry = ScriptedScenarioCatalog.Sample(scenario, _plant.Runtime.Fleet, _plant.Runtime.Seed);
+            _plant.Apply(scenario);
             FaultAccepted? first = null;
             foreach (var toolId in scenario.ToolIds)
             {
@@ -78,7 +78,7 @@ public sealed class ScenarioTrigger
 
             return new ScenarioRun(
                 scenario.Id,
-                _runtime.Seed,
+                _plant.Runtime.Seed,
                 first!.FaultId,
                 first.CorrelationId,
                 telemetry.Select(point => new ScenarioPointResponse(point.ToolId, point.ChamberId, point.Parameter, point.At, point.Value)).ToArray());
@@ -113,10 +113,10 @@ public sealed class ScenarioTrigger
             return null;
         }
 
-        var telemetry = ScriptedScenarioCatalog.Sample(scenario, _runtime.Fleet, _runtime.Seed);
+        var telemetry = ScriptedScenarioCatalog.Sample(scenario, _plant.Runtime.Fleet, _plant.Runtime.Seed);
         return new ScenarioRun(
             scenario.Id,
-            _runtime.Seed,
+            _plant.Runtime.Seed,
             faultId,
             confirmed.CorrelationId,
             telemetry.Select(point => new ScenarioPointResponse(point.ToolId, point.ChamberId, point.Parameter, point.At, point.Value)).ToArray());
@@ -161,4 +161,8 @@ public sealed record ScenarioDescription(
     string ChamberId,
     string Parameter,
     string Shape,
-    string Summary);
+    string Summary,
+    string WhatsHappening,
+    string WhatWeSimulate,
+    string WhatAiShouldFind,
+    string ExpectedCause);

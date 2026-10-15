@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { describe, expect, it } from "vitest";
-import { buildSeries, violatesWesternElectric1, violatesWesternElectric2 } from "./series";
+import { bandFromEarly, buildSeries, violatesWesternElectric1, violatesWesternElectric2 } from "./series";
 
 describe("SPC series", () => {
   it("is deterministic for a seed", () => {
@@ -27,5 +27,13 @@ describe("SPC series", () => {
     const points = buildSeries({ seed: 4, mean: 4, sigma: 0.4, shape: "step" });
     const values = points.map((point) => point.value);
     expect(violatesWesternElectric1(values, 4, 0.4)).toBe(true);
+  });
+
+  it("reads the limit from the early part of a live series", () => {
+    const values = [...Array(8).fill(200), 184, 184];
+    const band = bandFromEarly(values, 0, 1);
+    expect(band.mean).toBeCloseTo(200);
+    expect(violatesWesternElectric1(values, band.mean, band.sigma)).toBe(true);
+    expect(bandFromEarly([1, 2, 3], 9, 2)).toEqual({ mean: 9, sigma: 2 });
   });
 });

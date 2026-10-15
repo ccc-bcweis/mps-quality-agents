@@ -77,6 +77,21 @@ export function buildSeries(options: {
   return points;
 }
 
+/**
+ * Control limits from the early part of a live series, before a fault has moved the mean.
+ * A flat start uses a small floor so a later step still stands out. Short series keep the chart spec.
+ */
+export function bandFromEarly(values: number[], fallbackMean: number, fallbackSigma: number): { mean: number; sigma: number } {
+  const count = Math.max(4, Math.floor(values.length * 0.25));
+  if (values.length < 8) return { mean: fallbackMean, sigma: fallbackSigma };
+  const early = values.slice(0, count);
+  const mean = early.reduce((sum, value) => sum + value, 0) / early.length;
+  const variance = early.reduce((sum, value) => sum + (value - mean) ** 2, 0) / early.length;
+  const sigma = Math.sqrt(variance);
+  if (!Number.isFinite(mean) || !Number.isFinite(sigma)) return { mean: fallbackMean, sigma: fallbackSigma };
+  return { mean, sigma: Math.max(sigma, Math.abs(mean) * 0.005, 1e-3) };
+}
+
 export function violatesWesternElectric1(values: number[], mean: number, sigma: number): boolean {
   return values.some((value) => Math.abs(value - mean) > 3 * sigma);
 }

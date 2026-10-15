@@ -109,14 +109,7 @@ public sealed class DocumentIntakeServiceTests
             fleet.Add(new Tool(new ToolId("D-01"), "Dep 01", ToolFamily.Deposition, "MPS-D7", "Bay-3", [new Chamber("A", "Chamber A")]));
             var clock = new FixedClock(Now);
             var intake = new IntakeService(fleet, Incidents, new InMemoryTicketingPort(), NullQualityNotifier.Instance, clock);
-            var faults = new FaultInjectionService(
-                fleet,
-                Faults,
-                intake,
-                new SpcAlertService(Alerts, intake, NullQualityNotifier.Instance, SpcAlertService.DefaultDebounce),
-                NullQualityNotifier.Instance,
-                clock,
-                new InjectorPolicy(false));
+            var faults = new FaultInjectionService(fleet, Faults, NullQualityNotifier.Instance, clock);
             Service = new DocumentIntakeService(
                 new EmptyExtractor(),
                 new EmptyParser(),

@@ -112,8 +112,7 @@ export function telemetryForTool(toolId: string, options?: { applyDemoFault?: bo
 
 export function readingFor(sensor: FleetSensor): TelemetrySample {
   const row = telemetryForTool(sensor.toolId).find((item) => item.sensorId === sensor.id);
-  if (!row) {
-    throw new Error(`No mock reading for ${sensor.id}.`);
-  }
-  return row;
+  if (row) return row;
+  // A clone sensor is a rewritten copy. Sample it on its own limits when the catalog has no row.
+  return sample(sensor, new Map([[sensor.id, sensor]]), false);
 }

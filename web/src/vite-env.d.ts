@@ -15,6 +15,7 @@ declare module "virtual:fleet-sensors" {
   export const fleetSensorSource: string;
   export const fleetSensorNote: string;
   export const fleetSensors: FleetSensor[];
+  export const fleetTemplates: Record<string, string>;
 }
 
 interface ImportMetaEnv {

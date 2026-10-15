@@ -88,6 +88,22 @@ public sealed class FleetSimulator : ITelemetrySource
     }
 
     /// <summary>
+    /// Stamps each signal with the simulator clock while the clock cannot move. Onset is "now", not the baseline origin.
+    /// </summary>
+    public void InjectAtSimulatedNow(Func<DateTimeOffset, IEnumerable<FaultSignal>> build)
+    {
+        ArgumentNullException.ThrowIfNull(build);
+        lock (_gate)
+        {
+            foreach (var fault in build(_now))
+            {
+                ArgumentNullException.ThrowIfNull(fault);
+                _faults.Add(fault);
+            }
+        }
+    }
+
+    /// <summary>
     /// Drops injected faults and series cursors and puts the simulator clock back on <see cref="Origin"/>.
     /// </summary>
     public void Reset()
@@ -100,7 +116,13 @@ public sealed class FleetSimulator : ITelemetrySource
         }
     }
 
-    public IReadOnlyList<TelemetryFrame> Advance(TimeSpan simulatedElapsed)
+    public IReadOnlyList<TelemetryFrame> Advance(TimeSpan simulatedElapsed) => Advance(simulatedElapsed, 1);
+
+    /// <summary>
+    /// Advances one simulated second at a time so the seeded cursor matches a 1 Hz run.
+    /// <paramref name="sampleStrideSeconds"/> keeps every Nth second (and the last second) in the returned list.
+    /// </summary>
+    public IReadOnlyList<TelemetryFrame> Advance(TimeSpan simulatedElapsed, int sampleStrideSeconds)
     {
         var seconds = (int)simulatedElapsed.TotalSeconds;
         if (seconds <= 0 || TimeSpan.FromSeconds(seconds) != simulatedElapsed)
@@ -108,11 +130,17 @@ public sealed class FleetSimulator : ITelemetrySource
             throw new ArgumentOutOfRangeException(nameof(simulatedElapsed), "Advance in whole simulated seconds.");
         }
 
+        if (sampleStrideSeconds <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(sampleStrideSeconds), "Sample stride must be positive.");
+        }
+
         lock (_gate)
         {
             var frames = new List<TelemetryFrame>();
             for (var second = 0; second < seconds; second++)
             {
+                var keep = sampleStrideSeconds == 1 || second == seconds - 1 || (second + 1) % sampleStrideSeconds == 0;
                 var at = _now;
                 var elapsed = checked((int)(at - Origin).TotalSeconds);
                 foreach (var tool in Fleet.Tools)
@@ -135,7 +163,10 @@ public sealed class FleetSimulator : ITelemetrySource
                             var key = TelemetryMath.SeriesKey(tool.Id, chamber.Id, parameter);
                             var value = Cursor(key).Next(window, at, _faults, tool.Id, chamber.Id, parameter);
                             values[sensor.Id] = value;
-                            AddFrame(frames, tool.Id, chamber.Id, parameter, sensor.Unit, sensor.Id, at, value, schedule, runId, lotId);
+                            if (keep)
+                            {
+                                AddFrame(frames, tool.Id, chamber.Id, parameter, sensor.Unit, sensor.Id, at, value, schedule, runId, lotId);
+                            }
                         }
 
                         foreach (var reflected in tool.Sensors.Where(sensor => sensor.TracksSensorId is not null && string.Equals(sensor.ChamberId, chamber.Id, StringComparison.Ordinal)).OrderBy(sensor => sensor.Id, StringComparer.Ordinal))
@@ -149,7 +180,10 @@ public sealed class FleetSimulator : ITelemetrySource
                             var key = TelemetryMath.SeriesKey(tool.Id, chamber.Id, reflected.Id);
                             var noise = Cursor(key).NextDeviation(reflected.Limits.Sigma);
                             var value = (forward * (reflected.Limits.Nominal / tracked.Limits.Nominal)) + noise;
-                            AddFrame(frames, tool.Id, chamber.Id, reflected.Id, reflected.Unit, reflected.Id, at, value, schedule, runId, lotId);
+                            if (keep)
+                            {
+                                AddFrame(frames, tool.Id, chamber.Id, reflected.Id, reflected.Unit, reflected.Id, at, value, schedule, runId, lotId);
+                            }
                         }
                     }
 
@@ -168,7 +202,10 @@ public sealed class FleetSimulator : ITelemetrySource
                             value = Cursor(key).Next(window, at, _faults, tool.Id, chamberId, sensor.Id);
                         }
 
-                        AddFrame(frames, tool.Id, chamberId, sensor.Id, sensor.Unit, sensor.Id, at, value, schedule, runId, lotId);
+                        if (keep)
+                        {
+                            AddFrame(frames, tool.Id, chamberId, sensor.Id, sensor.Unit, sensor.Id, at, value, schedule, runId, lotId);
+                        }
                     }
                 }
 

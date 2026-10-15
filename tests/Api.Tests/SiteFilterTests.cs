@@ -33,9 +33,10 @@ public sealed class SiteFilterTests
         var ironTickets = await client.GetFromJsonAsync<JsonElement>("/api/tickets?siteId=lumen");
 
         allTools.GetArrayLength().Should().Be(8);
-        northTools.GetArrayLength().Should().Be(8);
+        northTools.GetArrayLength().Should().Be(12);
         northTools.EnumerateArray().Should().OnlyContain(tool => tool.GetProperty("siteId").GetString() == "northwater");
-        ironTools.GetArrayLength().Should().Be(0);
+        ironTools.GetArrayLength().Should().Be(10);
+        ironTools.EnumerateArray().Should().OnlyContain(tool => tool.GetProperty("siteId").GetString() == "ironwood");
         allIncidents.GetArrayLength().Should().Be(1);
         northIncidents.GetArrayLength().Should().Be(1);
         ironIncidents.GetArrayLength().Should().Be(0);

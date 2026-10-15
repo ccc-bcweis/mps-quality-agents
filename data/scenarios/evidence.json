@@ -111,5 +111,34 @@
         "summary": "Last chamber clean. Chamber A is past 420 RF-hours since that clean; etch rate typically falls as the chamber seasons."
       }
     ]
+  },
+  "SC-5": {
+    "materialLots": [
+      {"lotId":"MX4419","materialCode":"PREC-FILM","supplierName":"Harborfell Precursors","receivedAt":"2026-10-08T06:00:00Z","noticeId":"SN-MX4419"}
+    ],
+    "materialUses": [
+      {"lotId":"MX4419","toolId":"D-03"},
+      {"lotId":"MX4419","toolId":"I-D-01"}
+    ],
+    "notices": [
+      {"noticeId":"SN-MX4419","supplierName":"Harborfell Precursors","materialCode":"PREC-FILM","lotId":"MX4419","summary":"Lot MX4419 film precursor is about 8 percent light. It was loaded on deposition tool D-03 at Northwater and tool I-D-01 at Ironwood on 2026-10-08.","issuedAt":"2026-10-09T15:00:00Z"}
+    ],
+    "ncrs": [
+      {"ncrId":"QR-MX4419","toolId":"D-03","title":"Quality report: film thickness is low at Northwater (D-03) and Ironwood (I-D-01) after precursor lot MX4419.","openedAt":"2026-10-10T11:00:00Z","lotId":"MX4419"},
+      {"ncrId":"QR-MX4419-IW","toolId":"I-D-01","title":"Quality report: film thickness is low at Northwater (D-03) and Ironwood (I-D-01) after precursor lot MX4419.","openedAt":"2026-10-10T11:00:00Z","lotId":"MX4419"}
+    ],
+    "workOrders": [
+      {"workOrderId":"WO-CLN-D03-A","toolId":"D-03","chamberId":"D-03-A","kind":"clean","performedAt":"2026-10-08T02:00:00Z","summary":"Chamber clean on D-03 chamber A only. Ironwood tool I-D-01 was not cleaned. The clean can look like the cause of a thickness shift that also appears at Ironwood."}
+    ]
+  },
+  "SC-7": {
+    "workOrders": [
+      {"workOrderId":"WO-PMP-D02-BRG","toolId":"D-02","chamberId":"D-02-A","kind":"maintenance","performedAt":"2026-10-11T09:00:00Z","summary":"Foreline pump bearing hours are past the service interval on D-02. Vibration has been rising. The bearing was not replaced."}
+    ]
+  },
+  "SC-8": {
+    "workOrders": [
+      {"workOrderId":"WO-RCP-E03-RF","toolId":"E-03","chamberId":"E-03-A","kind":"process","performedAt":"2026-10-12T16:30:00Z","summary":"An operator edited the RF power recipe setpoint on E-03 in the MES recipe. There is no engineering change order for that edit."}
+    ]
   }
 }

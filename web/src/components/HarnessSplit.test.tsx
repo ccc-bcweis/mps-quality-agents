@@ -76,11 +76,27 @@ describe("demo harness and console split", () => {
     const harness = await screen.findByRole("banner", { name: "StatusNeo demo harness" });
     await within(harness).findByRole("option", { name: /SC-4/ });
     await user.selectOptions(within(harness).getByRole("combobox", { name: "Scenario" }), "SC-4");
+    expect(within(harness).getByRole("region", { name: "SC-4 scenario card" })).toHaveTextContent(/etch rate/i);
     await user.click(within(harness).getByRole("button", { name: "Run scenario" }));
-    expect(await screen.findByRole("heading", { name: "Alerts" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /Tool E-01/ })).toBeInTheDocument();
     const consoleRegion = screen.getByRole("region", { name: "Meridian Precision Systems console" });
-    expect(consoleRegion).toContainElement(screen.getByRole("heading", { name: "Alerts" }));
-    expect(await within(consoleRegion).findByRole("link", { name: "E-01" })).toBeInTheDocument();
-    expect(within(consoleRegion).queryByText("corr-scenario-SC-4")).not.toBeInTheDocument();
+    expect(consoleRegion).toContainElement(screen.getByRole("heading", { name: /Tool E-01/ }));
+    expect(within(consoleRegion).getByRole("status", { name: "Streaming trace" })).toHaveTextContent(/streaming/i);
+    expect(screen.queryByText("corr-scenario-SC-4")).not.toBeInTheDocument();
+  });
+
+  it("opens a scenario card from the picker", async () => {
+    const user = userEvent.setup();
+    renderConsole("/");
+    const harness = await screen.findByRole("banner", { name: "StatusNeo demo harness" });
+    await within(harness).findByRole("option", { name: /SC-5/ });
+    await user.selectOptions(within(harness).getByRole("combobox", { name: "Scenario" }), "SC-5");
+    const card = within(harness).getByRole("region", { name: "SC-5 scenario card" });
+    expect(card).toHaveTextContent(/precursor/i);
+    expect(card).toHaveTextContent(/film thickness/i);
+    expect(card.className).toContain("break-words");
+    expect(card.className).toContain("max-w-full");
+    await user.click(within(card).getByText("What the AI should find"));
+    expect(card).toHaveTextContent(/both plants/i);
   });
 });

@@ -5,36 +5,34 @@ import { describe, expect, it } from "vitest";
 import { renderConsole } from "../test/render";
 
 describe("fault injector", () => {
-  it("shows the new alert after inject", async () => {
+  it("opens the tool trace after inject", async () => {
     const user = userEvent.setup();
     renderConsole("/injector");
     expect(await screen.findByRole("heading", { name: "Fault injector" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Inject" }));
-    expect(await screen.findByRole("heading", { name: "Alerts" })).toBeInTheDocument();
-    expect(await screen.findByRole("link", { name: "S-01" })).toBeInTheDocument();
-    expect(screen.queryByText(/corr-inject-/)).not.toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent(/new alert/i);
+    expect(await screen.findByRole("heading", { name: /Tool S-01/ })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Streaming trace" })).toHaveTextContent(/streaming/i);
+    expect(screen.queryByRole("heading", { name: "Alerts" })).not.toBeInTheDocument();
   });
 
-  it("runs a named scenario and shows its alert", async () => {
+  it("runs a named scenario and opens its tool trace", async () => {
     const user = userEvent.setup();
     renderConsole("/injector");
     await screen.findByRole("option", { name: /SC-4/ });
     await user.selectOptions(screen.getByRole("combobox", { name: "Scenario" }), "SC-4");
     await user.click(screen.getByRole("button", { name: "Run scenario" }));
-    expect(await screen.findByRole("heading", { name: "Alerts" })).toBeInTheDocument();
-    expect(await screen.findByRole("link", { name: "E-01" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /Tool E-01/ })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Streaming trace" })).toHaveTextContent(/streaming/i);
     expect(screen.queryByText("corr-scenario-SC-4")).not.toBeInTheDocument();
   });
 
-  it("preset S4 raises an alert on both etch tools", async () => {
+  it("preset S4 opens the first etch tool trace", async () => {
     const user = userEvent.setup();
     renderConsole("/injector");
     await screen.findByRole("option", { name: /S-01/ });
     await user.click(screen.getByRole("button", { name: /Preset S4/ }));
-    expect(await screen.findByRole("heading", { name: "Alerts" })).toBeInTheDocument();
-    expect(await screen.findByRole("link", { name: "E-01" })).toBeInTheDocument();
-    expect(await screen.findByRole("link", { name: "E-02" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /Tool E-01/ })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Streaming trace" })).toHaveTextContent(/streaming/i);
     expect(screen.queryByText(/corr-inject-/)).not.toBeInTheDocument();
   });
 });

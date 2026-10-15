@@ -33,7 +33,11 @@ public static class RootCauseRanker
             var cause = notice is null
                 ? "Material lot " + lot + " spans the affected tools."
                 : "Material lot " + lot + " spans the affected tools and supplier notice " + notice + " matches it.";
-            var counters = request.EcoIds.Select(id => "ECO " + id + " is a confounder.").ToArray();
+            var counters = request.EcoIds.Select(id => "ECO " + id + " is a confounder.")
+                .Concat(request.PmSummaries
+                    .Where(summary => summary.Contains("clean", StringComparison.OrdinalIgnoreCase))
+                    .Select(summary => summary + " is a confounder on one tool."))
+                .ToArray();
             var cited = Prefer(request.LotEvidenceIds, request.SignalEvidenceIds);
             return Recommend(request, RootCauseCategory.SupplyChainMaterial, cause, 0.84d, cited, counters, ["Hold material lot " + lot + " pending supplier review."]);
         }
@@ -66,6 +70,30 @@ public static class RootCauseRanker
                 request.OverdueEvidenceIds.Length > 0 ? request.OverdueEvidenceIds : request.AlignmentEvidenceIds,
                 request.SignalEvidenceIds);
             return Recommend(request, RootCauseCategory.EquipmentCalibrationOrAlignment, cause, 0.82d, cited, counters, ["Restore calibration or alignment on chamber " + request.ScopeKey + " before the next run."]);
+        }
+
+        if (!eco && !material && Mentions(request, "bearing"))
+        {
+            return Recommend(
+                request,
+                RootCauseCategory.EquipmentCalibrationOrAlignment,
+                "A maintenance record shows the pump bearing is past its service interval, and vibration is rising.",
+                0.83d,
+                Prefer(request.PmEvidenceIds, request.SignalEvidenceIds),
+                request.LotIds.Select(id => "Supplier lot " + id + " is a confounder.").ToArray(),
+                ["Replace the pump bearing before the next production lot."]);
+        }
+
+        if (!eco && !material && Mentions(request, "recipe setpoint"))
+        {
+            return Recommend(
+                request,
+                RootCauseCategory.ProcessDrift,
+                "An operator changed a recipe setpoint and there is no engineering change order for that edit.",
+                0.8d,
+                Prefer(request.PmEvidenceIds, request.SignalEvidenceIds),
+                [],
+                ["Restore the approved recipe setpoint and record the edit."]);
         }
 
         if (string.Equals(request.SignalShape, "ramp", StringComparison.OrdinalIgnoreCase) && !eco && !calibration && !material)
@@ -123,6 +151,9 @@ public static class RootCauseRanker
     {
         return primary.Length > 0 ? primary : fallback;
     }
+
+    private static bool Mentions(ResolutionRequest request, string phrase) =>
+        request.PmSummaries.Any(summary => summary.Contains(phrase, StringComparison.OrdinalIgnoreCase));
 
     private static string? First(string[] values)
     {

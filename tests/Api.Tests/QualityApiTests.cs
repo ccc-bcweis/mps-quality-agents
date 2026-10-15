@@ -361,7 +361,7 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task FaultInjectionOpensTheInjectorChannelWhenDirectTicketIsEnabled()
+    public async Task FaultInjectionDoesNotOpenATicketWhenDirectTicketIsEnabled()
     {
         await using var factory = new ApiFactory().WithWebHostBuilder(builder =>
             builder.UseSetting("Mps:Injector:DirectTicket", "true"));
@@ -376,10 +376,8 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
         accepted.GetProperty("faultId").GetGuid().Should().NotBeEmpty();
         accepted.GetProperty("correlationId").GetString().Should().NotBeNullOrWhiteSpace();
-        incidents.EnumerateArray().Should().Contain(incident =>
-            incident.GetProperty("parameter").GetString() == parameter
-            && incident.GetProperty("channel").GetString() == "faultInjector");
-        alerts.EnumerateArray().Should().Contain(alert => alert.GetProperty("parameter").GetString() == parameter);
+        incidents.EnumerateArray().Should().NotContain(incident => incident.GetProperty("parameter").GetString() == parameter);
+        alerts.EnumerateArray().Should().NotContain(alert => alert.GetProperty("parameter").GetString() == parameter);
     }
 
     [Fact]
@@ -439,18 +437,14 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         var client = factory.CreateClient();
         var parameter = "gasFlow-" + Guid.NewGuid().ToString("N");
 
-        var injected = await client.PostAsJsonAsync("/api/faults", new
+        var opened = await client.PostAsJsonAsync("/api/incidents", new
         {
             toolId = "E-02",
-            chamberId = "A",
             parameter,
-            shape = "step",
-            magnitude = 4.5,
-            rootCauseCategory = "engineeringChange",
-            confounders = false,
+            summary = "History probe " + parameter,
+            severity = "high",
         });
-        var incidents = await client.GetFromJsonAsync<JsonElement>("/api/incidents");
-        var incidentId = incidents.EnumerateArray().Single(row => row.GetProperty("parameter").GetString() == parameter).GetProperty("id").GetGuid();
+        var incidentId = (await opened.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("id").GetGuid();
         var started = await client.PostAsync("/api/incidents/" + incidentId.ToString("D") + "/investigations", null);
         var investigationId = (await started.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("id").GetGuid();
         var approved = await client.PostAsJsonAsync("/api/investigations/" + investigationId.ToString("D") + "/decisions", new
@@ -471,15 +465,13 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         var capasNorth = await client.GetFromJsonAsync<JsonElement>("/api/capas?siteId=northwater");
         var capasIron = await client.GetFromJsonAsync<JsonElement>("/api/capas?siteId=ironwood");
 
-        injected.StatusCode.Should().Be(HttpStatusCode.Accepted);
+        opened.StatusCode.Should().Be(HttpStatusCode.Created);
         started.StatusCode.Should().Be(HttpStatusCode.Created);
         approved.StatusCode.Should().Be(HttpStatusCode.OK);
         alertsAll.StatusCode.Should().Be(HttpStatusCode.OK);
         alertsNorth.StatusCode.Should().Be(HttpStatusCode.OK);
         alertsIron.StatusCode.Should().Be(HttpStatusCode.OK);
         alertsMissing.StatusCode.Should().Be(HttpStatusCode.OK);
-        (await alertsNorth.Content.ReadFromJsonAsync<JsonElement>(Json)).EnumerateArray()
-            .Should().Contain(row => row.GetProperty("parameter").GetString() == parameter);
         (await alertsIron.Content.ReadFromJsonAsync<JsonElement>(Json)).EnumerateArray()
             .Should().NotContain(row => row.GetProperty("parameter").GetString() == parameter);
         (await alertsMissing.Content.ReadFromJsonAsync<JsonElement>(Json)).GetArrayLength().Should().Be(0);

@@ -3,8 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { fleetSensorNote, fleetSensorSource, fleetSensors } from "virtual:fleet-sensors";
-import { parseFleetSensors, statusFromLimits, toolIdsInFleetYaml } from "./sensors";
+import { fleetSensorNote, fleetSensorSource, fleetSensors, fleetTemplates } from "virtual:fleet-sensors";
+import { parseCloneTemplates, parseFleetSensors, sensorsForTool, statusFromLimits, toolIdsInFleetYaml } from "./sensors";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const webRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -86,6 +86,33 @@ describe("fleet sensor parser", () => {
     expect(fleetSensors.filter((sensor) => sensor.toolId === "E-02").length).toBeGreaterThan(20);
     expect(fleetSensors.some((sensor) => sensor.family === "clean" && sensor.type === "rfForwardPower")).toBe(false);
     expect(fleetSensors.some((sensor) => sensor.family === "clean" && sensor.type === "megasonicPower")).toBe(true);
+  });
+});
+
+describe("clone sensor ids", () => {
+  it("rewrites a placed tool onto its template", () => {
+    const templates = parseCloneTemplates(`
+      - { id: D-01 }
+      - { id: D-03, template: D-01, name: Deposition D-03 }
+      - { id: I-E-02, template: E-01, name: Etch I-E-02 }
+    `);
+    expect(templates["D-01"]).toBeUndefined();
+    expect(templates["D-03"]).toBe("D-01");
+    expect(fleetTemplates["D-03"]).toBe("D-01");
+    expect(fleetTemplates["I-D-01"]).toBe("D-01");
+    expect(fleetTemplates["I-E-02"]).toBe("E-01");
+    expect(fleetTemplates["E-03"]).toBe("E-01");
+
+    const deposition = sensorsForTool("D-03", fleetSensors, fleetTemplates);
+    expect(deposition.length).toBe(fleetSensors.filter((sensor) => sensor.toolId === "D-01").length);
+    expect(deposition.every((sensor) => sensor.toolId === "D-03")).toBe(true);
+    expect(deposition.some((sensor) => sensor.id === "D-03-A-PT-CHAMBER")).toBe(true);
+    expect(deposition.some((sensor) => sensor.id.startsWith("D-01"))).toBe(false);
+
+    const etch = sensorsForTool("I-E-02", fleetSensors, fleetTemplates);
+    expect(etch.some((sensor) => sensor.id === "I-E-02-A-PT-CHAMBER")).toBe(true);
+    expect(etch.some((sensor) => sensor.chamberId === "I-E-02-A")).toBe(true);
+    expect(sensorsForTool("E-02", fleetSensors, fleetTemplates).some((sensor) => sensor.id === "E-02-A-TC-ESC")).toBe(true);
   });
 });
 
