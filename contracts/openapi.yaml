@@ -705,7 +705,7 @@ components:
           $ref: "#/components/schemas/Severity"
     EvidenceSource:
       type: string
-      enum: [telemetry, spc, mes, qms, plm, erp, cmms, document, ticketing]
+      enum: [telemetry, spc, mes, qms, plm, erp, cmms, document, ticketing, manualMeasurement]
     EvidenceItem:
       type: object
       additionalProperties: false

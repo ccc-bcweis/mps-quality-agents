@@ -16,6 +16,7 @@ public enum EvidenceSource
     Cmms,
     Document,
     Ticketing,
+    ManualMeasurement,
 }
 
 public sealed class EvidenceItem

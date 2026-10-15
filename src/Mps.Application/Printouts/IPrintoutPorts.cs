@@ -24,3 +24,23 @@ public interface IPrintoutModelReader
         string? fileName,
         CancellationToken cancellationToken);
 }
+
+/// <summary>
+/// Applies a confirmed reading to the running simulation. The simulator tick itself belongs to the simulation lane.
+/// </summary>
+public interface ISimulationFaultPort
+{
+    bool TryApply(string toolId, string? chamberId, string parameter, string shape, double magnitude);
+}
+
+/// <summary>
+/// Bench readings kept for the life of the demo so an investigation can cite them. Cleared on demo reset.
+/// </summary>
+public interface IManualMeasurementLog
+{
+    void Add(ManualMeasurement measurement);
+
+    IReadOnlyList<ManualMeasurement> ForTool(string toolId);
+
+    void Clear();
+}

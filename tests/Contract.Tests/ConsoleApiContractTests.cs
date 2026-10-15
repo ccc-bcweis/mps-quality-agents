@@ -217,7 +217,8 @@ public sealed class ConsoleApiContractTests
             "erp",
             "cmms",
             "document",
-            "ticketing");
+            "ticketing",
+            "manualMeasurement");
 
         var evidence = document.Schema("EvidenceItem");
         evidence.AdditionalPropertiesAllowed.Should().BeFalse();

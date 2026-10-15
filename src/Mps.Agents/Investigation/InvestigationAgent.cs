@@ -3,9 +3,11 @@
 using Microsoft.Extensions.AI;
 
 using Mps.Agents.Evidence;
+using Mps.Agents.Explain;
 using Mps.Agents.Impact;
 using Mps.Agents.Prompts;
 using Mps.Agents.Tools;
+using Mps.Application.Printouts;
 using Mps.Domain.Incidents;
 
 namespace Mps.Agents.Investigation;
@@ -20,13 +22,15 @@ public sealed class InvestigationAgent : IInvestigationAgent
     private readonly PromptCatalog _prompts;
     private readonly TimeProvider _time;
     private readonly InvestigationLimits _limits;
+    private readonly IManualMeasurementLog? _measurements;
 
     public InvestigationAgent(
         ReadOnlyToolSession tools,
         IChatClient chat,
         PromptCatalog prompts,
         TimeProvider? time = null,
-        InvestigationLimits? limits = null)
+        InvestigationLimits? limits = null,
+        IManualMeasurementLog? measurements = null)
     {
         ArgumentNullException.ThrowIfNull(tools);
         ArgumentNullException.ThrowIfNull(chat);
@@ -36,6 +40,7 @@ public sealed class InvestigationAgent : IInvestigationAgent
         _prompts = prompts;
         _time = time ?? TimeProvider.System;
         _limits = limits ?? new InvestigationLimits();
+        _measurements = measurements;
     }
 
     public async Task<GatherResult> GatherAsync(Incident incident, CancellationToken cancellationToken)
@@ -112,6 +117,13 @@ public sealed class InvestigationAgent : IInvestigationAgent
         }
 
         var facts = EvidencePackFactory.Build(incident, harvest);
+        var extra = _measurements?.ForTool(incident.ToolId.Value);
+        if (extra is { Count: > 0 })
+        {
+            var pack = facts.Pack.Including(extra.Select(item => item.Evidence).ToArray(), WhyItMattersCatalog.Shared);
+            facts = new GatheredFacts(pack, facts.Observations, facts.Events, facts.Shape);
+        }
+
         ImpactFeatures features;
         if (facts.Observations.Count == 0)
         {

@@ -19,6 +19,7 @@ using Mps.Application.Lifecycle;
 using Mps.Application.Metrics;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
+using Mps.Application.Printouts;
 using Mps.Application.Spc;
 using Mps.Application.Workflow;
 using Mps.Application.Writes;
@@ -106,6 +107,7 @@ public static class QualityHost
         builder.Services.AddScoped<IInvestigationService, InvestigationService>();
         builder.Services.AddScoped<ICapaLifecycleService, CapaLifecycleService>();
         builder.Services.AddScoped<IHumanDecisionService, HumanDecisionService>();
+        builder.Services.AddSingleton<IManualMeasurementLog, InMemoryManualMeasurementLog>();
         builder.Services.AddScoped<IFaultInjectionService, FaultInjectionService>();
         builder.Services.AddHostedService<QualityDatabaseInitializer>();
     }

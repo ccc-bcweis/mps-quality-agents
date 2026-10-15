@@ -101,7 +101,12 @@ public static class LiveModelHost
             var key = System.Text.Encoding.UTF8.GetBytes(config["Mps:Approval:SigningKey"] ?? Guid.NewGuid().ToString("N"));
             return new MafInvestigationWorkflow(
                 new StoreIncidentSource(provider.GetRequiredService<IServiceScopeFactory>()),
-                new InvestigationAgent(tools, gateway, prompts, provider.GetRequiredService<TimeProvider>()),
+                new InvestigationAgent(
+                    tools,
+                    gateway,
+                    prompts,
+                    provider.GetRequiredService<TimeProvider>(),
+                    measurements: provider.GetRequiredService<Mps.Application.Printouts.IManualMeasurementLog>()),
                 new ResolutionAgent(gateway, prompts),
                 key,
                 provider.GetRequiredService<TimeProvider>(),

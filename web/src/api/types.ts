@@ -27,7 +27,8 @@ export type EvidenceSource =
   | "erp"
   | "cmms"
   | "document"
-  | "ticketing";
+  | "ticketing"
+  | "manualMeasurement";
 export type RootCauseCategory =
   | "engineeringChange"
   | "equipmentCalibrationOrAlignment"

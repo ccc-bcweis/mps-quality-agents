@@ -2,6 +2,7 @@
 
 using Mps.Application.Evidence;
 using Mps.Application.Persistence;
+using Mps.Application.Printouts;
 using Mps.Application.Workflow;
 using Mps.Domain.Evidence;
 using Mps.Domain.Hypotheses;
@@ -21,30 +22,51 @@ public sealed class FakeInvestigationWorkflow : IInvestigationWorkflow
 
     private readonly IInvestigationLog _investigations;
     private readonly IInvestigationNarrativeLog _narratives;
+    private readonly IIncidentLog _incidents;
+    private readonly IManualMeasurementLog _measurements;
     private readonly TimeProvider _time;
 
-    public FakeInvestigationWorkflow(IInvestigationLog investigations, IInvestigationNarrativeLog narratives, TimeProvider time)
+    public FakeInvestigationWorkflow(
+        IInvestigationLog investigations,
+        IInvestigationNarrativeLog narratives,
+        IIncidentLog incidents,
+        IManualMeasurementLog measurements,
+        TimeProvider time)
     {
         ArgumentNullException.ThrowIfNull(investigations);
         ArgumentNullException.ThrowIfNull(narratives);
+        ArgumentNullException.ThrowIfNull(incidents);
+        ArgumentNullException.ThrowIfNull(measurements);
         ArgumentNullException.ThrowIfNull(time);
         _investigations = investigations;
         _narratives = narratives;
+        _incidents = incidents;
+        _measurements = measurements;
         _time = time;
     }
 
-    public Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken)
+    public async Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken)
     {
-        _ = cancellationToken;
         var evidenceId = EvidenceId.New();
-        var evidence = new EvidenceItem(
-            evidenceId,
-            EvidenceSource.Spc,
-            "SPC stand-in",
-            "Deterministic stand-in until the agent workflow is connected.",
-            _time.GetUtcNow(),
-            null,
-            null);
+        var evidence = new List<EvidenceItem>
+        {
+            new(
+                evidenceId,
+                EvidenceSource.Spc,
+                "SPC stand-in",
+                "Deterministic stand-in until the agent workflow is connected.",
+                _time.GetUtcNow(),
+                null,
+                null),
+        };
+        var stored = await _incidents.GetAsync(incidentId, cancellationToken).ConfigureAwait(false);
+        if (stored is not null)
+        {
+            foreach (var measurement in _measurements.ForTool(stored.Incident.ToolId.Value))
+            {
+                evidence.Add(measurement.Evidence);
+            }
+        }
         var hypothesis = new Hypothesis(
             HypothesisId.New(),
             RootCauseCategory.ProcessDrift,
@@ -57,20 +79,26 @@ public sealed class FakeInvestigationWorkflow : IInvestigationWorkflow
             InvestigationId.New(),
             incidentId,
             InvestigationStage.RecommendationReady,
-            [evidence],
+            evidence,
             [hypothesis],
             null,
             "inv-" + incidentId.ToString());
         _narratives.Stage(snapshot.Id, StandInNarrative(snapshot));
-        return Task.FromResult(snapshot);
+        return snapshot;
     }
 
     private static InvestigationNarrative StandInNarrative(InvestigationSnapshot snapshot)
     {
         var evidenceId = snapshot.Evidence[0].Id.Value;
         var ids = snapshot.Evidence.Select(item => item.Id.Value).ToHashSet();
+        var notes = new List<EvidenceNote> { new(evidenceId, StandInWhyItMatters, StandInSignalId) };
+        foreach (var item in snapshot.Evidence.Skip(1))
+        {
+            notes.Add(new EvidenceNote(item.Id.Value, ManualMeasurement.WhyItMatters, null));
+        }
+
         return InvestigationNarrative.Create(
-            [new EvidenceNote(evidenceId, StandInWhyItMatters, StandInSignalId)],
+            notes,
             [
                 new EvidenceMatrixEntry(RootCauseCategory.EngineeringChange, evidenceId, EvidenceStance.RulesOut, "Nothing in this stand-in points to a recipe or document change."),
                 new EvidenceMatrixEntry(RootCauseCategory.EquipmentCalibrationOrAlignment, evidenceId, EvidenceStance.Neutral, "Calibration was not checked by the stand-in."),
