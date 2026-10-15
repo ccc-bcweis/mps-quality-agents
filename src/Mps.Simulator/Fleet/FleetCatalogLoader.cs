@@ -40,6 +40,11 @@ public static class FleetCatalogLoader
         foreach (var file in files)
         {
             var source = Path.GetFileName(file);
+            if (string.Equals(source, "sites.yaml", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
             FleetFileDto dto;
             try
             {

@@ -3,6 +3,7 @@
 using System.Globalization;
 
 using Mps.Domain.Enterprise;
+using Mps.Domain.Equipment;
 using Mps.Domain.Identity;
 using Mps.Simulator.Faults;
 using Mps.Simulator.Fleet;
@@ -86,9 +87,9 @@ public static class GroundTruthWriter
             fault.ToSignals());
     }
 
-    public static void WriteCatalog(string faultDirectory, FleetCatalog fleet, string outputDirectory)
+    public static void WriteCatalog(string faultDirectory, FleetCatalog fleet, string outputDirectory, IReadOnlyDictionary<string, ToolFamily>? knownTools = null)
     {
-        var catalog = FaultCatalogLoader.Load(faultDirectory, fleet);
+        var catalog = FaultCatalogLoader.Load(faultDirectory, fleet, knownTools);
         Directory.CreateDirectory(outputDirectory);
         foreach (var fault in catalog.Faults)
         {

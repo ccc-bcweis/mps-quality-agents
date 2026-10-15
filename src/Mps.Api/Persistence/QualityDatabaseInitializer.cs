@@ -35,6 +35,7 @@ public sealed class QualityDatabaseInitializer : IHostedService
                 Family = tool.Family.ToString(),
                 Model = tool.Model,
                 Bay = tool.Bay,
+                SiteId = tool.SiteId ?? "northwater",
                 Chambers = tool.Chambers.Select(chamber => new ChamberRow
                 {
                     ToolId = tool.Id.ToString(),

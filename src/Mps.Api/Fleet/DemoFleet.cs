@@ -2,6 +2,7 @@
 
 using Mps.Domain.Equipment;
 using Mps.Domain.Identity;
+using Mps.Simulator.Sites;
 
 namespace Mps.Api.Fleet;
 
@@ -29,5 +30,6 @@ public static class DemoFleet
             family,
             model,
             bay,
-            [new Chamber("A", "Chamber A"), new Chamber("B", "Chamber B")]);
+            [new Chamber("A", "Chamber A"), new Chamber("B", "Chamber B")],
+            SiteIds.Northwater);
 }

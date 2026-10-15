@@ -6,6 +6,7 @@ using Mps.Domain.Identity;
 using Mps.Simulator.Faults;
 using Mps.Simulator.Fleet;
 using Mps.Simulator.GroundTruth;
+using Mps.Simulator.Sites;
 
 namespace Mps.Simulator.Seed;
 
@@ -45,20 +46,60 @@ public static class EnterpriseSeedGenerator
         AddBaseline(draft, tools);
         var faultRuns = draft.Runs.ToArray();
         AddHistory(draft, tools, faultRuns, seed);
+        EnsureExtraConfigs(draft);
         return new EnterpriseSeed(
             seed,
             WindowStart,
             WindowEnd,
-            draft.Runs.OrderBy(run => run.StartedAt).ThenBy(run => run.RunId, StringComparer.Ordinal).ToArray(),
-            DistinctLots(draft.Lots),
+            draft.Runs.OrderBy(run => run.StartedAt).ThenBy(run => run.RunId, StringComparer.Ordinal).Select(StampRun).ToArray(),
+            DistinctLots(draft.Lots).Select(StampLot).ToArray(),
             draft.Ncrs.OrderBy(ncr => ncr.NcrId, StringComparer.Ordinal).ToArray(),
             draft.Ecos.OrderBy(eco => eco.EcoId, StringComparer.Ordinal).ToArray(),
             draft.Configs.OrderBy(config => config.ToolId.Value, StringComparer.Ordinal).ToArray(),
             draft.MaterialLots.OrderBy(lot => lot.LotId, StringComparer.Ordinal).ToArray(),
-            DistinctUses(draft.MaterialUses),
+            DistinctUses(draft.MaterialUses).Select(StampUse).ToArray(),
             draft.Notices.OrderBy(notice => notice.NoticeId, StringComparer.Ordinal).ToArray(),
             draft.WorkOrders.OrderBy(order => order.WorkOrderId, StringComparer.Ordinal).ToArray(),
             draft.Calibrations.OrderBy(record => record.CalibrationId, StringComparer.Ordinal).ToArray());
+    }
+
+    private static void EnsureExtraConfigs(EnterpriseDraft draft)
+    {
+        var ids = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (var run in draft.Runs)
+        {
+            ids.Add(run.ToolId.Value);
+        }
+
+        foreach (var use in draft.MaterialUses)
+        {
+            ids.Add(use.ToolId);
+        }
+
+        foreach (var id in ids)
+        {
+            if (draft.Configs.Exists(config => config.ToolId.Value == id))
+            {
+                continue;
+            }
+
+            draft.Configs.Add(new ConfigRevision("CFG-" + id, new ToolId(id), "A", PartName(SiteIds.FamilyOf(id))));
+        }
+    }
+
+    private static ProcessRun StampRun(ProcessRun run)
+    {
+        return new ProcessRun(run.RunId, run.ToolId, run.RecipeId, run.RecipeRevision, run.LotId, run.StartedAt, SiteIds.ForTool(run.ToolId.Value));
+    }
+
+    private static LotReference StampLot(LotReference lot)
+    {
+        return new LotReference(lot.LotId, lot.MaterialCode, lot.ToolId, SiteIds.ForTool(lot.ToolId.Value));
+    }
+
+    private static MaterialUse StampUse(MaterialUse use)
+    {
+        return use with { SiteId = SiteIds.ForTool(use.ToolId) };
     }
 
     private static void AddBaseline(EnterpriseDraft draft, IReadOnlyList<ToolSpec> tools)

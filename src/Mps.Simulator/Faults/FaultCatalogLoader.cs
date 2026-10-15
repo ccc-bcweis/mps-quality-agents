@@ -3,6 +3,7 @@
 using System.Globalization;
 
 using Mps.Domain.Enterprise;
+using Mps.Domain.Equipment;
 using Mps.Domain.Identity;
 using Mps.Simulator.Fleet;
 using Mps.Simulator.Telemetry;
@@ -21,7 +22,7 @@ public static class FaultCatalogLoader
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
         .Build();
 
-    public static FaultCatalog Load(string directory, FleetCatalog fleet)
+    public static FaultCatalog Load(string directory, FleetCatalog fleet, IReadOnlyDictionary<string, ToolFamily>? knownTools = null)
     {
         ArgumentNullException.ThrowIfNull(fleet);
         if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
@@ -45,7 +46,7 @@ public static class FaultCatalogLoader
                 continue;
             }
 
-            if (TryMap(dto, source, fleet, errors, out var fault))
+            if (TryMap(dto, source, fleet, knownTools, errors, out var fault))
             {
                 faults.Add(fault);
             }
@@ -81,7 +82,25 @@ public static class FaultCatalogLoader
         return new FaultCatalog(faults.OrderBy(fault => fault.Id, StringComparer.Ordinal).ToArray());
     }
 
-    private static bool TryMap(FaultFileDto dto, string source, FleetCatalog fleet, List<string> errors, out FaultDefinition fault)
+    private static bool TryFamily(FleetCatalog fleet, IReadOnlyDictionary<string, ToolFamily>? knownTools, string toolId, out ToolFamily family)
+    {
+        var listed = fleet.Tools.FirstOrDefault(tool => string.Equals(tool.Id, toolId, StringComparison.Ordinal));
+        if (listed is not null)
+        {
+            family = listed.Family;
+            return true;
+        }
+
+        if (knownTools is not null && knownTools.TryGetValue(toolId, out family))
+        {
+            return true;
+        }
+
+        family = default;
+        return false;
+    }
+
+    private static bool TryMap(FaultFileDto dto, string source, FleetCatalog fleet, IReadOnlyDictionary<string, ToolFamily>? knownTools, List<string> errors, out FaultDefinition fault)
     {
         fault = null!;
         var before = errors.Count;
@@ -133,16 +152,15 @@ public static class FaultCatalogLoader
 
         foreach (var toolId in tools)
         {
-            if (!fleet.Tools.Any(tool => string.Equals(tool.Id, toolId, StringComparison.Ordinal)))
+            if (!TryFamily(fleet, knownTools, toolId, out var family))
             {
                 errors.Add($"{source}: tool {toolId} is not in the fleet.");
                 continue;
             }
 
-            var tool = fleet.GetRequired(toolId);
-            if (!FamilyParameterCatalog.For(tool.Family).ContainsKey(parameter))
+            if (!FamilyParameterCatalog.For(family).ContainsKey(parameter))
             {
-                errors.Add($"{source}: {parameter} is not a {tool.Family} parameter.");
+                errors.Add($"{source}: {parameter} is not a {family} parameter.");
             }
         }
 

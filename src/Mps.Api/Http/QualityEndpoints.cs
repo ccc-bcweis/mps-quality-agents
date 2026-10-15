@@ -12,6 +12,8 @@ using Mps.Domain.Hypotheses;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
 using Mps.Domain.Investigations;
+using Mps.Simulator.Fleet;
+using Mps.Simulator.Sites;
 
 namespace Mps.Api.Http;
 
@@ -21,6 +23,21 @@ public static class QualityEndpoints
     {
         ArgumentNullException.ThrowIfNull(app);
         app.MapGet("/health", () => Results.Ok(new HealthResponse("ok", LayerAnchor.Name)));
+        app.MapGet("/api/sites", (SiteWorld world) => Results.Ok(world.Sites.Select(SiteResponses.ToSummary).ToArray()));
+        app.MapGet("/api/sites/compare", (string? family, SiteWorld world) =>
+        {
+            if (!FamilyParameterCatalog.TryParseFamily(family, out var parsed))
+            {
+                throw new IntakeValidationException("Query family must be deposition, etch, strip, or clean.");
+            }
+
+            return Results.Ok(SiteResponses.ToComparison(SiteComparison.Compare(world, parsed)));
+        });
+        app.MapGet("/api/sites/{siteId}", (string siteId, SiteWorld world) =>
+        {
+            var site = world.Find(siteId);
+            return site is null ? Results.NotFound() : Results.Ok(SiteResponses.ToDetail(site));
+        });
         app.MapGet("/api/tools", async (IFleetCatalog fleet, CancellationToken cancellationToken) =>
         {
             var tools = await fleet.ListAsync(cancellationToken).ConfigureAwait(false);
