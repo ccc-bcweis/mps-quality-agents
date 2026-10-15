@@ -562,6 +562,32 @@ public static class QualityEndpoints
 
             return Results.Json(run, statusCode: StatusCodes.Status202Accepted);
         });
+        app.MapPost("/api/injector/stop", async (
+            Mps.Api.Live.PlantSimulation plant,
+            CommandGateway commands,
+            ILifecycleEventSink events,
+            TimeProvider time,
+            HttpContext http,
+            IConfiguration configuration,
+            CancellationToken cancellationToken) =>
+        {
+            commands.Ensure(LifecycleTypes.ScenarioStart, Caller(http, configuration));
+            var removed = plant.ClearAll();
+            await events.PublishAsync(
+                new LifecycleEvent(
+                    LifecycleTypes.ScenarioStopped,
+                    "stop-" + Guid.NewGuid().ToString("N"),
+                    null,
+                    null,
+                    "presenter",
+                    null,
+                    null,
+                    null,
+                    time.GetUtcNow(),
+                    new { removed, summary = "Scenario stopped. Telemetry returns to nominal; records stay." }),
+                cancellationToken).ConfigureAwait(false);
+            return Results.Ok(new { removed });
+        });
         app.MapPost("/api/faults", async (
             FaultBody? body,
             IFaultInjectionService faults,
@@ -595,7 +621,8 @@ public static class QualityEndpoints
                     body.Shape ?? string.Empty,
                     body.Magnitude.Value,
                     body.RootCauseCategory.Value,
-                    body.Confounders),
+                    body.Confounders,
+                    DurationMinutes: body.DurationMinutes is > 0 ? body.DurationMinutes : null),
                 cancellationToken).ConfigureAwait(false);
             return Results.Json(new FaultAcceptedResponse(accepted.FaultId, accepted.CorrelationId), statusCode: StatusCodes.Status202Accepted);
         });

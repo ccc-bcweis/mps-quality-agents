@@ -79,6 +79,19 @@ public sealed class EfQualityStore :
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task ClearAsync(AlertId id, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        var row = await _db.Alerts.SingleOrDefaultAsync(item => item.Id == id.Value, cancellationToken).ConfigureAwait(false);
+        if (row is null || row.ClearedAt is not null)
+        {
+            return;
+        }
+
+        var raised = FromUtc(row.RaisedAt);
+        row.ClearedAt = ToUtc(at < raised ? raised : at);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task<IReadOnlyList<Alert>> ListAsync(ToolId? toolId, CancellationToken cancellationToken)
     {
         var query = _db.Alerts.AsNoTracking().AsQueryable();
@@ -532,8 +545,9 @@ public sealed class EfQualityStore :
             row.Chambers.OrderBy(chamber => chamber.ChamberId).Select(chamber => new Chamber(chamber.ChamberId, chamber.Name)).ToArray(),
             string.IsNullOrWhiteSpace(row.SiteId) ? "northwater" : row.SiteId);
 
-    private static Alert ToAlert(AlertRow row) =>
-        new(
+    private static Alert ToAlert(AlertRow row)
+    {
+        var alert = new Alert(
             new AlertId(row.Id),
             new ToolId(row.ToolId),
             row.ChamberId,
@@ -542,6 +556,13 @@ public sealed class EfQualityStore :
             row.Rule,
             FromUtc(row.RaisedAt),
             row.CorrelationId);
+        if (row.ClearedAt is { } cleared)
+        {
+            alert.Clear(FromUtc(cleared));
+        }
+
+        return alert;
+    }
 
     private static StoredIncident ToIncident(IncidentRow row)
     {

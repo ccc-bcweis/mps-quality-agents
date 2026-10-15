@@ -619,6 +619,7 @@ export const handlers = [
     });
   }),
 
+  http.post("/api/injector/stop", () => HttpResponse.json({ removed: 0 })),
   http.post("/api/injector/scenarios/:scenarioId", ({ params }) => {
     const scenarioId = String(params.scenarioId);
     const run: ScenarioRun = {

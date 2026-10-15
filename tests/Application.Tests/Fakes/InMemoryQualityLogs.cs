@@ -22,6 +22,13 @@ public sealed class InMemoryAlertLog : IAlertLog
         return Task.CompletedTask;
     }
 
+    public Task ClearAsync(AlertId id, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        _ = cancellationToken;
+        _alerts.FirstOrDefault(alert => alert.Id == id)?.Clear(at);
+        return Task.CompletedTask;
+    }
+
     public Task<IReadOnlyList<Alert>> ListAsync(ToolId? toolId, CancellationToken cancellationToken)
     {
         _ = cancellationToken;

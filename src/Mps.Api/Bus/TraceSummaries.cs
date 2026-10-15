@@ -46,6 +46,10 @@ internal static class TraceSummaries
             "telemetry.reading" => where + " recorded " + (parameter ?? "a reading") + " at " + when + "." + reading,
             "alert.raised" => "A process-control rule fired on " + where
                 + (parameter is null ? string.Empty : " for " + parameter) + " at " + when + "." + reading,
+            "alert.cleared" => "The alert on " + where
+                + (parameter is null ? string.Empty : " for " + parameter) + " cleared at " + when + " after the readings stayed in control.",
+            "fault.cleared" => "Containment removed the fault on " + where + " at " + when + ". Its readings return to nominal.",
+            "command.scenario.stop" => "The scenario was stopped at " + when + ". Telemetry returns to nominal; records stay.",
             "rule.matched" => RuleSentence(row, when),
             "ticket.created" => "A ticket was opened for " + where + " at " + when + ".",
             "incident.changed" => "The incident on " + where + " was updated at " + when + ".",

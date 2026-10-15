@@ -25,7 +25,8 @@
         "rootCauseCategory": {
           "enum": ["engineeringChange", "equipmentCalibrationOrAlignment", "supplyChainMaterial", "processDrift"]
         },
-        "confounders": { "type": "boolean" }
+        "confounders": { "type": "boolean" },
+        "durationMinutes": { "type": "number", "minimum": 0 }
       }
     }
   }

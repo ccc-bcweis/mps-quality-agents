@@ -136,6 +136,26 @@ public sealed class SpcAlertServiceTests
         outcome.Incident!.Channel.Should().Be(IncidentChannel.IotSpcAlert);
     }
 
+    [Fact]
+    public async Task AnAlertClearsAfterEightInControlReadingsInARow()
+    {
+        var fixture = new Fixture();
+        var raised = await fixture.Service.RaiseAsync(SpcSeries.Sample(0d, 4d), CancellationToken.None);
+        raised.Alert.Should().NotBeNull();
+        raised.Alert!.IsActive.Should().BeTrue();
+
+        var seven = new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, SpcSeries.Shifted(TimeSpan.FromMinutes(2), 0d, 0.1d, -0.2d, 0.3d, 0d, 0.1d, -0.1d));
+        await fixture.Service.RaiseAsync(seven, CancellationToken.None);
+        fixture.Alerts.Alerts.Single().IsActive.Should().BeTrue();
+
+        var eight = new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, SpcSeries.Shifted(TimeSpan.FromMinutes(2), 0d, 0.1d, -0.2d, 0.3d, 0d, 0.1d, -0.1d, 0.2d));
+        await fixture.Service.RaiseAsync(eight, CancellationToken.None);
+        var alert = fixture.Alerts.Alerts.Single();
+        alert.IsActive.Should().BeFalse();
+        alert.Status.Should().Be("cleared");
+        alert.ClearedAt.Should().Be(SpcSeries.Start.AddMinutes(9));
+    }
+
     private sealed class Fixture
     {
         public Fixture()

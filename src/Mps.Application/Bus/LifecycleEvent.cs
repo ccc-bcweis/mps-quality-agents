@@ -12,6 +12,12 @@ public static class LifecycleTypes
 
     public const string AlertRaised = "alert.raised";
 
+    public const string AlertCleared = "alert.cleared";
+
+    public const string FaultCleared = "fault.cleared";
+
+    public const string ScenarioStopped = "command.scenario.stop";
+
     public const string RuleMatched = "rule.matched";
 
     public const string TicketCreated = "ticket.created";

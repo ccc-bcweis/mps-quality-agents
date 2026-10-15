@@ -107,6 +107,16 @@ public sealed class FleetSimulator : ITelemetrySource
     /// <summary>
     /// Drops injected faults and series cursors and puts the simulator clock back on <see cref="Origin"/>.
     /// </summary>
+    /// <summary>Removes matching faults. Series cursors and the clock are untouched. Returns how many went.</summary>
+    public int RemoveFaults(Predicate<FaultSignal> match)
+    {
+        ArgumentNullException.ThrowIfNull(match);
+        lock (_gate)
+        {
+            return _faults.RemoveAll(match);
+        }
+    }
+
     public void Reset() => Reset(Origin);
 
     /// <summary>Drops faults and series cursors and restarts the clock on <paramref name="origin"/>.</summary>

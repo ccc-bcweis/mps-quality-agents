@@ -7,6 +7,7 @@ import { useSetLifecycle } from "../context/ConsoleContext";
 import { useSite } from "../context/SiteContext";
 import { visibleProblem } from "../history/copy";
 import { ProcessFlow } from "../rules/ProcessFlow";
+import { LIFECYCLE_RULES } from "../rules/lifecycleRules";
 
 type MapState = ProcessMap["state"];
 
@@ -71,7 +72,7 @@ export function RulesProcessPage() {
             </tr>
           </thead>
           <tbody>
-            {rules.map((rule) => (
+            {[...rules, ...(ready ? LIFECYCLE_RULES : [])].map((rule) => (
               <tr key={rule.id} className="border-t border-mps-line align-top">
                 <td className="break-words py-2 pr-3">{rule.whenPlain}</td>
                 <td className="break-words py-2 pr-3">{rule.thenPlain}</td>

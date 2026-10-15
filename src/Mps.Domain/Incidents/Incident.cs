@@ -83,6 +83,21 @@ public sealed class Alert
     public DateTimeOffset RaisedAt { get; }
 
     public string CorrelationId { get; }
+
+    /// <summary>When the signal came back in control. Null while the alert is active.</summary>
+    public DateTimeOffset? ClearedAt { get; private set; }
+
+    public bool IsActive => ClearedAt is null;
+
+    public string Status => IsActive ? "active" : "cleared";
+
+    public void Clear(DateTimeOffset at)
+    {
+        if (ClearedAt is null)
+        {
+            ClearedAt = at < RaisedAt ? RaisedAt : at;
+        }
+    }
 }
 
 public sealed class Ticket

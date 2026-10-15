@@ -76,6 +76,20 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
   const [resetKind, setResetKind] = useState<ResetKind | null>(null);
   const [resetPending, setResetPending] = useState(false);
   const [resetMessage, setResetMessage] = useState<string | null>(null);
+  const [stopPending, setStopPending] = useState(false);
+
+  const stopScenario = async () => {
+    setStopPending(true);
+    try {
+      const result = await api.stopScenario();
+      storeRunning("");
+      setResetMessage(`Scenario stopped. ${result.removed} fault${result.removed === 1 ? "" : "s"} removed; telemetry returns to nominal.`);
+    } catch (reason) {
+      setResetMessage(reason instanceof ApiProblem ? reason.title : "The scenario did not stop.");
+    } finally {
+      setStopPending(false);
+    }
+  };
   const [dataPending, setDataPending] = useState(false);
   const [dataMessage, setDataMessage] = useState<string | null>(null);
 
@@ -258,6 +272,15 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
               loadError={scenarioError}
             />
             <HarnessPrintout />
+            <button
+              type="button"
+              className={softBtn}
+              title="Remove the running scenario and injected faults. Telemetry returns to nominal. Alerts, tickets and other records stay."
+              disabled={stopPending}
+              onClick={() => void stopScenario()}
+            >
+              {stopPending ? "Stopping…" : "Stop scenario"}
+            </button>
             {admin ? (
               <div className="flex flex-wrap items-center gap-2">
                 <button

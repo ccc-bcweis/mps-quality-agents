@@ -29,7 +29,18 @@ processMaps:
         order: 4
         detail: An escalated case cannot skip this step.
         highlightStages: [Escalated, AwaitingApproval, Rejected]
-      - { id: action, name: The corrective action opens, order: 5, highlightStages: [Approved, Closed] }
+      - { id: action, name: Approval opens the corrective action, order: 5, highlightStages: [Approved] }
+      - id: contain
+        name: Containment stops the fault
+        order: 6
+        detail: Moving the corrective action to Containment removes the fault on that tool, so its readings settle back to nominal.
+        highlightStages: []
+      - id: verify
+        name: Readings are back in control
+        order: 7
+        detail: An alert clears after 8 readings in a row inside two sigma. Verification is refused while an alert on that signal is still active.
+        highlightStages: []
+      - { id: close, name: Closing the corrective action closes the ticket, order: 8, highlightStages: [Closed] }
     transitions:
       - { from: rule, to: investigate, name: Then }
       - { from: investigate, to: rank, name: The evidence is enough }
@@ -37,3 +48,6 @@ processMaps:
       - { from: rank, to: person, name: Then }
       - { from: person, to: action, name: The person approves }
       - { from: person, to: investigate, name: The person asks for more evidence. }
+      - { from: action, to: contain, name: Then }
+      - { from: contain, to: verify, name: The alert clears }
+      - { from: verify, to: close, name: Then }

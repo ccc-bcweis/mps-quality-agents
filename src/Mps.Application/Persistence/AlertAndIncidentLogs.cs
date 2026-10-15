@@ -10,6 +10,9 @@ public interface IAlertLog
 {
     Task AddAsync(Alert alert, CancellationToken cancellationToken);
 
+    /// <summary>Marks the alert cleared at <paramref name="at"/>. A no-op when it is already cleared.</summary>
+    Task ClearAsync(AlertId id, DateTimeOffset at, CancellationToken cancellationToken);
+
     Task<IReadOnlyList<Alert>> ListAsync(ToolId? toolId, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<Alert>> ListBySignalAsync(

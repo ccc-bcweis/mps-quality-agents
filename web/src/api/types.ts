@@ -87,6 +87,9 @@ export type Alert = {
   rule: string;
   raisedAt: string;
   correlationId: string;
+  /** Active until the signal stays in control for 8 readings in a row. */
+  status?: "active" | "cleared";
+  clearedAt?: string | null;
 };
 
 export type Ticket = {
@@ -279,6 +282,8 @@ export type FaultInjectionRequest = {
   magnitude: number;
   rootCauseCategory: RootCauseCategory;
   confounders?: boolean;
+  /** Optional. The fault ends this many minutes after onset. */
+  durationMinutes?: number;
 };
 
 export type FaultInjectionAccepted = {

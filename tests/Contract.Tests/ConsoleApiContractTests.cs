@@ -44,6 +44,7 @@ public sealed class ConsoleApiContractTests
         "/api/audit",
         "/api/injector/scenarios",
         "/api/injector/scenarios/{scenarioId}",
+        "/api/injector/stop",
         "/api/metrics",
         "/api/metadata/company",
         "/api/metadata/sites",
@@ -107,6 +108,7 @@ public sealed class ConsoleApiContractTests
         Expect(OperationType.Get, "/api/audit", "getAuditLog", "200");
         Expect(OperationType.Get, "/api/injector/scenarios", "listScenarios", "200");
         Expect(OperationType.Post, "/api/injector/scenarios/{scenarioId}", "runScenario", "202");
+        Expect(OperationType.Post, "/api/injector/stop", "stopScenario", "200");
         Expect(OperationType.Get, "/api/metrics", "getMetrics", "200");
         Expect(OperationType.Get, "/api/metadata/company", "getCompanyMetadata", "200");
         Expect(OperationType.Get, "/api/metadata/sites", "listMetadataSites", "200");
