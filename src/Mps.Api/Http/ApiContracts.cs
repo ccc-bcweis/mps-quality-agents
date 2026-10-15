@@ -282,3 +282,5 @@ public sealed class PrintoutConfirmBody
 
     public string? OperatorInitials { get; set; }
 }
+
+public sealed record ReplayCaptureResponse(string ScenarioId, int MessageCount);

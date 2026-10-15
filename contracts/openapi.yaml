@@ -572,6 +572,81 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /api/demo/data-mode:
+    get:
+      tags: [admin]
+      operationId: getDataMode
+      summary: Whether the console is showing live plant data or a recorded scenario
+      description: |
+        Live follows the running plant. Replay shows one recorded scenario.
+        This does not change saved answers versus a live model.
+      responses:
+        "200":
+          description: Current data mode.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataMode"
+    post:
+      tags: [admin]
+      operationId: setDataMode
+      summary: Switch the console between live plant data and a recorded scenario
+      description: |
+        Admin only. Live restores the running plant view. Replay loads data/replay for that scenario.
+        The recording is kept when switching back to live.
+      parameters:
+        - $ref: "#/components/parameters/ClientPrincipal"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataModeRequest"
+      responses:
+        "200":
+          description: The mode now in effect.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataMode"
+        "403":
+          description: The caller is not an admin.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The scenario is unknown or has no recording.
+  /api/admin/replay/{scenarioId}:
+    post:
+      tags: [admin]
+      operationId: recordScenarioReplay
+      summary: Record one scenario run onto the bus and save it
+      description: |
+        Admin only. Runs the scenario and writes the bus messages to data/replay for that scenario.
+        Saved model answers are left alone.
+      parameters:
+        - $ref: "#/components/parameters/ClientPrincipal"
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: How many bus messages were saved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplayCapture"
+        "403":
+          description: The caller is not an admin.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The scenario is unknown.
   /api/injector/scenarios:
     get:
       tags: [faults]
@@ -1632,6 +1707,39 @@ components:
         kind:
           type: string
           enum: [hard, soft]
+    DataMode:
+      type: object
+      additionalProperties: false
+      required: [mode, messageCount]
+      properties:
+        mode:
+          type: string
+          enum: [live, replay]
+        scenarioId:
+          type: string
+          nullable: true
+        messageCount:
+          type: integer
+    DataModeRequest:
+      type: object
+      additionalProperties: false
+      required: [mode]
+      properties:
+        mode:
+          type: string
+          enum: [live, replay]
+        scenarioId:
+          type: string
+          description: Required when mode is replay.
+    ReplayCapture:
+      type: object
+      additionalProperties: false
+      required: [scenarioId, messageCount]
+      properties:
+        scenarioId:
+          type: string
+        messageCount:
+          type: integer
     ScriptedScenario:
       type: object
       additionalProperties: false

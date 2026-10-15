@@ -42,6 +42,15 @@ public static class QualityHost
     {
         ArgumentNullException.ThrowIfNull(builder);
         var dataDirectory = DemoDataDirectory(builder.Environment.ContentRootPath, builder.Configuration["Mps:DataDirectory"]);
+        var replayDirectory = builder.Configuration["Mps:Replay:Directory"];
+        if (string.IsNullOrWhiteSpace(replayDirectory))
+        {
+            replayDirectory = Path.Combine(dataDirectory, "replay");
+        }
+
+        builder.Services.AddSingleton(new ReplayStore(replayDirectory));
+        builder.Services.AddSingleton<ConsoleDataMode>();
+        builder.Services.AddSingleton<ScenarioReplayRecorder>();
         var plantSeed = builder.Configuration.GetValue("Mps:Demo:Seed", SiteIds.DefaultSeed);
         builder.Services.AddSingleton(SitePlantGenerator.Load(dataDirectory, plantSeed));
         builder.Services.AddSingleton(new CrossSiteMaterialCatalog(Path.Combine(dataDirectory, "seed", "enterprise.json")));

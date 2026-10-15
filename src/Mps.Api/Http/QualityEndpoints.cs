@@ -72,14 +72,42 @@ public static class QualityEndpoints
                 ? Results.NotFound()
                 : Results.Ok(ContractMapper.ToResponse(tool));
         });
-        app.MapGet("/api/fleet/live", (PlantSimulation plant) => Results.Ok(LiveResponses.Fleet(plant)));
-        app.MapGet("/api/tools/{toolId}/live", (string toolId, PlantSimulation plant) =>
+        app.MapGet("/api/fleet/live", (PlantSimulation plant, ConsoleDataMode mode) =>
+            Results.Ok(mode.IsReplay ? ReplayProjection.Fleet(mode.Messages) : LiveResponses.Fleet(plant)));
+        app.MapGet("/api/tools/{toolId}/live", (string toolId, PlantSimulation plant, ConsoleDataMode mode) =>
         {
-            var live = LiveResponses.Tool(plant, toolId);
-            return live is null ? Results.NotFound() : Results.Ok(live);
+            if (!mode.IsReplay)
+            {
+                var live = LiveResponses.Tool(plant, toolId);
+                return live is null ? Results.NotFound() : Results.Ok(live);
+            }
+
+            var recorded = ReplayProjection.Tool(mode.Messages, toolId);
+            if (recorded is not null)
+            {
+                return Results.Ok(recorded);
+            }
+
+            var placed = plant.FindTool(toolId);
+            if (placed is null)
+            {
+                return Results.NotFound();
+            }
+
+            var now = mode.Messages.Count == 0 ? plant.SimulatedNow : mode.Messages.Max(message => message.OccurredAt);
+            return Results.Ok(new ToolLiveResponse(toolId, ContractMapper.SiteForTool(placed.SiteId ?? toolId), now, "nominal", [], []));
         });
-        app.MapGet("/api/alerts", async (string? toolId, string? siteId, IAlertLog alerts, CancellationToken cancellationToken) =>
+        app.MapGet("/api/alerts", async (string? toolId, string? siteId, IAlertLog alerts, ConsoleDataMode mode, CancellationToken cancellationToken) =>
         {
+            if (mode.IsReplay)
+            {
+                var recorded = ReplayProjection.Alerts(mode.Messages)
+                    .Where(row => string.IsNullOrWhiteSpace(toolId) || string.Equals(row.ToolId, toolId.Trim(), StringComparison.OrdinalIgnoreCase))
+                    .Where(row => MatchesSite(siteId, row.SiteId))
+                    .ToArray();
+                return Results.Ok(recorded);
+            }
+
             ToolId? filter = string.IsNullOrWhiteSpace(toolId) ? null : new ToolId(toolId);
             var rows = await alerts.ListAsync(filter, cancellationToken).ConfigureAwait(false);
             return Results.Ok(rows.Select(ContractMapper.ToResponse).Where(row => MatchesSite(siteId, row.SiteId)).ToArray());
@@ -326,6 +354,70 @@ public static class QualityEndpoints
             var baseline = await reset.ResetAsync(hard, cancellationToken).ConfigureAwait(false);
             return Results.Ok(baseline);
         });
+        app.MapGet("/api/demo/data-mode", (ConsoleDataMode mode) => Results.Ok(mode.Snapshot()));
+        app.MapPost("/api/demo/data-mode", async (HttpContext http, IConfiguration configuration, ConsoleDataMode mode, ReplayStore store, CancellationToken cancellationToken) =>
+        {
+            var caller = Caller(http, configuration);
+            if (!caller.IsAdmin)
+            {
+                return Results.Problem(title: "Admin role is required.", statusCode: StatusCodes.Status403Forbidden);
+            }
+
+            DataModeBody? body;
+            try
+            {
+                body = await http.Request.ReadFromJsonAsync<DataModeBody>(ResetJson, cancellationToken).ConfigureAwait(false);
+            }
+            catch (JsonException)
+            {
+                throw new IntakeValidationException("Data mode body is not valid.");
+            }
+
+            if (string.Equals(body?.Mode, "live", StringComparison.OrdinalIgnoreCase))
+            {
+                mode.UseLive();
+                return Results.Ok(mode.Snapshot());
+            }
+
+            if (!string.Equals(body?.Mode, "replay", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new IntakeValidationException("Data mode must be live or replay.");
+            }
+
+            if (!ScriptedScenarioCatalog.TryGet(body?.ScenarioId, out var scenario) || !store.TryLoad(scenario.Id, out var messages))
+            {
+                return Results.NotFound();
+            }
+
+            mode.UseReplay(scenario.Id, messages);
+            return Results.Ok(mode.Snapshot());
+        });
+        app.MapPost("/api/admin/replay/{scenarioId}", async (string scenarioId, HttpContext http, IConfiguration configuration, ScenarioReplayRecorder recorder, ScenarioTrigger trigger, CancellationToken cancellationToken) =>
+        {
+            var caller = Caller(http, configuration);
+            if (!caller.IsAdmin)
+            {
+                return Results.Problem(title: "Admin role is required.", statusCode: StatusCodes.Status403Forbidden);
+            }
+
+            if (!ScriptedScenarioCatalog.TryGet(scenarioId, out var scenario))
+            {
+                return Results.NotFound();
+            }
+
+            var count = await recorder.CaptureAsync(
+                scenario.Id,
+                async token =>
+                {
+                    var run = await trigger.RunAsync(scenario.Id, token).ConfigureAwait(false);
+                    if (run is null)
+                    {
+                        throw new InvalidOperationException("Scenario " + scenario.Id + " did not run.");
+                    }
+                },
+                cancellationToken).ConfigureAwait(false);
+            return Results.Ok(new ReplayCaptureResponse(scenario.Id, count));
+        });
         app.MapPost("/api/printouts/inspect", async (HttpRequest request, IDocumentIntake intake, CancellationToken cancellationToken) =>
         {
             if (!request.HasFormContentType)
@@ -558,3 +650,5 @@ public static class QualityEndpoints
 public sealed record AdminSessionResponse(string Mode, bool IsAdmin, string DisplayName);
 
 public sealed record ResetBody(string? Kind);
+
+public sealed record DataModeBody(string? Mode, string? ScenarioId);
