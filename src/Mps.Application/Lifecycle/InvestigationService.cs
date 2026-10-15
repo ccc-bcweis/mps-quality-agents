@@ -95,7 +95,8 @@ public sealed class InvestigationService : IInvestigationService
         }
 
         var aligned = Stamp(AlignCorrelation(started, stored.Incident.CorrelationId), stored.Incident);
-        using var command = await OpenCommandAsync(aligned, stored.Incident, cancellationToken).ConfigureAwait(false);
+        var opened = await OpenCommandAsync(aligned, stored.Incident, cancellationToken).ConfigureAwait(false);
+        using var command = CommandAmbient.Adopt(opened);
         var target = Map(aligned.Stage);
         LifecycleMoves.WalkTo(stored, target);
         await _incidents.SaveAsync(stored, _time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
@@ -176,7 +177,7 @@ public sealed class InvestigationService : IInvestigationService
         return changed ? snapshot.WithEvidence(evidence) : snapshot;
     }
 
-    private async ValueTask<IDisposable?> OpenCommandAsync(
+    private async ValueTask<CommandAmbient.Opened?> OpenCommandAsync(
         InvestigationSnapshot snapshot,
         Incident incident,
         CancellationToken cancellationToken)
@@ -200,7 +201,7 @@ public sealed class InvestigationService : IInvestigationService
                 _time.GetUtcNow(),
                 new { incidentId = incident.Id.Value, investigationId = snapshot.Id.Value }),
             cancellationToken).ConfigureAwait(false);
-        return CommandAmbient.Push(snapshot.CorrelationId, eventId);
+        return new CommandAmbient.Opened(snapshot.CorrelationId, eventId);
     }
 
     private static InvestigationSnapshot AlignCorrelation(InvestigationSnapshot snapshot, string correlationId)

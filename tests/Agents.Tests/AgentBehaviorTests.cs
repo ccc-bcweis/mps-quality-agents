@@ -165,6 +165,7 @@ public sealed class RootCauseRankerTests
             OverdueInstruments = ["manometer"],
             OverdueEvidenceIds = [Calibration],
             LotIds = ["LOT-NF3"],
+            NoticeIds = ["SN-4"],
             LotEvidenceIds = [Lot],
         });
 

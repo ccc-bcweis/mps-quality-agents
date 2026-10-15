@@ -110,7 +110,7 @@ rules:
     order: 140
     whenPlain: When a high alert is on etch rate at the etch tool in bay one.
     thenPlain: Open a ticket, set the priority to high, send it to process engineering, and start an investigation.
-    why: A rising etch rate is process drift. Process engineering owns the ticket.
+    why: A falling etch rate after a clean is process drift. Process engineering owns the ticket.
     when:
       requiresAlert: true
       severityAtLeast: high

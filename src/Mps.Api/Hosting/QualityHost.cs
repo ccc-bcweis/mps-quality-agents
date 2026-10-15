@@ -120,7 +120,8 @@ public static class QualityHost
                 services.GetRequiredService<IQualityNotifier>(),
                 debounce,
                 services.GetRequiredService<IBusinessRuleEngine>(),
-                services.GetRequiredService<ICascadeDirectory>());
+                services.GetRequiredService<ICascadeDirectory>(),
+                services.GetRequiredService<ILifecycleEventSink>());
         });
         if (!builder.TryAddLiveInvestigation())
         {
@@ -150,6 +151,7 @@ public static class QualityHost
         builder.Services.AddSingleton<CausalTraceService>();
         builder.Services.AddHostedService<QualityDatabaseInitializer>();
         builder.Services.AddHostedService<EventLogSubscriber>();
+        builder.Services.AddHostedService<PlantCommandSubscriber>();
         builder.Services.AddHostedService<BusSignalRBridge>();
         builder.Services.AddHostedService<SimulationTickService>();
     }

@@ -1,6 +1,9 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+import { useState } from "react";
 import type { EvidenceItem } from "../api/types";
 import { Explain } from "./Explain";
+import { TracePanel } from "./TracePanel";
+import { btn } from "./ui";
 import {
   SOURCE_LABEL,
   formatLocalWhen,
@@ -22,6 +25,7 @@ function fullText(item: EvidenceItem): string {
 }
 
 export function EvidencePack({ items }: { items: EvidenceItem[] }) {
+  const [traceItem, setTraceItem] = useState<EvidenceItem | null>(null);
   return (
     <div>
       <h2 className="mb-2 text-mps-title font-semibold">Evidence pack ({items.length})</h2>
@@ -47,6 +51,13 @@ export function EvidencePack({ items }: { items: EvidenceItem[] }) {
                     <summary className="cursor-pointer list-none text-mps-nominal [&::-webkit-details-marker]:hidden">Details</summary>
                     <p className="mt-1 break-words text-mps-secondary">{readableExcerpt(fullText(item))}</p>
                   </details>
+                  <button
+                    type="button"
+                    className={`${btn} mt-2 h-auto w-full whitespace-normal break-words text-left`}
+                    onClick={() => setTraceItem(item)}
+                  >
+                    Show the cause for {whatItShows(item)}
+                  </button>
                 </td>
                 <td className="break-words py-2 pr-2">{valueVsSpec(item)}</td>
                 <td className="break-words py-2 pr-2">{formatLocalWhen(item.observedAt)}</td>
@@ -58,6 +69,7 @@ export function EvidencePack({ items }: { items: EvidenceItem[] }) {
           </tbody>
         </table>
       </div>
+      {traceItem ? <TracePanel item={traceItem} onClose={() => setTraceItem(null)} /> : null}
     </div>
   );
 }

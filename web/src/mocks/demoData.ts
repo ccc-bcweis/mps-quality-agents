@@ -173,6 +173,7 @@ const s1Evidence: EvidenceItem[] = [
     unit: "C",
     specLow: 40,
     specHigh: 60,
+    sourceEventIds: ["01ARZ3NDEKTSV4RRFFQ69G5FAV"],
     ...etchB,
   },
   {

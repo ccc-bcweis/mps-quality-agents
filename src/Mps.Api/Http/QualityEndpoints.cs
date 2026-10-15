@@ -538,7 +538,6 @@ public static class QualityEndpoints
         app.MapPost("/api/faults", async (
             FaultBody? body,
             IFaultInjectionService faults,
-            PlantSimulation plant,
             CommandGateway commands,
             HttpContext http,
             IConfiguration configuration,
@@ -571,7 +570,6 @@ public static class QualityEndpoints
                     body.RootCauseCategory.Value,
                     body.Confounders),
                 cancellationToken).ConfigureAwait(false);
-            plant.TryApplyFreeForm(body.ToolId ?? string.Empty, body.ChamberId, body.Parameter ?? string.Empty, body.Shape ?? string.Empty, body.Magnitude.Value);
             return Results.Json(new FaultAcceptedResponse(accepted.FaultId, accepted.CorrelationId), statusCode: StatusCodes.Status202Accepted);
         });
         app.MapGet("/api/trace/{eventId}", (string eventId, CausalTraceService traces) =>

@@ -19,7 +19,8 @@ public sealed record FaultInjectionRequest(
     bool Confounders,
     string? CorrelationId = null,
     bool PublishCommand = true,
-    Guid? FaultId = null);
+    Guid? FaultId = null,
+    bool Scripted = false);
 
 public sealed record FaultAccepted(Guid FaultId, string CorrelationId, Guid IncidentId);
 
@@ -126,6 +127,7 @@ public sealed class FaultInjectionService : IFaultInjectionService
                         shape,
                         magnitude = request.Magnitude,
                         rootCauseCategory = category,
+                        scripted = request.Scripted,
                         body = new { faultId, correlationId },
                     }),
                 cancellationToken).ConfigureAwait(false);

@@ -22,6 +22,21 @@ internal static class PayloadReader
         return value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined ? null : value.ToString();
     }
 
+    public static bool Bool(JsonElement payload, string name)
+    {
+        if (payload.ValueKind != JsonValueKind.Object || !payload.TryGetProperty(name, out var value))
+        {
+            return false;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.True => true,
+            JsonValueKind.String => string.Equals(value.GetString(), "true", StringComparison.OrdinalIgnoreCase),
+            _ => false,
+        };
+    }
+
     public static double? Number(JsonElement payload, string name)
     {
         if (payload.ValueKind != JsonValueKind.Object

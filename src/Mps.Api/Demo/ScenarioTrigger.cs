@@ -21,7 +21,6 @@ public sealed class ScenarioTrigger
     private readonly IDocumentIntake _printouts;
     private readonly ScenarioEvidenceBoard? _board;
     private readonly ILifecycleEventSink? _events;
-    private readonly ICascadeDirectory? _cascade;
     private readonly TimeProvider? _time;
 
     public ScenarioTrigger(
@@ -38,13 +37,13 @@ public sealed class ScenarioTrigger
         ArgumentNullException.ThrowIfNull(faults);
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(printouts);
+        _ = cascade;
         _plant = plant;
         _faults = faults;
         _context = context;
         _printouts = printouts;
         _board = board;
         _events = events;
-        _cascade = cascade;
         _time = time;
     }
 
@@ -57,7 +56,8 @@ public sealed class ScenarioTrigger
 
         _context.Set(scenario.Id);
         _board?.Activate(scenario.Id);
-        using var command = await OpenCommandAsync(scenario, cancellationToken).ConfigureAwait(false);
+        var opened = await OpenCommandAsync(scenario, cancellationToken).ConfigureAwait(false);
+        using var command = CommandAmbient.Adopt(opened);
         try
         {
             if (string.Equals(scenario.Id, "SC-6", StringComparison.OrdinalIgnoreCase))
@@ -67,10 +67,12 @@ public sealed class ScenarioTrigger
                 {
                     return fromPrintout;
                 }
+
+                // The file is missing, so the command subscriber did not apply a signal. Apply the stream signal once.
+                _plant.ApplyStream(scenario);
             }
 
             var telemetry = ScriptedScenarioCatalog.Sample(scenario, _plant.Runtime.Fleet, _plant.Runtime.Seed);
-            _plant.Apply(scenario);
             FaultAccepted? first = null;
             foreach (var toolId in scenario.ToolIds)
             {
@@ -82,13 +84,13 @@ public sealed class ScenarioTrigger
                         scenario.ShapeName,
                         SigmaOf(scenario),
                         scenario.Category,
-                        scenario.Confounders),
+                        scenario.Confounders,
+                        Scripted: true),
                     cancellationToken).ConfigureAwait(false);
                 first ??= accepted;
             }
 
             var points = telemetry.Select(point => new ScenarioPointResponse(point.ToolId, point.ChamberId, point.Parameter, point.At, point.Value)).ToArray();
-            await PublishPointsAsync(points, cancellationToken).ConfigureAwait(false);
             return new ScenarioRun(
                 scenario.Id,
                 _plant.Runtime.Seed,
@@ -128,7 +130,6 @@ public sealed class ScenarioTrigger
 
         var telemetry = ScriptedScenarioCatalog.Sample(scenario, _plant.Runtime.Fleet, _plant.Runtime.Seed);
         var points = telemetry.Select(point => new ScenarioPointResponse(point.ToolId, point.ChamberId, point.Parameter, point.At, point.Value)).ToArray();
-        await PublishPointsAsync(points, cancellationToken).ConfigureAwait(false);
         return new ScenarioRun(
             scenario.Id,
             _plant.Runtime.Seed,
@@ -137,7 +138,7 @@ public sealed class ScenarioTrigger
             points);
     }
 
-    private async ValueTask<IDisposable?> OpenCommandAsync(ScriptedScenario scenario, CancellationToken cancellationToken)
+    private async ValueTask<CommandAmbient.Opened?> OpenCommandAsync(ScriptedScenario scenario, CancellationToken cancellationToken)
     {
         if (_events is null || CommandAmbient.EventId is not null)
         {
@@ -158,56 +159,7 @@ public sealed class ScenarioTrigger
                 _time?.GetUtcNow() ?? DateTimeOffset.UtcNow,
                 new { scenarioId = scenario.Id }),
             cancellationToken).ConfigureAwait(false);
-        return CommandAmbient.Push(correlationId, eventId);
-    }
-
-    private async Task PublishPointsAsync(IReadOnlyList<ScenarioPointResponse> points, CancellationToken cancellationToken)
-    {
-        if (_events is null || points.Count == 0)
-        {
-            return;
-        }
-
-        var drafts = new List<LifecycleEvent>(points.Count);
-        foreach (var point in points)
-        {
-            var parent = _cascade?.FaultEventId(point.ToolId, point.Parameter) ?? CommandAmbient.EventId;
-            var correlation = _cascade?.CorrelationFor(point.ToolId, point.Parameter)
-                ?? CommandAmbient.CorrelationId
-                ?? "scenario-" + point.ToolId;
-            var window = _plant.WindowAt(point.ToolId, point.Parameter, point.At);
-            drafts.Add(new LifecycleEvent(
-                LifecycleTypes.TelemetryReading,
-                correlation,
-                parent,
-                parent,
-                "scenario",
-                null,
-                point.ToolId,
-                point.ChamberId,
-                point.At,
-                new
-                {
-                    parameter = point.Parameter,
-                    value = point.Value,
-                    unit = window?.Unit,
-                    low = window?.Minimum,
-                    high = window?.Maximum,
-                }));
-        }
-
-        const int chunkSize = 2000;
-        for (var offset = 0; offset < drafts.Count; offset += chunkSize)
-        {
-            var count = Math.Min(chunkSize, drafts.Count - offset);
-            var chunk = new LifecycleEvent[count];
-            for (var index = 0; index < count; index++)
-            {
-                chunk[index] = drafts[offset + index];
-            }
-
-            await _events.PublishManyAsync(chunk, cancellationToken).ConfigureAwait(false);
-        }
+        return new CommandAmbient.Opened(correlationId, eventId);
     }
 
     private static string? FindSample(string fileName)

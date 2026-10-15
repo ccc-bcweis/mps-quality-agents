@@ -29,6 +29,7 @@ public sealed class IntakeService : IIntakeService
     private readonly TimeProvider _time;
     private readonly IBusinessRuleEngine _rules;
     private readonly ILifecycleEventSink? _events;
+    private readonly ICascadeDirectory? _hints;
 
     public IntakeService(
         IFleetCatalog fleet,
@@ -37,7 +38,8 @@ public sealed class IntakeService : IIntakeService
         IQualityNotifier notifier,
         TimeProvider time,
         IBusinessRuleEngine rules,
-        ILifecycleEventSink? events = null)
+        ILifecycleEventSink? events = null,
+        ICascadeDirectory? hints = null)
     {
         ArgumentNullException.ThrowIfNull(fleet);
         ArgumentNullException.ThrowIfNull(incidents);
@@ -52,6 +54,7 @@ public sealed class IntakeService : IIntakeService
         _time = time;
         _rules = rules;
         _events = events;
+        _hints = hints;
     }
 
     public async Task<IntakeResult> AcceptAsync(IntakeSubmission submission, CancellationToken cancellationToken)
@@ -119,7 +122,7 @@ public sealed class IntakeService : IIntakeService
             ?? submission.CorrelationId
             ?? "intake-" + Guid.NewGuid().ToString("N");
         var chamberId = string.IsNullOrWhiteSpace(submission.ChamberId) ? null : submission.ChamberId.Trim();
-        using var command = await OpenCommandAsync(
+        var opened = await OpenCommandAsync(
             correlationId,
             toolId.ToString(),
             chamberId,
@@ -127,6 +130,13 @@ public sealed class IntakeService : IIntakeService
             summary,
             occurredAt,
             cancellationToken).ConfigureAwait(false);
+        using var command = CommandAmbient.Adopt(opened);
+        if (decision.OpensTicket)
+        {
+            await PublishRuleAsync(decision, correlationId, toolId.ToString(), chamberId, occurredAt, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         var incident = Incident.Open(
             IncidentId.New(),
             toolId,
@@ -145,7 +155,7 @@ public sealed class IntakeService : IIntakeService
         return new IntakeResult(incident, ticket, linkedToExisting: false, stored.EscalationRequired, decision);
     }
 
-    private async ValueTask<IDisposable?> OpenCommandAsync(
+    private async ValueTask<CommandAmbient.Opened?> OpenCommandAsync(
         string correlationId,
         string toolId,
         string? chamberId,
@@ -172,7 +182,43 @@ public sealed class IntakeService : IIntakeService
                 occurredAt,
                 new { toolId, chamberId, parameter, summary }),
             cancellationToken).ConfigureAwait(false);
-        return CommandAmbient.Push(correlationId, eventId);
+        return new CommandAmbient.Opened(correlationId, eventId);
+    }
+
+    private async Task PublishRuleAsync(
+        RuleDecision decision,
+        string correlationId,
+        string toolId,
+        string? chamberId,
+        DateTimeOffset occurredAt,
+        CancellationToken cancellationToken)
+    {
+        if (_events is null || _hints?.FindStep(correlationId, "rule") is not null)
+        {
+            return;
+        }
+
+        var parent = _hints?.FindStep(correlationId, "alert") ?? CommandAmbient.EventId;
+        var eventId = await _events.PublishAsync(
+            new LifecycleEvent(
+                LifecycleTypes.RuleMatched,
+                correlationId,
+                parent,
+                parent,
+                "rules",
+                null,
+                toolId,
+                chamberId,
+                occurredAt,
+                new
+                {
+                    ruleId = decision.RuleId,
+                    name = decision.RuleName,
+                    why = decision.Why,
+                    queue = decision.Queue,
+                }),
+            cancellationToken).ConfigureAwait(false);
+        _hints?.RememberStep(correlationId, "rule", eventId);
     }
 
     private static bool ContainsDisallowedControl(string value)

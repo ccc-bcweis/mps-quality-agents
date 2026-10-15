@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text.Json;
 
 using Mps.Api.Http;
+using Mps.Simulator.Scenarios;
 
 namespace Mps.Api.Bus;
 
@@ -34,7 +35,7 @@ internal static class TraceSummaries
     private static string Describe(StoredEvent row, string? toolName, double? value, double? low, double? high)
     {
         var tool = string.IsNullOrWhiteSpace(toolName) ? row.ToolId : toolName;
-        var parameter = Parameter(row);
+        var parameter = PlainParameter(Parameter(row));
         var when = row.OccurredAt.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss 'UTC'", CultureInfo.InvariantCulture);
         var where = string.IsNullOrWhiteSpace(tool) ? "the plant" : tool;
         var reading = value is null
@@ -45,6 +46,7 @@ internal static class TraceSummaries
             "telemetry.reading" => where + " recorded " + (parameter ?? "a reading") + " at " + when + "." + reading,
             "alert.raised" => "A process-control rule fired on " + where
                 + (parameter is null ? string.Empty : " for " + parameter) + " at " + when + "." + reading,
+            "rule.matched" => RuleSentence(row, when),
             "ticket.created" => "A ticket was opened for " + where + " at " + when + ".",
             "incident.changed" => "The incident on " + where + " was updated at " + when + ".",
             "investigation.step" => Step(row, where, when),
@@ -55,7 +57,7 @@ internal static class TraceSummaries
             "document.uploaded" => "A bench reading was stored for " + where + " at " + when + "." + reading,
             "command.fault.inject" => "A fault was injected on " + where
                 + (parameter is null ? string.Empty : " for " + parameter) + " at " + when + ".",
-            "command.scenario.start" => "A scripted scenario started at " + when + ".",
+            "command.scenario.start" => ScenarioSentence(row, when),
             "command.reset.hard" => "The demo was reset to a clean plant at " + when + ".",
             "command.reset.soft" => "Open tickets were closed by demo reset and the history was kept at " + when + ".",
             "command.operator.report" => "An operator reported " + where + " at " + when + ".",
@@ -66,6 +68,44 @@ internal static class TraceSummaries
             _ => "An event of type " + row.Type + " was recorded at " + when + ".",
         };
         return text;
+    }
+
+    private static string RuleSentence(StoredEvent row, string when)
+    {
+        using var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(row.PayloadJson) ? "{}" : row.PayloadJson);
+        var name = PayloadReader.String(document.RootElement, "name") ?? "that matched";
+        var queue = PayloadReader.String(document.RootElement, "queue");
+        var why = PayloadReader.String(document.RootElement, "why");
+        var opened = string.IsNullOrWhiteSpace(queue)
+            ? " It opened a ticket."
+            : " It opened a ticket for " + queue.Trim().TrimEnd('.') + ".";
+        var because = string.IsNullOrWhiteSpace(why) ? string.Empty : " " + why.Trim();
+        return "The business rule " + name + " fired at " + when + "." + opened + because;
+    }
+
+    private static string ScenarioSentence(StoredEvent row, string when)
+    {
+        using var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(row.PayloadJson) ? "{}" : row.PayloadJson);
+        var id = PayloadReader.String(document.RootElement, "scenarioId");
+        var title = id is not null && ScriptedScenarioCatalog.TryGet(id, out var scenario) ? scenario.Title : null;
+        return title is null
+            ? "A scripted scenario started at " + when + "."
+            : "Scenario " + title + " started at " + when + ".";
+    }
+
+    private static string? PlainParameter(string? parameter)
+    {
+        return parameter switch
+        {
+            "escTemperature" => "chuck temperature",
+            "etchRate" => "etch rate",
+            "filmThickness" => "film thickness",
+            "rfSourcePower" => "source power",
+            "vibrationRms" => "pump vibration",
+            "rfBiasPower" => "bias power",
+            "cf4Flow" => "etch gas flow",
+            _ => parameter,
+        };
     }
 
     private static string Step(StoredEvent row, string where, string when)
