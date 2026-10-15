@@ -1,5 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Api.Auth;
+using Mps.Api.Demo;
 using Mps.Application.Decisions;
 using Mps.Application.Errors;
 using Mps.Application.Faults;
@@ -12,6 +14,8 @@ using Mps.Domain.Hypotheses;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
 using Mps.Domain.Investigations;
+using Mps.Simulator.Demo;
+using Mps.Simulator.Scenarios;
 
 namespace Mps.Api.Http;
 
@@ -146,7 +150,45 @@ public static class QualityEndpoints
             var stored = await capas.AdvanceAsync(new CapaId(capaId), body.Stage.Value, cancellationToken).ConfigureAwait(false);
             return Results.Ok(ContractMapper.ToResponse(stored.Capa));
         });
-        app.MapPost("/api/faults", async (FaultBody? body, IFaultInjectionService faults, CancellationToken cancellationToken) =>
+        app.MapGet("/api/admin/session", (HttpContext http, IConfiguration configuration) =>
+        {
+            var caller = Caller(http, configuration);
+            return Results.Ok(new AdminSessionResponse(caller.Mode, caller.IsAdmin, caller.DisplayName));
+        });
+        app.MapPost("/api/admin/reset", async (HttpContext http, IConfiguration configuration, DemoResetService reset, CancellationToken cancellationToken) =>
+        {
+            if (!Caller(http, configuration).IsAdmin)
+            {
+                return Results.Problem(title: "Admin role is required.", statusCode: StatusCodes.Status403Forbidden);
+            }
+
+            var baseline = await reset.ResetAsync(cancellationToken).ConfigureAwait(false);
+            return Results.Ok(baseline);
+        });
+        app.MapGet("/api/injector/scenarios", () =>
+        {
+            var rows = ScriptedScenarioCatalog.All.Select(scenario => new ScenarioDescription(
+                scenario.Id,
+                scenario.Title,
+                scenario.Category,
+                scenario.ToolIds,
+                ScriptedScenario.ChamberIdFor(scenario.ToolIds[0]),
+                scenario.Parameter,
+                scenario.ShapeName,
+                scenario.Summary)).ToArray();
+            return Results.Ok(rows);
+        });
+        app.MapPost("/api/injector/scenarios/{scenarioId}", async (string scenarioId, ScenarioTrigger scenarios, CancellationToken cancellationToken) =>
+        {
+            var run = await scenarios.RunAsync(scenarioId, cancellationToken).ConfigureAwait(false);
+            if (run is null)
+            {
+                throw new ResourceNotFoundException("Scenario was not found.");
+            }
+
+            return Results.Json(run, statusCode: StatusCodes.Status202Accepted);
+        });
+        app.MapPost("/api/faults", async (FaultBody? body, IFaultInjectionService faults, DemoRuntime runtime, CancellationToken cancellationToken) =>
         {
             if (body is null)
             {
@@ -173,6 +215,7 @@ public static class QualityEndpoints
                     body.RootCauseCategory.Value,
                     body.Confounders),
                 cancellationToken).ConfigureAwait(false);
+            runtime.TryApplyFreeForm(body.ToolId ?? string.Empty, body.ChamberId, body.Parameter ?? string.Empty, body.Shape ?? string.Empty, body.Magnitude.Value);
             return Results.Json(new FaultAcceptedResponse(accepted.FaultId, accepted.CorrelationId), statusCode: StatusCodes.Status202Accepted);
         });
         app.MapGet("/api/metrics", async (
@@ -199,4 +242,12 @@ public static class QualityEndpoints
                 rollup.SpendCapUsd));
         });
     }
+
+    private static DemoCaller Caller(HttpContext http, IConfiguration configuration)
+    {
+        var header = http.Request.Headers[EasyAuthPrincipal.HeaderName].ToString();
+        return EasyAuthPrincipal.Read(string.IsNullOrWhiteSpace(header) ? null : header, configuration["Mps:Auth:Mode"]);
+    }
 }
+
+public sealed record AdminSessionResponse(string Mode, bool IsAdmin, string DisplayName);
