@@ -19,6 +19,7 @@ export type HarnessLink = {
  * Presenter tools belong in HARNESS_LINKS, not here.
  */
 export const CONSOLE_TABS: ConsoleTab[] = [
+  { to: "/sites", label: "Sites", match: (path) => path.startsWith("/sites") },
   { to: "/", label: "Fleet", match: (path) => path === "/" },
   { to: "/tools/E-02", label: "Tool", match: (path) => path.startsWith("/tools") },
   { to: "/alerts", label: "Alerts", match: (path) => path.startsWith("/alerts") },

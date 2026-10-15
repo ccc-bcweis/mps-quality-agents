@@ -35,6 +35,12 @@ function useAdminSession(): AdminSession | null {
   return session;
 }
 
+function mainWidth(path: string): string {
+  if (path.startsWith("/sites")) return "max-w-[1920px]";
+  if (path.startsWith("/tools/")) return "max-w-[1680px]";
+  return "max-w-[1200px]";
+}
+
 function NavLabel({ label }: { label: string }) {
   if (label === "CAPA") return <Term id="CAPA" spellOut={false} />;
   return label;
@@ -72,7 +78,7 @@ export function ConsoleFrame() {
           <img src="/logo-concept-1.svg" width={32} height={32} alt="Meridian Precision Systems mark" />
           <span>
             <strong className="block text-mps-body">Meridian Precision Systems</strong>
-            <span className="block font-mono text-mps-micro uppercase tracking-wider text-mps-muted">Fab Ops Console · Austin Demo Fab</span>
+            <span className="block font-mono text-mps-micro uppercase tracking-wider text-mps-muted">Fab ops console · three plants</span>
           </span>
         </Link>
         <div className="ml-auto flex flex-wrap items-center gap-4 font-mono text-mps-micro text-mps-muted">
@@ -80,7 +86,7 @@ export function ConsoleFrame() {
             <Led tone={healthOn ? "nominal" : "off"} /> Sim clock · 1 s = 1 min
           </span>
           <span className="whitespace-nowrap">
-            Plant <b className="font-medium text-mps-secondary">AUS-1</b>
+            Plants <b className="font-medium text-mps-secondary">3</b>
           </span>
           <span className="whitespace-nowrap">
             Engineer <b className="font-medium text-mps-secondary">{session?.displayName ?? "dev-user"}</b>
@@ -116,7 +122,7 @@ export function ConsoleFrame() {
       <LifecycleBar current={lifecycle.current} escalated={lifecycle.escalated} />
       <main
         id="main"
-        className={`mx-auto w-full flex-1 px-4 py-4 ${location.pathname.startsWith("/tools/") ? "max-w-[1680px]" : "max-w-[1200px]"}`}
+        className={`mx-auto w-full flex-1 px-4 py-4 ${mainWidth(location.pathname)}`}
       >
         <Outlet />
       </main>

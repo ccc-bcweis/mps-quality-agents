@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { CONSOLE_TABS } from "../shell/navigation";
 import { renderConsole } from "../test/render";
 
-const CONSOLE_TAB_LABELS = ["Fleet", "Tool", "Alerts", "Tickets", "Investigation", "Approval", "CAPA"];
+const CONSOLE_TAB_LABELS = ["Sites", "Fleet", "Tool", "Alerts", "Tickets", "Investigation", "Approval", "CAPA"];
 
 describe("demo harness and console split", () => {
   it("keeps presenter controls out of the console region", async () => {

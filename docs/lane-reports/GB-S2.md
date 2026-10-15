@@ -1,0 +1,47 @@
+# Lane S2 report
+
+Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+
+Branch `lane/s2`. Commits are local. Nothing was pushed. The same note is in `docs/lane-reports/S2.md`.
+
+| Step | Commit | What landed |
+|---|---|---|
+| Mocks | `18a83d3` | Web types and client follow OpenAPI 1.2 for `GET /api/sites`, `GET /api/sites/{siteId}`, and `GET /api/sites/compare?family=`. Seed 4242 fixtures match the contract examples. Compare is registered before the site id route. A placed tool outside the original eight still opens a schematic record. |
+| Sites screen | `de56a7a` | Sites is the first tab, at `/sites`. Each plant draws a floor: bays, tool icons, status lights with words, wafer-flow arrows, and throughput. A tool opens its schematic. The etch comparison flags the Ironwood chuck and wall gap in plain language. Label boxes are checked from 1248 to 1920 px. |
+
+## Plants on the screen
+
+| Plant | Id | Role | Place |
+|---|---|---|---|
+| Northwater Fab | `northwater` | Front-end wafer fab | Cedar Reach, Valecrest |
+| Ironwood Fab | `ironwood` | Front-end wafer fab | Ironwood Bench, Eastmere |
+| Lumen Pilot Works | `lumen` | Strip, clean, and pilot line | Lumen Yard, Westfold |
+
+The plant tabs write `?site=`. The family list writes `?family=`. Etch is the default family, so the scripted gap is on screen when the page opens. An unknown family falls back to etch.
+
+The floor is one SVG blueprint, 1280 units wide, scaled to the page. Bays are labeled zones. Tool positions come from the plant payload (0–100 inside the bay). Each tool shows a family glyph, a green, amber, or red status light, and the word Nominal, Watch, or Alarm. Numbered arrows run between bays. The matching sentence sits under the floor. Bay and plant strips show wafer starts per hour, wafer outs per hour, work in process (WIP), yield, and uptime. The first WIP on the page is spelled out in the plant strip. Bay lines keep the short form so the measured boxes still fit.
+
+Clicking a tool goes to `/tools/{id}`. Home stays the fleet at `/`, and the logo still links there. The Sites page widens the shell to 1920 px. Tool pages stay at 1680 px. Other pages stay at 1200 px.
+
+The comparison sits under the floor. Pick thin-film deposition, plasma etch, photoresist strip, or single-wafer clean. The same parameters line up across the three plants. A cell that differs from Northwater is marked and shows the sentence from the API. At seed 4242 the only flags are Ironwood etch electrostatic chuck temperature (about 12 degrees hotter) and chamber wall temperature (about 4.9 degrees hotter). Deposition, strip, and clean have no flags.
+
+Glossary tooltips cover WIP, yield, uptime, wafer starts, wafer outs, bay, fab, and pilot line. Parameter titles are glossary words where a term exists, such as ESC temperature, chamber wall temperature, and °C.
+
+The header now says "Fab ops console · three plants" and "Plants 3". The fleet eyebrow says "Northwater teaching floor · eight tools".
+
+## How it was verified
+
+- `npm run lint` in `web/` exited 0.
+- `npm test` in `web/` passed: 30 files, 74 tests.
+- `npm run build` in `web/` passed (`tsc --noEmit` and the Vite build).
+- `floorLayout.test.ts` lays out all three plants and checks every label box at 1248, 1280, 1600, 1888, and 1920 px. Boxes stay inside the floor, clear of each other, and wide enough for the words. Tool type at 1248 px stays at least 11 px.
+- `SitesPage.test.tsx` checks that Sites comes before Fleet, Northwater throughput (57.9 per hour, 140 wafers), Bay 3, the deposition-to-etch sentence, D-01 Nominal, D-03 Alarm, both Ironwood etch sentences, a switch to deposition with no flagged parameter, Ironwood etch I-E-01 Watch, the WIP and yield tooltips, the jump from D-01 to its schematic, and the Lumen pilot-line tooltip.
+- This session had no browser. The 1280–1920 floor was not clicked through in a window. The overlap check is geometry, not a screenshot.
+- `web/src/components/ToolSchematic*` and `web/src/fleet/schematic.ts` were not edited. Contracts, the simulator, and `data/glossary.yaml` were not edited. Docker and the Azure CLI were not used.
+
+## Open questions for Bob
+
+1. On the sites map at seed 4242, D-01 is nominal and D-03 is alarm. The fleet tiles still show D-01 as alarm and E-02 as watch. `/api/tools` still lists the original eight. Say if those two stories should be brought together.
+2. D-03, the Ironwood tools, and the Lumen tools open a schematic from a synthesized record: one chamber and the family art. Those ids have no sensor series, so telemetry for them still returns 404. Say if a later lane should bind sensors for the extra tools.
+3. Home stays the fleet. Say if the logo should open Sites.
+4. The comparison sits under the floor so the floor keeps readable type at 1280 px. Say if it should sit beside the floor on a wide screen.
