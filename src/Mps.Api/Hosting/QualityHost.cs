@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 using Mps.Api.Fakes;
 using Mps.Api.Http;
+using Mps.Api.Live;
 using Mps.Api.Hubs;
 using Mps.Api.Persistence;
 using Mps.Application.Decisions;
@@ -76,7 +77,11 @@ public static class QualityHost
                 services.GetRequiredService<IQualityNotifier>(),
                 debounce);
         });
-        builder.Services.AddScoped<IInvestigationWorkflow, FakeInvestigationWorkflow>();
+        if (!builder.TryAddLiveInvestigation())
+        {
+            builder.Services.AddScoped<IInvestigationWorkflow, FakeInvestigationWorkflow>();
+        }
+
         builder.Services.AddScoped<IInvestigationService, InvestigationService>();
         builder.Services.AddScoped<ICapaLifecycleService, CapaLifecycleService>();
         builder.Services.AddScoped<IHumanDecisionService, HumanDecisionService>();
@@ -98,6 +103,7 @@ public static class QualityHost
         }
 
         QualityEndpoints.Map(app);
+        app.MapModelUsage();
         app.MapHub<FleetHub>("/hubs/fleet");
         if (HasWebRoot(app.Environment))
         {

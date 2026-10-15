@@ -122,6 +122,12 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
               value: '2'
             }
             {
+              // The injector routes faults past 3 sigma through the SPC rules, which raise the alert and open the ticket.
+              // The API host runs no background simulator, so this is the hosted demo's SPC path.
+              name: 'Mps__Injector__DirectTicket'
+              value: 'true'
+            }
+            {
               name: 'Mps__Model__Endpoint'
               value: openAiEndpoint
             }
@@ -170,8 +176,11 @@ resource auth 'Microsoft.App/containerApps/authConfigs@2024-03-01' = if (!empty(
           openIdIssuer: openIdIssuer
         }
         validation: {
+          // The second audience accepts Azure CLI tokens for the sign-in app's user_impersonation scope,
+          // so an assigned user can run the scripted smoke test (deploy/smoke-live.sh). See infra/ENTRA.md.
           allowedAudiences: [
             entraClientId
+            'api://${entraClientId}'
           ]
         }
       }

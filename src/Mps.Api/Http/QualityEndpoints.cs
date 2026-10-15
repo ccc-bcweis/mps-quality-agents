@@ -180,6 +180,7 @@ public static class QualityEndpoints
             MetricsPolicy policy,
             IConfiguration configuration,
             TimeProvider time,
+            IServiceProvider services,
             CancellationToken cancellationToken) =>
         {
             var rollup = await metrics.RollupAsync(
@@ -195,8 +196,20 @@ public static class QualityEndpoints
                 rollup.ToolFailureCount,
                 rollup.LatencyP95Ms,
                 rollup.CostPerInvestigationUsd,
-                rollup.SpendTodayUsd,
+                await LiveSpendAsync(services, time, rollup.SpendTodayUsd, cancellationToken).ConfigureAwait(false),
                 rollup.SpendCapUsd));
         });
+    }
+
+    private static async Task<double> LiveSpendAsync(IServiceProvider services, TimeProvider time, double fallback, CancellationToken cancellationToken)
+    {
+        var ledger = services.GetService<Mps.ModelGateway.Cost.ICostLedger>();
+        if (ledger is null)
+        {
+            return fallback;
+        }
+
+        var day = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
+        return (double)await ledger.GetSpendAsync(day, cancellationToken).ConfigureAwait(false);
     }
 }
