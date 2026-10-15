@@ -220,7 +220,7 @@ public static class ScriptedScenarioCatalog
             "rfSourcePower",
             FaultShape.Oscillation,
             MagnitudeKind.Sigma,
-            4d,
+            5d,
             confounders: false,
             periodSeconds: 30d),
         new(

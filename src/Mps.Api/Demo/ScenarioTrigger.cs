@@ -164,6 +164,17 @@ public sealed class ScenarioTrigger
 
     private static string? FindSample(string fileName)
     {
+        // The hosted image keeps content under Mps__DataDirectory (/app/content/data); /app/data is the database folder.
+        var configured = Environment.GetEnvironmentVariable("Mps__DataDirectory");
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            var hosted = Path.Combine(configured, "samples", fileName);
+            if (File.Exists(hosted))
+            {
+                return hosted;
+            }
+        }
+
         var seeds = new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
         foreach (var seed in seeds)
         {

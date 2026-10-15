@@ -32,6 +32,14 @@ public sealed class DemoResetService
     /// <summary>True while a hard or soft reset holds the gate. The plant tick waits so no reading, alert or ticket lands mid-reset.</summary>
     public static bool InProgress => Gate.CurrentCount == 0;
 
+    /// <summary>
+    /// A plant tick holds the same gate as a reset. A reset therefore waits for the tick in flight, including any
+    /// investigation that tick started, so no write from the previous run lands after the purge.
+    /// </summary>
+    public static bool TryEnterTick() => Gate.Wait(0);
+
+    public static void ExitTick() => Gate.Release();
+
     private readonly QualityDbContext _db;
     private readonly PlantSimulation _plant;
     private readonly StreamSpcPublisher _traces;
