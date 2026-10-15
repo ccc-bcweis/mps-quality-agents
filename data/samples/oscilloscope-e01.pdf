@@ -6,66 +6,344 @@ endobj
 << /Type /Pages /Kids [3 0 R] /Count 1 >>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R /F3 7 0 R >> >> >>
 endobj
 4 0 obj
-<< /Length 567 >>
+<< /Length 6389 >>
 stream
-BT
-/F1 11 Tf
-48 760 Td
-14 TL
-(NORTHLINE BENCH INSTRUMENTS) Tj
-T*
-(Model: NB-410 Oscilloscope) Tj
-T*
-(Printout) Tj
-T*
-(Tool: E-01) Tj
-T*
-(Chamber: E-01-A) Tj
-T*
-(Observed at: 2026-10-12T14:22:00Z) Tj
-T*
-(Instrument: oscilloscope) Tj
-T*
-(Parameter: rfPower) Tj
-T*
-(Plain name: RF power) Tj
-T*
-(Value: 2140) Tj
-T*
-(Unit: W) Tj
-T*
-(Spec minimum: 1000) Tj
-T*
-(Spec maximum: 2000) Tj
-T*
-(Shape: oscillation) Tj
-T*
-(Operator: KL) Tj
-T*
-(Reading table) Tj
-T*
-(Channel RF power  value 2140 W  spec 1000-2000) Tj
-T*
-(Trace: Peak-to-peak swing leaves the printed window.) Tj
-ET
+0.12 0.16 0.23 rg 0 722 612 70 re f
+BT 1 1 1 rg /F2 18 Tf 40 760 Td (NORTHLINE BENCH INSTRUMENTS) Tj ET
+BT 0.85 0.88 0.92 rg /F1 10 Tf 40 742 Td (NB-410 Oscilloscope  |  Bench Measurement Report) Tj ET
+BT 0 0 0 rg /F2 13 Tf 40 700 Td (MEASUREMENT REPORT) Tj ET
+BT 0.75 0.1 0.1 rg /F2 13 Tf 400 700 Td (RESULT  OUT OF SPEC) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 680 Td (Serial no: NB410-579422) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 667 Td (Report date: 12 Oct 2026) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 654 Td (Calibration due: 12 May 2027) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 641 Td (Tool: E-01) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 628 Td (Chamber: E-01-A) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 615 Td (Observed at: 2026-10-12T14:22:00Z) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 602 Td (Instrument: oscilloscope) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 589 Td (Parameter: rfPower) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 576 Td (Plain name: RF power) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 563 Td (Value: 2140) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 550 Td (Unit: W) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 537 Td (Spec minimum: 1000) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 524 Td (Spec maximum: 2000) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 511 Td (Shape: oscillation) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 498 Td (Operator: KL) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 485 Td (Specification: 1000 to 2000 W) Tj ET
+BT 0 0 0 rg /F3 9.5 Tf 40 472 Td (Note: Peak-to-peak swing leaves the printed window.) Tj ET
+BT 0 0 0 rg /F2 10 Tf 40 441 Td (TRACE  RF POWER \(W\)) Tj ET
+0.97 0.97 0.95 rg 80 200 480 229 re f
+0.85 0.85 0.85 RG 0.4 w
+128 200 m 128 429 l S
+176 200 m 176 429 l S
+224 200 m 224 429 l S
+272 200 m 272 429 l S
+320 200 m 320 429 l S
+368 200 m 368 429 l S
+416 200 m 416 429 l S
+464 200 m 464 429 l S
+512 200 m 512 429 l S
+80 238.17 m 560 238.17 l S
+80 276.33 m 560 276.33 l S
+80 314.5 m 560 314.5 l S
+80 352.67 m 560 352.67 l S
+80 390.83 m 560 390.83 l S
+0 0 0 RG 0.8 w 80 200 480 229 re S
+BT 0.3 0.3 0.3 rg /F1 7 Tf 44 198 Td (650) Tj ET
+BT 0.3 0.3 0.3 rg /F1 7 Tf 44 274.33 Td (1263) Tj ET
+BT 0.3 0.3 0.3 rg /F1 7 Tf 44 350.67 Td (1877) Tj ET
+BT 0.3 0.3 0.3 rg /F1 7 Tf 44 427 Td (2490) Tj ET
+[4 3] 0 d 0.8 0.1 0.1 RG 0.9 w
+80 243.56 m 560 243.56 l S
+80 368.02 m 560 368.02 l S
+[] 0 d
+BT 0.75 0.1 0.1 rg /F1 7 Tf 564 366.02 Td (USL 2000) Tj ET
+BT 0.75 0.1 0.1 rg /F1 7 Tf 564 241.56 Td (LSL 1000) Tj ET
+0.1 0.45 0.2 RG 1.2 w
+80 305.79 m
+82 312.66 l
+84 319.42 l
+86 325.88 l
+88 331.89 l
+90 337.29 l
+92 341.95 l
+94 345.75 l
+96 348.59 l
+98 350.38 l
+100 351.09 l
+102 350.68 l
+104 349.16 l
+106 346.55 l
+108 342.92 l
+110 338.35 l
+112 332.94 l
+114 326.83 l
+116 320.16 l
+118 313.09 l
+120 305.79 l
+122 298.44 l
+124 291.24 l
+126 284.34 l
+128 277.93 l
+130 272.17 l
+132 267.2 l
+134 263.16 l
+136 260.15 l
+138 258.24 l
+140 257.5 l
+142 257.95 l
+144 259.58 l
+146 262.36 l
+148 266.24 l
+150 271.11 l
+152 276.88 l
+154 283.39 l
+156 290.5 l
+158 298.02 l
+160 305.79 l
+162 313.6 l
+164 321.26 l
+166 328.59 l
+168 335.4 l
+170 341.52 l
+172 346.79 l
+174 351.08 l
+176 354.27 l
+178 356.29 l
+180 357.06 l
+182 356.58 l
+184 354.84 l
+186 351.87 l
+188 347.75 l
+190 342.57 l
+192 336.45 l
+194 329.54 l
+196 322 l
+198 314.02 l
+200 305.79 l
+202 297.51 l
+204 289.39 l
+206 281.63 l
+208 274.42 l
+210 267.95 l
+212 262.37 l
+214 257.84 l
+216 254.46 l
+218 252.34 l
+220 251.53 l
+222 252.05 l
+224 253.9 l
+226 257.04 l
+228 261.41 l
+230 266.89 l
+232 273.37 l
+234 280.68 l
+236 288.65 l
+238 297.09 l
+240 305.79 l
+242 314.53 l
+244 323.11 l
+246 331.3 l
+248 338.91 l
+250 345.74 l
+252 351.62 l
+254 356.4 l
+256 359.95 l
+258 362.19 l
+260 363.04 l
+262 362.48 l
+264 360.52 l
+266 357.2 l
+268 352.59 l
+270 346.8 l
+272 339.97 l
+274 332.25 l
+276 323.85 l
+278 314.95 l
+280 305.79 l
+282 296.58 l
+284 287.54 l
+286 278.92 l
+288 270.91 l
+290 263.72 l
+292 257.54 l
+294 252.52 l
+296 248.78 l
+298 246.44 l
+300 245.55 l
+302 246.15 l
+304 248.22 l
+306 251.72 l
+308 256.57 l
+310 262.67 l
+312 269.85 l
+314 277.97 l
+316 286.8 l
+318 296.15 l
+320 305.79 l
+322 315.47 l
+324 324.96 l
+326 334.02 l
+328 342.42 l
+330 349.97 l
+332 356.45 l
+334 361.72 l
+336 365.63 l
+338 368.09 l
+340 369.01 l
+342 368.38 l
+344 366.2 l
+346 362.52 l
+348 357.42 l
+350 351.02 l
+352 343.48 l
+354 334.97 l
+356 325.69 l
+358 315.89 l
+360 305.79 l
+362 295.64 l
+364 285.7 l
+366 276.2 l
+368 267.4 l
+370 259.5 l
+372 252.71 l
+374 247.19 l
+376 243.1 l
+378 240.54 l
+380 239.58 l
+382 240.24 l
+384 242.53 l
+386 246.39 l
+388 251.74 l
+390 258.44 l
+392 266.34 l
+394 275.25 l
+396 284.96 l
+398 295.22 l
+400 305.79 l
+402 316.4 l
+404 326.8 l
+406 336.73 l
+408 345.93 l
+410 354.19 l
+412 361.29 l
+414 367.04 l
+416 371.32 l
+418 373.99 l
+420 374.99 l
+422 374.28 l
+424 371.88 l
+426 367.84 l
+428 362.25 l
+430 355.25 l
+432 346.99 l
+434 337.68 l
+436 327.54 l
+438 316.82 l
+440 305.79 l
+442 294.71 l
+444 283.85 l
+446 273.49 l
+448 263.89 l
+450 255.27 l
+452 247.87 l
+454 241.87 l
+456 237.42 l
+458 234.64 l
+460 233.6 l
+462 234.34 l
+464 236.85 l
+466 241.07 l
+468 246.91 l
+470 254.22 l
+472 262.83 l
+474 272.54 l
+476 283.11 l
+478 294.29 l
+480 305.79 l
+482 317.34 l
+484 328.65 l
+486 339.44 l
+488 349.45 l
+490 358.41 l
+492 366.12 l
+494 372.37 l
+496 377 l
+498 379.89 l
+500 380.96 l
+502 380.18 l
+504 377.56 l
+506 373.17 l
+508 367.09 l
+510 359.47 l
+512 350.5 l
+514 340.39 l
+516 329.39 l
+518 317.76 l
+520 305.79 l
+522 293.77 l
+524 282 l
+526 270.78 l
+528 260.37 l
+530 251.05 l
+532 243.04 l
+534 236.55 l
+536 231.74 l
+538 228.74 l
+540 227.63 l
+542 228.44 l
+544 231.17 l
+546 235.75 l
+548 242.07 l
+550 249.99 l
+552 259.32 l
+554 269.83 l
+556 281.27 l
+558 293.35 l
+560 305.79 l
+S
+BT 0.3 0.3 0.3 rg /F1 7 Tf 80 188 Td (0 s) Tj ET
+BT 0.3 0.3 0.3 rg /F1 7 Tf 540 188 Td (60 s) Tj ET
+0.9 0.92 0.95 rg 40 151 532 16 re f
+BT 0 0 0 rg /F2 9 Tf 44 155 Td (Channel) Tj ET
+BT 0 0 0 rg /F1 9 Tf 44 137 Td (RF power) Tj ET
+BT 0 0 0 rg /F2 9 Tf 200 155 Td (Measured) Tj ET
+BT 0 0 0 rg /F1 9 Tf 200 137 Td (2140 W) Tj ET
+BT 0 0 0 rg /F2 9 Tf 300 155 Td (Min) Tj ET
+BT 0 0 0 rg /F1 9 Tf 300 137 Td (1000) Tj ET
+BT 0 0 0 rg /F2 9 Tf 380 155 Td (Max) Tj ET
+BT 0 0 0 rg /F1 9 Tf 380 137 Td (2000) Tj ET
+BT 0 0 0 rg /F2 9 Tf 460 155 Td (Result) Tj ET
+BT 0.75 0.1 0.1 rg /F1 9 Tf 460 137 Td (FAIL) Tj ET
+0.6 0.6 0.6 RG 0.5 w 40 129 m 572 129 l S
+BT 0 0 0 rg /F1 9 Tf 40 70 Td (Technician signature: ______________________   Initials KL) Tj ET
+BT 0 0 0 rg /F1 9 Tf 40 52 Td (Reviewed by  ______________________   Date  ____________) Tj ET
+BT 0.45 0.45 0.45 rg /F1 7 Tf 40 30 Td (Northline Bench Instruments  NB-410  Page 1 of 1  Fictional sample for demo use) Tj ET
 endstream
 endobj
 5 0 obj
 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
 endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+7 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
 xref
-0 6
+0 8
 0000000000 65535 f 
 0000000009 00000 n 
 0000000058 00000 n 
 0000000115 00000 n 
-0000000241 00000 n 
-0000000858 00000 n 
+0000000261 00000 n 
+0000006701 00000 n 
+0000006771 00000 n 
+0000006846 00000 n 
 trailer
-<< /Size 6 /Root 1 0 R >>
+<< /Size 8 /Root 1 0 R >>
 startxref
-928
+6914
 %%EOF
