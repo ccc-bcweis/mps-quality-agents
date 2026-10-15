@@ -119,6 +119,20 @@ public sealed class PlantSimulation
         return whole.AddSeconds(-_options.PrimeSeconds);
     }
 
+    /// <summary>
+    /// Real time keeps timestamps honest but would make a two-hour ramp take two hours. Faults injected in real time
+    /// therefore develop <see cref="RealTimeFaultPace"/> x speed faster (period and ramp shortened). Readings still land at now().
+    /// </summary>
+    public const double RealTimeFaultPace = 6d;
+
+    public double FaultPace => _options.RealTime ? RealTimeFaultPace * Math.Max(1, Speed) : 1d;
+
+    private FaultSignal[] Pace(IEnumerable<FaultSignal> faults)
+    {
+        var pace = FaultPace;
+        return faults.Select(fault => fault.Paced(pace)).ToArray();
+    }
+
     /// <summary>In real time, speed shortens the gap between kept readings (stride / speed, at least one second).</summary>
     private int EffectiveStride => _options.RealTime ? Math.Max(1, StrideSeconds / Math.Max(1, Speed)) : StrideSeconds;
 
@@ -135,7 +149,7 @@ public sealed class PlantSimulation
     {
         lock (_gate)
         {
-            Runtime.Apply(scenario);
+            Runtime.Simulator.InjectAtSimulatedNow(onset => Pace(scenario.Signals(onset)));
         }
     }
 
@@ -145,7 +159,7 @@ public sealed class PlantSimulation
         ArgumentNullException.ThrowIfNull(scenario);
         lock (_gate)
         {
-            Runtime.Simulator.InjectAtSimulatedNow(scenario.StreamSignals);
+            Runtime.Simulator.InjectAtSimulatedNow(onset => Pace(scenario.StreamSignals(onset)));
         }
     }
 
@@ -153,7 +167,7 @@ public sealed class PlantSimulation
     {
         lock (_gate)
         {
-            return Runtime.TryApplyFreeForm(toolId, chamberId, parameter, shape, magnitude);
+            return Runtime.TryApplyFreeForm(toolId, chamberId, parameter, shape, magnitude, FaultPace);
         }
     }
 
@@ -161,7 +175,7 @@ public sealed class PlantSimulation
     {
         lock (_gate)
         {
-            Runtime.Simulator.Inject(fault);
+            Runtime.Simulator.Inject(fault.Paced(FaultPace));
         }
     }
 

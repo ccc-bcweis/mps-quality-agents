@@ -39,3 +39,18 @@ internal sealed class FixedTime(DateTimeOffset now) : TimeProvider
 {
     public override DateTimeOffset GetUtcNow() => now;
 }
+
+public sealed class FaultPaceTests
+{
+    [Fact]
+    public void PacedShortensPeriodAndRampButKeepsOnset()
+    {
+        var onset = new DateTimeOffset(2026, 10, 15, 12, 0, 0, TimeSpan.Zero);
+        var fault = new FaultSignal("E-02", "A", "escTemperature", FaultShape.Ramp, MagnitudeKind.Sigma, 4d, onset, periodSeconds: 1200d, rampSeconds: 7200d);
+        var paced = fault.Paced(60d);
+        Assert.Equal(20d, paced.PeriodSeconds);
+        Assert.Equal(120d, paced.RampSeconds);
+        Assert.Equal(onset, paced.Onset);
+        Assert.Same(fault, fault.Paced(1d));
+    }
+}
