@@ -27,7 +27,8 @@ export type EvidenceSource =
   | "erp"
   | "cmms"
   | "document"
-  | "ticketing";
+  | "ticketing"
+  | "manualMeasurement";
 export type RootCauseCategory =
   | "engineeringChange"
   | "equipmentCalibrationOrAlignment"
@@ -71,6 +72,7 @@ export type Tool = {
   family: ToolFamily;
   model: string;
   bay: string;
+  siteId?: string;
   chambers: Chamber[];
 };
 
@@ -115,6 +117,48 @@ export type OpenIncidentRequest = {
   severity?: Severity;
 };
 
+export type PrintoutInspection = {
+  toolId: string;
+  chamberId?: string | null;
+  observedAt: string;
+  instrument: string;
+  parameter: string;
+  value: number;
+  unit: string;
+  specMinimum: number;
+  specMaximum: number;
+  shape?: string | null;
+  operatorInitials?: string | null;
+  parseMethod: "text" | "model";
+  outOfSpec: boolean;
+};
+
+export type PrintoutConfirmRequest = {
+  toolId: string;
+  chamberId?: string | null;
+  observedAt: string;
+  instrument: string;
+  parameter: string;
+  value: number;
+  unit: string;
+  specMinimum: number;
+  specMaximum: number;
+  shape?: string | null;
+  operatorInitials?: string | null;
+};
+
+export type PrintoutConfirmation = {
+  evidenceId: string;
+  incidentId: string;
+  faultId?: string | null;
+  correlationId?: string | null;
+  alertId?: string | null;
+  appliedToSimulation: boolean;
+  outOfSpec: boolean;
+  printedParameter: string;
+  catalogParameter: string;
+};
+
 export type EvidenceItem = {
   id: string;
   source: EvidenceSource;
@@ -123,8 +167,15 @@ export type EvidenceItem = {
   observedAt: string;
   toolId?: string | null;
   externalRef?: string | null;
-  /** Local demo field. The frozen evidence schema does not carry this yet. */
   whyItMatters?: string;
+  signalId?: string | null;
+  /** Optional reading. Older packs omit these. See ADR-001. */
+  value?: number | null;
+  unit?: string | null;
+  specLow?: number | null;
+  specHigh?: number | null;
+  toolName?: string | null;
+  chamberName?: string | null;
 };
 
 export type Hypothesis = {
@@ -161,6 +212,28 @@ export type Capa = {
   actionHash: string;
   stage: CapaStage;
   openedAt: string;
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+};
+
+export type AuditEvent = {
+  at: string;
+  kind: string;
+  summary: string;
+  actor?: string | null;
+  toolId?: string | null;
+  correlationId?: string | null;
+  recordId?: string | null;
+};
+
+export type CorrelationTrace = {
+  correlationId: string;
+  events: AuditEvent[];
+};
+
+export type AuditLog = {
+  entries: AuditEvent[];
+  traces: CorrelationTrace[];
 };
 
 export type DecisionResult = {

@@ -16,6 +16,28 @@ public sealed class DemoResetTests
     private static readonly DateTimeOffset Origin = new(2026, 9, 1, 0, 0, 0, TimeSpan.Zero);
 
     [Fact]
+    public async Task AFreshProcessStartsNominalWithNoFaults()
+    {
+        await using var factory = new ApiFactory();
+        var client = factory.CreateClient();
+
+        var alerts = await client.GetFromJsonAsync<JsonElement>("/api/alerts");
+        var tickets = await client.GetFromJsonAsync<JsonElement>("/api/tickets");
+        var incidents = await client.GetFromJsonAsync<JsonElement>("/api/incidents");
+        var capas = await client.GetFromJsonAsync<JsonElement>("/api/capas");
+        var north = await client.GetFromJsonAsync<JsonElement>("/api/sites/northwater");
+        var ironwood = await client.GetFromJsonAsync<JsonElement>("/api/sites/ironwood");
+
+        alerts!.GetArrayLength().Should().Be(0);
+        tickets!.GetArrayLength().Should().Be(0);
+        incidents!.GetArrayLength().Should().Be(0);
+        capas!.GetArrayLength().Should().Be(0);
+        ToolStatus(north, "D-01").Should().Be("nominal");
+        ToolStatus(north, "D-03").Should().Be("nominal");
+        ToolStatus(ironwood, "I-D-01").Should().Be("nominal");
+    }
+
+    [Fact]
     public async Task ResetIsIdempotentAndRestoresTheSeededBaseline()
     {
         await using var factory = new ApiFactory();
@@ -109,8 +131,8 @@ public sealed class DemoResetTests
         firstBody.GetProperty("scenarioId").GetString().Should().Be("SC-1");
         Values(secondBody).Should().Equal(Values(firstBody));
         Values(otherBody).Should().NotEqual(Values(firstBody));
-        listed.GetArrayLength().Should().Be(7);
-        listed.EnumerateArray().Select(row => row.GetProperty("id").GetString()).Should().Equal("SC-1", "SC-2", "SC-3", "SC-4", "SC-5", "SC-7", "SC-8");
+        listed.GetArrayLength().Should().Be(8);
+        listed.EnumerateArray().Select(row => row.GetProperty("id").GetString()).Should().Equal("SC-1", "SC-2", "SC-3", "SC-4", "SC-6", "SC-5", "SC-7", "SC-8");
         listed.EnumerateArray().Should().OnlyContain(row => row.GetProperty("whatsHappening").GetString()!.Length > 0);
         listed.EnumerateArray().Single(row => row.GetProperty("id").GetString() == "SC-5").GetProperty("expectedCause").GetString().Should().Contain("MX4419");
     }
@@ -125,6 +147,15 @@ public sealed class DemoResetTests
         admin.IsAdmin.Should().BeTrue();
         reader.IsAdmin.Should().BeFalse();
         broken.IsAdmin.Should().BeFalse();
+    }
+
+    private static string ToolStatus(JsonElement site, string toolId)
+    {
+        return site.GetProperty("bays").EnumerateArray()
+            .SelectMany(bay => bay.GetProperty("tools").EnumerateArray())
+            .Single(tool => tool.GetProperty("id").GetString() == toolId)
+            .GetProperty("status")
+            .GetString()!;
     }
 
     private static IEnumerable<double> Values(JsonElement body)

@@ -271,7 +271,7 @@ export function drawFabFloor(sheet) {
       { text: 'South utility chase', size: 16, weight: 'semibold', fill: chaseTone.title },
       { text: 'Exhaust and drains return in this corridor.' },
       {
-        text: `Plant B, ${plantB.name}, matches this mix. Plant C, ${plantC.name}, is strip, clean, and the pilot line. Not to scale.`,
+        text: `${plantB.name} matches this mix. ${plantC.name} is strip, clean, and pilot. Not to scale.`,
       },
     ],
     south.x + 16,

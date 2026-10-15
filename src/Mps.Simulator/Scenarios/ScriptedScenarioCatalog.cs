@@ -130,8 +130,8 @@ public sealed class ScriptedScenario
 public sealed record ScenarioPoint(string ToolId, string ChamberId, string Parameter, DateTimeOffset At, double Value);
 
 /// <summary>
-/// Named pitch scenarios. The 30 second sample starts at the demo clock origin so the preview does not depend on
-/// when the presenter presses the button. Live ticks use a slower ramp so the chart moves after the button press.
+/// Named pitch scenarios. SC-1 through SC-4 cover each root-cause class; SC-5, SC-7, and SC-8 add cross-plant, bearing, and recipe stories.
+/// SC-6 replays the oscilloscope printout on E-01. The sample starts at the demo clock origin; live ticks use a slower ramp so the chart moves after the button press.
 /// </summary>
 public static class ScriptedScenarioCatalog
 {
@@ -186,6 +186,18 @@ public static class ScriptedScenarioCatalog
             -3.5d,
             confounders: false,
             rampSeconds: 7200d),
+        new(
+            "SC-6",
+            "Oscilloscope RF oscillation on E-01",
+            RootCauseCategory.EquipmentCalibrationOrAlignment,
+            "An oscilloscope printout shows source RF power oscillating out of spec on E-01 chamber A.",
+            ["E-01"],
+            "rfSourcePower",
+            FaultShape.Oscillation,
+            MagnitudeKind.Sigma,
+            4d,
+            confounders: false,
+            periodSeconds: 30d),
         new(
             "SC-5",
             "Precursor lot on two plants",

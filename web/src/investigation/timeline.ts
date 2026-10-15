@@ -15,6 +15,9 @@ export type AgentStep = {
   screen: string;
   detail: string;
   status: StepStatus;
+  seconds: number;
+  prompt: string | null;
+  payload: string | null;
 };
 
 const ORDER = [
@@ -33,7 +36,7 @@ const ORDER = [
 
 type StepId = (typeof ORDER)[number];
 
-const COPY: Record<StepId, Omit<AgentStep, "status">> = {
+const COPY: Record<StepId, Omit<AgentStep, "status" | "prompt" | "payload">> = {
   ticket: {
     id: "ticket",
     n: "01",
@@ -42,6 +45,7 @@ const COPY: Record<StepId, Omit<AgentStep, "status">> = {
     actorLabel: "Deterministic",
     screen: "Alerts / Tickets",
     detail: "SPC and Western Electric open the alert and the ticket. This step is not an agent.",
+    seconds: 1,
   },
   triage: {
     id: "triage",
@@ -51,6 +55,7 @@ const COPY: Record<StepId, Omit<AgentStep, "status">> = {
     actorLabel: "Investigation agent",
     screen: "Investigation",
     detail: "Plans the evidence pack. Does not diagnose.",
+    seconds: 4,
   },
   hypotheses: {
     id: "hypotheses",
@@ -60,6 +65,7 @@ const COPY: Record<StepId, Omit<AgentStep, "status">> = {
     actorLabel: "Investigation agent",
     screen: "Investigation",
     detail: "Four classes, none picked: engineering change, equipment calibration, material lot, and process drift.",
+    seconds: 3,
   },
   toolCalls: {
     id: "toolCalls",
@@ -69,6 +75,7 @@ const COPY: Record<StepId, Omit<AgentStep, "status">> = {
     actorLabel: "Investigation agent",
     screen: "Investigation",
     detail: "Read-only MES, QMS, PLM, ERP, CMMS, and documents. At most 10 calls.",
+    seconds: 12,
   },
   gate: {
     id: "gate",
@@ -78,6 +85,7 @@ const COPY: Record<StepId, Omit<AgentStep, "status">> = {
     actorLabel: "Deterministic",
     screen: "Investigation",
     detail: "Checks that the pack is enough and that the records do not contradict each other.",
+    seconds: 2,
   },
   escalation: {
     id: "escalation",
@@ -87,6 +95,7 @@ const COPY: Record<StepId, Omit<AgentStep, "status">> = {
     actorLabel: "Deterministic",
     screen: "Investigation",
     detail: "Missing or contradictory evidence stops here. No root cause is asserted.",
+    seconds: 1,
   },
   ranking: {
     id: "ranking",
@@ -96,6 +105,7 @@ const COPY: Record<StepId, Omit<AgentStep, "status">> = {
     actorLabel: "Resolution agent",
     screen: "Investigation",
     detail: "Orders the four classes with citations and the points that argue the other way.",
+    seconds: 8,
   },
   capaDraft: {
     id: "capaDraft",
@@ -105,6 +115,7 @@ const COPY: Record<StepId, Omit<AgentStep, "status">> = {
     actorLabel: "Resolution agent",
     screen: "Investigation",
     detail: "Drafts containment and a CAPA proposal. This is not a write.",
+    seconds: 4,
   },
   grounding: {
     id: "grounding",
@@ -114,6 +125,7 @@ const COPY: Record<StepId, Omit<AgentStep, "status">> = {
     actorLabel: "Deterministic",
     screen: "Investigation",
     detail: "Every cited id is in the pack. A claim with no citation does not pass.",
+    seconds: 2,
   },
   approval: {
     id: "approval",
@@ -123,6 +135,7 @@ const COPY: Record<StepId, Omit<AgentStep, "status">> = {
     actorLabel: "Human",
     screen: "Approval",
     detail: "A person confirms. That mints a single-use approval token. Reject mints nothing.",
+    seconds: 1,
   },
   qms: {
     id: "qms",
@@ -132,8 +145,54 @@ const COPY: Record<StepId, Omit<AgentStep, "status">> = {
     actorLabel: "Deterministic",
     screen: "CAPA",
     detail: "The action service creates the CAPA after the token. Agents never write.",
+    seconds: 1,
   },
 };
+
+const INVESTIGATION_PROMPT =
+  "You are the investigation agent. Gather records with read-only tools. Do not diagnose, write, or approve.";
+
+const RESOLUTION_PROMPT =
+  "You are the resolution agent. Rank one cause from the records. You have no tools. Do not write or approve.";
+
+function toolPayload(investigation: Investigation): string {
+  return JSON.stringify(
+    investigation.evidence.map((item) => ({
+      source: item.source,
+      ref: item.externalRef ?? null,
+      at: item.observedAt,
+      tool: item.toolId ?? null,
+      text: item.excerpt,
+      value: item.value ?? null,
+      unit: item.unit ?? null,
+    })),
+    null,
+    2,
+  );
+}
+
+function rankPayload(investigation: Investigation): string {
+  return JSON.stringify(
+    investigation.hypotheses.map((item) => ({
+      category: item.category,
+      cause: item.cause,
+      confidence: item.confidence,
+      evidenceIds: item.evidenceIds,
+      counterEvidence: item.counterEvidence,
+      actions: item.actions,
+    })),
+    null,
+    2,
+  );
+}
+
+function stepExtras(id: StepId, investigation: Investigation): { prompt: string | null; payload: string | null } {
+  if (id === "triage" || id === "hypotheses") return { prompt: INVESTIGATION_PROMPT, payload: null };
+  if (id === "toolCalls") return { prompt: INVESTIGATION_PROMPT, payload: toolPayload(investigation) };
+  if (id === "ranking" || id === "capaDraft") return { prompt: RESOLUTION_PROMPT, payload: rankPayload(investigation) };
+  if (id === "gate" || id === "escalation" || id === "grounding") return { prompt: null, payload: toolPayload(investigation) };
+  return { prompt: null, payload: null };
+}
 
 function statuses(stage: InvestigationStage): Record<StepId, StepStatus> {
   const queued = Object.fromEntries(ORDER.map((id) => [id, "queued"])) as Record<StepId, StepStatus>;
@@ -174,7 +233,8 @@ function statuses(stage: InvestigationStage): Record<StepId, StepStatus> {
 export function buildAgentSteps(investigation: Investigation): AgentStep[] {
   const status = statuses(investigation.stage);
   return ORDER.map((id) => {
-    const step = { ...COPY[id], status: status[id] };
+    const extras = stepExtras(id, investigation);
+    const step: AgentStep = { ...COPY[id], status: status[id], prompt: extras.prompt, payload: extras.payload };
     if (id === "toolCalls") {
       const count = Math.min(10, investigation.evidence.length);
       step.detail = `${step.detail} This pack used ${count}.`;

@@ -1,8 +1,11 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Microsoft.EntityFrameworkCore;
+
 using Mps.Api.Auth;
 using Mps.Api.Demo;
 using Mps.Api.Live;
+using Mps.Api.Persistence;
 using Mps.Application.Decisions;
 using Mps.Application.Errors;
 using Mps.Application.Faults;
@@ -10,6 +13,7 @@ using Mps.Application.Intake;
 using Mps.Application.Lifecycle;
 using Mps.Application.Metrics;
 using Mps.Application.Persistence;
+using Mps.Application.Printouts;
 using Mps.Domain.Capa;
 using Mps.Domain.Hypotheses;
 using Mps.Domain.Identity;
@@ -52,7 +56,7 @@ public static class QualityEndpoints
             }
 
             var tools = await fleet.ListAsync(cancellationToken).ConfigureAwait(false);
-            return Results.Ok(tools.Select(ContractMapper.ToResponse).ToArray());
+            return Results.Ok(tools.Where(tool => SiteQuery.MatchesTool(siteId, tool)).Select(ContractMapper.ToResponse).ToArray());
         });
         app.MapGet("/api/tools/{toolId}", async (string toolId, IFleetCatalog fleet, CancellationToken cancellationToken) =>
         {
@@ -178,6 +182,7 @@ public static class QualityEndpoints
             IInvestigationService investigations,
             IInvestigationNarrativeLog narratives,
             IIncidentLog incidents,
+            QualityDbContext db,
             CancellationToken cancellationToken) =>
         {
             if (body?.Kind is null)
@@ -204,9 +209,9 @@ public static class QualityEndpoints
             var narrative = await narratives.GetAsync(id, cancellationToken).ConfigureAwait(false);
             return Results.Ok(new DecisionResponse(
                 ContractMapper.ToResponse(outcome.Investigation, narrative, site),
-                outcome.Capa is null ? null : ContractMapper.ToResponse(outcome.Capa.Capa, site)));
+                outcome.Capa is null ? null : await WithApprovalAsync(db, ContractMapper.ToResponse(outcome.Capa.Capa, site), cancellationToken).ConfigureAwait(false)));
         });
-        app.MapGet("/api/capas", async (string? siteId, ICapaLifecycleService capas, IIncidentLog incidents, CancellationToken cancellationToken) =>
+        app.MapGet("/api/capas", async (string? siteId, ICapaLifecycleService capas, IIncidentLog incidents, QualityDbContext db, CancellationToken cancellationToken) =>
         {
             var rows = await capas.ListAsync(cancellationToken).ConfigureAwait(false);
             var mapped = new List<CapaResponse>();
@@ -215,23 +220,24 @@ public static class QualityEndpoints
                 var site = await SiteForIncidentAsync(incidents, row.Capa.IncidentId, cancellationToken).ConfigureAwait(false);
                 if (MatchesSite(siteId, site))
                 {
-                    mapped.Add(ContractMapper.ToResponse(row.Capa, site));
+                    mapped.Add(await WithApprovalAsync(db, ContractMapper.ToResponse(row.Capa, site), cancellationToken).ConfigureAwait(false));
                 }
             }
 
             return Results.Ok(mapped);
         });
-        app.MapGet("/api/capas/{capaId:guid}", async (Guid capaId, ICapaLifecycleService capas, IIncidentLog incidents, CancellationToken cancellationToken) =>
+        app.MapGet("/api/capas/{capaId:guid}", async (Guid capaId, ICapaLifecycleService capas, IIncidentLog incidents, QualityDbContext db, CancellationToken cancellationToken) =>
         {
             var stored = await capas.GetAsync(new CapaId(capaId), cancellationToken).ConfigureAwait(false);
             var site = await SiteForIncidentAsync(incidents, stored.Capa.IncidentId, cancellationToken).ConfigureAwait(false);
-            return Results.Ok(ContractMapper.ToResponse(stored.Capa, site));
+            return Results.Ok(await WithApprovalAsync(db, ContractMapper.ToResponse(stored.Capa, site), cancellationToken).ConfigureAwait(false));
         });
         app.MapPost("/api/capas/{capaId:guid}/advance", async (
             Guid capaId,
             AdvanceCapaBody? body,
             ICapaLifecycleService capas,
             IIncidentLog incidents,
+            QualityDbContext db,
             CancellationToken cancellationToken) =>
         {
             if (body?.Stage is null)
@@ -241,14 +247,14 @@ public static class QualityEndpoints
 
             var stored = await capas.AdvanceAsync(new CapaId(capaId), body.Stage.Value, cancellationToken).ConfigureAwait(false);
             var site = await SiteForIncidentAsync(incidents, stored.Capa.IncidentId, cancellationToken).ConfigureAwait(false);
-            return Results.Ok(ContractMapper.ToResponse(stored.Capa, site));
+            return Results.Ok(await WithApprovalAsync(db, ContractMapper.ToResponse(stored.Capa, site), cancellationToken).ConfigureAwait(false));
         });
         app.MapGet("/api/admin/session", (HttpContext http, IConfiguration configuration) =>
         {
             var caller = Caller(http, configuration);
             return Results.Ok(new AdminSessionResponse(caller.Mode, caller.IsAdmin, caller.DisplayName));
         });
-        app.MapPost("/api/admin/reset", async (HttpContext http, IConfiguration configuration, DemoResetService reset, ScenarioEvidenceBoard board, CancellationToken cancellationToken) =>
+        app.MapPost("/api/admin/reset", async (HttpContext http, IConfiguration configuration, DemoResetService reset, ScenarioEvidenceBoard board, IManualMeasurementLog measurements, CancellationToken cancellationToken) =>
         {
             if (!Caller(http, configuration).IsAdmin)
             {
@@ -256,8 +262,79 @@ public static class QualityEndpoints
             }
 
             board.Clear();
+            measurements.Clear();
             var baseline = await reset.ResetAsync(cancellationToken).ConfigureAwait(false);
             return Results.Ok(baseline);
+        });
+        app.MapPost("/api/printouts/inspect", async (HttpRequest request, IDocumentIntake intake, CancellationToken cancellationToken) =>
+        {
+            if (!request.HasFormContentType)
+            {
+                throw new IntakeValidationException("Upload a PDF or an image.");
+            }
+
+            var form = await request.ReadFormAsync(cancellationToken).ConfigureAwait(false);
+            var file = form.Files.GetFile("file");
+            if (file is null || file.Length == 0)
+            {
+                throw new IntakeValidationException("A printout file is required.");
+            }
+
+            await using var stream = file.OpenReadStream();
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
+            var inspection = await intake.InspectAsync(buffer.ToArray(), file.ContentType, file.FileName, cancellationToken).ConfigureAwait(false);
+            var reading = inspection.Reading;
+            return Results.Ok(new PrintoutInspectionResponse(
+                reading.ToolId,
+                reading.ChamberId,
+                reading.ObservedAt,
+                reading.Instrument,
+                reading.Parameter,
+                reading.Value,
+                reading.Unit,
+                reading.SpecMinimum,
+                reading.SpecMaximum,
+                reading.Shape,
+                reading.OperatorInitials,
+                inspection.ParseMethod,
+                reading.OutOfSpec));
+        });
+        app.MapPost("/api/printouts/confirm", async (PrintoutConfirmBody? body, IDocumentIntake intake, CancellationToken cancellationToken) =>
+        {
+            if (body is null)
+            {
+                throw new IntakeValidationException("Printout body is required.");
+            }
+
+            if (body.ObservedAt is null || body.Value is null || body.SpecMinimum is null || body.SpecMaximum is null)
+            {
+                throw new IntakeValidationException("Observed time, value, and spec limits are required.");
+            }
+
+            PrintoutReading reading;
+            try
+            {
+                reading = new PrintoutReading(
+                    body.ToolId ?? string.Empty,
+                    body.ChamberId,
+                    body.ObservedAt.Value,
+                    body.Instrument ?? string.Empty,
+                    body.Parameter ?? string.Empty,
+                    body.Value.Value,
+                    body.Unit ?? string.Empty,
+                    body.SpecMinimum.Value,
+                    body.SpecMaximum.Value,
+                    body.Shape,
+                    body.OperatorInitials);
+            }
+            catch (ArgumentException exception)
+            {
+                throw new IntakeValidationException(exception.Message);
+            }
+
+            var confirmed = await intake.ConfirmAsync(reading, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(confirmed);
         });
         app.MapGet("/api/injector/scenarios", (ScenarioCardCatalog cards) =>
         {
@@ -321,6 +398,10 @@ public static class QualityEndpoints
             plant.TryApplyFreeForm(body.ToolId ?? string.Empty, body.ChamberId, body.Parameter ?? string.Empty, body.Shape ?? string.Empty, body.Magnitude.Value);
             return Results.Json(new FaultAcceptedResponse(accepted.FaultId, accepted.CorrelationId), statusCode: StatusCodes.Status202Accepted);
         });
+        app.MapGet("/api/audit", async (QualityDbContext db, CancellationToken cancellationToken) =>
+        {
+            return Results.Ok(await AuditLog.ReadAsync(db, cancellationToken).ConfigureAwait(false));
+        });
         app.MapGet("/api/metrics", async (
             IMetricsLog metrics,
             MetricsPolicy policy,
@@ -354,6 +435,16 @@ public static class QualityEndpoints
     {
         var stored = await incidents.GetAsync(incidentId, cancellationToken).ConfigureAwait(false);
         return ContractMapper.SiteForTool(stored?.Incident.ToolId.ToString());
+    }
+
+    private static async Task<CapaResponse> WithApprovalAsync(QualityDbContext db, CapaResponse capa, CancellationToken cancellationToken)
+    {
+        var approval = await db.Approvals.AsNoTracking()
+            .Where(row => row.TokenId == capa.ApprovalTokenId)
+            .OrderByDescending(row => row.IssuedAt)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return ContractMapper.WithApproval(capa, approval);
     }
 
     private static DemoCaller Caller(HttpContext http, IConfiguration configuration)

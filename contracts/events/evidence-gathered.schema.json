@@ -28,7 +28,7 @@
             "properties": {
               "id": { "type": "string", "format": "uuid" },
               "source": {
-                "enum": ["telemetry", "spc", "mes", "qms", "plm", "erp", "cmms", "document", "ticketing"]
+                "enum": ["telemetry", "spc", "mes", "qms", "plm", "erp", "cmms", "document", "ticketing", "manualMeasurement"]
               },
               "title": { "type": "string", "minLength": 1 },
               "excerpt": { "type": "string" },

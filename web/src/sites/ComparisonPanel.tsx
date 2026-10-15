@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import type { FamilyComparison, ToolFamily } from "../api/types";
 import { Explain } from "../components/Explain";
+import { visibleProblem } from "../history/copy";
 import { Term } from "../components/Term";
 import { field } from "../components/ui";
 import { lookupTerm } from "../glossary/terms";
@@ -70,7 +71,7 @@ export function ComparisonPanel({
           </select>
         </label>
       </div>
-      {error ? <p className="text-mps-alarm-text">{error}</p> : null}
+      {visibleProblem(error) ? <p className="text-mps-alarm-text">{visibleProblem(error)}</p> : null}
       {comparison ? (
         <>
           <p className="mb-3 text-mps-body">

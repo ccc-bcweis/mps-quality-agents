@@ -63,14 +63,16 @@ function clamp(value: number, limits: SensorLimits): number {
   return Math.min(limits.warningMaximum, Math.max(limits.warningMinimum, value));
 }
 
-function unclamped(sensor: FleetSensor, byId: Map<string, FleetSensor>, stack: Set<string>): number {
-  const demo = DEMO_VALUE[sensor.id];
-  if (demo !== undefined) return demo;
+function unclamped(sensor: FleetSensor, byId: Map<string, FleetSensor>, stack: Set<string>, applyDemoFault: boolean): number {
+  if (applyDemoFault) {
+    const demo = DEMO_VALUE[sensor.id];
+    if (demo !== undefined) return demo;
+  }
   if (sensor.tracksSensorId && !stack.has(sensor.id)) {
     const forward = byId.get(sensor.tracksSensorId);
     if (forward && forward.limits.nominal !== 0) {
       stack.add(sensor.id);
-      const forwardValue = unclamped(forward, byId, stack);
+      const forwardValue = unclamped(forward, byId, stack, applyDemoFault);
       return forwardValue * (sensor.limits.nominal / forward.limits.nominal);
     }
   }
@@ -79,10 +81,10 @@ function unclamped(sensor: FleetSensor, byId: Map<string, FleetSensor>, stack: S
   return sensor.limits.warningMinimum + span * (0.35 + hashUnit(sensor.id) * 0.3);
 }
 
-function sample(sensor: FleetSensor, byId: Map<string, FleetSensor>): TelemetrySample {
-  const raw = unclamped(sensor, byId, new Set());
+function sample(sensor: FleetSensor, byId: Map<string, FleetSensor>, applyDemoFault: boolean): TelemetrySample {
+  const raw = unclamped(sensor, byId, new Set(), applyDemoFault);
   const rounded = Number(formatValue(raw, sensor.unit));
-  const value = DEMO_VALUE[sensor.id] === undefined ? clamp(rounded, sensor.limits) : rounded;
+  const value = applyDemoFault && DEMO_VALUE[sensor.id] !== undefined ? rounded : clamp(rounded, sensor.limits);
   return {
     sensorId: sensor.id,
     toolId: sensor.toolId,
@@ -95,18 +97,22 @@ function sample(sensor: FleetSensor, byId: Map<string, FleetSensor>): TelemetryS
   };
 }
 
-export function telemetryFor(sensors: FleetSensor[]): TelemetrySample[] {
+export function telemetryFor(sensors: FleetSensor[], options?: { applyDemoFault?: boolean }): TelemetrySample[] {
+  const applyDemoFault = options?.applyDemoFault === true;
   const byId = new Map(sensors.map((sensor) => [sensor.id, sensor]));
-  return sensors.map((sensor) => sample(sensor, byId));
+  return sensors.map((sensor) => sample(sensor, byId, applyDemoFault));
 }
 
-export function telemetryForTool(toolId: string): TelemetrySample[] {
-  return telemetryFor(fleetSensors.filter((sensor) => sensor.toolId === toolId));
+export function telemetryForTool(toolId: string, options?: { applyDemoFault?: boolean }): TelemetrySample[] {
+  return telemetryFor(
+    fleetSensors.filter((sensor) => sensor.toolId === toolId),
+    options,
+  );
 }
 
 export function readingFor(sensor: FleetSensor): TelemetrySample {
   const row = telemetryForTool(sensor.toolId).find((item) => item.sensorId === sensor.id);
   if (row) return row;
   // A clone sensor is a rewritten copy. Sample it on its own limits when the catalog has no row.
-  return sample(sensor, new Map([[sensor.id, sensor]]));
+  return sample(sensor, new Map([[sensor.id, sensor]]), false);
 }

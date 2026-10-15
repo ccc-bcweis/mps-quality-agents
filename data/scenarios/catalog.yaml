@@ -21,6 +21,11 @@ scenarios:
     whatWeSimulate: "Etch rate on E-01 chamber A ramps down by about 3.5 standard deviations over about 2 minutes of real time."
     whatAiShouldFind: "The slow ramp has no engineering change, no overdue calibration, and no bad material lot. The cause is process drift after the clean."
     expectedCause: "Chamber seasoning after a clean on E-01."
+  - id: SC-6
+    whatsHappening: "A technician clipped an oscilloscope onto etch tool E-01 and printed the trace. The printout shows source RF power swinging above its limit on chamber A. The reading arrives as a document, not as a sensor stream."
+    whatWeSimulate: "We upload the oscilloscope printout. The console reads the value, the presenter confirms it, and source RF power on E-01 chamber A starts to oscillate out of spec on the next simulator ticks."
+    whatAiShouldFind: "The confirmed bench reading and the RF generator calibration record point to equipment, not to a recipe or material change."
+    expectedCause: "RF source power oscillation on E-01, an equipment or calibration fault."
   - id: SC-5
     whatsHappening: "A precursor is the material that becomes the deposited film. Lot MX4419 of that precursor went to deposition tool D-03 at Northwater and tool I-D-01 at Ironwood. Film thickness on both tools steps down. A chamber clean on D-03 happened the same week and can look like the cause."
     whatWeSimulate: "Film thickness on D-03 and I-D-01 steps down by about 8 percent, about 16 nanometers on a 200 nanometer film, on the next simulator ticks."

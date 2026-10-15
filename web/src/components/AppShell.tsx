@@ -1,10 +1,12 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { useEffect, useState } from "react";
-import { Link, Outlet, useLocation, useOutletContext } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { api } from "../api/client";
 import type { AdminSession } from "../api/types";
 import { useConsole } from "../context/ConsoleContext";
+import { SiteProvider, useSite } from "../context/SiteContext";
 import { CONSOLE_TABS } from "../shell/navigation";
+import { PLANTS } from "../sites/selection";
 import { Explain } from "./Explain";
 import { GlossaryScope } from "./GlossaryScope";
 import { HarnessBar } from "./HarnessBar";
@@ -48,9 +50,20 @@ function NavLabel({ label }: { label: string }) {
 
 export function ConsoleFrame() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { session } = useOutletContext<ShellOutletContext>();
   const { lifecycle } = useConsole();
+  const { siteId, setSiteId } = useSite();
   const [healthOn, setHealthOn] = useState(false);
+
+  function chooseSite(next: string) {
+    setSiteId(next);
+    if (!location.pathname.startsWith("/sites") || next === "all") return;
+    const params = new URLSearchParams(location.search);
+    if (params.get("site") === next) return;
+    params.set("site", next);
+    navigate({ pathname: "/sites", search: params.toString() }, { replace: true });
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -71,9 +84,9 @@ export function ConsoleFrame() {
     <section
       aria-label="Meridian Precision Systems console"
       data-region="console"
-      className="flex flex-1 flex-col rounded border-2 border-sn-gold bg-mps-canvas font-sans text-mps-text"
+      className="flex min-h-0 flex-1 flex-col overflow-hidden bg-mps-canvas font-sans text-mps-text"
     >
-      <header className="flex flex-wrap items-center gap-4 border-b border-mps-line bg-mps-panel px-4 py-2">
+      <header className="flex shrink-0 flex-wrap items-center gap-4 border-b border-mps-line bg-mps-panel px-4 py-2">
         <Link to="/" className="flex items-center gap-2.5 text-mps-text no-underline hover:no-underline">
           <img src="/logo-concept-1.svg" width={32} height={32} alt="Meridian Precision Systems mark" />
           <span>
@@ -82,6 +95,21 @@ export function ConsoleFrame() {
           </span>
         </Link>
         <div className="ml-auto flex flex-wrap items-center gap-4 font-mono text-mps-micro text-mps-muted">
+          <label className="flex shrink-0 items-center gap-2 whitespace-nowrap font-sans text-mps-body text-mps-secondary">
+            Plant
+            <select
+              aria-label="Plant"
+              className="shrink-0 whitespace-nowrap rounded border border-mps-line bg-mps-canvas px-2 py-1 font-sans text-mps-body text-mps-text"
+              value={siteId}
+              onChange={(event) => chooseSite(event.target.value)}
+            >
+              {PLANTS.map((plant) => (
+                <option key={plant.id} value={plant.id}>
+                  {plant.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <span className="whitespace-nowrap">
             <Led tone={healthOn ? "nominal" : "off"} /> Sim clock · 1 s = 1 min
           </span>
@@ -103,7 +131,7 @@ export function ConsoleFrame() {
       <nav
         aria-label="Console"
         data-sites-slot="before-fleet"
-        className="flex flex-wrap gap-1 border-b border-mps-line bg-mps-panel px-3"
+        className="flex shrink-0 flex-wrap gap-1 border-b border-mps-line bg-mps-panel px-3"
       >
         {CONSOLE_TABS.map((item) => {
           const active = item.match(location.pathname);
@@ -122,11 +150,12 @@ export function ConsoleFrame() {
       <LifecycleBar current={lifecycle.current} escalated={lifecycle.escalated} />
       <main
         id="main"
-        className={`mx-auto w-full flex-1 px-4 py-4 ${mainWidth(location.pathname)}`}
+        data-scroll="content"
+        className={`mx-auto min-h-0 w-full flex-1 overflow-y-auto px-4 py-4 ${mainWidth(location.pathname)}`}
       >
         <Outlet />
       </main>
-      <footer className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-mps-line px-4 py-3 text-mps-micro text-mps-muted">
+      <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-mps-line px-4 py-3 text-mps-micro text-mps-muted">
         <span>
           Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · <Explain text="MIT" /> · Fictional demonstration. All companies and data are synthetic.
         </span>
@@ -143,18 +172,18 @@ export function HarnessFrame() {
     <section
       aria-label="Demo harness panel"
       data-region="harness-panel"
-      className="flex flex-1 flex-col rounded border-2 border-dashed border-sn-gold bg-[#07111f] font-sans text-mps-text"
+      className="flex min-h-0 flex-1 flex-col overflow-hidden rounded border-2 border-dashed border-sn-gold bg-[#07111f] font-sans text-mps-text"
     >
-      <p className="border-b border-sn-gold/40 px-4 py-2 font-pitch text-mps-body text-sn-gold">
+      <p className="shrink-0 border-b border-sn-gold/40 px-4 py-2 font-pitch text-mps-body text-sn-gold">
         Presenter tool. This is not a Meridian Precision Systems console screen.{" "}
         <Link className="whitespace-nowrap text-sn-gold-wash underline" to="/">
           Open the console
         </Link>
       </p>
-      <main id="main" className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-4">
+      <main id="main" data-scroll="content" className="mx-auto min-h-0 w-full max-w-[1200px] flex-1 overflow-y-auto px-4 py-4">
         <Outlet />
       </main>
-      <footer className="mt-auto px-4 py-3 font-sans text-mps-micro text-sn-gold-wash">
+      <footer className="shrink-0 px-4 py-3 font-sans text-mps-micro text-sn-gold-wash">
         Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · <Explain text="MIT" /> · Fictional demonstration. All companies and data are synthetic.
       </footer>
     </section>
@@ -164,18 +193,21 @@ export function HarnessFrame() {
 export function AppShell() {
   const location = useLocation();
   const session = useAdminSession();
+  const { revision } = useConsole();
   const outlet: ShellOutletContext = { session };
   return (
-    <GlossaryScope key={location.pathname}>
-      <div className="flex min-h-screen flex-col bg-sn-navy">
+    <SiteProvider>
+      <GlossaryScope key={location.pathname}>
+      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-sn-navy" data-region="app">
         <a className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-toast focus:bg-mps-panel focus:p-2" href="#main">
           Skip to content
         </a>
         <HarnessBar session={session} />
-        <div className="flex flex-1 flex-col px-2 pb-2 pt-2">
-          <Outlet context={outlet} />
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-2 pt-2">
+          <Outlet context={outlet} key={revision} />
         </div>
       </div>
-    </GlossaryScope>
+      </GlossaryScope>
+    </SiteProvider>
   );
 }

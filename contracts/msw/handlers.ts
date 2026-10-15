@@ -67,6 +67,18 @@ const investigation = {
   siteId: "northwater",
 };
 
+function requestedSite(request: Request): string | null {
+  const value = new URL(request.url).searchParams.get("siteId");
+  if (!value || value.trim().length === 0) return null;
+  return value.trim().toLowerCase();
+}
+
+/** The contract fixture tools sit at Northwater. Another plant returns an empty list. */
+function allowsNorthwater(request: Request): boolean {
+  const wanted = requestedSite(request);
+  return wanted === null || wanted === "northwater";
+}
+
 export const handlers = [
   http.get("/health", () => HttpResponse.json({ status: "ok", service: "mps-api" })),
   http.get("/api/sites", () =>
@@ -162,8 +174,10 @@ export const handlers = [
       series: [],
     }),
   ),
-  http.get("/api/alerts", () =>
-    HttpResponse.json([
+  http.get("/api/alerts", ({ request }) =>
+    !allowsNorthwater(request)
+      ? HttpResponse.json([])
+      : HttpResponse.json([
       {
         id: "33333333-3333-4333-8333-333333333333",
         toolId: "E-02",
@@ -177,8 +191,10 @@ export const handlers = [
       },
     ]),
   ),
-  http.get("/api/tickets", () =>
-    HttpResponse.json([
+  http.get("/api/tickets", ({ request }) =>
+    !allowsNorthwater(request)
+      ? HttpResponse.json([])
+      : HttpResponse.json([
       {
         id: "44444444-4444-4444-8444-444444444444",
         number: "TKT-1001",
@@ -211,7 +227,7 @@ export const handlers = [
   http.post("/api/incidents/:incidentId/investigations", () =>
     HttpResponse.json({ ...investigation, stage: "started", hypotheses: [] }, { status: 201 }),
   ),
-  http.get("/api/investigations", () => HttpResponse.json([investigation])),
+  http.get("/api/investigations", ({ request }) => HttpResponse.json(allowsNorthwater(request) ? [investigation] : [])),
   http.get("/api/investigations/:investigationId", () => HttpResponse.json(investigation)),
   http.post("/api/investigations/:investigationId/decisions", async ({ request }) => {
     const body = (await request.json()) as { kind?: string; approverId?: string; comment?: string | null };
@@ -237,6 +253,8 @@ export const handlers = [
             actionHash: "ABC123",
             stage: "open",
             openedAt: "2026-10-14T15:05:00Z",
+            approvedBy: body.approverId ?? "dev-user",
+            approvedAt: "2026-10-15T02:42:00.000Z",
           }
         : null;
     return HttpResponse.json({
@@ -266,6 +284,37 @@ export const handlers = [
       { status: 202 },
     ),
   ),
+  http.post("/api/printouts/inspect", () =>
+    HttpResponse.json({
+      toolId: "E-01",
+      chamberId: "E-01-A",
+      observedAt: "2026-10-12T14:22:00Z",
+      instrument: "oscilloscope",
+      parameter: "rfPower",
+      value: 2140,
+      unit: "W",
+      specMinimum: 1000,
+      specMaximum: 2000,
+      shape: "oscillation",
+      operatorInitials: "KL",
+      parseMethod: "text",
+      outOfSpec: true,
+    }),
+  ),
+  http.post("/api/printouts/confirm", () =>
+    HttpResponse.json({
+      evidenceId: "77777777-7777-4777-8777-777777777777",
+      incidentId: "66666666-6666-4666-8666-666666666666",
+      faultId: "55555555-5555-4555-8555-555555555555",
+      correlationId: "corr-printout",
+      alertId: "44444444-4444-4444-8444-444444444444",
+      appliedToSimulation: true,
+      outOfSpec: true,
+      printedParameter: "rfPower",
+      catalogParameter: "rfSourcePower",
+    }),
+  ),
+  http.get("/api/audit", () => HttpResponse.json({ entries: [], traces: [] })),
   http.get("/api/admin/session", () =>
     HttpResponse.json({ mode: "local", isAdmin: true, displayName: "dev-user" }),
   ),
@@ -379,6 +428,16 @@ export const handlers = [
         whatWeSimulate: "RF bias power on E-03 steps up by about 4.5 standard deviations. No other tool moves.",
         whatAiShouldFind: "The note says the operator changed the recipe setpoint and there is no engineering change order.",
         expectedCause: "Unauthorized RF power recipe edit on E-03.",
+      },
+      {
+        id: "SC-6",
+        title: "Oscilloscope RF oscillation on E-01",
+        rootCauseCategory: "equipmentCalibrationOrAlignment",
+        toolIds: ["E-01"],
+        chamberId: "E-01-A",
+        parameter: "rfSourcePower",
+        shape: "oscillation",
+        summary: "An oscilloscope printout shows source RF power oscillating out of spec on E-01 chamber A.",
       },
     ]),
   ),

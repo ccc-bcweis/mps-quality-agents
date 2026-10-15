@@ -1,0 +1,89 @@
+{
+  "Files": [
+    {
+      "FileName": "oscilloscope-e01.pdf",
+      "Sha256": "6d76dadb113ed20c20bbb194a1081ccd67a312ebe78e5bdc7a14fa070a273ce6",
+      "Reading": {
+        "ToolId": "E-01",
+        "ChamberId": "E-01-A",
+        "ObservedAt": "2026-10-12T14:22:00Z",
+        "Instrument": "oscilloscope",
+        "Parameter": "rfPower",
+        "Value": 2140,
+        "Unit": "W",
+        "SpecMinimum": 1000,
+        "SpecMaximum": 2000,
+        "Shape": "oscillation",
+        "OperatorInitials": "KL"
+      }
+    },
+    {
+      "FileName": "rf-power-meter-e02.pdf",
+      "Sha256": "586379f78d364b435a78a3e1f8a0c3c62516268df6c30d9275fab5fb420395a6",
+      "Reading": {
+        "ToolId": "E-02",
+        "ChamberId": "E-02-A",
+        "ObservedAt": "2026-10-12T15:05:00Z",
+        "Instrument": "rfPowerMeter",
+        "Parameter": "rfBiasPower",
+        "Value": 510,
+        "Unit": "W",
+        "SpecMinimum": 200,
+        "SpecMaximum": 500,
+        "Shape": "step",
+        "OperatorInitials": "MR"
+      }
+    },
+    {
+      "FileName": "particle-counter-d01.pdf",
+      "Sha256": "edacc0a1d7d238e34a0bb9f146f515806a9d14de6b8652cc811048d4594f2641",
+      "Reading": {
+        "ToolId": "D-01",
+        "ChamberId": "D-01-A",
+        "ObservedAt": "2026-10-11T18:10:00Z",
+        "Instrument": "particleCounter",
+        "Parameter": "particlesAdders",
+        "Value": 3,
+        "Unit": "count",
+        "SpecMinimum": 0,
+        "SpecMaximum": 10,
+        "Shape": null,
+        "OperatorInitials": "BN"
+      }
+    },
+    {
+      "FileName": "thermocouple-logger-e01.pdf",
+      "Sha256": "2c2d255f5980efd947c80902870c8f43534193f153e2a96d6ca937bc339a78ab",
+      "Reading": {
+        "ToolId": "E-01",
+        "ChamberId": "E-01-A",
+        "ObservedAt": "2026-10-12T09:40:00Z",
+        "Instrument": "thermocoupleLogger",
+        "Parameter": "escTemperature",
+        "Value": 68,
+        "Unit": "C",
+        "SpecMinimum": 40,
+        "SpecMaximum": 60,
+        "Shape": "ramp",
+        "OperatorInitials": "JL"
+      }
+    },
+    {
+      "FileName": "thermocouple-logger-e01.png",
+      "Sha256": "8c326842502f109b41c29e574a9029aaebdac231c699d4ed6ff4318752aef5e2",
+      "Reading": {
+        "ToolId": "E-01",
+        "ChamberId": "E-01-A",
+        "ObservedAt": "2026-10-12T09:40:00Z",
+        "Instrument": "thermocoupleLogger",
+        "Parameter": "escTemperature",
+        "Value": 68,
+        "Unit": "C",
+        "SpecMinimum": 40,
+        "SpecMaximum": 60,
+        "Shape": "ramp",
+        "OperatorInitials": "JL"
+      }
+    }
+  ]
+}

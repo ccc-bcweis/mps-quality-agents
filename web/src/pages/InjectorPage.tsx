@@ -7,6 +7,7 @@ import type { FaultInjectionRequest, FaultShape, RootCauseCategory, Tool } from 
 import { Explain } from "../components/Explain";
 import { btn, btnPrimary, field, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
+import { visibleProblem } from "../history/copy";
 
 const SHAPES: FaultShape[] = ["step", "ramp", "oscillation", "intermittent"];
 const CATEGORIES = Object.keys(CATEGORY_LABEL) as RootCauseCategory[];
@@ -108,9 +109,9 @@ export function InjectorPage() {
           Throw a new problem onto the live trace. Agents do not receive the fault object. The category below is held out of the alert. Named scenarios run from the demo harness bar. This click does not open an alert. The trace has to cross a rule first.
         </p>
       </div>
-      {error ? (
+      {visibleProblem(error) ? (
         <p className="mb-3 text-mps-alarm-text" role="alert">
-          {error}
+          {visibleProblem(error)}
         </p>
       ) : null}
       <div className="grid gap-3 lg:grid-cols-2">

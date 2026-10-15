@@ -34,8 +34,11 @@ public sealed class ConsoleApiContractTests
         "/api/capas/{capaId}",
         "/api/capas/{capaId}/advance",
         "/api/faults",
+        "/api/printouts/inspect",
+        "/api/printouts/confirm",
         "/api/admin/session",
         "/api/admin/reset",
+        "/api/audit",
         "/api/injector/scenarios",
         "/api/injector/scenarios/{scenarioId}",
         "/api/metrics",
@@ -84,8 +87,11 @@ public sealed class ConsoleApiContractTests
         Expect(OperationType.Get, "/api/capas/{capaId}", "getCapa", "200");
         Expect(OperationType.Post, "/api/capas/{capaId}/advance", "advanceCapa", "200");
         Expect(OperationType.Post, "/api/faults", "injectFault", "202");
+        Expect(OperationType.Post, "/api/printouts/inspect", "inspectPrintout", "200");
+        Expect(OperationType.Post, "/api/printouts/confirm", "confirmPrintout", "200");
         Expect(OperationType.Get, "/api/admin/session", "getAdminSession", "200");
         Expect(OperationType.Post, "/api/admin/reset", "resetDemo", "200");
+        Expect(OperationType.Get, "/api/audit", "getAuditLog", "200");
         Expect(OperationType.Get, "/api/injector/scenarios", "listScenarios", "200");
         Expect(OperationType.Post, "/api/injector/scenarios/{scenarioId}", "runScenario", "202");
         Expect(OperationType.Get, "/api/metrics", "getMetrics", "200");
@@ -94,6 +100,29 @@ public sealed class ConsoleApiContractTests
         OpenApiDocs.Console.Paths.Keys.Should().NotContain(path =>
             path.Contains("groundtruth", StringComparison.OrdinalIgnoreCase)
             || path.Contains("ground-truth", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void HistoryListsAcceptAnOptionalSiteFilter()
+    {
+        var document = OpenApiDocs.Console;
+        foreach (var path in new[] { "/api/alerts", "/api/tickets", "/api/investigations", "/api/capas" })
+        {
+            var operation = document.Operation(path, OperationType.Get);
+            var site = operation.Parameters
+                .Select(document.Parameter)
+                .Should()
+                .ContainSingle(parameter => parameter.Name == "siteId")
+                .Subject;
+            site.In.Should().Be(ParameterLocation.Query);
+            site.Required.Should().BeFalse();
+        }
+
+        document.Operation("/api/alerts", OperationType.Get)
+            .Parameters.Select(document.Parameter)
+            .Select(parameter => parameter.Name)
+            .Should()
+            .Equal("toolId", "siteId");
     }
 
     [Fact]
@@ -223,11 +252,14 @@ public sealed class ConsoleApiContractTests
             "erp",
             "cmms",
             "document",
-            "ticketing");
+            "ticketing",
+            "manualMeasurement");
 
         var evidence = document.Schema("EvidenceItem");
         evidence.AdditionalPropertiesAllowed.Should().BeFalse();
         evidence.Required.Should().BeEquivalentTo("id", "source", "title", "excerpt", "observedAt");
+        evidence.Properties.Keys.Should().Contain(["value", "unit", "specLow", "specHigh", "toolName", "chamberName"]);
+        evidence.Required.Should().NotContain(["value", "unit", "specLow", "specHigh", "toolName", "chamberName"]);
 
         document.Schema("RootCauseCategory").EnumNames().Should().Equal(
             "engineeringChange",

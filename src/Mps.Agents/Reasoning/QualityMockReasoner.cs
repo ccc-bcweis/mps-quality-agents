@@ -1,5 +1,8 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using System.Text.Json;
+using System.Text.RegularExpressions;
+
 using Microsoft.Extensions.AI;
 
 using Mps.Agents.Ranking;
@@ -14,9 +17,22 @@ namespace Mps.Agents.Reasoning;
 /// </summary>
 public sealed class QualityMockReasoner : IMockReasoner
 {
+    private const string UnrecognizedPrintout = "{\"error\":\"unrecognized printout\"}";
+
+    private static readonly Regex Sha256 = new("sha256:\\s*([0-9a-fA-F]{64})", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static readonly JsonSerializerOptions Camel = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
+    private static readonly Lazy<Dictionary<string, string>> SamplePrintouts = new(LoadSamplePrintouts);
+
     public ChatResponse Complete(IReadOnlyList<ChatMessage> messages, ChatOptions? options)
     {
         ArgumentNullException.ThrowIfNull(messages);
+        if (IsPrintout(messages))
+        {
+            return Text(PrintoutAnswer(messages));
+        }
+
         if (IsResolution(messages))
         {
             return Text(Resolve(messages));
@@ -51,6 +67,111 @@ public sealed class QualityMockReasoner : IMockReasoner
     private static bool IsResolution(IReadOnlyList<ChatMessage> messages)
     {
         return messages.Any(message => message.Role == ChatRole.System && (message.Text?.Contains("resolution agent", StringComparison.Ordinal) ?? false));
+    }
+
+    private static bool IsPrintout(IReadOnlyList<ChatMessage> messages)
+    {
+        return messages.Any(message => message.Role == ChatRole.System && (message.Text?.Contains("printout reader", StringComparison.Ordinal) ?? false));
+    }
+
+    private static string PrintoutAnswer(IReadOnlyList<ChatMessage> messages)
+    {
+        var text = string.Join('\n', messages.Select(message => message.Text));
+        var match = Sha256.Match(text);
+        if (!match.Success)
+        {
+            return UnrecognizedPrintout;
+        }
+
+        return SamplePrintouts.Value.TryGetValue(match.Groups[1].Value.ToLowerInvariant(), out var json)
+            ? json
+            : UnrecognizedPrintout;
+    }
+
+    private static Dictionary<string, string> LoadSamplePrintouts()
+    {
+        var path = FindManifest();
+        var table = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (path is null)
+        {
+            return table;
+        }
+
+        var document = JsonSerializer.Deserialize<SampleManifest>(File.ReadAllText(path));
+        if (document?.Files is null)
+        {
+            return table;
+        }
+
+        foreach (var file in document.Files)
+        {
+            if (string.IsNullOrWhiteSpace(file.Sha256) || file.Reading is null)
+            {
+                continue;
+            }
+
+            table[file.Sha256.Trim().ToLowerInvariant()] = JsonSerializer.Serialize(file.Reading, Camel);
+        }
+
+        return table;
+    }
+
+    private static string? FindManifest()
+    {
+        var seeds = new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
+        foreach (var seed in seeds)
+        {
+            var dir = new DirectoryInfo(seed);
+            while (dir is not null)
+            {
+                var candidate = Path.Combine(dir.FullName, "data", "samples", "manifest.json");
+                if (File.Exists(candidate))
+                {
+                    return candidate;
+                }
+
+                dir = dir.Parent;
+            }
+        }
+
+        return null;
+    }
+
+    private sealed class SampleManifest
+    {
+        public List<SampleFile>? Files { get; set; }
+    }
+
+    private sealed class SampleFile
+    {
+        public string? Sha256 { get; set; }
+
+        public SampleReading? Reading { get; set; }
+    }
+
+    private sealed class SampleReading
+    {
+        public string? ToolId { get; set; }
+
+        public string? ChamberId { get; set; }
+
+        public DateTimeOffset ObservedAt { get; set; }
+
+        public string? Instrument { get; set; }
+
+        public string? Parameter { get; set; }
+
+        public double Value { get; set; }
+
+        public string? Unit { get; set; }
+
+        public double SpecMinimum { get; set; }
+
+        public double SpecMaximum { get; set; }
+
+        public string? Shape { get; set; }
+
+        public string? OperatorInitials { get; set; }
     }
 
     private static ChatResponse Text(string text)

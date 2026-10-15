@@ -31,6 +31,7 @@ function CardCopy({ text }: { text: string }) {
   if (nodes.length === 0) return <Explain text={text} />;
   return <>{nodes}</>;
 }
+import { visibleProblem } from "../history/copy";
 
 const harnessBtn =
   "inline-flex shrink-0 items-center whitespace-nowrap rounded border border-sn-gold bg-transparent px-2 py-1 font-pitch text-mps-body text-sn-gold hover:bg-sn-navy-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sn-gold disabled:cursor-not-allowed disabled:opacity-40";
@@ -141,9 +142,9 @@ export function ScenarioControl() {
           </details>
         </section>
       ) : null}
-      {error ? (
-        <p className="basis-full min-w-0 max-w-full break-words text-mps-body text-mps-alarm-text" role="alert">
-          {error}
+      {visibleProblem(error) ? (
+        <p className="basis-full text-mps-body text-mps-alarm-text" role="alert">
+          {visibleProblem(error)}
         </p>
       ) : null}
     </div>

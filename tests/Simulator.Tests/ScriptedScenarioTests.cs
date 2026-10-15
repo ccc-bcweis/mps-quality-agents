@@ -16,15 +16,20 @@ public sealed class ScriptedScenarioTests
     [Fact]
     public void CatalogCoversEachRootCauseClass()
     {
-        ScriptedScenarioCatalog.All.Select(scenario => scenario.Id).Should().Equal("SC-1", "SC-2", "SC-3", "SC-4", "SC-5", "SC-7", "SC-8");
+        ScriptedScenarioCatalog.All.Select(scenario => scenario.Id).Should().Equal("SC-1", "SC-2", "SC-3", "SC-4", "SC-6", "SC-5", "SC-7", "SC-8");
         ScriptedScenarioCatalog.All.Select(scenario => scenario.Category).Should().Equal(
             RootCauseCategory.EngineeringChange,
             RootCauseCategory.EquipmentCalibrationOrAlignment,
             RootCauseCategory.SupplyChainMaterial,
             RootCauseCategory.ProcessDrift,
+            RootCauseCategory.EquipmentCalibrationOrAlignment,
             RootCauseCategory.SupplyChainMaterial,
             RootCauseCategory.EquipmentCalibrationOrAlignment,
             RootCauseCategory.ProcessDrift);
+        var oscilloscope = ScriptedScenarioCatalog.All.Single(scenario => scenario.Id == "SC-6");
+        oscilloscope.Parameter.Should().Be("rfSourcePower");
+        oscilloscope.Shape.Should().Be(FaultShape.Oscillation);
+        oscilloscope.Summary.Should().Contain("oscilloscope");
         ScriptedScenarioCatalog.TryGet("sc-1", out var engineering).Should().BeTrue();
         engineering.ToolIds.Should().Equal("E-02");
         engineering.Summary.Should().Contain("edge ring revision C");
@@ -89,6 +94,7 @@ public sealed class ScriptedScenarioTests
     [InlineData("SC-2")]
     [InlineData("SC-3")]
     [InlineData("SC-4")]
+    [InlineData("SC-6")]
     public void SameSeedProducesTheSameTelemetry(string id)
     {
         ScriptedScenarioCatalog.TryGet(id, out var scenario).Should().BeTrue();

@@ -12,9 +12,10 @@ describe("tool detail", () => {
     renderConsole("/tools/E-02");
     expect(await screen.findByRole("heading", { name: /Tool E-02/ })).toBeInTheDocument();
     const chart = await screen.findByRole("figure", { name: /SPC chart of ESC temperature/ });
-    expect(chart).toHaveAccessibleName(/Western Electric rule 2/i);
+    expect(chart).toHaveAccessibleName(/SPC chart of ESC temperature/i);
     expect(screen.getByRole("cell", { name: "40–60 °C" })).toBeInTheDocument();
-    expect(screen.getAllByText("53.1 °C osc").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("51.0 °C").length).toBeGreaterThan(0);
+    expect(screen.queryByText("53.1 °C osc")).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Tool performance" })).toHaveTextContent("24.0 wafers/h");
     expect(screen.getByText("Illustrative demo readings, not a live tool counter.")).toBeInTheDocument();
     expect(screen.getByText(matchCopy(/mean time between failures \(MTBF\)/))).toBeInTheDocument();
@@ -26,7 +27,7 @@ describe("tool detail", () => {
     renderConsole("/tools/E-02");
     expect(await screen.findByRole("region", { name: /plasma etch schematic/i })).toBeInTheDocument();
     const esc = screen.getByRole("button", { name: /E-02-A-TC-ESC/ });
-    expect(esc).toHaveTextContent("53.1");
+    expect(esc).not.toHaveTextContent("53.1");
     expect(esc).toHaveTextContent("C");
     expect(esc).toHaveAttribute("data-status", "inSpec");
     expect(esc).toHaveAttribute("data-anchor", "a.chuck.esc");
@@ -36,12 +37,13 @@ describe("tool detail", () => {
     expect(await screen.findByRole("figure", { name: /SPC chart of Chamber pressure/ })).toBeInTheDocument();
   });
 
-  it("marks deposition chamber pressure out of spec", async () => {
+  it("keeps deposition chamber pressure inside the window", async () => {
     renderConsole("/tools/D-01");
     const pressure = await screen.findByRole("button", { name: /D-01-A-PT-CHAMBER/ });
-    expect(pressure).toHaveTextContent("6.52");
+    expect(pressure).not.toHaveTextContent("6.52");
     expect(pressure).toHaveTextContent("Torr");
-    expect(pressure).toHaveAttribute("data-status", "outOfSpec");
+    expect(pressure).toHaveAttribute("data-status", "inSpec");
+    expect(screen.getAllByText("4.10 Torr").length).toBeGreaterThan(0);
     expect(screen.getByRole("region", { name: /thin-film deposition schematic/i })).toBeInTheDocument();
   });
 

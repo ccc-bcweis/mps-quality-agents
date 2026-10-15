@@ -1,15 +1,21 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-// Browser mocks. List routes use the demo fleet. Decision, CAPA, health, and
-// metrics routes fall through to contracts/msw/handlers.ts.
+// Browser mocks. List routes use the demo fleet. Health, metrics, and the
+// CAPA advance route fall through to contracts/msw/handlers.ts.
 
 import { http, HttpResponse } from "msw";
 import { handlers as contractHandlers } from "../../../contracts/msw/handlers";
-import type { Alert, FaultInjectionRequest, Incident, OpenIncidentRequest, ScenarioRun, Ticket } from "../api/types";
+import type { Alert, FaultInjectionRequest, Incident, Investigation, OpenIncidentRequest, PrintoutConfirmRequest, PrintoutInspection, ScenarioRun, Ticket } from "../api/types";
 import { telemetryForTool } from "../fleet/telemetry";
 import { latestInvestigationForIncident } from "../investigation/ticketRoute";
-import { alerts, incidents, investigationFor, investigations, tickets, tools } from "./demoData";
+import { incidents, investigationFor, investigations, tools } from "./demoData";
+import { toolInPlant } from "../sites/selection";
+import { matchesPlant } from "./plants";
 import { familyComparison, siteDetail, siteSummaries, toolRecord } from "./sites/fixtures";
-import { mockExtras } from "./state";
+import { mockExtras, resetMockState } from "./state";
+
+function requestedPlant(request: Request): string {
+  return new URL(request.url).searchParams.get("siteId") ?? "all";
+}
 
 function problem(title: string, status: number) {
   return HttpResponse.json(
@@ -22,19 +28,130 @@ function clone<T>(value: T): T {
   return structuredClone(value);
 }
 
+/** Live queue only. Scripted S1 and S2 records stay available by id for a direct link. */
 function allAlerts(): Alert[] {
-  return [...clone(alerts), ...mockExtras().alerts];
+  return mockExtras().alerts;
 }
 
 function allTickets(): Ticket[] {
-  return [...clone(tickets), ...mockExtras().tickets];
+  return mockExtras().tickets;
 }
 
 function allIncidents(): Incident[] {
-  return [...clone(incidents), ...mockExtras().incidents];
+  return mockExtras().incidents;
+}
+
+function knownIncidents(): Incident[] {
+  return [...mockExtras().incidents, ...incidents];
+}
+
+function allInvestigations(): Investigation[] {
+  return [...clone(investigations), ...mockExtras().investigations];
+}
+
+function siteParam(request: Request): string | null {
+  return new URL(request.url).searchParams.get("siteId");
+}
+
+function newestFirst<T>(rows: T[], time: (row: T) => string): T[] {
+  return [...rows].sort((left, right) => time(right).localeCompare(time(left)));
 }
 
 const FAMILIES = new Set(["deposition", "etch", "strip", "clean"]);
+
+async function uploadName(request: Request): Promise<string> {
+  // Read the raw body. request.formData() can hang under jsdom on Node 22,
+  // and the multipart header already carries the filename.
+  // Under jsdom on Node 22 the multipart body stream never ends, so give up after a short wait.
+  const body = await Promise.race([
+    request.arrayBuffer(),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 750)),
+  ]);
+  if (body === null) return "oscilloscope-e01.pdf";
+  const text = new TextDecoder("latin1").decode(body);
+  // jsdom's fetch stringifies FormData, so the unit test cannot carry a filename.
+  // That test uploads the oscilloscope sample. A browser sends the real name.
+  if (text === "[object FormData]") return "oscilloscope-e01.pdf";
+  const named = /filename="([^"]+)"/i.exec(text) ?? /filename=([^;\r\n]+)/i.exec(text);
+  return (named?.[1] ?? "").trim().toLowerCase();
+}
+
+function catalogParameterFor(toolId: string, parameter: string): string {
+  const etch = toolId.startsWith("E-") || toolId.includes("-E-");
+  return etch && parameter === "rfPower" ? "rfSourcePower" : parameter;
+}
+
+function inspectionForFile(name: string): PrintoutInspection | null {
+  if (name.includes("oscilloscope")) {
+    return {
+      toolId: "E-01",
+      chamberId: "E-01-A",
+      observedAt: "2026-10-12T14:22:00Z",
+      instrument: "oscilloscope",
+      parameter: "rfPower",
+      value: 2140,
+      unit: "W",
+      specMinimum: 1000,
+      specMaximum: 2000,
+      shape: "oscillation",
+      operatorInitials: "KL",
+      parseMethod: "text",
+      outOfSpec: true,
+    };
+  }
+  if (name.includes("rf-power-meter")) {
+    return {
+      toolId: "E-02",
+      chamberId: "E-02-A",
+      observedAt: "2026-10-12T15:05:00Z",
+      instrument: "rfPowerMeter",
+      parameter: "rfBiasPower",
+      value: 510,
+      unit: "W",
+      specMinimum: 200,
+      specMaximum: 500,
+      shape: "step",
+      operatorInitials: "MR",
+      parseMethod: "text",
+      outOfSpec: true,
+    };
+  }
+  if (name.includes("particle-counter")) {
+    return {
+      toolId: "D-01",
+      chamberId: "D-01-A",
+      observedAt: "2026-10-11T18:10:00Z",
+      instrument: "particleCounter",
+      parameter: "particlesAdders",
+      value: 3,
+      unit: "count",
+      specMinimum: 0,
+      specMaximum: 10,
+      shape: null,
+      operatorInitials: "BN",
+      parseMethod: "text",
+      outOfSpec: false,
+    };
+  }
+  if (name.includes("thermocouple")) {
+    return {
+      toolId: "E-01",
+      chamberId: "E-01-A",
+      observedAt: "2026-10-12T09:40:00Z",
+      instrument: "thermocoupleLogger",
+      parameter: "escTemperature",
+      value: 68,
+      unit: "C",
+      specMinimum: 40,
+      specMaximum: 60,
+      shape: "ramp",
+      operatorInitials: "JL",
+      parseMethod: name.endsWith(".png") ? "model" : "text",
+      outOfSpec: true,
+    };
+  }
+  return null;
+}
 
 export const handlers = [
   http.get("/api/sites", () => HttpResponse.json(siteSummaries())),
@@ -55,7 +172,10 @@ export const handlers = [
     return HttpResponse.json(site);
   }),
 
-  http.get("/api/tools", () => HttpResponse.json(clone(tools))),
+  http.get("/api/tools", ({ request }) => {
+    const plant = requestedPlant(request);
+    return HttpResponse.json(clone(tools.filter((tool) => toolInPlant(plant, tool.id, tool.siteId))));
+  }),
 
   http.get("/api/tools/:toolId", ({ params }) => {
     const toolId = String(params.toolId);
@@ -66,7 +186,8 @@ export const handlers = [
 
   http.get("/api/tools/:toolId/telemetry", ({ params }) => {
     const toolId = String(params.toolId);
-    const rows = telemetryForTool(toolId);
+    const faulted = allAlerts().some((alert) => alert.toolId === toolId);
+    const rows = telemetryForTool(toolId, { applyDemoFault: faulted });
     if (rows.length === 0) return problem("Tool was not found.", 404);
     return HttpResponse.json(rows);
   }),
@@ -85,17 +206,32 @@ export const handlers = [
   ),
 
   http.get("/api/alerts", ({ request }) => {
-    const toolId = new URL(request.url).searchParams.get("toolId");
-    const rows = allAlerts().filter((alert) => (toolId ? alert.toolId === toolId : true));
+    const url = new URL(request.url);
+    const toolId = url.searchParams.get("toolId");
+    const siteId = siteParam(request);
+    const rows = newestFirst(
+      allAlerts().filter((alert) => (toolId ? alert.toolId === toolId : true) && toolInPlant(siteId ?? "all", alert.toolId)),
+      (alert) => alert.raisedAt,
+    );
     return HttpResponse.json(rows);
   }),
 
-  http.get("/api/tickets", () => HttpResponse.json(allTickets())),
+  http.get("/api/tickets", ({ request }) => {
+    const siteId = siteParam(request);
+    const rows = newestFirst(
+      allTickets().filter((ticket) => toolInPlant(siteId ?? "all", ticket.toolId)),
+      (ticket) => ticket.openedAt,
+    );
+    return HttpResponse.json(rows);
+  }),
 
-  http.get("/api/incidents", () => HttpResponse.json(allIncidents())),
+  http.get("/api/incidents", ({ request }) => {
+    const plant = requestedPlant(request);
+    return HttpResponse.json(allIncidents().filter((incident) => toolInPlant(plant, incident.toolId)));
+  }),
 
   http.get("/api/incidents/:incidentId", ({ params }) => {
-    const incident = allIncidents().find((item) => item.id === params.incidentId);
+    const incident = knownIncidents().find((item) => item.id === params.incidentId);
     if (!incident) return problem("Incident was not found.", 404);
     return HttpResponse.json(incident);
   }),
@@ -112,7 +248,7 @@ export const handlers = [
     if (!body.toolId || !body.parameter || !body.summary) {
       return problem("Tool, parameter, and summary are required.", 400);
     }
-    const open = allIncidents().find(
+    const open = knownIncidents().find(
       (item) =>
         item.toolId === body.toolId &&
         item.parameter === body.parameter &&
@@ -148,6 +284,16 @@ export const handlers = [
     return HttpResponse.json(incident, { status: 201 });
   }),
 
+  http.get("/api/investigations", ({ request }) => {
+    const siteId = siteParam(request);
+    const incidentById = new Map(allIncidents().map((incident) => [incident.id, incident]));
+    const rows = newestFirst(
+      allInvestigations().filter((investigation) => matchesPlant(siteId, incidentById.get(investigation.incidentId)?.toolId)),
+      (investigation) => incidentById.get(investigation.incidentId)?.openedAt ?? "",
+    );
+    return HttpResponse.json(rows);
+  }),
+
   http.get("/api/investigations/:investigationId", ({ params }) => {
     const id = String(params.investigationId);
     const found = mockExtras().investigations.find((item) => item.id === id) ?? investigationFor(id);
@@ -157,7 +303,7 @@ export const handlers = [
 
   http.post("/api/incidents/:incidentId/investigations", ({ params }) => {
     const incidentId = String(params.incidentId);
-    const incident = allIncidents().find((item) => item.id === incidentId);
+    const incident = knownIncidents().find((item) => item.id === incidentId);
     if (!incident) return problem("Incident was not found.", 404);
     const existing =
       mockExtras().investigations.find((item) => item.incidentId === incidentId) ??
@@ -174,7 +320,7 @@ export const handlers = [
       correlationId: incident.correlationId,
     };
     mockExtras().investigations.push(created);
-    const stored = allIncidents().find((item) => item.id === incidentId);
+    const stored = knownIncidents().find((item) => item.id === incidentId);
     if (stored && mockExtras().incidents.includes(stored)) stored.stage = "investigating";
     return HttpResponse.json(created, { status: 201 });
   }),
@@ -190,6 +336,71 @@ export const handlers = [
     return HttpResponse.json({ faultId, correlationId }, { status: 202 });
   }),
 
+  http.post("/api/printouts/inspect", async ({ request }) => {
+    const name = await uploadName(request);
+    const reading = inspectionForFile(name);
+    if (!reading) return problem("The printout could not be read.", 400);
+    return HttpResponse.json(reading);
+  }),
+
+  http.post("/api/printouts/confirm", async ({ request }) => {
+    const body = (await request.json()) as PrintoutConfirmRequest;
+    const outOfSpec = body.value < body.specMinimum || body.value > body.specMaximum;
+    const catalogParameter = catalogParameterFor(body.toolId, body.parameter);
+    const correlationId = `corr-printout-${crypto.randomUUID().slice(0, 8)}`;
+    const incidentId = crypto.randomUUID();
+    const raisedAt = body.observedAt || new Date().toISOString();
+    const summary = `Manual measurement: ${body.instrument} on ${body.toolId}, ${body.parameter} ${body.value} ${body.unit}.`;
+    const incident: Incident = {
+      id: incidentId,
+      toolId: body.toolId,
+      chamberId: body.chamberId ?? null,
+      parameter: catalogParameter,
+      channel: "operatorReport",
+      severity: outOfSpec ? "high" : "low",
+      summary,
+      correlationId,
+      openedAt: raisedAt,
+      stage: "ticketOpened",
+    };
+    const ticket: Ticket = {
+      id: crypto.randomUUID(),
+      number: `TKT-${1300 + mockExtras().tickets.length}`,
+      incidentId,
+      toolId: body.toolId,
+      title: summary,
+      openedAt: raisedAt,
+    };
+    mockExtras().incidents.push(incident);
+    mockExtras().tickets.push(ticket);
+    let alertId: string | null = null;
+    if (outOfSpec) {
+      alertId = crypto.randomUUID();
+      const alert: Alert = {
+        id: alertId,
+        toolId: body.toolId,
+        chamberId: body.chamberId ?? null,
+        parameter: catalogParameter,
+        severity: "high",
+        rule: "manualMeasurement",
+        raisedAt,
+        correlationId,
+      };
+      mockExtras().alerts.push(alert);
+    }
+    return HttpResponse.json({
+      evidenceId: crypto.randomUUID(),
+      incidentId,
+      faultId: outOfSpec ? crypto.randomUUID() : null,
+      correlationId: outOfSpec ? correlationId : null,
+      alertId,
+      appliedToSimulation: outOfSpec,
+      outOfSpec,
+      printedParameter: body.parameter,
+      catalogParameter,
+    });
+  }),
+
   http.post("/api/injector/scenarios/:scenarioId", ({ params }) => {
     const scenarioId = String(params.scenarioId);
     const run: ScenarioRun = {
@@ -200,6 +411,54 @@ export const handlers = [
       telemetry: [],
     };
     return HttpResponse.json(run, { status: 202 });
+  }),
+
+  http.get("/api/audit", () => HttpResponse.json({ entries: [], traces: [] })),
+
+  http.post("/api/admin/reset", () => {
+    resetMockState();
+    return HttpResponse.json({
+      seed: 4242,
+      simulatedOrigin: "2026-09-01T00:00:00Z",
+      fleetToolCount: 8,
+      ticketCount: 0,
+      investigationCount: 0,
+      approvalCount: 0,
+      capaCount: 0,
+    });
+  }),
+
+
+  http.post("/api/investigations/:investigationId/decisions", async ({ params, request }) => {
+    const body = (await request.json()) as { kind?: string; approverId?: string; comment?: string | null };
+    if (body.kind === "override" && (body.comment ?? "").trim().length < 20) {
+      return problem("Override needs a written justification of at least 20 characters.", 400);
+    }
+    if ((body.kind === "approve" || body.kind === "override") && !body.approverId) {
+      return problem("Approval requires an approver.", 400);
+    }
+    const id = String(params.investigationId);
+    const current = mockExtras().investigations.find((item) => item.id === id) ?? investigationFor(id);
+    if (!current) return problem("No such record.", 404);
+    const next = clone(current);
+    next.stage =
+      body.kind === "approve" || body.kind === "override" ? "approved" : body.kind === "reject" ? "rejected" : "escalated";
+    mockExtras().investigations.push(next);
+    const capa =
+      body.kind === "approve" || body.kind === "override"
+        ? {
+            id: "66666666-6666-4666-8666-666666666666",
+            incidentId: current.incidentId,
+            summary: "Hold the affected lots and confirm the edge ring revision.",
+            approvalTokenId: "77777777-7777-4777-8777-777777777777",
+            actionHash: "ABC123",
+            stage: "open" as const,
+            openedAt: "2026-10-14T15:05:00Z",
+            approvedBy: body.approverId ?? null,
+            approvedAt: "2026-10-15T02:42:00.000Z",
+          }
+        : null;
+    return HttpResponse.json({ investigation: next, capa });
   }),
 
   ...contractHandlers,

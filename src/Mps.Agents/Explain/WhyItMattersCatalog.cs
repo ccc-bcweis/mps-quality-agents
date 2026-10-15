@@ -304,6 +304,7 @@ public sealed class WhyItMattersCatalog
             EvidenceSource.Qms => "A quality record in this window describes a defect that may match this signal.",
             EvidenceSource.Document => "A procedure in the document set describes how this signal should behave.",
             EvidenceSource.Ticketing => "The ticket records the same incident the sensors and records are being checked against.",
+            EvidenceSource.ManualMeasurement => Mps.Application.Printouts.ManualMeasurement.WhyItMatters,
             _ => GenericSentence,
         };
     }
@@ -612,6 +613,7 @@ public sealed class WhyItMattersCatalog
             EvidenceSource.Cmms => "cmms",
             EvidenceSource.Document => "document",
             EvidenceSource.Ticketing => "ticketing",
+            EvidenceSource.ManualMeasurement => "manualMeasurement",
             _ => "document",
         };
     }
@@ -646,6 +648,9 @@ public sealed class WhyItMattersCatalog
                 return true;
             case "ticketing":
                 source = EvidenceSource.Ticketing;
+                return true;
+            case "manualmeasurement":
+                source = EvidenceSource.ManualMeasurement;
                 return true;
             default:
                 source = default;

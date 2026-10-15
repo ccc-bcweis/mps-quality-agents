@@ -16,6 +16,7 @@ public enum EvidenceSource
     Cmms,
     Document,
     Ticketing,
+    ManualMeasurement,
 }
 
 public sealed class EvidenceItem
@@ -27,7 +28,8 @@ public sealed class EvidenceItem
         string excerpt,
         DateTimeOffset observedAt,
         string? toolId,
-        string? externalRef)
+        string? externalRef,
+        EvidenceReading? reading = null)
     {
         if (id.IsEmpty)
         {
@@ -41,6 +43,7 @@ public sealed class EvidenceItem
         ObservedAt = observedAt;
         ToolId = string.IsNullOrWhiteSpace(toolId) ? null : toolId.Trim();
         ExternalRef = string.IsNullOrWhiteSpace(externalRef) ? null : externalRef.Trim();
+        Reading = Normalize(reading);
     }
 
     public EvidenceId Id { get; }
@@ -56,4 +59,43 @@ public sealed class EvidenceItem
     public string? ToolId { get; }
 
     public string? ExternalRef { get; }
+
+    public EvidenceReading? Reading { get; }
+
+    private static EvidenceReading? Normalize(EvidenceReading? reading)
+    {
+        if (reading is null || reading.IsEmpty)
+        {
+            return null;
+        }
+
+        if (reading.Value is double value && !double.IsFinite(value))
+        {
+            throw new DomainRuleException("Evidence value must be finite.");
+        }
+
+        if (reading.SpecLow is double low && !double.IsFinite(low))
+        {
+            throw new DomainRuleException("Evidence spec must be finite.");
+        }
+
+        if (reading.SpecHigh is double high && !double.IsFinite(high))
+        {
+            throw new DomainRuleException("Evidence spec must be finite.");
+        }
+
+        if (reading.SpecLow is double specLow && reading.SpecHigh is double specHigh && specLow > specHigh)
+        {
+            throw new DomainRuleException("Evidence spec low cannot exceed spec high.");
+        }
+
+        return reading with
+        {
+            Unit = Blank(reading.Unit),
+            ToolName = Blank(reading.ToolName),
+            ChamberName = Blank(reading.ChamberName),
+        };
+    }
+
+    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

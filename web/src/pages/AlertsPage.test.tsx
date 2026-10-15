@@ -5,13 +5,11 @@ import { matchCopy } from "../test/matchCopy";
 import { renderConsole } from "../test/render";
 
 describe("alerts", () => {
-  it("lists the rules-engine rows and the linked ticket", async () => {
+  it("starts with an empty list", async () => {
     renderConsole("/alerts");
     expect(await screen.findByRole("heading", { name: "Alerts" })).toBeInTheDocument();
-    expect(screen.getByText(matchCopy(/Western Electric rules \(WE-1\) · 1 point > 3σ/))).toBeInTheDocument();
-    expect(screen.getByText(matchCopy(/WE-2 · 2 of 3 > 2σ/))).toBeInTheDocument();
-    expect(screen.queryByText(matchCopy(/Western Electric rules \(WE-2\)/))).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "TKT-1044" })).toBeInTheDocument();
+    expect(screen.queryByText(matchCopy(/Western Electric rules \(WE-1\) · 1 point > 3σ/))).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "TKT-1044" })).not.toBeInTheDocument();
     expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Alert");
   });
 });

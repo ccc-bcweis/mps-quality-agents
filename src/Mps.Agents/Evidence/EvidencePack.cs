@@ -66,4 +66,28 @@ public sealed class EvidencePack
     /// whyItMatters for every item in the pack. Sensor items also carry signalId.
     /// </summary>
     public IReadOnlyList<CitedEvidence> Explanations { get; }
+
+    /// <summary>Appends bench readings and rebuilds whyItMatters for the whole pack.</summary>
+    public EvidencePack Including(IReadOnlyList<EvidenceItem> extra, WhyItMattersCatalog catalog)
+    {
+        ArgumentNullException.ThrowIfNull(extra);
+        ArgumentNullException.ThrowIfNull(catalog);
+        if (extra.Count == 0)
+        {
+            return this;
+        }
+
+        var items = Items.Concat(extra).ToArray();
+        return new EvidencePack(
+            items,
+            ConfigClaims,
+            Ecos,
+            WorkOrders,
+            Calibrations,
+            MaterialLots,
+            SupplierNotices,
+            CalibrationLookupCompleted,
+            SignalShape,
+            CitedEvidenceFactory.ForItems(items, catalog));
+    }
 }

@@ -3,38 +3,37 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { FAMILY_PROCESS } from "../api/labels";
-import type { Tool } from "../api/types";
+import type { Alert, Tool } from "../api/types";
 import { SpcChart } from "../components/SpcChart";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
 import { PlainMetrics } from "../components/PlainMetrics";
 import { ToolSchematic } from "../components/ToolSchematic";
-import { btn, btnPrimary, panel } from "../components/ui";
+import { btn, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
+import { visibleProblem } from "../history/copy";
+import { useSite } from "../context/SiteContext";
+import { toolInPlant } from "../sites/selection";
 import { chartSpec } from "../fleet/chartSpec";
 import { statusTone, storyFor, windowRows } from "../fleet/catalog";
 import { sensorsForTool } from "../fleet/sensors";
 import { liveReadingMap, overlayWindows, seriesPoints, storyWithLive } from "../live/overlay";
 import { usePolled } from "../live/usePolled";
 import { fleetSensors, fleetTemplates } from "virtual:fleet-sensors";
-import { S1_INVESTIGATION_ID, S2_INVESTIGATION_ID } from "../mocks/demoData";
-
-const INVESTIGATION_LINK: Record<string, string> = {
-  "E-02": S1_INVESTIGATION_ID,
-  "D-01": S2_INVESTIGATION_ID,
-};
 
 export function ToolPage() {
   const { toolId = "" } = useParams();
   const [searchParams] = useSearchParams();
   const streaming = searchParams.get("streaming") === "1";
   const focusParameter = searchParams.get("parameter");
+  const { siteId } = useSite();
   const [tool, setTool] = useState<Tool | null>(null);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const focused = useRef(false);
   const live = usePolled(() => api.getToolLive(toolId), toolId);
-  const story = tool ? storyFor(tool) : null;
+  const story = tool ? storyFor(tool, alerts) : null;
   useSetLifecycle(story?.lifecycle ?? "alert", story?.escalated ?? false);
   const toolSensors = useMemo(
     () => (tool ? sensorsForTool(tool.id, fleetSensors, fleetTemplates) : []),
@@ -44,20 +43,26 @@ export function ToolPage() {
   useEffect(() => {
     let cancelled = false;
     setTool(null);
+    setAlerts([]);
     setError(null);
     setSelectedId(null);
-    api
-      .getTool(toolId)
-      .then((next) => {
-        if (!cancelled) setTool(next);
+    Promise.all([api.getTool(toolId), api.listAlerts(toolId, siteId).catch(() => [] as Alert[])])
+      .then(([next, nextAlerts]) => {
+        if (!cancelled) {
+          setTool(next);
+          setAlerts(nextAlerts);
+        }
       })
       .catch((reason: unknown) => {
-        if (!cancelled) setError(reason instanceof ApiProblem ? reason.title : "Tool was not found.");
+        if (!cancelled) {
+          const title = reason instanceof ApiProblem ? reason.title : "Tool was not found.";
+          setError(visibleProblem(title) ?? "Tool was not found.");
+        }
       });
     return () => {
       cancelled = true;
     };
-  }, [toolId]);
+  }, [toolId, siteId]);
 
   useEffect(() => {
     focused.current = false;
@@ -75,11 +80,18 @@ export function ToolPage() {
 
   if (error) return <p className="text-mps-alarm-text">{error}</p>;
   if (!tool || !story) return <p className="text-mps-muted">Loading {toolId}…</p>;
+  if (!toolInPlant(siteId, tool.id, tool.siteId)) {
+    return (
+      <div>
+        <h1 className="text-mps-display font-semibold">Tool {tool.id}</h1>
+        <p>This tool is at another plant. Choose All sites to open it.</p>
+      </div>
+    );
+  }
 
   const liveTile = live && live.readings.length > 0 ? live : undefined;
   const shown = storyWithLive(story, liveTile, liveTile ? liveTile.readings.slice(0, 12).map((reading) => reading.value) : undefined);
   const tone = statusTone(shown.status);
-  const investigationId = INVESTIGATION_LINK[tool.id];
   const selected = toolSensors.find((sensor) => sensor.id === selectedId) ?? null;
   const chart = selected ? chartSpec(selected, story) : story.chart;
   const seriesParameter = selected?.parameter ?? focusParameter ?? chart.parameter;
@@ -110,13 +122,8 @@ export function ToolPage() {
         </div>
         <div className="flex gap-2">
           <Link className={btn} to="/tools/D-01">
-            Open D-01 (S2 alarm)
+            Open D-01
           </Link>
-          {investigationId ? (
-            <Link className={btnPrimary} to={`/investigations/${investigationId}`}>
-              Open investigation
-            </Link>
-          ) : null}
         </div>
       </div>
       {streaming ? (
@@ -195,11 +202,6 @@ export function ToolPage() {
         <div className={panel}>
           <h2 className="mb-2 text-mps-title font-semibold">Linked records</h2>
           {story.ticketNumber ? <p>Ticket <Link to="/tickets">{story.ticketNumber}</Link></p> : <p className="text-mps-muted">No open ticket on this tile.</p>}
-          {investigationId ? (
-            <p className="mt-2">
-              Investigation <Link to={`/investigations/${investigationId}`}>{investigationId.slice(0, 8)}</Link>
-            </p>
-          ) : null}
           <p className="mt-3 font-mono text-mps-micro text-mps-muted">Deterministic rules draw the chart. The model has not written anything.</p>
           <div className="mt-3 flex gap-2">
             <Link className={btn} to="/alerts">

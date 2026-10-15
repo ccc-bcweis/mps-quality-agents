@@ -1,0 +1,71 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 572 >>
+stream
+BT
+/F1 11 Tf
+48 760 Td
+14 TL
+(SABLE FORK INSTRUMENTS) Tj
+T*
+(Model: SF-80 Thermocouple logger) Tj
+T*
+(Printout) Tj
+T*
+(Tool: E-01) Tj
+T*
+(Chamber: E-01-A) Tj
+T*
+(Observed at: 2026-10-12T09:40:00Z) Tj
+T*
+(Instrument: thermocoupleLogger) Tj
+T*
+(Parameter: escTemperature) Tj
+T*
+(Plain name: ESC temperature) Tj
+T*
+(Value: 68) Tj
+T*
+(Unit: C) Tj
+T*
+(Spec minimum: 40) Tj
+T*
+(Spec maximum: 60) Tj
+T*
+(Shape: ramp) Tj
+T*
+(Operator: JL) Tj
+T*
+(Reading table) Tj
+T*
+(Channel ESC temperature  value 68 C  spec 40-60) Tj
+T*
+(Trace: The trace rises past the printed maximum.) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000863 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+933
+%%EOF

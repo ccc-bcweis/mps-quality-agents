@@ -6,6 +6,8 @@ import type { FamilyComparison, SiteDetail, SiteSummary, ToolFamily } from "../a
 import { Term } from "../components/Term";
 import { btn, btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
+import { visibleProblem } from "../history/copy";
+import { useSite } from "../context/SiteContext";
 import { ComparisonPanel } from "../sites/ComparisonPanel";
 import { FloorPlan } from "../sites/FloorPlan";
 import { formatPct } from "../sites/floorLayout";
@@ -32,6 +34,7 @@ function RoleLine({ role }: { role: SiteDetail["role"] }) {
 
 export function SitesPage() {
   useSetLifecycle("alert");
+  const { setSiteId } = useSite();
   const [params, setParams] = useSearchParams();
   const siteId = params.get("site") ?? "northwater";
   const requestedFamily = params.get("family") ?? "etch";
@@ -110,7 +113,7 @@ export function SitesPage() {
       <p className="max-w-3xl text-mps-secondary">
         A <Term id="Bay" /> is a group of tools that share a process step. A <Term id="Fab">fab</Term> is a plant that runs wafers. Lumen Pilot Works also keeps a <Term id="Pilot line">pilot line</Term> for research wafers.
       </p>
-      {listError ? <p className="mt-3 text-mps-alarm-text">{listError}</p> : null}
+      {visibleProblem(listError) ? <p className="mt-3 text-mps-alarm-text">{visibleProblem(listError)}</p> : null}
       <div role="tablist" aria-label="Plant" className="mt-4 flex flex-wrap gap-2">
         {(sites ?? []).map((site) => {
           const selected = site.id === siteId;
@@ -121,14 +124,17 @@ export function SitesPage() {
               role="tab"
               aria-selected={selected}
               className={selected ? btnPrimary : btn}
-              onClick={() => setQuery("site", site.id)}
+              onClick={() => {
+                setSiteId(site.id);
+                setQuery("site", site.id);
+              }}
             >
               {site.name}
             </button>
           );
         })}
       </div>
-      {detailError ? <p className="mt-3 text-mps-alarm-text">{detailError}</p> : null}
+      {visibleProblem(detailError) ? <p className="mt-3 text-mps-alarm-text">{visibleProblem(detailError)}</p> : null}
       {detail ? (
         <>
           <div className="mt-4">

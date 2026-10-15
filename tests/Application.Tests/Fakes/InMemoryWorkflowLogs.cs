@@ -62,7 +62,8 @@ public sealed class InMemoryInvestigationLog : IInvestigationLog
     public Task<IReadOnlyList<InvestigationSnapshot>> ListAsync(CancellationToken cancellationToken)
     {
         _ = cancellationToken;
-        return Task.FromResult<IReadOnlyList<InvestigationSnapshot>>(_snapshots.ToArray());
+        IReadOnlyList<InvestigationSnapshot> newestFirst = _snapshots.AsEnumerable().Reverse().ToArray();
+        return Task.FromResult(newestFirst);
     }
 }
 
