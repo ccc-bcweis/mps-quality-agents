@@ -210,6 +210,51 @@ export type ScriptedScenario = {
   parameter: string;
   shape: FaultShape;
   summary: string;
+  whatsHappening: string;
+  whatWeSimulate: string;
+  whatAiShouldFind: string;
+  expectedCause: string;
+};
+
+export type LiveStatus = "nominal" | "watch" | "alarm";
+
+export type LiveReading = {
+  sensorId: string;
+  parameter: string;
+  chamberId: string;
+  unit: string;
+  at: string;
+  value: number;
+  status: LiveStatus;
+};
+
+export type LivePoint = { at: string; value: number };
+
+export type LiveSeries = {
+  parameter: string;
+  chamberId: string;
+  points: LivePoint[];
+};
+
+export type FleetLiveTool = {
+  toolId: string;
+  siteId: string;
+  status: LiveStatus;
+  readings: LiveReading[];
+};
+
+export type FleetLive = {
+  simulatedNow: string;
+  tools: FleetLiveTool[];
+};
+
+export type ToolLive = {
+  toolId: string;
+  siteId: string;
+  simulatedNow: string;
+  status: LiveStatus;
+  readings: LiveReading[];
+  series: LiveSeries[];
 };
 
 export type ScenarioTelemetryPoint = {

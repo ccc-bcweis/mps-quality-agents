@@ -1,17 +1,42 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import type { ScriptedScenario } from "../api/types";
-import { useConsole } from "../context/ConsoleContext";
-import { pollUntil } from "../poll";
+import { lookupTerm } from "../glossary/terms";
+import { Explain } from "./Explain";
+import { Term } from "./Term";
+
+/** Acronyms go through Explain. The card also links the plain glossary phrases in the story. */
+function CardCopy({ text }: { text: string }) {
+  const nodes: ReactNode[] = [];
+  let cursor = 0;
+  for (const match of text.matchAll(/foreline pump|edge ring|precursor/gi)) {
+    const index = match.index ?? 0;
+    if (index > cursor) nodes.push(<Explain key={`t-${cursor}`} text={text.slice(cursor, index)} />);
+    const word = match[0];
+    const term = lookupTerm(word);
+    nodes.push(
+      term ? (
+        <Term key={`p-${index}`} id={term.term}>
+          {word}
+        </Term>
+      ) : (
+        <span key={`p-${index}`}>{word}</span>
+      ),
+    );
+    cursor = index + word.length;
+  }
+  if (cursor < text.length) nodes.push(<Explain key={`t-${cursor}`} text={text.slice(cursor)} />);
+  if (nodes.length === 0) return <Explain text={text} />;
+  return <>{nodes}</>;
+}
 
 const harnessBtn =
   "inline-flex shrink-0 items-center whitespace-nowrap rounded border border-sn-gold bg-transparent px-2 py-1 font-pitch text-mps-body text-sn-gold hover:bg-sn-navy-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sn-gold disabled:cursor-not-allowed disabled:opacity-40";
 
 export function ScenarioControl() {
   const navigate = useNavigate();
-  const { bannerMode, noteUnrecordedInjection, rememberLocalAlert } = useConsole();
   const [scenarios, setScenarios] = useState<ScriptedScenario[]>([]);
   const [scenarioId, setScenarioId] = useState("");
   const [pending, setPending] = useState(false);
@@ -41,38 +66,32 @@ export function ScenarioControl() {
       setError("Pick a named scenario.");
       return;
     }
+    const toolId = selected.toolIds[0];
+    if (!toolId) {
+      setError("This scenario has no tool.");
+      return;
+    }
     setPending(true);
     setError(null);
     try {
-      const run = await api.runScenario(selected.id);
-      const found = await pollUntil(
-        () => api.listAlerts(),
-        (rows) => rows.some((alert) => alert.correlationId === run.correlationId),
-        { timeoutMs: 10_000, intervalMs: 400 },
-      );
-      if (!found) {
-        rememberLocalAlert({
-          id: run.faultId,
-          toolId: selected.toolIds[0] ?? selected.id,
-          chamberId: selected.chamberId,
-          parameter: selected.parameter,
-          severity: "high",
-          rule: "westernElectric1",
-          raisedAt: new Date().toISOString(),
-          correlationId: run.correlationId,
-        });
-      }
-      if (bannerMode === "live") noteUnrecordedInjection();
-      navigate("/alerts?injected=1");
+      await api.runScenario(selected.id);
+      const parameter = encodeURIComponent(selected.parameter);
+      navigate(`/tools/${encodeURIComponent(toolId)}?streaming=1&parameter=${parameter}`);
     } catch (reason: unknown) {
       setError(reason instanceof ApiProblem ? reason.title : "The scenario was not accepted.");
+    } finally {
       setPending(false);
     }
   }
 
+  const happening = selected?.whatsHappening || selected?.summary || "";
+  const simulate = selected?.whatWeSimulate || selected?.summary || "";
+  const finding = selected?.whatAiShouldFind || "";
+  const cause = selected?.expectedCause || "";
+
   return (
-    <div className="flex max-w-full flex-wrap items-center gap-2">
-      <label className="flex items-center gap-2 whitespace-nowrap text-mps-body text-sn-gold-wash">
+    <div className="flex min-w-0 max-w-full basis-full flex-wrap items-center gap-2">
+      <label className="flex min-w-0 items-center gap-2 whitespace-nowrap text-mps-body text-sn-gold-wash">
         Scenario
         <select
           className="w-80 max-w-full rounded border border-sn-gold bg-sn-navy-soft px-2 py-1 font-sans text-mps-body text-sn-gold-wash"
@@ -91,9 +110,39 @@ export function ScenarioControl() {
       <button className={harnessBtn} type="button" disabled={pending || !selected} onClick={() => void runScenario()}>
         {pending ? "Running…" : "Run scenario"}
       </button>
-      {selected ? <p className="basis-full text-mps-body text-sn-gold-wash">{selected.summary}</p> : null}
+      {selected ? (
+        <section
+          aria-label={`${selected.id} scenario card`}
+          className="basis-full min-w-0 max-w-full break-words rounded border border-sn-gold/40 bg-sn-navy-soft px-3 py-2 text-mps-body text-sn-gold-wash"
+        >
+          <h2 className="break-words text-mps-body font-semibold">
+            {selected.id} · {selected.title}
+          </h2>
+          <p className="mt-1 break-words">
+            <span className="font-semibold">What&apos;s happening. </span>
+            <CardCopy text={happening} />
+          </p>
+          <p className="mt-1 break-words">
+            <span className="font-semibold">What data we simulate. </span>
+            <CardCopy text={simulate} />
+          </p>
+          <details className="mt-1 min-w-0 max-w-full break-words">
+            <summary className="cursor-pointer">What the AI should find</summary>
+            {finding ? (
+              <p className="mt-1 break-words">
+                <CardCopy text={finding} />
+              </p>
+            ) : null}
+            {cause ? (
+              <p className="mt-1 break-words">
+                Expected cause: <CardCopy text={cause} />
+              </p>
+            ) : null}
+          </details>
+        </section>
+      ) : null}
       {error ? (
-        <p className="basis-full text-mps-body text-mps-alarm-text" role="alert">
+        <p className="basis-full min-w-0 max-w-full break-words text-mps-body text-mps-alarm-text" role="alert">
           {error}
         </p>
       ) : null}

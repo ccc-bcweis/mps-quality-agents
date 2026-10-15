@@ -71,6 +71,19 @@ export const handlers = [
     return HttpResponse.json(rows);
   }),
 
+  http.get("/api/fleet/live", () => HttpResponse.json({ simulatedNow: "2026-09-01T00:02:00Z", tools: [] })),
+
+  http.get("/api/tools/:toolId/live", ({ params }) =>
+    HttpResponse.json({
+      toolId: String(params.toolId),
+      siteId: "northwater",
+      simulatedNow: "2026-09-01T00:02:00Z",
+      status: "nominal",
+      readings: [],
+      series: [],
+    }),
+  ),
+
   http.get("/api/alerts", ({ request }) => {
     const toolId = new URL(request.url).searchParams.get("toolId");
     const rows = allAlerts().filter((alert) => (toolId ? alert.toolId === toolId : true));
@@ -173,64 +186,17 @@ export const handlers = [
     }
     const faultId = crypto.randomUUID();
     const correlationId = `corr-inject-${faultId.slice(0, 8)}`;
-    const raisedAt = new Date().toISOString();
-    const incidentId = crypto.randomUUID();
-    const alert: Alert = {
-      id: crypto.randomUUID(),
-      toolId: body.toolId,
-      chamberId: body.chamberId ?? null,
-      parameter: body.parameter,
-      severity: "high",
-      rule: "westernElectric1",
-      raisedAt,
-      correlationId,
-    };
-    const incident: Incident = {
-      id: incidentId,
-      toolId: body.toolId,
-      chamberId: body.chamberId ?? null,
-      parameter: body.parameter,
-      channel: "faultInjector",
-      severity: "high",
-      summary: `Injected ${body.shape} on ${body.parameter} (${body.magnitude} σ).`,
-      correlationId,
-      openedAt: raisedAt,
-      stage: "ticketOpened",
-    };
-    const ticket: Ticket = {
-      id: crypto.randomUUID(),
-      number: `TKT-${1200 + mockExtras().tickets.length}`,
-      incidentId,
-      toolId: body.toolId,
-      title: incident.summary,
-      openedAt: raisedAt,
-    };
-    mockExtras().alerts.push(alert);
-    mockExtras().incidents.push(incident);
-    mockExtras().tickets.push(ticket);
+    // The stream raises the alert on a later tick. This click only accepts the fault.
     return HttpResponse.json({ faultId, correlationId }, { status: 202 });
   }),
 
   http.post("/api/injector/scenarios/:scenarioId", ({ params }) => {
     const scenarioId = String(params.scenarioId);
-    const correlationId = `corr-scenario-${scenarioId}`;
-    const raisedAt = new Date().toISOString();
-    const alert: Alert = {
-      id: crypto.randomUUID(),
-      toolId: scenarioId === "SC-1" ? "E-02" : "E-01",
-      chamberId: scenarioId === "SC-1" ? "E-02-A" : "E-01-A",
-      parameter: "escTemperature",
-      severity: "high",
-      rule: "westernElectric1",
-      raisedAt,
-      correlationId,
-    };
-    mockExtras().alerts.push(alert);
     const run: ScenarioRun = {
       scenarioId,
       seed: 4242,
       faultId: crypto.randomUUID(),
-      correlationId,
+      correlationId: `corr-scenario-${scenarioId}`,
       telemetry: [],
     };
     return HttpResponse.json(run, { status: 202 });

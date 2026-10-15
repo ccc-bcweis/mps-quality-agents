@@ -12,12 +12,16 @@ import { PlainMetrics, TileMetrics } from "../components/PlainMetrics";
 import { btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { bayCaption, statusTone, storyFor } from "../fleet/catalog";
+import { storyWithLive } from "../live/overlay";
+import { usePolled } from "../live/usePolled";
 
 export function FleetPage() {
   useSetLifecycle("alert");
   const [tools, setTools] = useState<Tool[] | null>(null);
   const [tickets, setTickets] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sparks, setSparks] = useState<Record<string, number[]>>({});
+  const live = usePolled(() => api.listFleetLive(), "fleet");
 
   useEffect(() => {
     let cancelled = false;
@@ -35,8 +39,29 @@ export function FleetPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!live || live.tools.length === 0) {
+      setSparks((current) => (Object.keys(current).length === 0 ? current : {}));
+      return;
+    }
+    setSparks((current) => {
+      let changed = false;
+      const next = { ...current };
+      for (const tool of live.tools) {
+        const headline = tool.readings[0];
+        if (!headline) continue;
+        const prior = next[tool.toolId] ?? [];
+        if (prior.length > 0 && prior[prior.length - 1] === headline.value) continue;
+        next[tool.toolId] = [...prior, headline.value].slice(-12);
+        changed = true;
+      }
+      return changed ? next : current;
+    });
+  }, [live]);
+
   const rows = tools ?? [];
-  const stories = rows.map((tool) => ({ tool, story: storyFor(tool) }));
+  const liveById = new Map((live?.tools ?? []).map((tool) => [tool.toolId, tool]));
+  const stories = rows.map((tool) => ({ tool, story: storyWithLive(storyFor(tool), liveById.get(tool.id), sparks[tool.id]) }));
   const bays = [...new Set(rows.map((tool) => tool.bay))];
 
   return (
@@ -89,8 +114,8 @@ export function FleetPage() {
                       </p>
                       <div className="mt-2 space-y-1 font-mono text-mps-micro">
                         {story.params.map((param) => (
-                          <div key={param.label} className="flex justify-between gap-2">
-                            <span className="text-mps-muted">
+                          <div key={param.label} className="flex min-w-0 justify-between gap-2">
+                            <span className="min-w-0 break-words text-mps-muted">
                               <Explain text={param.label} />
                             </span>
                             <span className={param.tone === "alarm" ? "text-mps-alarm-text" : param.tone === "warn" ? "text-mps-warn" : "text-mps-secondary"}>

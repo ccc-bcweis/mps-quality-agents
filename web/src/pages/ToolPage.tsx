@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { FAMILY_PROCESS } from "../api/labels";
 import type { Tool } from "../api/types";
@@ -13,7 +13,10 @@ import { btn, btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { chartSpec } from "../fleet/chartSpec";
 import { statusTone, storyFor, windowRows } from "../fleet/catalog";
-import { fleetSensors } from "virtual:fleet-sensors";
+import { sensorsForTool } from "../fleet/sensors";
+import { liveReadingMap, overlayWindows, seriesPoints, storyWithLive } from "../live/overlay";
+import { usePolled } from "../live/usePolled";
+import { fleetSensors, fleetTemplates } from "virtual:fleet-sensors";
 import { S1_INVESTIGATION_ID, S2_INVESTIGATION_ID } from "../mocks/demoData";
 
 const INVESTIGATION_LINK: Record<string, string> = {
@@ -23,11 +26,20 @@ const INVESTIGATION_LINK: Record<string, string> = {
 
 export function ToolPage() {
   const { toolId = "" } = useParams();
+  const [searchParams] = useSearchParams();
+  const streaming = searchParams.get("streaming") === "1";
+  const focusParameter = searchParams.get("parameter");
   const [tool, setTool] = useState<Tool | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const focused = useRef(false);
+  const live = usePolled(() => api.getToolLive(toolId), toolId);
   const story = tool ? storyFor(tool) : null;
   useSetLifecycle(story?.lifecycle ?? "alert", story?.escalated ?? false);
+  const toolSensors = useMemo(
+    () => (tool ? sensorsForTool(tool.id, fleetSensors, fleetTemplates) : []),
+    [tool],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -47,14 +59,34 @@ export function ToolPage() {
     };
   }, [toolId]);
 
+  useEffect(() => {
+    focused.current = false;
+  }, [toolId, focusParameter]);
+
+  useEffect(() => {
+    if (!focusParameter || focused.current) return;
+    const sensor =
+      toolSensors.find((item) => item.parameter === focusParameter && item.chamberId?.endsWith("-A")) ??
+      toolSensors.find((item) => item.parameter === focusParameter);
+    if (!sensor) return;
+    focused.current = true;
+    setSelectedId(sensor.id);
+  }, [focusParameter, toolSensors]);
+
   if (error) return <p className="text-mps-alarm-text">{error}</p>;
   if (!tool || !story) return <p className="text-mps-muted">Loading {toolId}…</p>;
 
-  const tone = statusTone(story.status);
+  const liveTile = live && live.readings.length > 0 ? live : undefined;
+  const shown = storyWithLive(story, liveTile, liveTile ? liveTile.readings.slice(0, 12).map((reading) => reading.value) : undefined);
+  const tone = statusTone(shown.status);
   const investigationId = INVESTIGATION_LINK[tool.id];
-  const toolSensors = fleetSensors.filter((sensor) => sensor.toolId === tool.id);
   const selected = toolSensors.find((sensor) => sensor.id === selectedId) ?? null;
   const chart = selected ? chartSpec(selected, story) : story.chart;
+  const seriesParameter = selected?.parameter ?? focusParameter ?? chart.parameter;
+  const livePoints = seriesPoints(live, seriesParameter, selected?.chamberId);
+  const pointCount = livePoints && livePoints.length > 0 ? livePoints.length : 60;
+  const readings = liveReadingMap(live?.readings);
+  const windows = overlayWindows(windowRows(tool), live?.readings);
 
   function showSensor(sensor: (typeof toolSensors)[number]) {
     setSelectedId(sensor.id);
@@ -87,14 +119,23 @@ export function ToolPage() {
           ) : null}
         </div>
       </div>
+      {streaming ? (
+        <p
+          role="status"
+          aria-label="Streaming trace"
+          className="mb-3 max-w-full break-words rounded border border-mps-nominal bg-mps-panel px-3 py-2 text-mps-secondary"
+        >
+          <Explain text="This trace is streaming. An SPC rule opens the alert when the points cross the limit." />
+        </p>
+      ) : null}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <div className={panel}>
           <div className="font-mono text-mps-micro uppercase text-mps-muted">Status</div>
           <div className="mt-1">
-            <Chip tone={tone}>{story.status === "watch" ? "WATCH" : story.status === "alarm" ? "ALARM" : "NOMINAL"}</Chip>
+            <Chip tone={tone}>{shown.status === "watch" ? "WATCH" : shown.status === "alarm" ? "ALARM" : "NOMINAL"}</Chip>
           </div>
         </div>
-        {story.params.map((param) => (
+        {shown.params.map((param) => (
           <div key={param.label} className={panel}>
             <div className="font-mono text-mps-micro uppercase text-mps-muted">
               <Explain text={param.label} spellOut={false} />
@@ -107,13 +148,13 @@ export function ToolPage() {
       </div>
       <PlainMetrics toolIds={[tool.id]} />
       <div className={`${panel} mt-3`}>
-        <ToolSchematic family={tool.family} sensors={toolSensors} selectedId={selectedId} onSelect={showSensor} />
+        <ToolSchematic family={tool.family} sensors={toolSensors} selectedId={selectedId} onSelect={showSensor} readings={readings} />
       </div>
       <div id="spc-chart" className={`${panel} mt-3 scroll-mt-16`}>
         <h2 className="mb-2 text-mps-title font-semibold">
           <Explain text={`SPC · ${chart.label}`} />{" "}
           <span className="float-right font-mono text-mps-micro font-normal text-mps-muted">
-            σ = {chart.sigma} {chart.unit} · n = 60
+            σ = {chart.sigma} {chart.unit} · n = {pointCount}
           </span>
         </h2>
         <SpcChart
@@ -124,6 +165,7 @@ export function ToolPage() {
           sigma={chart.sigma}
           shape={chart.shape}
           endValue={chart.endValue}
+          points={livePoints}
         />
       </div>
       <div className="mt-3 grid gap-3 lg:grid-cols-2">
@@ -138,7 +180,7 @@ export function ToolPage() {
               </tr>
             </thead>
             <tbody>
-              {windowRows(tool).map((row) => (
+              {windows.map((row) => (
                 <tr key={row.parameter} className="border-t border-mps-line">
                   <td className="py-1.5">
                     <Explain text={row.label} />

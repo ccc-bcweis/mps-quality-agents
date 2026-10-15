@@ -17,6 +17,12 @@ import {
   type ViewBox,
 } from "../fleet/schematic";
 import { formatValue, readingFor, type SensorStatus } from "../fleet/telemetry";
+
+export type SchematicReading = {
+  value: number;
+  unit: string;
+  status: SensorStatus;
+};
 import { PanelDrawing } from "./schematicArt";
 import { FAMILY_PROCESS } from "../api/labels";
 
@@ -64,14 +70,16 @@ function SensorButton({
   onSelect,
   className,
   style,
+  live,
 }: {
   sensor: FleetSensor;
   selected: boolean;
   onSelect: (sensor: FleetSensor) => void;
   className: string;
   style?: CSSProperties;
+  live?: SchematicReading;
 }) {
-  const reading = readingFor(sensor);
+  const reading = live ?? readingFor(sensor);
   return (
     <button
       type="button"
@@ -101,12 +109,14 @@ function FlowPanel({
   selectedId,
   onSelect,
   className,
+  readings,
 }: {
   panel: SchematicPanel;
   sensors: FleetSensor[];
   selectedId: string | null;
   onSelect: (sensor: FleetSensor) => void;
   className?: string;
+  readings?: ReadonlyMap<string, SchematicReading>;
 }) {
   const byAnchor = new Map(sensors.map((sensor) => [sensor.schematicAnchor, sensor]));
   return (
@@ -126,6 +136,7 @@ function FlowPanel({
                 onSelect={onSelect}
                 className="absolute -translate-x-1/2 -translate-y-1/2"
                 style={boxStyle(box, panel.view)}
+                live={readings?.get(sensor.id)}
               />
             );
           })}
@@ -140,11 +151,13 @@ function CounterStrip({
   sensors,
   selectedId,
   onSelect,
+  readings,
 }: {
   panel: SchematicPanel;
   sensors: FleetSensor[];
   selectedId: string | null;
   onSelect: (sensor: FleetSensor) => void;
+  readings?: ReadonlyMap<string, SchematicReading>;
 }) {
   const wanted = new Set(panel.boxes.map((box) => box.anchor));
   const cards = sensors.filter((sensor) => wanted.has(sensor.schematicAnchor));
@@ -159,6 +172,7 @@ function CounterStrip({
             selected={sensor.id === selectedId}
             onSelect={onSelect}
             className="w-full"
+            live={readings?.get(sensor.id)}
           />
         ))}
       </div>
@@ -176,11 +190,13 @@ export function ToolSchematic({
   sensors,
   selectedId,
   onSelect,
+  readings,
 }: {
   family: ToolFamily;
   sensors: FleetSensor[];
   selectedId: string | null;
   onSelect: (sensor: FleetSensor) => void;
+  readings?: ReadonlyMap<string, SchematicReading>;
 }) {
   const panels = schematicPanels(family);
   const known = new Set(panels.flatMap((panel) => panel.boxes.map((box) => box.anchor)));
@@ -199,15 +215,15 @@ export function ToolSchematic({
       <div className="grid gap-3">
         {handler ? (
           <div className="w-full" style={{ maxWidth: HANDLER_PANEL_PX }}>
-            <FlowPanel panel={handler} sensors={sensors} selectedId={selectedId} onSelect={onSelect} className="w-full" />
+            <FlowPanel panel={handler} sensors={sensors} selectedId={selectedId} onSelect={onSelect} className="w-full" readings={readings} />
           </div>
         ) : null}
         <div className="grid w-full min-w-0 gap-3" data-chamber-grid="" style={{ gridTemplateColumns: chamberGridTemplate() }}>
           {chambers.map((panel) => (
-            <FlowPanel key={panel.id} panel={panel} sensors={sensors} selectedId={selectedId} onSelect={onSelect} className="min-w-0" />
+            <FlowPanel key={panel.id} panel={panel} sensors={sensors} selectedId={selectedId} onSelect={onSelect} className="min-w-0" readings={readings} />
           ))}
         </div>
-        {counters ? <CounterStrip panel={counters} sensors={sensors} selectedId={selectedId} onSelect={onSelect} /> : null}
+        {counters ? <CounterStrip panel={counters} sensors={sensors} selectedId={selectedId} onSelect={onSelect} readings={readings} /> : null}
       </div>
       <ul className="mt-2 flex flex-wrap gap-3 text-[11px] leading-tight">
         <li className="text-mps-ok">In spec</li>

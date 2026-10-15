@@ -214,3 +214,40 @@ export function statusFromLimits(value: number, limits: SensorLimits): "inSpec" 
   if (value < limits.warningMinimum || value > limits.warningMaximum) return "warning";
   return "inSpec";
 }
+
+/** Tool id to the original fleet tool it copies. Only rows that name a template are recorded. */
+export function parseCloneTemplates(yaml: string): Record<string, string> {
+  const templates: Record<string, string> = {};
+  const pattern = /\{\s*id:\s*([A-Za-z0-9-]+)(?:\s*,\s*template:\s*([A-Za-z0-9-]+))?/g;
+  for (const match of yaml.matchAll(pattern)) {
+    const template = match[2];
+    if (template) templates[match[1]] = template;
+  }
+  return templates;
+}
+
+/** Same rewrite the plant generator uses when it clones a tool spec. */
+export function rewriteToolId(value: string, fromId: string, toId: string): string {
+  if (value.startsWith(fromId)) return toId + value.slice(fromId.length);
+  return `${toId}-${value}`;
+}
+
+/**
+ * Sensors for a placed tool. Original tools keep their catalog rows.
+ * A clone copies its template and rewrites ids so the schematic matches the live stream.
+ */
+export function sensorsForTool(toolId: string, sensors: FleetSensor[], templates: Record<string, string>): FleetSensor[] {
+  const own = sensors.filter((sensor) => sensor.toolId === toolId);
+  if (own.length > 0) return own;
+  const templateId = templates[toolId];
+  if (!templateId || templateId === toolId) return [];
+  return sensors
+    .filter((sensor) => sensor.toolId === templateId)
+    .map((sensor) => ({
+      ...sensor,
+      id: rewriteToolId(sensor.id, templateId, toolId),
+      toolId,
+      chamberId: sensor.chamberId ? rewriteToolId(sensor.chamberId, templateId, toolId) : undefined,
+      tracksSensorId: sensor.tracksSensorId ? rewriteToolId(sensor.tracksSensorId, templateId, toolId) : undefined,
+    }));
+}

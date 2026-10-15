@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vitest/config";
-import { parseFleetSensors, type FleetSensor } from "./src/fleet/sensors";
+import { parseCloneTemplates, parseFleetSensors, type FleetSensor } from "./src/fleet/sensors";
 import { parseGlossaryYaml } from "./src/glossary/parse";
 import type { GlossaryTerm } from "./src/glossary/types";
 
@@ -22,7 +22,7 @@ function loadGlossary(): { source: string; note: string; terms: GlossaryTerm[] }
   };
 }
 
-function loadFleetSensors(): { source: string; note: string; sensors: FleetSensor[] } {
+function loadFleetSensors(): { source: string; note: string; sensors: FleetSensor[]; templates: Record<string, string> } {
   const dir = path.resolve(root, "../data/fleet");
   if (!fs.existsSync(dir)) {
     throw new Error("data/fleet is required. The console does not keep a second sensor catalog.");
@@ -34,7 +34,9 @@ function loadFleetSensors(): { source: string; note: string; sensors: FleetSenso
   if (sensors.length === 0) {
     throw new Error("data/fleet has no sensors. The console does not keep a second sensor catalog.");
   }
-  return { source: "data/fleet", note: "", sensors };
+  const sitesPath = path.join(dir, "sites.yaml");
+  const templates = fs.existsSync(sitesPath) ? parseCloneTemplates(fs.readFileSync(sitesPath, "utf8")) : {};
+  return { source: "data/fleet", note: "", sensors, templates };
 }
 
 function fleetSensorPlugin(): Plugin {
@@ -49,7 +51,7 @@ function fleetSensorPlugin(): Plugin {
     load(id) {
       if (id !== resolvedId) return null;
       const loaded = loadFleetSensors();
-      return `export const fleetSensorSource = ${JSON.stringify(loaded.source)};\nexport const fleetSensorNote = ${JSON.stringify(loaded.note)};\nexport const fleetSensors = ${JSON.stringify(loaded.sensors)};\n`;
+      return `export const fleetSensorSource = ${JSON.stringify(loaded.source)};\nexport const fleetSensorNote = ${JSON.stringify(loaded.note)};\nexport const fleetSensors = ${JSON.stringify(loaded.sensors)};\nexport const fleetTemplates = ${JSON.stringify(loaded.templates)};\n`;
     },
   };
 }

@@ -2,7 +2,7 @@
 import { CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, Tooltip, XAxis, YAxis } from "recharts";
 import { mpsColor } from "../brand/colors";
 import { Term } from "./Term";
-import { buildSeries, limits, seedFrom, violatesWesternElectric1, violatesWesternElectric2, type SeriesShape } from "../spc/series";
+import { bandFromEarly, buildSeries, limits, seedFrom, violatesWesternElectric1, violatesWesternElectric2, type SeriesShape, type SpcPoint } from "../spc/series";
 
 export function SpcChart({
   seedKey,
@@ -12,6 +12,7 @@ export function SpcChart({
   sigma,
   shape,
   endValue,
+  points: livePoints,
 }: {
   seedKey: string;
   label: string;
@@ -20,18 +21,21 @@ export function SpcChart({
   sigma: number;
   shape: SeriesShape;
   endValue?: number;
+  /** Live samples from the plant tick. When absent, the chart draws the frozen teaching series. */
+  points?: SpcPoint[];
 }) {
-  const points = buildSeries({ seed: seedFrom(seedKey), mean, sigma, shape, endValue });
+  const points = livePoints && livePoints.length > 0 ? livePoints : buildSeries({ seed: seedFrom(seedKey), mean, sigma, shape, endValue });
   const values = points.map((point) => point.value);
-  const band = limits(mean, sigma);
-  const rule1 = violatesWesternElectric1(values, mean, sigma);
-  const rule2 = violatesWesternElectric2(values, mean, sigma);
+  const center = livePoints && livePoints.length > 0 ? bandFromEarly(values, mean, sigma) : { mean, sigma };
+  const band = limits(center.mean, center.sigma);
+  const rule1 = violatesWesternElectric1(values, center.mean, center.sigma);
+  const rule2 = violatesWesternElectric2(values, center.mean, center.sigma);
   const finding = rule1
     ? "Western Electric rule 1: a point is beyond 3 sigma."
     : rule2
       ? "Western Electric rule 2: two of three points are beyond 2 sigma."
       : "Western Electric rules 1 and 2 are clear on this series.";
-  const caption = `SPC chart of ${label}. Mean ${mean} ${unit}, sigma ${sigma}. ${finding} Client check on the drawn series.`;
+  const caption = `SPC chart of ${label}. Mean ${center.mean.toFixed(2)} ${unit}, sigma ${center.sigma.toFixed(2)}. ${finding} Client check on the drawn series.`;
 
   return (
     <figure aria-label={caption} className="overflow-x-auto">
@@ -40,7 +44,7 @@ export function SpcChart({
           <CartesianGrid stroke={mpsColor.line} strokeDasharray="3 3" />
           <XAxis dataKey="index" tick={{ fill: mpsColor.muted, fontSize: 10 }} stroke={mpsColor.line} />
           <YAxis
-            domain={[band.lcl3 - sigma, band.ucl3 + sigma]}
+            domain={[Math.min(band.lcl3 - center.sigma, ...values), Math.max(band.ucl3 + center.sigma, ...values)]}
             tick={{ fill: mpsColor.muted, fontSize: 10 }}
             stroke={mpsColor.line}
             width={48}
