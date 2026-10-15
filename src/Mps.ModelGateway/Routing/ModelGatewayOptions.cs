@@ -14,9 +14,9 @@ public sealed class ModelGatewayOptions
     /// </summary>
     public decimal DailySpendCapUsd { get; set; } = 2.00m;
 
-    public decimal InputUsdPerMillionTokens { get; set; } = 0.15m;
+    public decimal InputUsdPerMillionTokens { get; set; } = 0.75m;
 
-    public decimal OutputUsdPerMillionTokens { get; set; } = 0.60m;
+    public decimal OutputUsdPerMillionTokens { get; set; } = 4.50m;
 
     public int LiveRetryCount { get; set; } = 2;
 
