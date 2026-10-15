@@ -4,11 +4,11 @@
 **Copyright (c) 2026 Bryan C. Weis and Common Consulting Company**
 **License:** MIT
 
-This kit has **two layers**. They never mix on the same surface except at the documented seams (deck title plate, console footer).
+This kit has **two layers**. They never mix on the same surface except at the documented seams (deck title plate, and the StatusNeo demo harness bar that frames the console). ADR-006 records that split.
 
 | Layer | Owner of the surface | Used on |
 |---|---|---|
-| **StatusNeo pitch shell** | StatusNeo presenting | PowerPoint framing, title/closing slides, “Prepared for…” lockup, console footer wordmark |
+| **StatusNeo pitch shell** | StatusNeo presenting | PowerPoint framing, title/closing slides, “Prepared for…” lockup, demo harness bar |
 | **Meridian Precision Systems** | The fictional customer | The demo app: a dark fab operations console |
 
 Bryan presents **as StatusNeo** pitching to **Meridian Precision Systems**. The console is MPS’s own control room, with “Powered by StatusNeo” in the footer.
@@ -112,9 +112,9 @@ Ramp (dense console): display 22/600 Inter, title 16/600 Inter, body 13/400 Inte
 - 4 px grid. Tight padding (12–16 px in tiles).
 - Panels: 4 px radius, 1 px `#3D4654` border, `shadow.panel`.
 - Status LED: 8 px circle, 2 px glow of the same color.
-- Lifecycle bar on every operational screen: Alert → Ticket → Investigation → Recommendation → Approval → CAPA.
-- Mode banner (LIVE AI / REPLAY MODE / MOCK REASONER) is always visible. Spend meter sits in the same strip.
-- Footer: `Powered by StatusNeo` (wordmark placeholder) · IP line.
+- Lifecycle bar on every operational console screen: Alert → Ticket → Investigation → Recommendation → Approval → CAPA. It is not shown on a harness panel.
+- The mode line (live / replay / mock reasoner) and the spend meter live in the StatusNeo demo harness bar, not in the console tab row.
+- Console footer: the IP line. The StatusNeo wordmark placeholder lives in the harness bar.
 
 ### 2.5 Motion
 120 ms color/opacity, 200 ms panels. No decorative animation. Charts update; they do not bounce.
@@ -147,7 +147,7 @@ A steel chamber bezel, RF coil arcs, wafer on a chuck, status LED. Reads as **a 
 - Do not add drop shadows, gradients beyond the films in concept 2, or a real-vendor silhouette.
 
 ### StatusNeo lockup
-On the deck title: StatusNeo **placeholder wordmark** (left) + gold rule + “Prepared for Meridian Precision Systems” (right). On the console: MPS mark in the top bar, StatusNeo placeholder in the footer. Never stack the two marks in the same corner.
+On the deck title: StatusNeo **placeholder wordmark** (left) + gold rule + “Prepared for Meridian Precision Systems” (right). On the running demo: StatusNeo placeholder in the harness bar, MPS mark in the console header. Never stack the two marks in the same corner.
 
 ---
 

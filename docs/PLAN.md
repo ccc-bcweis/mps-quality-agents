@@ -19,7 +19,7 @@ All intellectual property in this build (design, specification, plan, code, data
 | `Mps.Orchestration` | MAF workflow behind `IInvestigationWorkflow`; LangGraph adapter stub | Agents, Domain | bypass gates |
 | `Mps.Api` | Minimal API, SignalR, auth, OTel | Application, Orchestration | hold logic |
 | `Mps.MockEnterprise` | Mock enterprise HTTP APIs with fault injection | seed data | — |
-| `web/` | React console (MPS-branded, "Powered by StatusNeo") | OpenAPI contract | call mock systems directly |
+| `web/` | React app: StatusNeo demo harness around the MPS console (ADR-006) | OpenAPI contract | call mock systems directly |
 | `eval/`, `tests/`, `deploy/` | Evaluation, tests, IaC/CI | all | — |
 Layering is enforced by a NetArchTest suite in CI (F1), so violations fail the build rather than relying on review.
 
@@ -88,7 +88,7 @@ CodeQL (C#, JS) · gitleaks · Dependabot + dependency-review action · **OWASP 
 24 at launch → 60 (combinations × confounders) before pilot → 200+ from shadow-mode traces labeled through approve/reject → continuous regression from every human rejection. Judge-calibration check against human labels (≥85% agreement).
 ### 6.5 ROI / financial model (simulated, assumptions stated)
 Inputs (synthetic, per year, for a 3-plant MPS): revenue $1.2B; COPQ 8% of revenue split into scrap/rework, warranty/field, downtime and investigation labor; 1,400 quality incidents/yr; MTTR-Q baseline 9.5 days; time to root-cause hypothesis 4 days; repeat-defect rate 18%; CAPA cycle time 62 days; engineer loaded cost $95/h, ~22 h per investigation; tool downtime $12k/h for key tools.
-Projection levers (conservative / expected): investigation hours −30/−45%; time to hypothesis −50/−70%; repeat defects −15/−25%; CAPA cycle −20/−35%; downtime hours avoided via earlier SPC detection. Output: annual savings range, payback period, cost to run (AI cost per investigation × volume + platform), and sensitivity table. Lives in `data/roi/` as CSV + a generator, rendered on the console's ROI screen and in deck slide 5. All values labeled "illustrative, synthetic".
+Projection levers (conservative / expected): investigation hours −30/−45%; time to hypothesis −50/−70%; repeat defects −15/−25%; CAPA cycle −20/−35%; downtime hours avoided via earlier SPC detection. Output: annual savings range, payback period, cost to run (AI cost per investigation × volume + platform), and sensitivity table. Lives in `data/roi/` as CSV + a generator, rendered on the demo harness return-on-investment panel and in deck slide 5. All values labeled "illustrative, synthetic".
 
 ## 7. Deck plan (PowerPoint, StatusNeo-branded, "Prepared for Meridian Precision Systems")
 Draft outline now; finish after the demo with real screenshots and measured metrics.
@@ -98,6 +98,21 @@ Draft outline now; finish after the demo with real screenshots and measured metr
 
 - **Design principle slide (K5 #66):** Plain-language operations (ADR-003): a supervisor or manager who isn't an engineer can understand and explain a problem, because nothing is in code. Show glossary hovers, the tool schematic, why-it-matters evidence and plain-word metrics.
 - **Current versus future slides (K6 #75):** Three slides. 1. As-is swimlane, with manual hand-offs and error risks (`docs/diagrams/print/as-is-flow-archD.pdf`). 2. To-be swimlane (G6), the same stages and lanes plus the MPS agent platform (`docs/diagrams/print/to-be-flow-archD.pdf`). 3. Side-by-side with simulated benefits (`docs/diagrams/print/as-is-vs-to-be-archD.pdf`). Narrative and the stage table: `docs/analysis/current-vs-future-state.md`. Every figure on these slides is labeled simulated. The G4 screen-order sheet (`docs/diagrams/print/investigation-flow-archD.pdf`) stays the architecture flow. It is not the K6 to-be slide.
+
+### Deck screenshots (harness vs application)
+
+Shoot the StatusNeo demo harness and the Meridian Precision Systems console as two surfaces (ADR-006). A shot may keep the harness bar in frame so the buyer sees the outer band. Do not crop that bar off and then treat Reset demo, the scenario picker, or the spend line as product features. Do not show the fault injector, return on investment, or metrics as console tabs.
+
+| Slide | What to shoot | Surface |
+|---|---|---|
+| Title and MPS context | Fleet overview. Harness bar visible above the console. | Application, harness in frame |
+| The problem in numbers, and the business case | Return-on-investment panel. Every figure already says illustrative, synthetic. | Harness |
+| Deep dive | Investigation with evidence, then Approval. | Application |
+| Plain-language operations | Glossary hover, tool schematic, why-it-matters line. | Application |
+| How the pitch is run | Harness bar: scenario picker, Reset demo, live / replay / mock, today's spend against the cap. One fault-injector panel, then the alerts screen it opens. | Harness, then application |
+| What the demo costs to run | Metrics panel, including spend against the cap. | Harness |
+
+The screen list for the rehearsal is `docs/demo/SCREENS.md`.
 
 ## 8. Issue breakdown
 Labels: `lane:*`, `phase:*`, `type:test`, `design-question`, `stretch` (plus `type:design|infra|docs|ci`, `needs-bryan`).
