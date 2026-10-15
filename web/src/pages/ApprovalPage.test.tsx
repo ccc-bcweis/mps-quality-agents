@@ -2,7 +2,7 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { S1_INVESTIGATION_ID } from "../mocks/demoData";
+import { S1_INVESTIGATION_ID, S2_INVESTIGATION_ID } from "../mocks/demoData";
 import { renderConsole } from "../test/render";
 
 describe("approval dialog", () => {
@@ -49,5 +49,21 @@ describe("approval dialog", () => {
     await screen.findByText("77777777-7777-4777-8777-777777777777");
     await user.click(screen.getByRole("button", { name: "Advance stage" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Illegal CAPA transition.");
+  });
+
+  it("blocks direct approval of an escalated case and requires a justified override", async () => {
+    const user = userEvent.setup();
+    renderConsole(`/approvals/${S2_INVESTIGATION_ID}`);
+    expect(await screen.findByTestId("escalation-gate")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Approve CAPA + containment" })).toBeDisabled();
+    const override = screen.getByRole("button", { name: "Override with justification" });
+    expect(override).toBeDisabled();
+    await user.type(screen.getByLabelText("Note or justification"), "too short");
+    expect(override).toBeDisabled();
+    await user.clear(screen.getByLabelText("Note or justification"));
+    await user.type(screen.getByLabelText("Note or justification"), "Engineer verified revision B on the tool.");
+    expect(override).toBeEnabled();
+    await user.click(override);
+    expect(await screen.findByText("77777777-7777-4777-8777-777777777777")).toBeInTheDocument();
   });
 });

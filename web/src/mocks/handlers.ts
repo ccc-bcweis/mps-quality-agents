@@ -4,7 +4,7 @@
 
 import { http, HttpResponse } from "msw";
 import { handlers as contractHandlers } from "../../../contracts/msw/handlers";
-import type { Alert, FaultInjectionRequest, Incident, OpenIncidentRequest, Ticket } from "../api/types";
+import type { Alert, FaultInjectionRequest, Incident, OpenIncidentRequest, ScenarioRun, Ticket } from "../api/types";
 import { telemetryForTool } from "../fleet/telemetry";
 import { latestInvestigationForIncident } from "../investigation/ticketRoute";
 import { alerts, incidents, investigationFor, investigations, tickets, tools } from "./demoData";
@@ -187,6 +187,31 @@ export const handlers = [
     mockExtras().incidents.push(incident);
     mockExtras().tickets.push(ticket);
     return HttpResponse.json({ faultId, correlationId }, { status: 202 });
+  }),
+
+  http.post("/api/injector/scenarios/:scenarioId", ({ params }) => {
+    const scenarioId = String(params.scenarioId);
+    const correlationId = `corr-scenario-${scenarioId}`;
+    const raisedAt = new Date().toISOString();
+    const alert: Alert = {
+      id: crypto.randomUUID(),
+      toolId: scenarioId === "SC-1" ? "E-02" : "E-01",
+      chamberId: scenarioId === "SC-1" ? "E-02-A" : "E-01-A",
+      parameter: "escTemperature",
+      severity: "high",
+      rule: "westernElectric1",
+      raisedAt,
+      correlationId,
+    };
+    mockExtras().alerts.push(alert);
+    const run: ScenarioRun = {
+      scenarioId,
+      seed: 4242,
+      faultId: crypto.randomUUID(),
+      correlationId,
+      telemetry: [],
+    };
+    return HttpResponse.json(run, { status: 202 });
   }),
 
   ...contractHandlers,

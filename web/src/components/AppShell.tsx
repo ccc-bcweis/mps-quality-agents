@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { api } from "../api/client";
+import type { AdminSession } from "../api/types";
 import { useConsole } from "../context/ConsoleContext";
 import { S1_INVESTIGATION_ID } from "../mocks/demoData";
 import { Explain } from "./Explain";
@@ -10,6 +11,7 @@ import { Led } from "./Chip";
 import { LifecycleBar } from "./LifecycleBar";
 import { ModeBanner } from "./ModeBanner";
 import { Term } from "./Term";
+import { btn } from "./ui";
 
 const NAV = [
   { to: "/", label: "Fleet", match: (path: string) => path === "/" },
@@ -34,6 +36,11 @@ export function AppShell() {
   const location = useLocation();
   const { lifecycle } = useConsole();
   const [healthOn, setHealthOn] = useState(false);
+  const [session, setSession] = useState<AdminSession | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetPending, setResetPending] = useState(false);
+  const [resetMessage, setResetMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,6 +56,35 @@ export function AppShell() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .getAdminSession()
+      .then((next) => {
+        if (!cancelled) setSession(next);
+      })
+      .catch(() => {
+        if (!cancelled) setSession(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function confirmReset() {
+    setResetPending(true);
+    setResetMessage(null);
+    try {
+      const result = await api.resetDemo();
+      setResetMessage(`Demo baseline restored. Seed ${result.seed}.`);
+      setResetOpen(false);
+    } catch {
+      setResetMessage("The reset was not accepted.");
+    } finally {
+      setResetPending(false);
+    }
+  }
 
   return (
     <GlossaryScope key={location.pathname}>
@@ -72,11 +108,71 @@ export function AppShell() {
           <span>
             Plant <b className="font-medium text-mps-secondary">AUS-1</b>
           </span>
-          <span>
-            Engineer <b className="font-medium text-mps-secondary">dev-user</b>
-          </span>
+          {session?.isAdmin ? (
+            <div className="relative">
+              <button
+                type="button"
+                className={btn}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                aria-label="Account menu"
+                onClick={() => setMenuOpen((open) => !open)}
+              >
+                Engineer <b className="font-medium text-mps-secondary">{session.displayName}</b>
+              </button>
+              {menuOpen ? (
+                <div role="menu" aria-label="Account" className="absolute right-0 z-toast mt-1 min-w-40 rounded border border-mps-line bg-mps-panel p-1 shadow-panel">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={`${btn} w-full justify-start`}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setResetOpen(true);
+                    }}
+                  >
+                    Reset demo
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <span>
+              Engineer <b className="font-medium text-mps-secondary">{session?.displayName ?? "dev-user"}</b>
+            </span>
+          )}
         </div>
       </header>
+      {resetMessage ? (
+        <p className="border-b border-mps-line bg-mps-panel px-4 py-2 text-mps-body" role="status">
+          {resetMessage}
+        </p>
+      ) : null}
+      {resetOpen ? (
+        <div className="fixed inset-0 z-toast flex items-center justify-center bg-black/60 p-4" role="presentation">
+          <div role="dialog" aria-modal="true" aria-labelledby="reset-title" className="w-full max-w-lg rounded border border-mps-line bg-mps-panel p-4 shadow-panel">
+            <h2 id="reset-title" className="text-mps-title font-semibold">
+              Reset the demo?
+            </h2>
+            <p className="mt-2 text-mps-secondary">This restores the seeded baseline. The same seed is used on this computer and in the hosted demo.</p>
+            <ul className="mt-3 list-disc space-y-1 pl-5">
+              <li>Fleet state</li>
+              <li>Tickets</li>
+              <li>Investigations</li>
+              <li>Approvals and corrective actions</li>
+              <li>Simulated clock</li>
+            </ul>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button type="button" className={btn} disabled={resetPending} onClick={() => void confirmReset()}>
+                {resetPending ? "Resetting…" : "Confirm reset"}
+              </button>
+              <button type="button" className={btn} disabled={resetPending} onClick={() => setResetOpen(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <nav aria-label="Console" className="sticky top-9 z-nav flex gap-1 overflow-x-auto border-b border-mps-line bg-mps-panel px-3">
         {NAV.map((item) => {
           const active = item.match(location.pathname);
@@ -93,7 +189,10 @@ export function AppShell() {
         })}
       </nav>
       <LifecycleBar current={lifecycle.current} escalated={lifecycle.escalated} />
-      <main id="main" className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-4">
+      <main
+        id="main"
+        className={`mx-auto w-full flex-1 px-4 py-4 ${location.pathname.startsWith("/tools/") ? "max-w-[1680px]" : "max-w-[1200px]"}`}
+      >
         <Outlet />
       </main>
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-mps-line px-4 py-3 text-mps-micro text-mps-muted">

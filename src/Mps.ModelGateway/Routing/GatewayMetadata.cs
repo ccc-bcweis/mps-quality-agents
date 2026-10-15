@@ -16,4 +16,9 @@ public static class GatewayMetadata
     public const string PromptHash = "mps.promptHash";
 
     public const string CostUsd = "mps.costUsd";
+
+    /// <summary>Scenario id carried on chat options additional properties.</summary>
+    public const string ScenarioId = "mps.scenarioId";
+
+    public const string ScriptedReplay = "mps.scriptedReplay";
 }

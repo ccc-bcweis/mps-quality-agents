@@ -17,7 +17,11 @@ using Mps.Domain.Investigations;
 
 namespace Mps.Application.Decisions;
 
-public sealed record HumanDecisionOutcome(InvestigationSnapshot Investigation, StoredCapa? Capa);
+public sealed record HumanDecisionOutcome(InvestigationSnapshot Investigation, StoredCapa? Capa)
+{
+    /// <summary>True when the investigation was closed so a new run can gather more evidence.</summary>
+    public bool Superseded { get; init; }
+}
 
 /// <summary>
 /// Records a human decision. A CAPA is created only after a valid explicit approval token is consumed.
@@ -35,6 +39,11 @@ public interface IHumanDecisionService
 public sealed class HumanDecisionService : IHumanDecisionService
 {
     public const int MaxWriteAttempts = 3;
+
+    /// <summary>Shortest override justification accepted, in characters (ADR-005).</summary>
+    public const int MinOverrideJustification = 20;
+
+    public const string OverridePrefix = "Override of escalation by ";
 
     private static readonly ConcurrentDictionary<Guid, SemaphoreSlim> ApprovalGates = new();
 
@@ -99,6 +108,12 @@ public sealed class HumanDecisionService : IHumanDecisionService
         switch (kind)
         {
             case HumanDecisionKind.Approve:
+                if (snapshot.Stage == InvestigationStage.Escalated)
+                {
+                    throw new LifecycleConflictException(
+                        "An escalated investigation cannot be approved directly. Request more evidence, or override with a written justification.");
+                }
+
                 using (QualityDiagnostics.ActivitySource.StartActivity("decision.approve"))
                 {
                     return await ApproveAsync(snapshot, comment, approverId, cancellationToken).ConfigureAwait(false);
@@ -110,7 +125,32 @@ public sealed class HumanDecisionService : IHumanDecisionService
                     return await RejectAsync(snapshot, stored, _time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
                 }
             case HumanDecisionKind.RequestInfo:
+                if (snapshot.Stage == InvestigationStage.Escalated)
+                {
+                    return await SupersedeForMoreEvidenceAsync(snapshot, stored, comment, _time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+                }
+
                 return await RequestInfoAsync(snapshot, stored, comment, _time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+            case HumanDecisionKind.Override:
+                if (snapshot.Stage != InvestigationStage.Escalated)
+                {
+                    throw new LifecycleConflictException("Override applies only to an escalated investigation. Use approve.");
+                }
+
+                var justification = comment?.Trim() ?? string.Empty;
+                if (justification.Length < MinOverrideJustification)
+                {
+                    throw new IntakeValidationException(
+                        $"Override needs a written justification of at least {MinOverrideJustification} characters.");
+                }
+
+                using (var activity = QualityDiagnostics.ActivitySource.StartActivity("decision.override"))
+                {
+                    activity?.SetTag("mps.override.approver", approverId);
+                    activity?.SetTag("mps.override.justification", justification);
+                    var audited = OverridePrefix + (approverId ?? "unknown") + ": " + justification;
+                    return await ApproveAsync(snapshot, audited, approverId, cancellationToken).ConfigureAwait(false);
+                }
             default:
                 throw new IntakeValidationException("Decision kind is not supported.");
         }
@@ -463,6 +503,31 @@ public sealed class HumanDecisionService : IHumanDecisionService
         await _notifier.InvestigationChangedAsync(updated, cancellationToken).ConfigureAwait(false);
         await _notifier.IncidentChangedAsync(stored.Incident, cancellationToken).ConfigureAwait(false);
         return new HumanDecisionOutcome(updated, null);
+    }
+
+    /// <summary>
+    /// "Request more evidence" on an escalated investigation closes it as superseded and returns the incident to
+    /// investigating, so the endpoint can start a fresh run with the added data (ADR-005).
+    /// </summary>
+    private async Task<HumanDecisionOutcome> SupersedeForMoreEvidenceAsync(
+        InvestigationSnapshot snapshot,
+        StoredIncident stored,
+        string? comment,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        var note = string.IsNullOrWhiteSpace(comment) ? "More evidence requested." : comment.Trim();
+        var updated = Copy(snapshot, InvestigationStage.Rejected, "Superseded: more evidence requested. " + note);
+        await _investigations.UpdateAsync(updated, cancellationToken).ConfigureAwait(false);
+        if (stored.Incident.Stage == IncidentStage.Escalated)
+        {
+            LifecycleMoves.WalkTo(stored, IncidentStage.Investigating);
+            await _incidents.SaveAsync(stored, now, cancellationToken).ConfigureAwait(false);
+        }
+
+        await _notifier.InvestigationChangedAsync(updated, cancellationToken).ConfigureAwait(false);
+        await _notifier.IncidentChangedAsync(stored.Incident, cancellationToken).ConfigureAwait(false);
+        return new HumanDecisionOutcome(updated, null) { Superseded = true };
     }
 
     private static InvestigationSnapshot Copy(InvestigationSnapshot snapshot, InvestigationStage stage, string? reason) =>

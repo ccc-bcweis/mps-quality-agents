@@ -109,15 +109,21 @@ export const handlers = [
   ),
   http.get("/api/investigations/:investigationId", () => HttpResponse.json(investigation)),
   http.post("/api/investigations/:investigationId/decisions", async ({ request }) => {
-    const body = (await request.json()) as { kind?: string; approverId?: string };
-    if (body.kind === "approve" && !body.approverId) {
+    const body = (await request.json()) as { kind?: string; approverId?: string; comment?: string | null };
+    if (body.kind === "override" && (body.comment ?? "").trim().length < 20) {
+      return HttpResponse.json(
+        { title: "Override needs a written justification of at least 20 characters.", status: 400 },
+        { status: 400, headers: { "Content-Type": "application/problem+json" } },
+      );
+    }
+    if ((body.kind === "approve" || body.kind === "override") && !body.approverId) {
       return HttpResponse.json(
         { title: "Approval requires an approver.", status: 400 },
         { status: 400, headers: { "Content-Type": "application/problem+json" } },
       );
     }
     const capa =
-      body.kind === "approve"
+      body.kind === "approve" || body.kind === "override"
         ? {
             id: "66666666-6666-4666-8666-666666666666",
             incidentId: incident.id,
@@ -131,7 +137,7 @@ export const handlers = [
     return HttpResponse.json({
       investigation: {
         ...investigation,
-        stage: body.kind === "approve" ? "approved" : body.kind === "reject" ? "rejected" : "escalated",
+        stage: body.kind === "approve" || body.kind === "override" ? "approved" : body.kind === "reject" ? "rejected" : "escalated",
       },
       capa,
     });
@@ -152,6 +158,84 @@ export const handlers = [
   http.post("/api/faults", () =>
     HttpResponse.json(
       { faultId: "88888888-8888-4888-8888-888888888888", correlationId: "corr-inject" },
+      { status: 202 },
+    ),
+  ),
+  http.get("/api/admin/session", () =>
+    HttpResponse.json({ mode: "local", isAdmin: true, displayName: "dev-user" }),
+  ),
+  http.post("/api/admin/reset", () =>
+    HttpResponse.json({
+      seed: 4242,
+      simulatedOrigin: "2026-09-01T00:00:00Z",
+      fleetToolCount: 8,
+      ticketCount: 0,
+      investigationCount: 0,
+      approvalCount: 0,
+      capaCount: 0,
+    }),
+  ),
+  http.get("/api/injector/scenarios", () =>
+    HttpResponse.json([
+      {
+        id: "SC-1",
+        title: "Edge ring revision C on E-02",
+        rootCauseCategory: "engineeringChange",
+        toolIds: ["E-02"],
+        chamberId: "E-02-A",
+        parameter: "escTemperature",
+        shape: "oscillation",
+        summary: "ESC temperature oscillates on E-02 chamber A after edge ring revision C.",
+      },
+      {
+        id: "SC-2",
+        title: "ESC thermocouple calibration drift",
+        rootCauseCategory: "equipmentCalibrationOrAlignment",
+        toolIds: ["E-01"],
+        chamberId: "E-01-A",
+        parameter: "escTemperature",
+        shape: "ramp",
+        summary: "The ESC thermocouple on E-01 chamber A drifts because its calibration is overdue.",
+      },
+      {
+        id: "SC-3",
+        title: "Bad precursor gas lot",
+        rootCauseCategory: "supplyChainMaterial",
+        toolIds: ["E-01", "E-02"],
+        chamberId: "E-01-A",
+        parameter: "cf4Flow",
+        shape: "step",
+        summary: "Precursor gas lot PL-2044 is out of spec and both etch tools step off on CF4 flow.",
+      },
+      {
+        id: "SC-4",
+        title: "Slow chamber seasoning drift",
+        rootCauseCategory: "processDrift",
+        toolIds: ["E-01"],
+        chamberId: "E-01-A",
+        parameter: "etchRate",
+        shape: "ramp",
+        summary: "Etch rate on E-01 chamber A ramps slowly as the chamber seasons after a clean.",
+      },
+    ]),
+  ),
+  http.post("/api/injector/scenarios/:scenarioId", () =>
+    HttpResponse.json(
+      {
+        scenarioId: "SC-1",
+        seed: 4242,
+        faultId: "99999999-9999-4999-8999-999999999999",
+        correlationId: "corr-scenario-SC-1",
+        telemetry: [
+          {
+            toolId: "E-02",
+            chamberId: "E-02-A",
+            parameter: "escTemperature",
+            at: "2026-09-01T00:00:00Z",
+            value: 51.2,
+          },
+        ],
+      },
       { status: 202 },
     ),
   ),

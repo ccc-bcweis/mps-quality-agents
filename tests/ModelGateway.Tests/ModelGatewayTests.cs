@@ -202,6 +202,64 @@ public sealed class ModelGatewayTests
     }
 
     [Fact]
+    public async Task LiveCallsArePinnedToTemperatureZeroAndTheConfiguredSeed()
+    {
+        var live = new ScriptedChatClient("pinned", 4, 4);
+        var gateway = Gateway(ModelRoute.OpenAI, new InMemoryReplayCatalog(), reasoner: ThrowingReasoner(), openAi: live, seed: 4242);
+
+        var response = await gateway.GetResponseAsync(User("pin me"), new ChatOptions { Temperature = 0.9f, Seed = 99 });
+
+        response.Text.Should().Be("pinned");
+        live.LastOptions!.Temperature.Should().Be(0f);
+        live.LastOptions.Seed.Should().Be(4242);
+    }
+
+    [Fact]
+    public async Task ScriptedReplayUsesTheScenarioAndPromptHashAndFallsBackToLive()
+    {
+        var messages = User("rank the etch excursion");
+        var hash = PromptHasher.Hash(messages, null);
+        var scripted = new InMemoryScriptedReplayCatalog();
+        scripted.Store("SC-1", hash, new ReplayTurn("recorded", "same words", [], 4, 4));
+        var live = new ScriptedChatClient("live wording", 4, 4);
+        var hit = Gateway(
+            ModelRoute.OpenAI,
+            new InMemoryReplayCatalog(),
+            reasoner: ThrowingReasoner(),
+            openAi: live,
+            scriptedReplay: true,
+            scripted: scripted);
+        var miss = Gateway(
+            ModelRoute.OpenAI,
+            new InMemoryReplayCatalog(),
+            reasoner: ThrowingReasoner(),
+            openAi: live,
+            scriptedReplay: true,
+            scripted: scripted);
+
+        var recorded = await hit.GetResponseAsync(messages, Scenario("SC-1"));
+        var liveCall = await miss.GetResponseAsync(messages, Scenario("SC-3"));
+        var ignored = Gateway(
+            ModelRoute.OpenAI,
+            new InMemoryReplayCatalog(),
+            reasoner: ThrowingReasoner(),
+            openAi: live,
+            scriptedReplay: false,
+            scripted: scripted);
+        var uncached = await ignored.GetResponseAsync(messages, Scenario("SC-1"));
+
+        recorded.Text.Should().Be("same words");
+        recorded.AdditionalProperties![GatewayMetadata.ScriptedReplay].Should().Be(true);
+        recorded.AdditionalProperties[GatewayMetadata.Route].Should().Be(ModelRoutes.Replay);
+        liveCall.Text.Should().Be("live wording");
+        liveCall.AdditionalProperties!.ContainsKey(GatewayMetadata.ScriptedReplay).Should().BeFalse();
+        uncached.Text.Should().Be("live wording");
+        live.Calls.Should().Be(2);
+        live.LastOptions!.Temperature.Should().Be(0f);
+        live.LastOptions.Seed.Should().Be(4242);
+    }
+
+    [Fact]
     public async Task AzureModeWithoutAClientThrowsBeforeAnyCall()
     {
         var gateway = Gateway(ModelRoute.AzureOpenAI, new InMemoryReplayCatalog(), reasoner: ThrowingReasoner());
@@ -222,7 +280,10 @@ public sealed class ModelGatewayTests
         IChatClient? azure = null,
         IChatClient? openAi = null,
         int retries = 2,
-        int breaker = 5)
+        int breaker = 5,
+        bool scriptedReplay = false,
+        long seed = 4242,
+        IScriptedReplayCatalog? scripted = null)
     {
         var options = new ModelGatewayOptions
         {
@@ -232,8 +293,30 @@ public sealed class ModelGatewayTests
             OutputUsdPerMillionTokens = outputPrice,
             LiveRetryCount = retries,
             CircuitBreakerFailures = breaker,
+            ScriptedReplay = scriptedReplay,
+            Temperature = 0f,
+            Seed = seed,
         };
-        return new Routing.ModelGateway(options, ledger ?? new InMemoryCostLedger(), catalog, reasoner ?? ThrowingReasoner(), Clock(), azure, openAi);
+        return new Routing.ModelGateway(
+            options,
+            ledger ?? new InMemoryCostLedger(),
+            catalog,
+            reasoner ?? ThrowingReasoner(),
+            Clock(),
+            azure,
+            openAi,
+            scripted);
+    }
+
+    private static ChatOptions Scenario(string scenarioId)
+    {
+        return new ChatOptions
+        {
+            AdditionalProperties = new AdditionalPropertiesDictionary
+            {
+                [GatewayMetadata.ScenarioId] = scenarioId,
+            },
+        };
     }
 
     private static InMemoryReplayCatalog CatalogWith(IReadOnlyList<ChatMessage> messages, string text)
@@ -299,6 +382,8 @@ public sealed class ModelGatewayTests
 
         public int Calls { get; private set; }
 
+        public ChatOptions? LastOptions { get; private set; }
+
         public Exception? Failure { get; set; }
 
         public Task<ChatResponse> GetResponseAsync(
@@ -307,6 +392,7 @@ public sealed class ModelGatewayTests
             CancellationToken cancellationToken = default)
         {
             Calls++;
+            LastOptions = options;
             if (Failure is not null)
             {
                 throw Failure;
