@@ -142,4 +142,17 @@ describe("harness collapse, replay, and soft reset", () => {
     expect(within(harness).getByRole("combobox", { name: "Scenario" })).toHaveValue("SC-4");
     expect(screen.getByRole("status", { name: "Harness status" })).toHaveTextContent("Running SC-4");
   });
+
+  it("offers a data speed and sample interval", async () => {
+    const user = userEvent.setup();
+    renderConsole("/");
+    const harness = await expandHarness();
+    const speed = within(harness).getByRole("combobox", { name: "Speed" });
+    expect(within(speed).getAllByRole("option").map((option) => option.textContent)).toEqual(["1x", "2x", "5x", "10x"]);
+    if (!(speed as HTMLSelectElement).disabled) {
+      await user.selectOptions(speed, "5");
+      await waitFor(() => expect(speed).toHaveValue("5"));
+    }
+    expect(within(harness).getByRole("combobox", { name: "Sample every" })).toBeInTheDocument();
+  });
 });

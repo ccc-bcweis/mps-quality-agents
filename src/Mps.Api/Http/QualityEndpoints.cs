@@ -321,6 +321,19 @@ public static class QualityEndpoints
             var caller = Caller(http, configuration);
             return Results.Ok(new AdminSessionResponse(caller.Mode, caller.IsAdmin, caller.DisplayName));
         });
+        app.MapGet("/api/demo/speed", (Mps.Api.Live.PlantSimulation plant) =>
+            Results.Ok(new { speed = plant.Speed, strideSeconds = plant.StrideSeconds, speeds = Mps.Api.Live.PlantSimulation.Speeds, strides = Mps.Api.Live.PlantSimulation.Strides }));
+        app.MapPost("/api/demo/speed", (SpeedBody? body, HttpContext http, IConfiguration configuration, Mps.Api.Live.PlantSimulation plant) =>
+        {
+            if (!Caller(http, configuration).IsAdmin)
+            {
+                return Results.Problem(title: "Admin role is required.", statusCode: StatusCodes.Status403Forbidden);
+            }
+
+            return body is not null && plant.TrySetSpeed(body.Speed, body.StrideSeconds)
+                ? Results.Ok(new { speed = plant.Speed, strideSeconds = plant.StrideSeconds, speeds = Mps.Api.Live.PlantSimulation.Speeds, strides = Mps.Api.Live.PlantSimulation.Strides })
+                : Results.Problem(title: "Speed must be 1, 2, 5 or 10 and samples every 5, 15, 30 or 60 seconds.", statusCode: StatusCodes.Status400BadRequest);
+        });
         app.MapGet("/api/admin/reset/progress", (ResetProgress progress) => Results.Ok(progress.Current));
         app.MapPost("/api/admin/reset", async (HttpContext http, IConfiguration configuration, DemoResetService reset, CommandGateway commands, CancellationToken cancellationToken) =>
         {
@@ -658,3 +671,5 @@ public sealed record AdminSessionResponse(string Mode, bool IsAdmin, string Disp
 public sealed record ResetBody(string? Kind);
 
 public sealed record DataModeBody(string? Mode, string? ScenarioId);
+
+public sealed record SpeedBody(int Speed, int StrideSeconds);

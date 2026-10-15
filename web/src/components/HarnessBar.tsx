@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { useEffect, useState } from "react";
+import { SpeedControl } from "./SpeedControl";
 import { readRunning, readScenario, RUNNING_EVENT, storeRunning, storeScenario } from "./harnessSession";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
@@ -304,6 +305,7 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
                 Replay
               </button>
             </div>
+            <SpeedControl admin={admin} />
             <ModeBanner />
             {resetMessage ? (
               <p

@@ -661,6 +661,11 @@ export const handlers = [
     });
   }),
 
+  http.get("/api/demo/speed", () => HttpResponse.json({ speed: 1, strideSeconds: 15, speeds: [1, 2, 5, 10], strides: [5, 15, 30, 60] })),
+  http.post("/api/demo/speed", async ({ request }) => {
+    const body = (await request.json()) as { speed: number; strideSeconds: number };
+    return HttpResponse.json({ ...body, speeds: [1, 2, 5, 10], strides: [5, 15, 30, 60] });
+  }),
   http.get("/api/demo/data-mode", () => HttpResponse.json({ mode: "live", scenarioId: null, messageCount: 0 })),
 
   http.post("/api/demo/data-mode", async ({ request }) => {

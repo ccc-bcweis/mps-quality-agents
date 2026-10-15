@@ -137,6 +137,9 @@ export const api = {
   getAuditLog: () => apiSend<AuditLog>("/api/audit"),
   resetDemo: (kind: ResetKind) =>
     apiSend<DemoResetResult>("/api/admin/reset", { method: "POST", body: JSON.stringify({ kind }) }),
+  getSpeed: () => apiSend<DemoSpeed>("/api/demo/speed"),
+  setSpeed: (speed: number, strideSeconds: number) =>
+    apiSend<DemoSpeed>("/api/demo/speed", { method: "POST", body: JSON.stringify({ speed, strideSeconds }) }),
   getResetProgress: () => apiSend<ResetProgress>("/api/admin/reset/progress"),
   getDataMode: () => apiSend<DataMode>("/api/demo/data-mode"),
   setDataMode: (mode: DataMode["mode"], scenarioId?: string) =>
@@ -155,3 +158,5 @@ export const api = {
   getMetrics: () => apiSend<MetricsSummary>("/api/metrics"),
   getTrace: (eventId: string) => apiSend<CausalTrace>(`/api/trace/${encodeURIComponent(eventId)}`),
 };
+
+export type DemoSpeed = { speed: number; strideSeconds: number; speeds: number[]; strides: number[] };

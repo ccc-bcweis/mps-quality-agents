@@ -61,9 +61,35 @@ public sealed class PlantSimulation
         }
     }
 
+    private int _speed = 1;
+    private int _strideSeconds;
+
+    /// <summary>Allowed harness speeds. 1x is the configured rate (1 wall second = 1 simulated minute by default).</summary>
+    public static readonly IReadOnlyList<int> Speeds = [1, 2, 5, 10];
+
+    /// <summary>Allowed seconds between kept samples.</summary>
+    public static readonly IReadOnlyList<int> Strides = [5, 15, 30, 60];
+
+    public int Speed => Volatile.Read(ref _speed);
+
+    public int StrideSeconds => Volatile.Read(ref _strideSeconds) is var stride && stride > 0 ? stride : _options.SampleStrideSeconds;
+
+    /// <summary>Sets the flow rate from the harness. Returns false for a value outside the allowed lists.</summary>
+    public bool TrySetSpeed(int speed, int strideSeconds)
+    {
+        if (!Speeds.Contains(speed) || !Strides.Contains(strideSeconds))
+        {
+            return false;
+        }
+
+        Volatile.Write(ref _speed, speed);
+        Volatile.Write(ref _strideSeconds, strideSeconds);
+        return true;
+    }
+
     public void AdvanceTick()
     {
-        var seconds = checked(_options.TickSeconds * _options.SimSecondsPerWallSecond);
+        var seconds = checked(_options.TickSeconds * _options.SimSecondsPerWallSecond * Speed);
         lock (_gate)
         {
             EnsurePrimedUnlocked();
@@ -246,7 +272,7 @@ public sealed class PlantSimulation
 
     private void AppendUnlocked(TimeSpan simulatedElapsed)
     {
-        var frames = Runtime.Simulator.Advance(simulatedElapsed, _options.SampleStrideSeconds);
+        var frames = Runtime.Simulator.Advance(simulatedElapsed, StrideSeconds);
         _log.Append(frames);
         _pending.AddRange(frames);
     }
