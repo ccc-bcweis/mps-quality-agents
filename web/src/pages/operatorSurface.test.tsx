@@ -16,6 +16,7 @@ function visibleCopy(container: HTMLElement): string {
 async function open(path: string) {
   const view = renderConsole(path);
   if (path === "/capas") await screen.findByRole("heading", { name: "CAPA" });
+  else if (path === "/alerts" || path === "/tickets") await screen.findAllByRole("heading", { level: 1 });
   else await screen.findAllByRole("table", { name: "Evidence pack" });
   return view;
 }

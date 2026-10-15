@@ -72,6 +72,18 @@ export function severityWord(severity: Severity): string {
   return severity;
 }
 
+/** Operator sentence. The clock is the browser's local time, for example "10:42 PM". */
+export function approvalSentence(name: string, at: string): string {
+  const date = new Date(at);
+  const who = name.trim();
+  if (!who || Number.isNaN(date.getTime())) return "Approved.";
+  const clock = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+  return `Approved by ${who} at ${clock}`;
+}
+
 export function formatStamp(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;

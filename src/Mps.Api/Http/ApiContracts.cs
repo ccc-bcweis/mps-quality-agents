@@ -95,7 +95,22 @@ public sealed record CapaResponse(
     Guid ApprovalTokenId,
     string ActionHash,
     CapaStage Stage,
-    DateTimeOffset OpenedAt);
+    DateTimeOffset OpenedAt,
+    string? ApprovedBy = null,
+    DateTimeOffset? ApprovedAt = null);
+
+public sealed record AuditEventResponse(
+    DateTimeOffset At,
+    string Kind,
+    string Summary,
+    string? Actor,
+    string? ToolId,
+    string? CorrelationId,
+    string? RecordId);
+
+public sealed record CorrelationTraceResponse(string CorrelationId, IReadOnlyList<AuditEventResponse> Events);
+
+public sealed record AuditLogResponse(IReadOnlyList<AuditEventResponse> Entries, IReadOnlyList<CorrelationTraceResponse> Traces);
 
 public sealed record DecisionResponse(InvestigationResponse Investigation, CapaResponse? Capa);
 

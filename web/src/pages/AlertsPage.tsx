@@ -9,10 +9,13 @@ import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
 import { panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
+import { useSite } from "../context/SiteContext";
+import { toolInPlant } from "../sites/selection";
 
 export function AlertsPage() {
   useSetLifecycle("alert");
   const [params] = useSearchParams();
+  const { siteId } = useSite();
   const { localAlerts } = useConsole();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -22,7 +25,7 @@ export function AlertsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([api.listAlerts(), api.listTickets(), api.listIncidents()])
+    Promise.all([api.listAlerts(undefined, siteId), api.listTickets(siteId), api.listIncidents(siteId)])
       .then(([nextAlerts, nextTickets, nextIncidents]) => {
         if (cancelled) return;
         setAlerts(nextAlerts);
@@ -35,11 +38,11 @@ export function AlertsPage() {
     return () => {
       cancelled = true;
     };
-  }, [injected, localAlerts]);
+  }, [injected, localAlerts, siteId]);
 
-  const merged = [...localAlerts, ...alerts].filter(
-    (alert, index, all) => all.findIndex((item) => item.correlationId === alert.correlationId) === index,
-  );
+  const merged = [...localAlerts, ...alerts]
+    .filter((alert, index, all) => all.findIndex((item) => item.correlationId === alert.correlationId) === index)
+    .filter((alert) => toolInPlant(siteId, alert.toolId));
   const fresh = merged.filter((alert) => alert.correlationId.startsWith("corr-inject"));
 
   return (
@@ -69,7 +72,6 @@ export function AlertsPage() {
                 <th className="py-1 font-medium">Rule</th>
                 <th className="py-1 font-medium">Severity</th>
                 <th className="py-1 font-medium">Raised</th>
-                <th className="py-1 font-medium">Correlation</th>
                 <th className="py-1 font-medium">Ticket</th>
               </tr>
             </thead>
@@ -90,7 +92,6 @@ export function AlertsPage() {
                       <Chip tone={severityTone(alert.severity)}>{severityWord(alert.severity)}</Chip>
                     </td>
                     <td className="py-1.5 font-mono text-mps-micro">{formatStamp(alert.raisedAt)}</td>
-                    <td className="py-1.5 font-mono text-mps-micro">{alert.correlationId}</td>
                     <td className="py-1.5 font-mono">{matched ? <Link to="/tickets">{matched.number}</Link> : "—"}</td>
                   </tr>
                 );

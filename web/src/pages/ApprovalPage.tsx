@@ -30,6 +30,7 @@ export function ApprovalPage() {
   useSetLifecycle(investigation?.stage === "approved" ? "capa" : "approval", investigation ? lifecycleForInvestigation(investigation.stage).escalated : false);
 
   useEffect(() => {
+    if (!investigationId) return undefined;
     let cancelled = false;
     api
       .getInvestigation(investigationId)
@@ -74,6 +75,15 @@ export function ApprovalPage() {
   const justified = note.trim().length >= OVERRIDE_MIN;
   const top = investigation?.hypotheses.slice().sort((a, b) => b.confidence - a.confidence)[0];
 
+  if (!investigationId) {
+    return (
+      <div>
+        <h1 className="text-mps-display font-semibold">Approval</h1>
+        <p className="max-w-3xl text-mps-secondary">No approval is waiting.</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="mb-4">
@@ -82,7 +92,7 @@ export function ApprovalPage() {
         </p>
         <h1 className="text-mps-display font-semibold">Approval</h1>
         <p className="max-w-3xl text-mps-secondary">
-          <Explain text="The model never holds write authority. Approve sends an approver id. The server issues the token and creates the CAPA." />
+          <Explain text="The model never holds write authority. Approve records the approver name and creates the CAPA." />
         </p>
       </div>
       {error ? (
@@ -134,8 +144,8 @@ export function ApprovalPage() {
                 />
               </label>
               <label className="mt-2 block">
-                <span className="text-mps-secondary">Approver id</span>
-                <input aria-label="Approver id" className="mt-1 block w-full rounded border border-mps-line bg-transparent p-2" value={approverId} onChange={(event) => setApproverId(event.target.value)} />
+                <span className="text-mps-secondary">Approver name</span>
+                <input aria-label="Approver name" className="mt-1 block w-full rounded border border-mps-line bg-transparent p-2" value={approverId} onChange={(event) => setApproverId(event.target.value)} />
               </label>
               <div className="mt-3 flex flex-wrap gap-2">
                 <button type="button" className={btnOk} disabled={pending} onClick={() => void decide("requestInfo", note.trim() || "More evidence requested.")}>
@@ -169,11 +179,11 @@ export function ApprovalPage() {
           </h2>
           <table className="w-full text-left">
             <tbody>
-              <tr className="border-t border-mps-line"><td className="py-1.5">No approver id</td><td className="py-1.5 font-mono">400</td></tr>
-              <tr className="border-t border-mps-line"><td className="py-1.5">Tampered, expired, or reused token</td><td className="py-1.5 font-mono">rejected</td></tr>
-              <tr className="border-t border-mps-line"><td className="py-1.5">Hash mismatch</td><td className="py-1.5 font-mono">rejected</td></tr>
+              <tr className="border-t border-mps-line"><td className="py-1.5">No approver name</td><td className="py-1.5 font-mono">400</td></tr>
+              <tr className="border-t border-mps-line"><td className="py-1.5">Used or expired approval</td><td className="py-1.5 font-mono">rejected</td></tr>
+              <tr className="border-t border-mps-line"><td className="py-1.5">Recorded action does not match</td><td className="py-1.5 font-mono">rejected</td></tr>
               <tr className="border-t border-mps-line"><td className="py-1.5">Agent write tool</td><td className="py-1.5">not registered</td></tr>
-              <tr className="border-t border-mps-line"><td className="py-1.5">Client-supplied signature</td><td className="py-1.5">ignored</td></tr>
+              <tr className="border-t border-mps-line"><td className="py-1.5">The browser does not sign the approval</td><td className="py-1.5">ignored</td></tr>
             </tbody>
           </table>
         </section>

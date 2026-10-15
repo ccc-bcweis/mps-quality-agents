@@ -13,6 +13,8 @@ info:
     contracts-v1.2 adds GET /api/incidents/{incidentId}/investigation (ADR-001 addendum).
     It returns the latest investigation for that incident, or 404 when none exists.
     The path is additive. Earlier clients stay compatible.
+    GET /api/audit is additive and read-only. It returns the audit trail and correlation traces.
+    List routes accept an optional siteId query. Omit it to return every plant.
     EvidenceItem gains optional value, unit, specLow, specHigh, toolName, and chamberName.
     Clients that ignore unknown fields stay compatible.
     All names and data are synthetic.
@@ -31,6 +33,7 @@ tags:
   - name: capas
   - name: faults
   - name: admin
+  - name: audit
   - name: metrics
 paths:
   /health:
@@ -106,6 +109,8 @@ paths:
       tags: [fleet]
       operationId: listTools
       summary: List the simulated tool fleet
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: Tools.
@@ -138,6 +143,7 @@ paths:
       summary: SPC alerts
       parameters:
         - $ref: "#/components/parameters/ToolIdQuery"
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: Alerts.
@@ -152,6 +158,8 @@ paths:
       tags: [incidents]
       operationId: listTickets
       summary: Intake tickets
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: Tickets.
@@ -166,6 +174,8 @@ paths:
       tags: [incidents]
       operationId: listIncidents
       summary: Normalized incidents
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: Incidents.
@@ -302,6 +312,8 @@ paths:
       tags: [capas]
       operationId: listCapas
       summary: CAPA records
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: CAPAs.
@@ -443,6 +455,22 @@ paths:
                 $ref: "#/components/schemas/ScenarioRun"
         "404":
           $ref: "#/components/responses/NotFound"
+  /api/audit:
+    get:
+      tags: [audit]
+      operationId: getAuditLog
+      summary: Audit trail and correlation traces
+      description: |
+        Read-only. Each entry is one recorded step (fault, alert, ticket, incident, investigation,
+        approval, or corrective action). Traces group the steps that share a correlation id.
+        Operator screens do not show these ids.
+      responses:
+        "200":
+          description: The audit log.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLog"
   /api/metrics:
     get:
       tags: [metrics]
@@ -505,6 +533,13 @@ components:
       schema:
         type: string
         minLength: 1
+    SiteIdQuery:
+      name: siteId
+      in: query
+      required: false
+      description: When set, only records for this plant are returned. Omit it to return every plant.
+      schema:
+        type: string
     FamilyQuery:
       name: family
       in: query
@@ -912,6 +947,64 @@ components:
         openedAt:
           type: string
           format: date-time
+        approvedBy:
+          type: string
+          nullable: true
+          description: Display name of the person who approved. Absent until an approval is recorded.
+        approvedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the approval was recorded. The console shows this in local time.
+    AuditEvent:
+      type: object
+      additionalProperties: false
+      required: [at, kind, summary]
+      properties:
+        at:
+          type: string
+          format: date-time
+        kind:
+          type: string
+          description: fault, alert, ticket, incident, investigation, approval, or capa.
+        summary:
+          type: string
+        actor:
+          type: string
+          nullable: true
+        toolId:
+          type: string
+          nullable: true
+        correlationId:
+          type: string
+          nullable: true
+        recordId:
+          type: string
+          nullable: true
+    CorrelationTrace:
+      type: object
+      additionalProperties: false
+      required: [correlationId, events]
+      properties:
+        correlationId:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditEvent"
+    AuditLog:
+      type: object
+      additionalProperties: false
+      required: [entries, traces]
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditEvent"
+        traces:
+          type: array
+          items:
+            $ref: "#/components/schemas/CorrelationTrace"
     AdvanceCapaRequest:
       type: object
       additionalProperties: false

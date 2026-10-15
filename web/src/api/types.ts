@@ -71,6 +71,7 @@ export type Tool = {
   family: ToolFamily;
   model: string;
   bay: string;
+  siteId?: string;
   chambers: Chamber[];
 };
 
@@ -168,6 +169,28 @@ export type Capa = {
   actionHash: string;
   stage: CapaStage;
   openedAt: string;
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+};
+
+export type AuditEvent = {
+  at: string;
+  kind: string;
+  summary: string;
+  actor?: string | null;
+  toolId?: string | null;
+  correlationId?: string | null;
+  recordId?: string | null;
+};
+
+export type CorrelationTrace = {
+  correlationId: string;
+  events: AuditEvent[];
+};
+
+export type AuditLog = {
+  entries: AuditEvent[];
+  traces: CorrelationTrace[];
 };
 
 export type DecisionResult = {

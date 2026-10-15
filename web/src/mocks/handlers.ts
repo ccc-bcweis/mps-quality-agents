@@ -7,9 +7,14 @@ import { handlers as contractHandlers } from "../../../contracts/msw/handlers";
 import type { Alert, FaultInjectionRequest, Incident, OpenIncidentRequest, ScenarioRun, Ticket } from "../api/types";
 import { telemetryForTool } from "../fleet/telemetry";
 import { latestInvestigationForIncident } from "../investigation/ticketRoute";
-import { alerts, incidents, investigationFor, investigations, tickets, tools } from "./demoData";
+import { toolInPlant } from "../sites/selection";
+import { incidents, investigationFor, investigations, tools } from "./demoData";
 import { familyComparison, siteDetail, siteSummaries, toolRecord } from "./sites/fixtures";
-import { mockExtras } from "./state";
+import { mockExtras, resetMockState } from "./state";
+
+function requestedPlant(request: Request): string {
+  return new URL(request.url).searchParams.get("siteId") ?? "all";
+}
 
 function problem(title: string, status: number) {
   return HttpResponse.json(
@@ -22,16 +27,21 @@ function clone<T>(value: T): T {
   return structuredClone(value);
 }
 
+/** Live queue only. Scripted S1 and S2 records stay available by id for a direct link. */
 function allAlerts(): Alert[] {
-  return [...clone(alerts), ...mockExtras().alerts];
+  return mockExtras().alerts;
 }
 
 function allTickets(): Ticket[] {
-  return [...clone(tickets), ...mockExtras().tickets];
+  return mockExtras().tickets;
 }
 
 function allIncidents(): Incident[] {
-  return [...clone(incidents), ...mockExtras().incidents];
+  return mockExtras().incidents;
+}
+
+function knownIncidents(): Incident[] {
+  return [...mockExtras().incidents, ...incidents];
 }
 
 const FAMILIES = new Set(["deposition", "etch", "strip", "clean"]);
@@ -55,7 +65,10 @@ export const handlers = [
     return HttpResponse.json(site);
   }),
 
-  http.get("/api/tools", () => HttpResponse.json(clone(tools))),
+  http.get("/api/tools", ({ request }) => {
+    const plant = requestedPlant(request);
+    return HttpResponse.json(clone(tools.filter((tool) => toolInPlant(plant, tool.id, tool.siteId))));
+  }),
 
   http.get("/api/tools/:toolId", ({ params }) => {
     const toolId = String(params.toolId);
@@ -66,23 +79,32 @@ export const handlers = [
 
   http.get("/api/tools/:toolId/telemetry", ({ params }) => {
     const toolId = String(params.toolId);
-    const rows = telemetryForTool(toolId);
+    const faulted = allAlerts().some((alert) => alert.toolId === toolId);
+    const rows = telemetryForTool(toolId, { applyDemoFault: faulted });
     if (rows.length === 0) return problem("Tool was not found.", 404);
     return HttpResponse.json(rows);
   }),
 
   http.get("/api/alerts", ({ request }) => {
-    const toolId = new URL(request.url).searchParams.get("toolId");
-    const rows = allAlerts().filter((alert) => (toolId ? alert.toolId === toolId : true));
+    const url = new URL(request.url);
+    const toolId = url.searchParams.get("toolId");
+    const plant = url.searchParams.get("siteId") ?? "all";
+    const rows = allAlerts().filter((alert) => (toolId ? alert.toolId === toolId : true) && toolInPlant(plant, alert.toolId));
     return HttpResponse.json(rows);
   }),
 
-  http.get("/api/tickets", () => HttpResponse.json(allTickets())),
+  http.get("/api/tickets", ({ request }) => {
+    const plant = requestedPlant(request);
+    return HttpResponse.json(allTickets().filter((ticket) => toolInPlant(plant, ticket.toolId)));
+  }),
 
-  http.get("/api/incidents", () => HttpResponse.json(allIncidents())),
+  http.get("/api/incidents", ({ request }) => {
+    const plant = requestedPlant(request);
+    return HttpResponse.json(allIncidents().filter((incident) => toolInPlant(plant, incident.toolId)));
+  }),
 
   http.get("/api/incidents/:incidentId", ({ params }) => {
-    const incident = allIncidents().find((item) => item.id === params.incidentId);
+    const incident = knownIncidents().find((item) => item.id === params.incidentId);
     if (!incident) return problem("Incident was not found.", 404);
     return HttpResponse.json(incident);
   }),
@@ -99,7 +121,7 @@ export const handlers = [
     if (!body.toolId || !body.parameter || !body.summary) {
       return problem("Tool, parameter, and summary are required.", 400);
     }
-    const open = allIncidents().find(
+    const open = knownIncidents().find(
       (item) =>
         item.toolId === body.toolId &&
         item.parameter === body.parameter &&
@@ -144,7 +166,7 @@ export const handlers = [
 
   http.post("/api/incidents/:incidentId/investigations", ({ params }) => {
     const incidentId = String(params.incidentId);
-    const incident = allIncidents().find((item) => item.id === incidentId);
+    const incident = knownIncidents().find((item) => item.id === incidentId);
     if (!incident) return problem("Incident was not found.", 404);
     const existing =
       mockExtras().investigations.find((item) => item.incidentId === incidentId) ??
@@ -161,7 +183,7 @@ export const handlers = [
       correlationId: incident.correlationId,
     };
     mockExtras().investigations.push(created);
-    const stored = allIncidents().find((item) => item.id === incidentId);
+    const stored = knownIncidents().find((item) => item.id === incidentId);
     if (stored && mockExtras().incidents.includes(stored)) stored.stage = "investigating";
     return HttpResponse.json(created, { status: 201 });
   }),
@@ -236,6 +258,22 @@ export const handlers = [
     return HttpResponse.json(run, { status: 202 });
   }),
 
+  http.get("/api/audit", () => HttpResponse.json({ entries: [], traces: [] })),
+
+  http.post("/api/admin/reset", () => {
+    resetMockState();
+    return HttpResponse.json({
+      seed: 4242,
+      simulatedOrigin: "2026-09-01T00:00:00Z",
+      fleetToolCount: 8,
+      ticketCount: 0,
+      investigationCount: 0,
+      approvalCount: 0,
+      capaCount: 0,
+    });
+  }),
+
+
   http.post("/api/investigations/:investigationId/decisions", async ({ params, request }) => {
     const body = (await request.json()) as { kind?: string; approverId?: string; comment?: string | null };
     if (body.kind === "override" && (body.comment ?? "").trim().length < 20) {
@@ -261,6 +299,8 @@ export const handlers = [
             actionHash: "ABC123",
             stage: "open" as const,
             openedAt: "2026-10-14T15:05:00Z",
+            approvedBy: body.approverId ?? null,
+            approvedAt: "2026-10-15T02:42:00.000Z",
           }
         : null;
     return HttpResponse.json({ investigation: next, capa });

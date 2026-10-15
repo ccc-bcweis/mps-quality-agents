@@ -10,6 +10,8 @@ import { EvidencePack } from "../components/EvidencePack";
 import { Explain } from "../components/Explain";
 import { btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
+import { useSite } from "../context/SiteContext";
+import { toolInPlant } from "../sites/selection";
 import { placeLabel, plainNarrative } from "../investigation/format";
 import { lifecycleForIncident, lifecycleForInvestigation } from "../lifecycle";
 import { INVESTIGATION_POLL_MS } from "../investigation/timeline";
@@ -17,8 +19,14 @@ import { parameterLabel } from "../sites/parameters";
 
 type LoadResult = "ready" | "missing" | "failed";
 
+function plantToolId(investigation: Investigation | null, incident: Incident | null): string | null {
+  if (incident?.toolId) return incident.toolId;
+  return investigation?.evidence.find((item) => item.toolId)?.toolId ?? null;
+}
+
 export function InvestigationPage() {
   const params = useParams();
+  const { siteId } = useSite();
   const routeInvestigationId = params.investigationId ?? "";
   const routeIncidentId = params.incidentId ?? "";
   const [investigation, setInvestigation] = useState<Investigation | null>(null);
@@ -42,6 +50,11 @@ export function InvestigationPage() {
     setError(null);
     setReady(false);
     setStartError(null);
+
+    if (!routeIncidentId && !routeInvestigationId) {
+      setReady(true);
+      return;
+    }
 
     const applyError = (reason: unknown) => {
       if (cancelled) return;
@@ -81,6 +94,12 @@ export function InvestigationPage() {
       try {
         const loaded = await api.getInvestigation(routeInvestigationId);
         if (!cancelled) setInvestigation(loaded);
+        try {
+          const loadedIncident = await api.getIncident(loaded.incidentId);
+          if (!cancelled) setIncident(loadedIncident);
+        } catch {
+          // Evidence still names the tool when the incident lookup misses.
+        }
       } catch (reason: unknown) {
         if (reason instanceof ApiProblem && reason.status === 404) {
           const result = await loadIncident(routeInvestigationId);
@@ -134,7 +153,25 @@ export function InvestigationPage() {
     }
   }
 
+  if (!routeIncidentId && !routeInvestigationId) {
+    return (
+      <div>
+        <h1 className="text-mps-display font-semibold">Investigation</h1>
+        <p className="max-w-3xl text-mps-secondary">No investigation is open. Faults show up here after a scenario or a manual injection.</p>
+      </div>
+    );
+  }
+
   if (!ready) return <p className="text-mps-muted">Loading investigation…</p>;
+  const homeTool = plantToolId(investigation, incident);
+  if (homeTool && !toolInPlant(siteId, homeTool)) {
+    return (
+      <div>
+        <h1 className="text-mps-display font-semibold">Investigation</h1>
+        <p>This investigation is at another plant. Choose All sites to open it.</p>
+      </div>
+    );
+  }
   if (investigation) return <InvestigationDetail investigation={investigation} />;
   if (incident && !error) {
     const finished = incident.stage === "closed" || incident.stage === "approved";

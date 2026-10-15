@@ -11,7 +11,8 @@ describe("fault injector", () => {
     expect(await screen.findByRole("heading", { name: "Fault injector" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Inject" }));
     expect(await screen.findByRole("heading", { name: "Alerts" })).toBeInTheDocument();
-    expect(await screen.findByText(/corr-inject-/)).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "S-01" })).toBeInTheDocument();
+    expect(screen.queryByText(/corr-inject-/)).not.toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(/new alert/i);
   });
 
@@ -22,7 +23,8 @@ describe("fault injector", () => {
     await user.selectOptions(screen.getByRole("combobox", { name: "Scenario" }), "SC-4");
     await user.click(screen.getByRole("button", { name: "Run scenario" }));
     expect(await screen.findByRole("heading", { name: "Alerts" })).toBeInTheDocument();
-    expect(await screen.findByText("corr-scenario-SC-4")).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "E-01" })).toBeInTheDocument();
+    expect(screen.queryByText("corr-scenario-SC-4")).not.toBeInTheDocument();
   });
 
   it("preset S4 raises an alert on both etch tools", async () => {
@@ -31,7 +33,8 @@ describe("fault injector", () => {
     await screen.findByRole("option", { name: /S-01/ });
     await user.click(screen.getByRole("button", { name: /Preset S4/ }));
     expect(await screen.findByRole("heading", { name: "Alerts" })).toBeInTheDocument();
-    const correlations = await screen.findAllByText(/corr-inject-/);
-    expect(correlations.length).toBeGreaterThanOrEqual(2);
+    expect(await screen.findByRole("link", { name: "E-01" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "E-02" })).toBeInTheDocument();
+    expect(screen.queryByText(/corr-inject-/)).not.toBeInTheDocument();
   });
 });

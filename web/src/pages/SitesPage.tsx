@@ -6,6 +6,7 @@ import type { FamilyComparison, SiteDetail, SiteSummary, ToolFamily } from "../a
 import { Term } from "../components/Term";
 import { btn, btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
+import { useSite } from "../context/SiteContext";
 import { ComparisonPanel } from "../sites/ComparisonPanel";
 import { FloorPlan } from "../sites/FloorPlan";
 import { formatPct } from "../sites/floorLayout";
@@ -32,6 +33,7 @@ function RoleLine({ role }: { role: SiteDetail["role"] }) {
 
 export function SitesPage() {
   useSetLifecycle("alert");
+  const { setSiteId } = useSite();
   const [params, setParams] = useSearchParams();
   const siteId = params.get("site") ?? "northwater";
   const requestedFamily = params.get("family") ?? "etch";
@@ -121,7 +123,10 @@ export function SitesPage() {
               role="tab"
               aria-selected={selected}
               className={selected ? btnPrimary : btn}
-              onClick={() => setQuery("site", site.id)}
+              onClick={() => {
+                setSiteId(site.id);
+                setQuery("site", site.id);
+              }}
             >
               {site.name}
             </button>

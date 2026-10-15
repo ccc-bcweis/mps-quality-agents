@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
+import { approvalSentence } from "../api/labels";
 import type { Capa, CapaStage, Investigation } from "../api/types";
 import { AgentTimeline } from "../components/AgentTimeline";
 import { EvidencePack } from "../components/EvidencePack";
@@ -9,17 +10,20 @@ import { Explain } from "../components/Explain";
 import { Term } from "../components/Term";
 import { btn, panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
+import { useSite } from "../context/SiteContext";
+import { toolInPlant } from "../sites/selection";
 import { formatLocalWhen } from "../investigation/format";
 import { CAPA_STAGES, nextCapaStage } from "../lifecycle";
-import { S1_INVESTIGATION_ID } from "../mocks/demoData";
 
 export function CapaPage() {
   useSetLifecycle("capa");
   const { capaId } = useParams();
+  const { siteId } = useSite();
   const { capas, rememberCapa } = useConsole();
   const capasRef = useRef(capas);
   capasRef.current = capas;
   const [capa, setCapa] = useState<Capa | null>(null);
+  const [homeTool, setHomeTool] = useState<string | null>(null);
   const [investigation, setInvestigation] = useState<Investigation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -56,6 +60,25 @@ export function CapaPage() {
       cancelled = true;
     };
   }, [capaId, rememberCapa]);
+
+  useEffect(() => {
+    if (!capa) {
+      setHomeTool(null);
+      return undefined;
+    }
+    let cancelled = false;
+    api
+      .getIncident(capa.incidentId)
+      .then((incident) => {
+        if (!cancelled) setHomeTool(incident.toolId);
+      })
+      .catch(() => {
+        if (!cancelled) setHomeTool(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [capa]);
 
   const incidentId = capa?.incidentId ?? "";
   useEffect(() => {
@@ -103,7 +126,7 @@ export function CapaPage() {
     <div>
       <div className="mb-4">
         <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">
-          <Link to={`/approvals/${S1_INVESTIGATION_ID}`}>Approval</Link> · mock <Explain text="QMS" spellOut={false} />
+          <Link to="/approvals">Approval</Link> · mock <Explain text="QMS" spellOut={false} />
         </p>
         <h1 className="text-mps-display font-semibold">
           <Term id="CAPA" spellOut={false} />
@@ -120,11 +143,15 @@ export function CapaPage() {
       {notice ? <p className="mb-3 text-mps-ok">{notice}</p> : null}
       {!capa ? (
         <p className="text-mps-muted">
-          <Explain text="No CAPA yet. Approve a recommendation to create one. The server list is empty until that token is issued." spellOut={false} />
+          <Explain text="No CAPA yet. Approve a recommendation to create one." spellOut={false} />
         </p>
+      ) : homeTool && !toolInPlant(siteId, homeTool) ? (
+        <p>This corrective action is at another plant. Choose All sites to open it.</p>
       ) : (
         <>
-          <p className="mb-3 rounded border border-mps-ok bg-mps-panel px-3 py-2">Approval token consumed. It can be used once.</p>
+          <p className="mb-3 rounded border border-mps-ok bg-mps-panel px-3 py-2" role="status">
+            {capa.approvedBy && capa.approvedAt ? approvalSentence(capa.approvedBy, capa.approvedAt) : "Approved."}
+          </p>
           <section className={`${panel} mb-3`}>
             <h2 className="mb-2 text-mps-title font-semibold">
               <Explain text="CAPA stages" spellOut={false} />
@@ -158,19 +185,10 @@ export function CapaPage() {
                   Open the investigation
                 </Link>
               </p>
-            </section>
-            <section className={panel} data-audit="log" aria-label="Audit log">
-              <h2 className="mb-2 text-mps-title font-semibold">Audit log</h2>
-              <p>
-                Token <span className="font-mono">{capa.approvalTokenId}</span>
+              <p className="mt-2 text-mps-secondary">
+                {capa.approvedBy && capa.approvedAt ? approvalSentence(capa.approvedBy, capa.approvedAt) : "Approved."}
               </p>
-              <p>
-                Action hash <span className="font-mono">{capa.actionHash}</span>
-              </p>
-              <p>
-                Incident <span className="font-mono">{capa.incidentId}</span>
-              </p>
-              <p>Stage {CAPA_STAGES.find((item) => item.id === capa.stage)?.label ?? capa.stage}</p>
+              <p className="mt-2 text-mps-secondary">Stage {CAPA_STAGES.find((item) => item.id === capa.stage)?.label ?? capa.stage}</p>
             </section>
           </div>
           {investigation ? (

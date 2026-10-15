@@ -24,6 +24,8 @@ type ConsoleValue = {
   rememberCapa: (capa: Capa) => void;
   localAlerts: Alert[];
   rememberLocalAlert: (alert: Alert) => void;
+  revision: number;
+  clearDemo: () => void;
 };
 
 const ConsoleContext = createContext<ConsoleValue | null>(null);
@@ -52,6 +54,7 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
   const [lifecycle, setLifecycleState] = useState<LifecycleView>({ current: "alert", escalated: false });
   const [capas, setCapas] = useState<Capa[]>(() => readCapas());
   const [localAlerts, setLocalAlerts] = useState<Alert[]>([]);
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -103,6 +106,13 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
     setLocalAlerts((current) => [alert, ...current.filter((item) => item.correlationId !== alert.correlationId)]);
   }, []);
 
+  const clearDemo = useCallback(() => {
+    sessionStorage.removeItem(CAPA_KEY);
+    setCapas([]);
+    setLocalAlerts([]);
+    setRevision((current) => current + 1);
+  }, []);
+
   const value = useMemo<ConsoleValue>(
     () => ({
       metrics,
@@ -119,6 +129,8 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
       rememberCapa,
       localAlerts,
       rememberLocalAlert,
+      revision,
+      clearDemo,
     }),
     [
       metrics,
@@ -136,6 +148,8 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
       rememberCapa,
       localAlerts,
       rememberLocalAlert,
+      revision,
+      clearDemo,
     ],
   );
 

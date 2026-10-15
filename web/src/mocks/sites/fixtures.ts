@@ -44,6 +44,7 @@ export function toolRecord(toolId: string): Tool | undefined {
         family: placed.family,
         model: placed.model,
         bay: bay.id,
+        siteId: site.id,
         chambers: [{ id: `${placed.id}-A`, name: "Chamber A" }],
       };
     }

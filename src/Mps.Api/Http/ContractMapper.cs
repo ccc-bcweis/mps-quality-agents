@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Api.Persistence;
 using Mps.Application.Evidence;
 using Mps.Application.Persistence;
 using Mps.Domain.Capa;
@@ -103,6 +104,20 @@ public static class ContractMapper
 
     public static CapaResponse ToResponse(CapaAction capa) =>
         new(capa.Id.Value, capa.IncidentId.Value, capa.Summary, capa.ApprovalTokenId.Value, capa.ActionHash, capa.Stage, capa.OpenedAt);
+
+    public static CapaResponse WithApproval(CapaResponse capa, ApprovalRow? approval)
+    {
+        if (approval is null || string.IsNullOrWhiteSpace(approval.ApproverId))
+        {
+            return capa;
+        }
+
+        return capa with
+        {
+            ApprovedBy = approval.ApproverId.Trim(),
+            ApprovedAt = new DateTimeOffset(DateTime.SpecifyKind(approval.IssuedAt, DateTimeKind.Utc)),
+        };
+    }
 
     /// <summary>
     /// Fills unit and spec from the family catalog when the pack only stored the measured value.
