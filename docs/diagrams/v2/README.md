@@ -1,6 +1,6 @@
 # Architecture drafts, Baseline v2 (Deliverable 03)
 
-Editable drafts of the logical architecture, the physical architecture and the data model (ER-style). They show the TARGET design; `*` marks items the running demo implements in a thinner form (see the notes band on each sheet).
+Editable drafts of the logical architecture, the physical architecture and the data model (entity-relationship style). They show the target design; `*` marks items the running demo implements in a thinner form (see the notes band on each sheet).
 
 | Sheet | SVG (editable text) | draw.io | PNG | ARCH D PDF |
 |---|---|---|---|---|
