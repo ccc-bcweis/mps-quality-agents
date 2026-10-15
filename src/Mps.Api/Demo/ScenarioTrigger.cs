@@ -4,6 +4,7 @@ using Mps.Application.Faults;
 using Mps.Domain.Hypotheses;
 using Mps.Simulator.Demo;
 using Mps.Simulator.Scenarios;
+using Mps.Simulator.Telemetry;
 
 namespace Mps.Api.Demo;
 
@@ -50,7 +51,7 @@ public sealed class ScenarioTrigger
                         ScriptedScenario.ChamberIdFor(toolId),
                         scenario.Parameter,
                         scenario.ShapeName,
-                        scenario.Magnitude,
+                        SigmaOf(scenario),
                         scenario.Category,
                         scenario.Confounders),
                     cancellationToken).ConfigureAwait(false);
@@ -69,6 +70,10 @@ public sealed class ScenarioTrigger
             _context.Set(null);
         }
     }
+
+    /// <summary>The injector takes sigma. A percent scenario (for example a 12 percent flow drop) maps to a clear 4.5 sigma step with the same sign.</summary>
+    private static double SigmaOf(ScriptedScenario scenario) =>
+        scenario.MagnitudeKind == MagnitudeKind.Percent ? Math.CopySign(4.5d, scenario.Magnitude) : scenario.Magnitude;
 }
 
 public sealed record ScenarioRun(
