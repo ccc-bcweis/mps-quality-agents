@@ -1,9 +1,13 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-// Local auth is off. The managed identity calls the data plane. Capacity is the TPM backstop.
+// Local auth is off. The managed identity calls the data plane. No key is declared.
+// GlobalStandard capacity is thousands of tokens per minute. 20 is about 20,000 TPM.
 
 param location string
 param name string
 param principalId string
+
+@description('GlobalStandard capacity for the gpt-4o-mini deployment.')
+param capacity int = 20
 
 var openAiUserRole = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
 
@@ -29,31 +33,13 @@ resource investigation 'Microsoft.CognitiveServices/accounts/deployments@2024-10
   name: 'gpt-4o-mini'
   sku: {
     name: 'GlobalStandard'
-    capacity: 1
+    capacity: capacity
   }
   properties: {
     model: {
       format: 'OpenAI'
       name: 'gpt-4o-mini'
       version: '2024-07-18'
-    }
-    raiPolicyName: 'Microsoft.Default'
-    versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
-  }
-}
-
-resource resolution 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
-  parent: account
-  name: 'gpt-4o'
-  sku: {
-    name: 'GlobalStandard'
-    capacity: 1
-  }
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: 'gpt-4o'
-      version: '2024-08-06'
     }
     raiPolicyName: 'Microsoft.Default'
     versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
@@ -72,5 +58,6 @@ resource openAiUser 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 
 output id string = account.id
 output endpoint string = account.properties.endpoint
+output deploymentName string = investigation.name
 output investigationDeployment string = investigation.name
-output resolutionDeployment string = resolution.name
+output resolutionDeployment string = investigation.name

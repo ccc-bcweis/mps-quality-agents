@@ -89,8 +89,52 @@ public static class QualityHost
         ArgumentNullException.ThrowIfNull(app);
         app.UseExceptionHandler();
         app.UseCors("console");
+
+        // The Azure image copies web/dist here. Local `dotnet run` has no wwwroot, so the API stays API-only.
+        if (HasWebRoot(app.Environment))
+        {
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
+        }
+
         QualityEndpoints.Map(app);
         app.MapHub<FleetHub>("/hubs/fleet");
+        if (HasWebRoot(app.Environment))
+        {
+            MapSpaFallback(app);
+        }
+    }
+
+    private static bool HasWebRoot(IWebHostEnvironment environment)
+    {
+        var path = environment.WebRootPath;
+        return !string.IsNullOrEmpty(path) && Directory.Exists(path);
+    }
+
+    private static void MapSpaFallback(WebApplication app)
+    {
+        app.MapFallback((HttpContext context) =>
+        {
+            var path = context.Request.Path;
+            if (path.StartsWithSegments("/api")
+                || path.StartsWithSegments("/hubs")
+                || path.StartsWithSegments("/health")
+                || Path.HasExtension(path.Value))
+            {
+                return Results.NotFound();
+            }
+
+            var root = app.Environment.WebRootPath;
+            if (string.IsNullOrEmpty(root))
+            {
+                return Results.NotFound();
+            }
+
+            var index = Path.Combine(root, "index.html");
+            return File.Exists(index)
+                ? Results.File(index, "text/html; charset=utf-8")
+                : Results.NotFound();
+        });
     }
 
     private static void ApplyJson(JsonSerializerOptions options)
