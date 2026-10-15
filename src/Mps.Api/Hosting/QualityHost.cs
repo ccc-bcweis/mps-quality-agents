@@ -22,6 +22,7 @@ using Mps.Application.Persistence;
 using Mps.Application.Spc;
 using Mps.Application.Workflow;
 using Mps.Application.Writes;
+using Mps.Simulator.Sites;
 
 using Gateway = Mps.ModelGateway.Routing.ModelGateway;
 
@@ -32,6 +33,10 @@ public static class QualityHost
     public static void AddQualityApi(this WebApplicationBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
+        var dataDirectory = DemoDataDirectory(builder.Environment.ContentRootPath, builder.Configuration["Mps:DataDirectory"]);
+        var plantSeed = builder.Configuration.GetValue("Mps:Demo:Seed", SiteIds.DefaultSeed);
+        builder.Services.AddSingleton(SitePlantGenerator.Load(dataDirectory, plantSeed));
+        builder.Services.AddSingleton(new CrossSiteMaterialCatalog(Path.Combine(dataDirectory, "seed", "enterprise.json")));
         var connectionString = builder.Configuration.GetConnectionString("Mps") ?? "Data Source=mps.db";
         builder.Services.AddProblemDetails();
         builder.AddQualityTelemetry();
@@ -156,6 +161,33 @@ public static class QualityHost
                 ? Results.File(index, "text/html; charset=utf-8")
                 : Results.NotFound();
         });
+    }
+
+    private static string DemoDataDirectory(string contentRoot, string? configured)
+    {
+        if (!string.IsNullOrWhiteSpace(configured) && Directory.Exists(configured))
+        {
+            return configured;
+        }
+
+        foreach (var start in new[] { contentRoot, AppContext.BaseDirectory })
+        {
+            if (string.IsNullOrWhiteSpace(start))
+            {
+                continue;
+            }
+
+            for (var dir = new DirectoryInfo(start); dir is not null; dir = dir.Parent)
+            {
+                var candidate = Path.Combine(dir.FullName, "data");
+                if (File.Exists(Path.Combine(candidate, "seed", "enterprise.json")))
+                {
+                    return candidate;
+                }
+            }
+        }
+
+        throw new DirectoryNotFoundException("The data directory with seed/enterprise.json was not found.");
     }
 
     private static void ApplyJson(JsonSerializerOptions options)

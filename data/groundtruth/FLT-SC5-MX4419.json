@@ -1,0 +1,56 @@
+{
+  "faultId": "FLT-SC5-MX4419",
+  "scenario": "SC-5",
+  "category": "supplyChainMaterial",
+  "expectedBehavior": "recommend",
+  "assertCategory": true,
+  "cause": "Precursor lot MX4419 from Marrowgate Process Gases is out of spec and was released to D-03 at Northwater Fab and I-D-01 at Ironwood Fab.",
+  "tools": [
+    "D-03",
+    "I-D-01"
+  ],
+  "parameter": "filmThickness",
+  "chamberId": null,
+  "evidenceRecordIds": [
+    "MX4419",
+    "SN-MX4419",
+    "RUN-FLT-SC5-MX4419-D-03-00",
+    "RUN-FLT-SC5-MX4419-D-03-01",
+    "RUN-FLT-SC5-MX4419-I-D-01-00",
+    "RUN-FLT-SC5-MX4419-I-D-01-01"
+  ],
+  "confounderRecordIds": [
+    "WO-PM-D03-4419"
+  ],
+  "missingRecordIds": [],
+  "contradiction": null,
+  "counterEvidence": [
+    "A chamber clean on D-03 the same week cannot explain the matching step on I-D-01 at the other plant."
+  ],
+  "signals": [
+    {
+      "toolId": "D-03",
+      "chamberId": null,
+      "parameter": "filmThickness",
+      "shape": "step",
+      "magnitudeKind": "percent",
+      "magnitude": -8,
+      "onset": "2026-10-09T06:00:00Z",
+      "periodSeconds": 30,
+      "rampSeconds": 600,
+      "dutyCycle": 0.5
+    },
+    {
+      "toolId": "I-D-01",
+      "chamberId": null,
+      "parameter": "filmThickness",
+      "shape": "step",
+      "magnitudeKind": "percent",
+      "magnitude": -8,
+      "onset": "2026-10-09T06:00:00Z",
+      "periodSeconds": 30,
+      "rampSeconds": 600,
+      "dutyCycle": 0.5
+    }
+  ]
+}

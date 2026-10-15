@@ -9,8 +9,17 @@ const tool = {
   name: "Etch 02",
   family: "etch",
   model: "MPS-E7",
-  bay: "Bay B",
+  bay: "Bay-2",
+  siteId: "northwater",
   chambers: [{ id: "C1", name: "Chamber 1" }],
+};
+
+const throughput = {
+  waferStartsPerHour: 18.4,
+  waferOutsPerHour: 17.6,
+  wip: 42,
+  yieldPct: 96.8,
+  uptimePct: 95.1,
 };
 
 const incident = {
@@ -58,6 +67,86 @@ const investigation = {
 
 export const handlers = [
   http.get("/health", () => HttpResponse.json({ status: "ok", service: "mps-api" })),
+  http.get("/api/sites", () =>
+    HttpResponse.json([
+      {
+        id: "northwater",
+        name: "Northwater Fab",
+        role: "Front-end wafer fab",
+        location: "Cedar Reach, Valecrest",
+        timezone: "America/Denver",
+        bays: [{ id: "Bay-1", name: "Bay 1", toolCount: 4 }],
+        kpis: throughput,
+      },
+    ]),
+  ),
+  http.get("/api/sites/compare", () =>
+    HttpResponse.json({
+      family: "etch",
+      referenceSiteId: "northwater",
+      parameters: [
+        {
+          parameter: "escTemperature",
+          unit: "C",
+          sites: [
+            {
+              siteId: "northwater",
+              siteName: "Northwater Fab",
+              mean: 50.1,
+              sigma: 1.2,
+              alarmRate: 0.01,
+              uptimePct: 96.2,
+              yieldPct: 97.4,
+              discrepancy: false,
+              reason: null,
+            },
+            {
+              siteId: "ironwood",
+              siteName: "Ironwood Fab",
+              mean: 62.0,
+              sigma: 2.6,
+              alarmRate: 0.22,
+              uptimePct: 92.1,
+              yieldPct: 94.8,
+              discrepancy: true,
+              reason:
+                "Ironwood Fab's electrostatic chuck temperature averages about 12 °C higher than the same tool family at Northwater Fab, and the readings wander more.",
+            },
+          ],
+        },
+      ],
+    }),
+  ),
+  http.get("/api/sites/:siteId", () =>
+    HttpResponse.json({
+      id: "northwater",
+      name: "Northwater Fab",
+      role: "Front-end wafer fab",
+      location: "Cedar Reach, Valecrest",
+      timezone: "America/Denver",
+      bays: [
+        {
+          id: "Bay-1",
+          name: "Bay 1",
+          tools: [
+            {
+              id: "E-01",
+              name: "Etch E-01",
+              family: "etch",
+              model: "MPS-E7",
+              status: "nominal",
+              x: 22,
+              y: 30,
+              siteId: "northwater",
+            },
+          ],
+          kpis: throughput,
+        },
+      ],
+      flows: [{ fromBayId: "Bay-3", toBayId: "Bay-1", label: "Deposited wafers move to bay 1 for etch." }],
+      kpis: throughput,
+    }),
+  ),
   http.get("/api/tools", () => HttpResponse.json([tool])),
   http.get("/api/tools/:toolId", () => HttpResponse.json(tool)),
   http.get("/api/alerts", () =>
@@ -103,6 +192,7 @@ export const handlers = [
     );
   }),
   http.get("/api/incidents/:incidentId", () => HttpResponse.json(incident)),
+  http.get("/api/incidents/:incidentId/investigation", () => HttpResponse.json(investigation)),
   http.post("/api/incidents/:incidentId/investigations", () =>
     HttpResponse.json({ ...investigation, stage: "started", hypotheses: [] }, { status: 201 }),
   ),

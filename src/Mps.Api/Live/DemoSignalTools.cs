@@ -23,10 +23,14 @@ public sealed class DemoSignalTools : ITelemetryTool, ISpcTool, IImpactScopeTool
 
     private readonly IServiceScopeFactory _scopes;
 
-    public DemoSignalTools(IServiceScopeFactory scopes)
+    private readonly CrossSiteMaterialCatalog _sharedLots;
+
+    public DemoSignalTools(IServiceScopeFactory scopes, CrossSiteMaterialCatalog sharedLots)
     {
         ArgumentNullException.ThrowIfNull(scopes);
+        ArgumentNullException.ThrowIfNull(sharedLots);
         _scopes = scopes;
+        _sharedLots = sharedLots;
     }
 
     public async Task<TelemetryWindow> GetWindowAsync(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
@@ -71,6 +75,12 @@ public sealed class DemoSignalTools : ITelemetryTool, ISpcTool, IImpactScopeTool
 
     public async Task<ImpactScope> GetScopeAsync(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
     {
+        var shared = _sharedLots.Find(toolId.Value);
+        if (shared is not null)
+        {
+            return shared;
+        }
+
         using var scope = _scopes.CreateScope();
         var faults = await FaultsAsync(scope, toolId, parameter, cancellationToken).ConfigureAwait(false);
         var fault = faults.LastOrDefault();

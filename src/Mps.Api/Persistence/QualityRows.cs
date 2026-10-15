@@ -14,6 +14,8 @@ public sealed class ToolRow
 
     public string Bay { get; set; } = string.Empty;
 
+    public string SiteId { get; set; } = "northwater";
+
     public List<ChamberRow> Chambers { get; set; } = [];
 }
 
@@ -103,6 +105,9 @@ public sealed class InvestigationRow
     public Guid Id { get; set; }
 
     public Guid IncidentId { get; set; }
+
+    /// <summary>Start order for one incident. A later investigation has a higher sequence.</summary>
+    public int Sequence { get; set; }
 
     public string Stage { get; set; } = string.Empty;
 

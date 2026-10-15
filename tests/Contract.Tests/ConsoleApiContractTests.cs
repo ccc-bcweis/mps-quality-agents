@@ -14,12 +14,16 @@ public sealed class ConsoleApiContractTests
     private static readonly string[] LifecyclePaths =
     [
         "/health",
+        "/api/sites",
+        "/api/sites/compare",
+        "/api/sites/{siteId}",
         "/api/tools",
         "/api/tools/{toolId}",
         "/api/alerts",
         "/api/tickets",
         "/api/incidents",
         "/api/incidents/{incidentId}",
+        "/api/incidents/{incidentId}/investigation",
         "/api/incidents/{incidentId}/investigations",
         "/api/investigations/{investigationId}",
         "/api/investigations/{investigationId}/decisions",
@@ -56,6 +60,9 @@ public sealed class ConsoleApiContractTests
         OpenApiDocs.Console.Paths.Keys.Should().BeEquivalentTo(LifecyclePaths);
 
         Expect(OperationType.Get, "/health", "getHealth", "200");
+        Expect(OperationType.Get, "/api/sites", "listSites", "200");
+        Expect(OperationType.Get, "/api/sites/compare", "compareSites", "200");
+        Expect(OperationType.Get, "/api/sites/{siteId}", "getSite", "200");
         Expect(OperationType.Get, "/api/tools", "listTools", "200");
         Expect(OperationType.Get, "/api/tools/{toolId}", "getTool", "200");
         Expect(OperationType.Get, "/api/alerts", "listAlerts", "200");
@@ -63,6 +70,7 @@ public sealed class ConsoleApiContractTests
         Expect(OperationType.Get, "/api/incidents", "listIncidents", "200");
         Expect(OperationType.Post, "/api/incidents", "openIncident", "201");
         Expect(OperationType.Get, "/api/incidents/{incidentId}", "getIncident", "200");
+        Expect(OperationType.Get, "/api/incidents/{incidentId}/investigation", "getLatestInvestigation", "200");
         Expect(OperationType.Post, "/api/incidents/{incidentId}/investigations", "startInvestigation", "201");
         Expect(OperationType.Get, "/api/investigations/{investigationId}", "getInvestigation", "200");
         Expect(OperationType.Post, "/api/investigations/{investigationId}/decisions", "submitDecision", "200");
@@ -88,6 +96,7 @@ public sealed class ConsoleApiContractTests
         var document = OpenApiDocs.Console;
         Problem(document, document.Operation("/api/incidents", OperationType.Post), "400");
         Problem(document, document.Operation("/api/incidents/{incidentId}", OperationType.Get), "404");
+        Problem(document, document.Operation("/api/incidents/{incidentId}/investigation", OperationType.Get), "404");
         Problem(document, document.Operation("/api/incidents/{incidentId}/investigations", OperationType.Post), "409");
         Problem(document, document.Operation("/api/capas/{capaId}/advance", OperationType.Post), "409");
 
@@ -261,7 +270,7 @@ public sealed class ConsoleApiContractTests
         var document = OpenApiDocs.Console;
         var tool = document.Schema("Tool");
         tool.AdditionalPropertiesAllowed.Should().BeFalse();
-        tool.Required.Should().BeEquivalentTo("id", "name", "family", "model", "bay", "chambers");
+        tool.Required.Should().BeEquivalentTo("id", "name", "family", "model", "bay", "siteId", "chambers");
         tool.Properties["model"].Description.Should().Contain("MPS-E7");
 
         var health = document.Schema("Health");

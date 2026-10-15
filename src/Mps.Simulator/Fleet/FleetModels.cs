@@ -2,6 +2,7 @@
 
 using Mps.Domain.Equipment;
 using Mps.Domain.Identity;
+using Mps.Simulator.Sites;
 
 namespace Mps.Simulator.Fleet;
 
@@ -172,7 +173,7 @@ public sealed class ToolSpec
     public Tool ToDomainTool()
     {
         var chambers = Chambers.Select(chamber => new Chamber(chamber.Id, chamber.Name)).ToArray();
-        return new Tool(new ToolId(Id), Name, Family, Model, Bay, chambers);
+        return new Tool(new ToolId(Id), Name, Family, Model, Bay, chambers, SiteIds.Northwater);
     }
 }
 

@@ -49,3 +49,5 @@ header: X-MS-CLIENT-PRINCIPAL
 scenarios: SC-1 SC-2 SC-3 SC-4
 ```
 - `contracts/msw/handlers.ts` covers the new operations. No request or response field on an existing operation changed.
+- (lane T1) `GET /api/incidents/{incidentId}/investigation` returns the latest investigation for that incident. 404 when the incident does not exist or no investigation was started. A ticket opens by its incident id; a ticket id or number is not an investigation id.
+- `HumanDecisionKind` gains `override` (ADR-005).

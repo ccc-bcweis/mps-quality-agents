@@ -130,4 +130,4 @@ public sealed class EnterpriseDraft
     }
 }
 
-public readonly record struct MaterialUse(string LotId, string ToolId);
+public readonly record struct MaterialUse(string LotId, string ToolId, string? SiteId = null);

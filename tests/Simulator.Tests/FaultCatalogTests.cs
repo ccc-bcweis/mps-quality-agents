@@ -11,7 +11,7 @@ public sealed class FaultCatalogTests
 {
     private static readonly FleetCatalog Fleet = FleetCatalogLoader.Load(RepoPaths.FleetDirectory());
 
-    private static readonly FaultCatalog Catalog = FaultCatalogLoader.Load(RepoPaths.FaultDirectory(), Fleet);
+    private static readonly FaultCatalog Catalog = FaultCatalogLoader.Load(RepoPaths.FaultDirectory(), Fleet, KnownSiteTools.Families);
 
     private static readonly string[] HiddenTokens =
     [
@@ -143,20 +143,21 @@ public sealed class FaultCatalogTests
         var committed = RepoPaths.GroundTruthDirectory();
         if (Environment.GetEnvironmentVariable("MPS_EXPORT_GROUNDTRUTH") == "1")
         {
-            GroundTruthWriter.WriteCatalog(RepoPaths.FaultDirectory(), Fleet, committed);
+            GroundTruthWriter.WriteCatalog(RepoPaths.FaultDirectory(), Fleet, committed, KnownSiteTools.Families);
         }
 
         var temp = Directory.CreateTempSubdirectory("mps-groundtruth");
         try
         {
-            GroundTruthWriter.WriteCatalog(RepoPaths.FaultDirectory(), Fleet, temp.FullName);
+            GroundTruthWriter.WriteCatalog(RepoPaths.FaultDirectory(), Fleet, temp.FullName, KnownSiteTools.Families);
             var files = Directory.GetFiles(temp.FullName, "*.json").Select(Path.GetFileName).Order(StringComparer.Ordinal).ToArray();
             files.Should().BeEquivalentTo(
                 "FLT-CAL-S02.json",
                 "FLT-CONTRA-D01.json",
                 "FLT-DRIFT-E01.json",
                 "FLT-ECO-4471.json",
-                "FLT-GAS-NF3317.json");
+                "FLT-GAS-NF3317.json",
+                "FLT-SC5-MX4419.json");
             foreach (var name in files)
             {
                 var expected = File.ReadAllText(Path.Combine(committed, name!));

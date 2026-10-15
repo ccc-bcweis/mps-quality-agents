@@ -16,6 +16,8 @@ public interface IInvestigationService
     Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken);
 
     Task<InvestigationSnapshot> GetAsync(InvestigationId investigationId, CancellationToken cancellationToken);
+
+    Task<InvestigationSnapshot> GetLatestByIncidentAsync(IncidentId incidentId, CancellationToken cancellationToken);
 }
 
 public sealed class InvestigationService : IInvestigationService
@@ -107,6 +109,14 @@ public sealed class InvestigationService : IInvestigationService
     public async Task<InvestigationSnapshot> GetAsync(InvestigationId investigationId, CancellationToken cancellationToken)
     {
         return await _investigations.GetAsync(investigationId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ResourceNotFoundException("Investigation was not found.");
+    }
+
+    public async Task<InvestigationSnapshot> GetLatestByIncidentAsync(IncidentId incidentId, CancellationToken cancellationToken)
+    {
+        _ = await _incidents.GetAsync(incidentId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ResourceNotFoundException("Incident was not found.");
+        return await _investigations.FindLatestByIncidentAsync(incidentId, cancellationToken).ConfigureAwait(false)
             ?? throw new ResourceNotFoundException("Investigation was not found.");
     }
 

@@ -1,0 +1,47 @@
+# Lane S1 report
+
+Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+
+Branch `lane/s1`. Commits are local. Nothing was pushed. The same note is in `docs/lane-reports/S1.md`.
+
+| Step | Commit | What landed |
+|---|---|---|
+| Contract | `e1358c3` | OpenAPI 1.2.0 adds `GET /api/sites`, `GET /api/sites/{siteId}`, and `GET /api/sites/compare?family=`. `Tool.siteId` is required. Examples are in `contracts/examples/sites/`. ADR-004, SPEC section 2.0a, glossary terms, and the mock handlers match the contract. |
+| Plants, SC-5, API | `ad277f8` | Three fictional plants, deterministic from `Mps:Demo:Seed` (default 4242). Scenario SC-5 shares precursor lot MX4419. The three routes are served. `/api/tools` still returns the original eight tools, each with `siteId` `northwater`. |
+
+## Plants
+
+| Plant | Id | Role | Place | Tools |
+|---|---|---|---|---|
+| Northwater Fab | `northwater` | Front-end wafer fab | Cedar Reach, Valecrest | 12, four bays |
+| Ironwood Fab | `ironwood` | Front-end wafer fab | Ironwood Bench, Eastmere | 10, four bays |
+| Lumen Pilot Works | `lumen` | Strip, clean, and pilot line | Lumen Yard, Westfold | 10, four bays |
+
+`D-01`, `D-02`, `E-01`, `E-02`, `S-01`, `S-02`, `C-01`, and `C-02` stay on Northwater, on Bay-1 and Bay-2. Ironwood ids start with `I-`. Lumen ids start with `P-`. Extra tools are clones of a template. `data/fleet/sites.yaml` is the roster. The fleet loader skips that file, so the original eight-tool schema is unchanged.
+
+Ironwood etch runs hotter. Electrostatic chuck temperature is offset by about 12 degrees with a wider spread. Chamber wall temperature is offset by about 5 degrees with a wider spread. Northwater is the reference. A row is flagged when the average is more than two reference spreads away, or the spread is more than one and a half times the reference. For seed 4242 the only flags are those two Ironwood etch parameters. The wall sentence says about 4.9 degrees, which is the sampled gap.
+
+## Scenario SC-5
+
+Precursor lot MX4419 from Marrowgate Process Gases is used on `D-03` (Northwater) and `I-D-01` (Ironwood). Film thickness steps down on both. A chamber clean on `D-03` only is the confounder. `D-01` is not on this lot, so the contradictory-document case is unchanged. Ground truth is `data/groundtruth/FLT-SC5-MX4419.json` and is not served by the API.
+
+Runs, manufacturing lot references, and material uses in `enterprise.json` carry `siteId`. The material lot itself has no single site. The manufacturing and material tools return MX4419 for both tools. Impact scope returns a material-lot scope, and the note names both plants, both tools, and the lot. A lot used only inside one plant, including NF-3317, does not take that path.
+
+Plant positions, telemetry, and throughput use `Mps:Demo:Seed` (default 4242). The 90-day enterprise history stays on seed 20261014.
+
+## How it was verified
+
+- `dotnet format MPS.sln --verify-no-changes` exited 0.
+- `dotnet build MPS.sln` was clean with warnings as errors.
+- `dotnet test MPS.sln` passed: Domain 19, ModelGateway 13, Simulator 49, Application 167, Agents 77, MockEnterprise 4, Connectors 7, Orchestration 15, Architecture 14, Contract 39, Api 18. Api.IntegrationTests had no cases for the existing `Category!=PendingLane` filter.
+- Simulator tests check the roster, identical output for seed 4242, a moved position for seed 4243, the two Ironwood flags, and the shared lot from both tools.
+- API tests check the three routes, 404 for an unknown plant, 400 for a missing or unknown family, eight tools with `siteId` `northwater`, a different `Mps:Demo:Seed` moving positions, and MX4419 visible from `D-03` and `I-D-01` through the material tool and impact scope.
+- Example JSON was dumped from the API at seed 4242.
+- `web/`, `infra/`, `deploy/`, and `ToolSchematic` files were not edited. Docker and the Azure CLI were not used.
+
+## Open questions for Bob
+
+1. `Tool.siteId` is required in contract 1.2.0. The eight console tools always send `northwater`. Say if an older client must keep working without that field.
+2. `/api/tools` still lists only the original eight. The full map is `GET /api/sites`. Say if the fleet screen should later list every plant.
+3. Lane R2 reset should rebuild the plant snapshot from `Mps:Demo:Seed`. It should not rewrite `enterprise.json`. The shared-lot tool ids are fixed in `sites.yaml`, so a new demo seed does not move SC-5.
+4. Every Ironwood etch tool that is not on the SC-5 lot is status `warning`, because the offset applies to that family at that plant. `D-03` and `I-D-01` are `alarm`.

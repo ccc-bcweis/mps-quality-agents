@@ -1,8 +1,10 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Domain.Impact;
 using Mps.Simulator.Faults;
 using Mps.Simulator.Fleet;
 using Mps.Simulator.Seed;
+using Mps.Simulator.Sites;
 
 namespace Mps.Simulator.Tests;
 
@@ -22,7 +24,7 @@ public sealed class EnterpriseSeedTests
 
     private static readonly FleetCatalog Fleet = FleetCatalogLoader.Load(RepoPaths.FleetDirectory());
 
-    private static readonly FaultCatalog Catalog = FaultCatalogLoader.Load(RepoPaths.FaultDirectory(), Fleet);
+    private static readonly FaultCatalog Catalog = FaultCatalogLoader.Load(RepoPaths.FaultDirectory(), Fleet, KnownSiteTools.Families);
 
     [Fact]
     public void DemoSeedCoversTheFleetTheFaultsAndNinetyDays()
@@ -30,7 +32,7 @@ public sealed class EnterpriseSeedTests
         var seed = EnterpriseSeedGenerator.Generate(Fleet, Catalog, EnterpriseSeedGenerator.DemoSeed);
         seed.WindowEnd.Should().Be(new DateTimeOffset(2026, 10, 14, 0, 0, 0, TimeSpan.Zero));
         seed.WindowStart.Should().Be(seed.WindowEnd.AddDays(-EnterpriseSeedGenerator.HistoryDays));
-        seed.Configs.Select(config => config.ToolId.Value).Should().BeEquivalentTo("C-01", "C-02", "D-01", "D-02", "E-01", "E-02", "S-01", "S-02");
+        seed.Configs.Select(config => config.ToolId.Value).Should().BeEquivalentTo("C-01", "C-02", "D-01", "D-02", "D-03", "E-01", "E-02", "I-D-01", "S-01", "S-02");
         seed.Runs.Count(run => run.RunId.StartsWith("RUN-BG-", StringComparison.Ordinal)).Should().Be(8 * EnterpriseSeedGenerator.Weeks * EnterpriseSeedGenerator.WafersPerWeek);
         var faultRuns = Catalog.Faults.Sum(fault => (fault.Evidence.Runs?.Count ?? 0) * fault.ToolIds.Count);
         seed.Runs.Count(run => run.RunId.StartsWith("RUN-FLT-", StringComparison.Ordinal)).Should().Be(faultRuns);
@@ -48,6 +50,21 @@ public sealed class EnterpriseSeedTests
         seed.Calibrations.Select(record => record.CalibrationId).Should().NotContain("CAL-D01-MANOMETER");
 
         seed.MaterialUses.Where(use => use.LotId == "NF-3317").Select(use => use.ToolId).Should().BeEquivalentTo("E-01", "E-02");
+        seed.MaterialUses.Where(use => use.LotId == "MX4419").Select(use => use.ToolId).Should().BeEquivalentTo("D-03", "I-D-01");
+        seed.MaterialUses.Where(use => use.LotId == "MX4419").Select(use => use.SiteId).Should().BeEquivalentTo("northwater", "ironwood");
+        seed.MaterialLots.Should().Contain(lot => lot.LotId == "MX4419" && lot.SupplierName == "Marrowgate Process Gases");
+        seed.Runs.Should().OnlyContain(run => run.SiteId == SiteIds.ForTool(run.ToolId.Value));
+        seed.Lots.Should().OnlyContain(lot => lot.SiteId == SiteIds.ForTool(lot.ToolId.Value));
+        seed.Configs.Should().Contain(config => config.ToolId.Value == "D-01" && config.Revision == "C");
+        seed.Configs.Should().Contain(config => config.ConfigId == "CFG-D-03" && config.Revision == "A" && config.PartName == "Showerhead");
+        var shared = SharedLotFinder.Find(seed, "D-03");
+        shared.Should().NotBeNull();
+        shared!.Kind.Should().Be(ImpactScopeKind.MaterialLot);
+        shared.Key.Should().Be("MX4419");
+        shared.AlignmentNote.Should().Contain("Northwater Fab").And.Contain("Ironwood Fab").And.Contain("D-03").And.Contain("I-D-01");
+        SharedLotFinder.Find(seed, "I-D-01")!.Key.Should().Be("MX4419");
+        SharedLotFinder.Find(seed, "E-01").Should().BeNull();
+        SharedLotFinder.Find(seed, "D-01").Should().BeNull();
         seed.Notices.Should().Contain(notice => notice.NoticeId == "SN-NF-3317");
         seed.Notices.Should().Contain(notice => notice.NoticeId == "SN-SIH4-088" && notice.SupplierName == "Cinderwell Specialty Gases");
         seed.MaterialLots.Should().Contain(lot => lot.LotId == "QR-TANK-003" && lot.SupplierName == "Bramble Quartz Components");

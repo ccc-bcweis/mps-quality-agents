@@ -2,6 +2,7 @@
 // Hand-tuned ARCH D layouts. Mermaid auto-layout crosses these graphs.
 
 import { INK, NAVY } from './sheet.mjs';
+import { drawFabFloor } from './fab-floor.mjs';
 
 const HAND = '#B91C1C';
 
@@ -1912,6 +1913,25 @@ export const SHEETS = [
       { tone: 'ai', label: 'To-be agent. Plans, gathers, and ranks.' },
       { tone: 'human', label: 'To-be human. Opens the ticket and approves.' },
       { tone: 'gw', label: 'Benefit. Every figure is simulated.' },
+    ],
+  },
+  {
+    sheetId: 'G7',
+    issue: 'G7',
+    kicker: 'FAB FLOOR PLAN',
+    title: 'Physical fab floor',
+    slug: 'fab-floor',
+    strictLabels: true,
+    draw: drawFabFloor,
+    legend: [
+      { tone: 'human', label: 'Cleanroom bay. Filtered air.' },
+      { tone: 'gov', label: 'Utility chase. Sub-fab is below.' },
+      { tone: 'gw', label: 'Overhead rail and stocker.' },
+      { tone: 'det', label: 'Deposition tool. MPS-D7.' },
+      { tone: 'review', label: 'Etch tool. MPS-E7.' },
+      { tone: 'ai', label: 'Strip tool. MPS-S7.' },
+      { tone: 'ok', label: 'Clean tool. MPS-C7.' },
+      { tone: 'neutral', label: 'Plan view. Ports face the rail.' },
     ],
   },
 ];

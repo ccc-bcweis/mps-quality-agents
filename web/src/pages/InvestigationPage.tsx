@@ -2,50 +2,173 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import { CATEGORY_LABEL } from "../api/labels";
-import type { Investigation } from "../api/types";
+import { CATEGORY_LABEL, CHANNEL_LABEL, STAGE_LABEL } from "../api/labels";
+import type { Incident, Investigation } from "../api/types";
 import { AgentTimeline } from "../components/AgentTimeline";
 import { EvidenceMatrix } from "../components/EvidenceMatrix";
 import { Explain } from "../components/Explain";
 import { Term } from "../components/Term";
 import { btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
-import { lifecycleForInvestigation } from "../lifecycle";
+import { lifecycleForIncident, lifecycleForInvestigation } from "../lifecycle";
 import { INVESTIGATION_POLL_MS } from "../investigation/timeline";
 import { buildTrace } from "../trace";
 
+type LoadResult = "ready" | "missing" | "failed";
+
 export function InvestigationPage() {
-  const { investigationId = "" } = useParams();
+  const params = useParams();
+  const routeInvestigationId = params.investigationId ?? "";
+  const routeIncidentId = params.incidentId ?? "";
   const [investigation, setInvestigation] = useState<Investigation | null>(null);
+  const [incident, setIncident] = useState<Incident | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const view = investigation ? lifecycleForInvestigation(investigation.stage) : { current: "investigation" as const, escalated: false };
+  const [ready, setReady] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
+  const view = investigation
+    ? lifecycleForInvestigation(investigation.stage)
+    : {
+        current: "investigation" as const,
+        escalated: incident ? lifecycleForIncident(incident.stage).escalated : false,
+      };
   useSetLifecycle(view.current, view.escalated);
 
   useEffect(() => {
     let cancelled = false;
     setInvestigation(null);
+    setIncident(null);
     setError(null);
-    const load = (initial: boolean) => {
+    setReady(false);
+    setStartError(null);
+
+    const applyError = (reason: unknown) => {
+      if (cancelled) return;
+      setError(reason instanceof ApiProblem ? reason.title : "Investigation did not load.");
+    };
+
+    const loadIncident = async (id: string): Promise<LoadResult> => {
+      try {
+        const loaded = await api.getIncident(id);
+        if (cancelled) return "ready";
+        setIncident(loaded);
+      } catch (reason: unknown) {
+        if (reason instanceof ApiProblem && reason.status === 404) return "missing";
+        applyError(reason);
+        return "failed";
+      }
+
+      try {
+        const latest = await api.getLatestInvestigation(id);
+        if (!cancelled) setInvestigation(latest);
+      } catch (reason: unknown) {
+        if (reason instanceof ApiProblem && reason.status === 404) return "ready";
+        applyError(reason);
+        return "failed";
+      }
+
+      return "ready";
+    };
+
+    const run = async () => {
+      if (routeIncidentId) {
+        const result = await loadIncident(routeIncidentId);
+        if (result === "missing" && !cancelled) setError("No such record.");
+        return;
+      }
+
+      try {
+        const loaded = await api.getInvestigation(routeInvestigationId);
+        if (!cancelled) setInvestigation(loaded);
+      } catch (reason: unknown) {
+        if (reason instanceof ApiProblem && reason.status === 404) {
+          const result = await loadIncident(routeInvestigationId);
+          if (result === "missing" && !cancelled) setError(reason.title);
+          return;
+        }
+        applyError(reason);
+      }
+    };
+
+    void run().finally(() => {
+      if (!cancelled) setReady(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [routeIncidentId, routeInvestigationId]);
+
+  const liveId = investigation?.id ?? "";
+  useEffect(() => {
+    if (!liveId) return undefined;
+    let cancelled = false;
+    const timer = window.setInterval(() => {
       api
-        .getInvestigation(investigationId)
+        .getInvestigation(liveId)
         .then((next) => {
           if (!cancelled) setInvestigation(next);
         })
-        .catch((reason: unknown) => {
-          if (!cancelled && initial) setError(reason instanceof ApiProblem ? reason.title : "Investigation did not load.");
+        .catch(() => {
+          // A missed poll keeps the last snapshot on screen.
         });
-    };
-    load(true);
-    const timer = window.setInterval(() => load(false), INVESTIGATION_POLL_MS);
+    }, INVESTIGATION_POLL_MS);
     return () => {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [investigationId]);
+  }, [liveId]);
 
-  if (error) return <p className="text-mps-alarm-text">{error}</p>;
-  if (!investigation) return <p className="text-mps-muted">Loading investigation…</p>;
+  async function onStart() {
+    if (!incident || starting) return;
+    setStarting(true);
+    setStartError(null);
+    try {
+      const started = await api.startInvestigation(incident.id);
+      setInvestigation(started);
+    } catch (reason: unknown) {
+      setStartError(reason instanceof ApiProblem ? reason.title : "The investigation did not start.");
+    } finally {
+      setStarting(false);
+    }
+  }
 
+  if (!ready) return <p className="text-mps-muted">Loading investigation…</p>;
+  if (investigation) return <InvestigationDetail investigation={investigation} />;
+  if (incident && !error) {
+    const finished = incident.stage === "closed" || incident.stage === "approved";
+    return (
+      <div>
+        <div className="mb-4">
+          <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">{incident.correlationId}</p>
+          <h1 className="text-mps-display font-semibold">Investigation</h1>
+          <p className="max-w-3xl text-mps-secondary">No investigation has started for this ticket. Starting one gathers the evidence and shows the agent steps.</p>
+        </div>
+        <section className={panel}>
+          <p>
+            <Explain text={CHANNEL_LABEL[incident.channel]} spellOut={false} /> · tool {incident.toolId}
+          </p>
+          <p className="mt-2">
+            <Explain text={incident.summary} />
+          </p>
+          <p className="mt-2 text-mps-secondary">Stage: {STAGE_LABEL[incident.stage]}</p>
+        </section>
+        {finished ? (
+          <p className="mt-3">This ticket is finished. There is no investigation to open.</p>
+        ) : (
+          <button className={`${btnPrimary} mt-3`} type="button" onClick={() => void onStart()} disabled={starting}>
+            {starting ? "Starting…" : "Start investigation"}
+          </button>
+        )}
+        {startError ? <p className="mt-3 text-mps-alarm-text">{startError}</p> : null}
+      </div>
+    );
+  }
+
+  return <p className="text-mps-alarm-text">{error ?? "Investigation did not load."}</p>;
+}
+
+function InvestigationDetail({ investigation }: { investigation: Investigation }) {
   const trace = buildTrace(investigation);
   const ranked = [...investigation.hypotheses].sort((a, b) => b.confidence - a.confidence);
 

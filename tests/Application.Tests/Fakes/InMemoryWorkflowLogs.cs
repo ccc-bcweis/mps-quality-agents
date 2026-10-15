@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Application.Lifecycle;
 using Mps.Application.Persistence;
 using Mps.Application.Workflow;
 using Mps.Domain.Capa;
@@ -50,6 +51,12 @@ public sealed class InMemoryInvestigationLog : IInvestigationLog
             item.IncidentId == incidentId
             && item.Stage is not (InvestigationStage.Rejected or InvestigationStage.Failed));
         return Task.FromResult(match);
+    }
+
+    public Task<InvestigationSnapshot?> FindLatestByIncidentAsync(IncidentId incidentId, CancellationToken cancellationToken)
+    {
+        _ = cancellationToken;
+        return Task.FromResult(TicketInvestigationMap.Latest(incidentId, _snapshots));
     }
 }
 
