@@ -19,12 +19,15 @@ public sealed class ConsoleApiContractTests
         "/api/sites/{siteId}",
         "/api/tools",
         "/api/tools/{toolId}",
+        "/api/tools/{toolId}/live",
+        "/api/fleet/live",
         "/api/alerts",
         "/api/tickets",
         "/api/incidents",
         "/api/incidents/{incidentId}",
         "/api/incidents/{incidentId}/investigation",
         "/api/incidents/{incidentId}/investigations",
+        "/api/investigations",
         "/api/investigations/{investigationId}",
         "/api/investigations/{investigationId}/decisions",
         "/api/capas",
@@ -65,6 +68,8 @@ public sealed class ConsoleApiContractTests
         Expect(OperationType.Get, "/api/sites/{siteId}", "getSite", "200");
         Expect(OperationType.Get, "/api/tools", "listTools", "200");
         Expect(OperationType.Get, "/api/tools/{toolId}", "getTool", "200");
+        Expect(OperationType.Get, "/api/tools/{toolId}/live", "getToolLive", "200");
+        Expect(OperationType.Get, "/api/fleet/live", "listFleetLive", "200");
         Expect(OperationType.Get, "/api/alerts", "listAlerts", "200");
         Expect(OperationType.Get, "/api/tickets", "listTickets", "200");
         Expect(OperationType.Get, "/api/incidents", "listIncidents", "200");
@@ -72,6 +77,7 @@ public sealed class ConsoleApiContractTests
         Expect(OperationType.Get, "/api/incidents/{incidentId}", "getIncident", "200");
         Expect(OperationType.Get, "/api/incidents/{incidentId}/investigation", "getLatestInvestigation", "200");
         Expect(OperationType.Post, "/api/incidents/{incidentId}/investigations", "startInvestigation", "201");
+        Expect(OperationType.Get, "/api/investigations", "listInvestigations", "200");
         Expect(OperationType.Get, "/api/investigations/{investigationId}", "getInvestigation", "200");
         Expect(OperationType.Post, "/api/investigations/{investigationId}/decisions", "submitDecision", "200");
         Expect(OperationType.Get, "/api/capas", "listCapas", "200");

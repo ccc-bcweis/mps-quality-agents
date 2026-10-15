@@ -18,6 +18,8 @@ public interface IInvestigationLog
 
     /// <summary>The latest investigation for the incident, or null when none has been started.</summary>
     Task<InvestigationSnapshot?> FindLatestByIncidentAsync(IncidentId incidentId, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<InvestigationSnapshot>> ListAsync(CancellationToken cancellationToken);
 }
 
 public interface ICapaLog

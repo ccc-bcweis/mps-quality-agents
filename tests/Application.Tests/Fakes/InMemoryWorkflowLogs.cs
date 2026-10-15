@@ -58,6 +58,12 @@ public sealed class InMemoryInvestigationLog : IInvestigationLog
         _ = cancellationToken;
         return Task.FromResult(TicketInvestigationMap.Latest(incidentId, _snapshots));
     }
+
+    public Task<IReadOnlyList<InvestigationSnapshot>> ListAsync(CancellationToken cancellationToken)
+    {
+        _ = cancellationToken;
+        return Task.FromResult<IReadOnlyList<InvestigationSnapshot>>(_snapshots.ToArray());
+    }
 }
 
 public sealed class InMemoryCapaLog : ICapaLog

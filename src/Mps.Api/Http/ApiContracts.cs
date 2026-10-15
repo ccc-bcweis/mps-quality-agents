@@ -24,7 +24,8 @@ public sealed record AlertResponse(
     Severity Severity,
     string Rule,
     DateTimeOffset RaisedAt,
-    string CorrelationId);
+    string CorrelationId,
+    string SiteId);
 
 public sealed record TicketResponse(
     Guid Id,
@@ -32,7 +33,8 @@ public sealed record TicketResponse(
     Guid IncidentId,
     string ToolId,
     string Title,
-    DateTimeOffset OpenedAt);
+    DateTimeOffset OpenedAt,
+    string SiteId);
 
 public sealed record IncidentResponse(
     Guid Id,
@@ -44,7 +46,8 @@ public sealed record IncidentResponse(
     string Summary,
     string CorrelationId,
     DateTimeOffset OpenedAt,
-    IncidentStage Stage);
+    IncidentStage Stage,
+    string SiteId);
 
 public sealed record EvidenceResponse(
     Guid Id,
@@ -80,7 +83,8 @@ public sealed record InvestigationResponse(
     IReadOnlyList<HypothesisResponse> Hypotheses,
     string? EscalationReason,
     string CorrelationId,
-    IReadOnlyList<EvidenceMatrixResponse> EvidenceMatrix);
+    IReadOnlyList<EvidenceMatrixResponse> EvidenceMatrix,
+    string SiteId);
 
 public sealed record CapaResponse(
     Guid Id,
@@ -89,7 +93,8 @@ public sealed record CapaResponse(
     Guid ApprovalTokenId,
     string ActionHash,
     CapaStage Stage,
-    DateTimeOffset OpenedAt);
+    DateTimeOffset OpenedAt,
+    string SiteId);
 
 public sealed record DecisionResponse(InvestigationResponse Investigation, CapaResponse? Capa);
 
@@ -164,6 +169,24 @@ public sealed record SiteSummaryResponse(
     ThroughputResponse Kpis);
 
 public sealed record PlacedToolResponse(string Id, string Name, ToolFamily Family, string Model, string Status, double X, double Y, string SiteId);
+
+public sealed record FleetLiveResponse(DateTimeOffset SimulatedNow, IReadOnlyList<FleetLiveToolResponse> Tools);
+
+public sealed record FleetLiveToolResponse(string ToolId, string SiteId, string Status, IReadOnlyList<LiveReadingResponse> Readings);
+
+public sealed record ToolLiveResponse(
+    string ToolId,
+    string SiteId,
+    DateTimeOffset SimulatedNow,
+    string Status,
+    IReadOnlyList<LiveReadingResponse> Readings,
+    IReadOnlyList<LiveSeriesResponse> Series);
+
+public sealed record LiveReadingResponse(string SensorId, string Parameter, string ChamberId, string Unit, DateTimeOffset At, double Value, string Status);
+
+public sealed record LiveSeriesResponse(string Parameter, string ChamberId, IReadOnlyList<LivePointResponse> Points);
+
+public sealed record LivePointResponse(DateTimeOffset At, double Value);
 
 public sealed record SiteBayDetailResponse(string Id, string Name, IReadOnlyList<PlacedToolResponse> Tools, ThroughputResponse Kpis);
 

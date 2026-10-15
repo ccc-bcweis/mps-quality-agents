@@ -31,10 +31,11 @@ public static class ContractMapper
             alert.Severity,
             alert.Rule,
             alert.RaisedAt,
-            alert.CorrelationId);
+            alert.CorrelationId,
+            SiteForTool(alert.ToolId.ToString()));
 
     public static TicketResponse ToResponse(Ticket ticket) =>
-        new(ticket.Id.Value, ticket.Number, ticket.IncidentId.Value, ticket.ToolId.ToString(), ticket.Title, ticket.OpenedAt);
+        new(ticket.Id.Value, ticket.Number, ticket.IncidentId.Value, ticket.ToolId.ToString(), ticket.Title, ticket.OpenedAt, SiteForTool(ticket.ToolId.ToString()));
 
     public static IncidentResponse ToResponse(Incident incident) =>
         new(
@@ -47,12 +48,10 @@ public static class ContractMapper
             incident.Summary,
             incident.CorrelationId,
             incident.OpenedAt,
-            incident.Stage);
+            incident.Stage,
+            SiteForTool(incident.ToolId.ToString()));
 
-    public static InvestigationResponse ToResponse(InvestigationSnapshot snapshot) =>
-        ToResponse(snapshot, InvestigationNarrative.Empty);
-
-    public static InvestigationResponse ToResponse(InvestigationSnapshot snapshot, InvestigationNarrative narrative)
+    public static InvestigationResponse ToResponse(InvestigationSnapshot snapshot, InvestigationNarrative narrative, string siteId)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentNullException.ThrowIfNull(narrative);
@@ -89,11 +88,29 @@ public static class ContractMapper
                 entry.Category,
                 entry.EvidenceId,
                 entry.Stance,
-                entry.WhyItMatters)).ToArray());
+                entry.WhyItMatters)).ToArray(),
+            SiteForTool(siteId));
     }
 
-    public static CapaResponse ToResponse(CapaAction capa) =>
-        new(capa.Id.Value, capa.IncidentId.Value, capa.Summary, capa.ApprovalTokenId.Value, capa.ActionHash, capa.Stage, capa.OpenedAt);
+    public static CapaResponse ToResponse(CapaAction capa, string siteId) =>
+        new(capa.Id.Value, capa.IncidentId.Value, capa.Summary, capa.ApprovalTokenId.Value, capa.ActionHash, capa.Stage, capa.OpenedAt, SiteForTool(siteId));
+
+    /// <summary>Plant id for a tool, or the site id itself when the caller already resolved it.</summary>
+    public static string SiteForTool(string? toolOrSiteId)
+    {
+        if (string.IsNullOrWhiteSpace(toolOrSiteId))
+        {
+            return SiteIds.Northwater;
+        }
+
+        var value = toolOrSiteId.Trim();
+        if (value is SiteIds.Northwater or SiteIds.Ironwood or SiteIds.Lumen)
+        {
+            return value;
+        }
+
+        return SiteIds.ForTool(value);
+    }
 
     public static string ModeFrom(string? configured) => configured?.Trim().ToLowerInvariant() switch
     {

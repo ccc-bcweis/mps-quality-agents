@@ -42,8 +42,15 @@ public static class QualityEndpoints
             var site = world.Find(siteId);
             return site is null ? Results.NotFound() : Results.Ok(SiteResponses.ToDetail(site));
         });
-        app.MapGet("/api/tools", async (IFleetCatalog fleet, CancellationToken cancellationToken) =>
+        app.MapGet("/api/tools", async (string? siteId, IFleetCatalog fleet, PlantSimulation plant, CancellationToken cancellationToken) =>
         {
+            if (!string.IsNullOrWhiteSpace(siteId))
+            {
+                var site = plant.World.Sites.FirstOrDefault(item => string.Equals(item.Id, siteId.Trim(), StringComparison.OrdinalIgnoreCase));
+                var placed = site is null ? [] : plant.ToolsForSite(site.Id);
+                return Results.Ok(placed.Select(ContractMapper.ToResponse).ToArray());
+            }
+
             var tools = await fleet.ListAsync(cancellationToken).ConfigureAwait(false);
             return Results.Ok(tools.Select(ContractMapper.ToResponse).ToArray());
         });
@@ -54,21 +61,27 @@ public static class QualityEndpoints
                 ? Results.NotFound()
                 : Results.Ok(ContractMapper.ToResponse(tool));
         });
-        app.MapGet("/api/alerts", async (string? toolId, IAlertLog alerts, CancellationToken cancellationToken) =>
+        app.MapGet("/api/fleet/live", (PlantSimulation plant) => Results.Ok(LiveResponses.Fleet(plant)));
+        app.MapGet("/api/tools/{toolId}/live", (string toolId, PlantSimulation plant) =>
+        {
+            var live = LiveResponses.Tool(plant, toolId);
+            return live is null ? Results.NotFound() : Results.Ok(live);
+        });
+        app.MapGet("/api/alerts", async (string? toolId, string? siteId, IAlertLog alerts, CancellationToken cancellationToken) =>
         {
             ToolId? filter = string.IsNullOrWhiteSpace(toolId) ? null : new ToolId(toolId);
             var rows = await alerts.ListAsync(filter, cancellationToken).ConfigureAwait(false);
-            return Results.Ok(rows.Select(ContractMapper.ToResponse).ToArray());
+            return Results.Ok(rows.Select(ContractMapper.ToResponse).Where(row => MatchesSite(siteId, row.SiteId)).ToArray());
         });
-        app.MapGet("/api/tickets", async (ITicketLog tickets, CancellationToken cancellationToken) =>
+        app.MapGet("/api/tickets", async (string? siteId, ITicketLog tickets, CancellationToken cancellationToken) =>
         {
             var rows = await tickets.ListAsync(cancellationToken).ConfigureAwait(false);
-            return Results.Ok(rows.Select(ContractMapper.ToResponse).ToArray());
+            return Results.Ok(rows.Select(ContractMapper.ToResponse).Where(row => MatchesSite(siteId, row.SiteId)).ToArray());
         });
-        app.MapGet("/api/incidents", async (IIncidentLog incidents, CancellationToken cancellationToken) =>
+        app.MapGet("/api/incidents", async (string? siteId, IIncidentLog incidents, CancellationToken cancellationToken) =>
         {
             var rows = await incidents.ListAsync(cancellationToken).ConfigureAwait(false);
-            return Results.Ok(rows.Select(row => ContractMapper.ToResponse(row.Incident)).ToArray());
+            return Results.Ok(rows.Select(row => ContractMapper.ToResponse(row.Incident)).Where(row => MatchesSite(siteId, row.SiteId)).ToArray());
         });
         app.MapPost("/api/incidents", async (OpenIncidentBody? body, IIntakeService intake, CancellationToken cancellationToken) =>
         {
@@ -101,33 +114,62 @@ public static class QualityEndpoints
             Guid incidentId,
             IInvestigationService investigations,
             IInvestigationNarrativeLog narratives,
+            IIncidentLog incidents,
             CancellationToken cancellationToken) =>
         {
             var snapshot = await investigations.GetLatestByIncidentAsync(new IncidentId(incidentId), cancellationToken).ConfigureAwait(false);
             var narrative = await narratives.GetAsync(snapshot.Id, cancellationToken).ConfigureAwait(false);
-            return Results.Ok(ContractMapper.ToResponse(snapshot, narrative));
+            var site = await SiteForIncidentAsync(incidents, snapshot.IncidentId, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(ContractMapper.ToResponse(snapshot, narrative, site));
         });
         app.MapPost("/api/incidents/{incidentId:guid}/investigations", async (
             Guid incidentId,
             IInvestigationService investigations,
             IInvestigationNarrativeLog narratives,
+            IIncidentLog incidents,
             CancellationToken cancellationToken) =>
         {
             var snapshot = await investigations.StartAsync(new IncidentId(incidentId), cancellationToken).ConfigureAwait(false);
             var narrative = await narratives.GetAsync(snapshot.Id, cancellationToken).ConfigureAwait(false);
-            var response = ContractMapper.ToResponse(snapshot, narrative);
+            var site = await SiteForIncidentAsync(incidents, snapshot.IncidentId, cancellationToken).ConfigureAwait(false);
+            var response = ContractMapper.ToResponse(snapshot, narrative, site);
             return Results.Created("/api/investigations/" + response.Id.ToString("D"), response);
+        });
+        app.MapGet("/api/investigations", async (
+            string? siteId,
+            IInvestigationLog investigations,
+            IInvestigationNarrativeLog narratives,
+            IIncidentLog incidents,
+            CancellationToken cancellationToken) =>
+        {
+            var rows = await investigations.ListAsync(cancellationToken).ConfigureAwait(false);
+            var mapped = new List<InvestigationResponse>();
+            foreach (var snapshot in rows)
+            {
+                var site = await SiteForIncidentAsync(incidents, snapshot.IncidentId, cancellationToken).ConfigureAwait(false);
+                if (!MatchesSite(siteId, site))
+                {
+                    continue;
+                }
+
+                var narrative = await narratives.GetAsync(snapshot.Id, cancellationToken).ConfigureAwait(false);
+                mapped.Add(ContractMapper.ToResponse(snapshot, narrative, site));
+            }
+
+            return Results.Ok(mapped);
         });
         app.MapGet("/api/investigations/{investigationId:guid}", async (
             Guid investigationId,
             IInvestigationService investigations,
             IInvestigationNarrativeLog narratives,
+            IIncidentLog incidents,
             CancellationToken cancellationToken) =>
         {
             var id = new InvestigationId(investigationId);
             var snapshot = await investigations.GetAsync(id, cancellationToken).ConfigureAwait(false);
             var narrative = await narratives.GetAsync(id, cancellationToken).ConfigureAwait(false);
-            return Results.Ok(ContractMapper.ToResponse(snapshot, narrative));
+            var site = await SiteForIncidentAsync(incidents, snapshot.IncidentId, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(ContractMapper.ToResponse(snapshot, narrative, site));
         });
         app.MapPost("/api/investigations/{investigationId:guid}/decisions", async (
             Guid investigationId,
@@ -135,6 +177,7 @@ public static class QualityEndpoints
             IHumanDecisionService decisions,
             IInvestigationService investigations,
             IInvestigationNarrativeLog narratives,
+            IIncidentLog incidents,
             CancellationToken cancellationToken) =>
         {
             if (body?.Kind is null)
@@ -149,33 +192,46 @@ public static class QualityEndpoints
                 body.Comment,
                 body.ApproverId,
                 cancellationToken).ConfigureAwait(false);
+            var site = await SiteForIncidentAsync(incidents, outcome.Investigation.IncidentId, cancellationToken).ConfigureAwait(false);
             if (outcome.Superseded)
             {
                 // Request more evidence: re-run the agents on the same incident with whatever data is now available.
                 var rerun = await investigations.StartAsync(outcome.Investigation.IncidentId, cancellationToken).ConfigureAwait(false);
                 var rerunNarrative = await narratives.GetAsync(rerun.Id, cancellationToken).ConfigureAwait(false);
-                return Results.Ok(new DecisionResponse(ContractMapper.ToResponse(rerun, rerunNarrative), null));
+                return Results.Ok(new DecisionResponse(ContractMapper.ToResponse(rerun, rerunNarrative, site), null));
             }
 
             var narrative = await narratives.GetAsync(id, cancellationToken).ConfigureAwait(false);
             return Results.Ok(new DecisionResponse(
-                ContractMapper.ToResponse(outcome.Investigation, narrative),
-                outcome.Capa is null ? null : ContractMapper.ToResponse(outcome.Capa.Capa)));
+                ContractMapper.ToResponse(outcome.Investigation, narrative, site),
+                outcome.Capa is null ? null : ContractMapper.ToResponse(outcome.Capa.Capa, site)));
         });
-        app.MapGet("/api/capas", async (ICapaLifecycleService capas, CancellationToken cancellationToken) =>
+        app.MapGet("/api/capas", async (string? siteId, ICapaLifecycleService capas, IIncidentLog incidents, CancellationToken cancellationToken) =>
         {
             var rows = await capas.ListAsync(cancellationToken).ConfigureAwait(false);
-            return Results.Ok(rows.Select(row => ContractMapper.ToResponse(row.Capa)).ToArray());
+            var mapped = new List<CapaResponse>();
+            foreach (var row in rows)
+            {
+                var site = await SiteForIncidentAsync(incidents, row.Capa.IncidentId, cancellationToken).ConfigureAwait(false);
+                if (MatchesSite(siteId, site))
+                {
+                    mapped.Add(ContractMapper.ToResponse(row.Capa, site));
+                }
+            }
+
+            return Results.Ok(mapped);
         });
-        app.MapGet("/api/capas/{capaId:guid}", async (Guid capaId, ICapaLifecycleService capas, CancellationToken cancellationToken) =>
+        app.MapGet("/api/capas/{capaId:guid}", async (Guid capaId, ICapaLifecycleService capas, IIncidentLog incidents, CancellationToken cancellationToken) =>
         {
             var stored = await capas.GetAsync(new CapaId(capaId), cancellationToken).ConfigureAwait(false);
-            return Results.Ok(ContractMapper.ToResponse(stored.Capa));
+            var site = await SiteForIncidentAsync(incidents, stored.Capa.IncidentId, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(ContractMapper.ToResponse(stored.Capa, site));
         });
         app.MapPost("/api/capas/{capaId:guid}/advance", async (
             Guid capaId,
             AdvanceCapaBody? body,
             ICapaLifecycleService capas,
+            IIncidentLog incidents,
             CancellationToken cancellationToken) =>
         {
             if (body?.Stage is null)
@@ -184,7 +240,8 @@ public static class QualityEndpoints
             }
 
             var stored = await capas.AdvanceAsync(new CapaId(capaId), body.Stage.Value, cancellationToken).ConfigureAwait(false);
-            return Results.Ok(ContractMapper.ToResponse(stored.Capa));
+            var site = await SiteForIncidentAsync(incidents, stored.Capa.IncidentId, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(ContractMapper.ToResponse(stored.Capa, site));
         });
         app.MapGet("/api/admin/session", (HttpContext http, IConfiguration configuration) =>
         {
@@ -288,6 +345,15 @@ public static class QualityEndpoints
                 await LiveSpendAsync(services, time, rollup.SpendTodayUsd, cancellationToken).ConfigureAwait(false),
                 rollup.SpendCapUsd));
         });
+    }
+
+    private static bool MatchesSite(string? requested, string actual) =>
+        string.IsNullOrWhiteSpace(requested) || string.Equals(requested.Trim(), actual, StringComparison.OrdinalIgnoreCase);
+
+    private static async Task<string> SiteForIncidentAsync(IIncidentLog incidents, IncidentId incidentId, CancellationToken cancellationToken)
+    {
+        var stored = await incidents.GetAsync(incidentId, cancellationToken).ConfigureAwait(false);
+        return ContractMapper.SiteForTool(stored?.Incident.ToolId.ToString());
     }
 
     private static DemoCaller Caller(HttpContext http, IConfiguration configuration)

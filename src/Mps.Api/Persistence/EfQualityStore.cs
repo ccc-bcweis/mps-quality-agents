@@ -303,6 +303,15 @@ public sealed class EfQualityStore :
         return TicketInvestigationMap.Latest(incidentId, rows.Select(ToSnapshot).ToArray());
     }
 
+    async Task<IReadOnlyList<InvestigationSnapshot>> IInvestigationLog.ListAsync(CancellationToken cancellationToken)
+    {
+        var rows = await _db.Investigations.AsNoTracking()
+            .OrderByDescending(item => item.Id)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return rows.Select(ToSnapshot).ToArray();
+    }
+
     private async Task<int> NextInvestigationSequenceAsync(IncidentId incidentId, CancellationToken cancellationToken)
     {
         var current = await _db.Investigations

@@ -33,6 +33,7 @@ const incident = {
   correlationId: "corr-s1",
   openedAt: "2026-10-14T15:00:00Z",
   stage: "investigating",
+  siteId: "northwater",
 };
 
 const investigation = {
@@ -63,6 +64,7 @@ const investigation = {
     },
   ],
   escalationReason: null,
+  siteId: "northwater",
 };
 
 export const handlers = [
@@ -149,6 +151,17 @@ export const handlers = [
   ),
   http.get("/api/tools", () => HttpResponse.json([tool])),
   http.get("/api/tools/:toolId", () => HttpResponse.json(tool)),
+  http.get("/api/fleet/live", () => HttpResponse.json({ simulatedNow: "2026-09-01T00:02:00Z", tools: [] })),
+  http.get("/api/tools/:toolId/live", () =>
+    HttpResponse.json({
+      toolId: "E-02",
+      siteId: "northwater",
+      simulatedNow: "2026-09-01T00:02:00Z",
+      status: "nominal",
+      readings: [],
+      series: [],
+    }),
+  ),
   http.get("/api/alerts", () =>
     HttpResponse.json([
       {
@@ -160,6 +173,7 @@ export const handlers = [
         rule: "westernElectric1",
         raisedAt: "2026-10-14T14:59:00Z",
         correlationId: "corr-s1",
+        siteId: "northwater",
       },
     ]),
   ),
@@ -172,6 +186,7 @@ export const handlers = [
         toolId: "E-02",
         title: incident.summary,
         openedAt: incident.openedAt,
+        siteId: "northwater",
       },
     ]),
   ),
@@ -196,6 +211,7 @@ export const handlers = [
   http.post("/api/incidents/:incidentId/investigations", () =>
     HttpResponse.json({ ...investigation, stage: "started", hypotheses: [] }, { status: 201 }),
   ),
+  http.get("/api/investigations", () => HttpResponse.json([investigation])),
   http.get("/api/investigations/:investigationId", () => HttpResponse.json(investigation)),
   http.post("/api/investigations/:investigationId/decisions", async ({ request }) => {
     const body = (await request.json()) as { kind?: string; approverId?: string; comment?: string | null };
@@ -275,6 +291,10 @@ export const handlers = [
         parameter: "escTemperature",
         shape: "oscillation",
         summary: "ESC temperature oscillates on E-02 chamber A after edge ring revision C.",
+        whatsHappening: "An edge ring is the ring around the wafer that shapes the process at the wafer edge. Etch tool E-02 received revision C of that ring.",
+        whatWeSimulate: "The chuck temperature sensor on E-02 chamber A oscillates by about 3.5 standard deviations.",
+        whatAiShouldFind: "The temperature swing lines up with the engineering change that installed edge ring revision C.",
+        expectedCause: "Edge ring revision C on E-02.",
       },
       {
         id: "SC-2",
@@ -285,6 +305,10 @@ export const handlers = [
         parameter: "escTemperature",
         shape: "ramp",
         summary: "The ESC thermocouple on E-01 chamber A drifts because its calibration is overdue.",
+        whatsHappening: "The thermocouple on etch tool E-01 is overdue for calibration. The reading drifts away from the true temperature.",
+        whatWeSimulate: "Chuck temperature on E-01 chamber A ramps about 4 standard deviations high over about 2 minutes of real time.",
+        whatAiShouldFind: "The drift matches an overdue thermocouple calibration.",
+        expectedCause: "Overdue thermocouple calibration on E-01.",
       },
       {
         id: "SC-3",
@@ -295,6 +319,10 @@ export const handlers = [
         parameter: "cf4Flow",
         shape: "step",
         summary: "Precursor gas lot PL-2044 is out of spec and both etch tools step off on CF4 flow.",
+        whatsHappening: "Both etch tools use the same bottle of CF4. That bottle arrived out of specification.",
+        whatWeSimulate: "CF4 flow on E-01 and E-02 steps down by about 12 percent.",
+        whatAiShouldFind: "The shared gas lot and the supplier notice explain both tools.",
+        expectedCause: "The shared gas lot is out of specification.",
       },
       {
         id: "SC-4",
@@ -305,6 +333,52 @@ export const handlers = [
         parameter: "etchRate",
         shape: "ramp",
         summary: "Etch rate on E-01 chamber A ramps slowly as the chamber seasons after a clean.",
+        whatsHappening: "After a chamber clean, the etch chamber slowly seasons and the etch rate falls.",
+        whatWeSimulate: "Etch rate on E-01 chamber A ramps down by about 3.5 standard deviations over about 2 minutes of real time.",
+        whatAiShouldFind: "The slow ramp has no engineering change and no bad material lot.",
+        expectedCause: "Chamber seasoning after a clean on E-01.",
+      },
+      {
+        id: "SC-5",
+        title: "Precursor lot on two plants",
+        rootCauseCategory: "supplyChainMaterial",
+        toolIds: ["D-03", "I-D-01"],
+        chamberId: "D-03-A",
+        parameter: "filmThickness",
+        shape: "step",
+        summary: "Precursor lot MX4419 is thin, so film thickness steps down on D-03 and I-D-01.",
+        whatsHappening: "A precursor is the material that becomes the deposited film. Lot MX4419 went to D-03 and I-D-01.",
+        whatWeSimulate: "Film thickness on both tools steps down by about 8 percent.",
+        whatAiShouldFind: "Both plants share the precursor lot. The chamber clean on only one tool is a confounder.",
+        expectedCause: "Precursor lot MX4419 is thin at both plants.",
+      },
+      {
+        id: "SC-7",
+        title: "Pump bearing wear",
+        rootCauseCategory: "equipmentCalibrationOrAlignment",
+        toolIds: ["D-02"],
+        chamberId: "D-02-A",
+        parameter: "vibrationRms",
+        shape: "ramp",
+        summary: "Foreline pump vibration on D-02 rises as the bearing runs past its service interval.",
+        whatsHappening: "The foreline pump is the vacuum pump that pulls gas out of the chamber. Its bearing is past the service interval on D-02.",
+        whatWeSimulate: "Pump vibration on D-02 ramps up by about 5 standard deviations over about two and a half minutes.",
+        whatAiShouldFind: "The maintenance record says the bearing hours are past the service interval.",
+        expectedCause: "Foreline pump bearing wear on D-02.",
+      },
+      {
+        id: "SC-8",
+        title: "Recipe setpoint edited",
+        rootCauseCategory: "processDrift",
+        toolIds: ["E-03"],
+        chamberId: "E-03-A",
+        parameter: "rfBiasPower",
+        shape: "step",
+        summary: "An operator raised the RF power setpoint on E-03 and did not file an engineering change.",
+        whatsHappening: "RF power is the radio-frequency power that drives the etch. An operator edited that setpoint on E-03 with no engineering change order.",
+        whatWeSimulate: "RF bias power on E-03 steps up by about 4.5 standard deviations. No other tool moves.",
+        whatAiShouldFind: "The note says the operator changed the recipe setpoint and there is no engineering change order.",
+        expectedCause: "Unauthorized RF power recipe edit on E-03.",
       },
     ]),
   ),

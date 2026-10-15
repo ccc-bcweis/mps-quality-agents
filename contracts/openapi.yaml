@@ -15,6 +15,9 @@ info:
     The path is additive. Earlier clients stay compatible.
     Contract 1.3 adds presenter copy on each scripted scenario: whatsHappening, whatWeSimulate,
     whatAiShouldFind, and expectedCause. The fields are additive.
+    Contract 1.3 also adds optional siteId on alerts, tickets, incidents, investigations, and CAPA records,
+    an optional siteId query on those lists and on tools, GET /api/fleet/live, GET /api/tools/{toolId}/live,
+    and GET /api/investigations. Omitting siteId leaves the original lists unchanged.
     All names and data are synthetic.
   license:
     name: MIT
@@ -106,6 +109,10 @@ paths:
       tags: [fleet]
       operationId: listTools
       summary: List the simulated tool fleet
+      description: |
+        Without siteId this is the original eight tools. With siteId it is every tool at that plant.
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: Tools.
@@ -131,6 +138,36 @@ paths:
                 $ref: "#/components/schemas/Tool"
         "404":
           $ref: "#/components/responses/NotFound"
+  /api/fleet/live:
+    get:
+      tags: [fleet]
+      operationId: listFleetLive
+      summary: Latest reading for every simulated tool
+      description: |
+        Empty tools means the simulator has not published a sample yet. The console keeps its static tiles in that case.
+      responses:
+        "200":
+          description: Live fleet snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FleetLive"
+  /api/tools/{toolId}/live:
+    get:
+      tags: [fleet]
+      operationId: getToolLive
+      summary: Live readings and SPC series for one tool
+      parameters:
+        - $ref: "#/components/parameters/ToolId"
+      responses:
+        "200":
+          description: Live tool snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToolLive"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /api/alerts:
     get:
       tags: [fleet]
@@ -138,6 +175,7 @@ paths:
       summary: SPC alerts
       parameters:
         - $ref: "#/components/parameters/ToolIdQuery"
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: Alerts.
@@ -152,6 +190,8 @@ paths:
       tags: [incidents]
       operationId: listTickets
       summary: Intake tickets
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: Tickets.
@@ -166,6 +206,8 @@ paths:
       tags: [incidents]
       operationId: listIncidents
       summary: Normalized incidents
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: Incidents.
@@ -230,6 +272,22 @@ paths:
                 $ref: "#/components/schemas/Investigation"
         "404":
           $ref: "#/components/responses/NotFound"
+  /api/investigations:
+    get:
+      tags: [investigations]
+      operationId: listInvestigations
+      summary: Investigations, newest first
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
+      responses:
+        "200":
+          description: Investigations.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Investigation"
   /api/investigations/{investigationId}:
     get:
       tags: [investigations]
@@ -302,6 +360,8 @@ paths:
       tags: [capas]
       operationId: listCapas
       summary: CAPA records
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: CAPAs.
@@ -470,6 +530,13 @@ components:
       required: false
       schema:
         type: string
+    SiteIdQuery:
+      name: siteId
+      in: query
+      required: false
+      description: Optional plant id. Omit it to keep the unfiltered list.
+      schema:
+        type: string
     IncidentId:
       name: incidentId
       in: path
@@ -598,6 +665,101 @@ components:
           type: string
         name:
           type: string
+    FleetLive:
+      type: object
+      additionalProperties: false
+      required: [simulatedNow, tools]
+      properties:
+        simulatedNow:
+          type: string
+          format: date-time
+        tools:
+          type: array
+          items:
+            $ref: "#/components/schemas/FleetLiveTool"
+    FleetLiveTool:
+      type: object
+      additionalProperties: false
+      required: [toolId, siteId, status, readings]
+      properties:
+        toolId:
+          type: string
+        siteId:
+          type: string
+        status:
+          type: string
+          enum: [nominal, watch, alarm]
+        readings:
+          type: array
+          items:
+            $ref: "#/components/schemas/LiveReading"
+    ToolLive:
+      type: object
+      additionalProperties: false
+      required: [toolId, siteId, simulatedNow, status, readings, series]
+      properties:
+        toolId:
+          type: string
+        siteId:
+          type: string
+        simulatedNow:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [nominal, watch, alarm]
+        readings:
+          type: array
+          items:
+            $ref: "#/components/schemas/LiveReading"
+        series:
+          type: array
+          items:
+            $ref: "#/components/schemas/LiveSeries"
+    LiveReading:
+      type: object
+      additionalProperties: false
+      required: [sensorId, parameter, chamberId, unit, at, value, status]
+      properties:
+        sensorId:
+          type: string
+        parameter:
+          type: string
+        chamberId:
+          type: string
+        unit:
+          type: string
+        at:
+          type: string
+          format: date-time
+        value:
+          type: number
+        status:
+          type: string
+          enum: [nominal, watch, alarm]
+    LiveSeries:
+      type: object
+      additionalProperties: false
+      required: [parameter, chamberId, points]
+      properties:
+        parameter:
+          type: string
+        chamberId:
+          type: string
+        points:
+          type: array
+          items:
+            $ref: "#/components/schemas/LivePoint"
+    LivePoint:
+      type: object
+      additionalProperties: false
+      required: [at, value]
+      properties:
+        at:
+          type: string
+          format: date-time
+        value:
+          type: number
     Severity:
       type: string
       enum: [low, medium, high, critical]
@@ -639,6 +801,9 @@ components:
           format: date-time
         correlationId:
           type: string
+        siteId:
+          type: string
+          description: Plant that owns the tool. Derived from the tool id.
     Ticket:
       type: object
       additionalProperties: false
@@ -660,6 +825,9 @@ components:
         openedAt:
           type: string
           format: date-time
+        siteId:
+          type: string
+          description: Plant that owns the tool. Derived from the tool id.
     Incident:
       type: object
       additionalProperties: false
@@ -688,6 +856,9 @@ components:
           format: date-time
         stage:
           $ref: "#/components/schemas/IncidentStage"
+        siteId:
+          type: string
+          description: Plant that owns the tool. Derived from the tool id.
     OpenIncidentRequest:
       type: object
       additionalProperties: false
@@ -834,6 +1005,9 @@ components:
           nullable: true
         correlationId:
           type: string
+        siteId:
+          type: string
+          description: Plant that owns the incident tool. Derived at the HTTP edge.
     HumanDecisionKind:
       type: string
       enum: [approve, reject, requestInfo, override]
@@ -888,6 +1062,9 @@ components:
         openedAt:
           type: string
           format: date-time
+        siteId:
+          type: string
+          description: Plant that owns the incident tool. Derived at the HTTP edge.
     AdvanceCapaRequest:
       type: object
       additionalProperties: false

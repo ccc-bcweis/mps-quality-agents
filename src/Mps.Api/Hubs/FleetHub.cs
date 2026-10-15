@@ -6,6 +6,7 @@ using Mps.Api.Http;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
 using Mps.Domain.Capa;
+using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
 using Mps.Domain.Investigations;
 
@@ -37,13 +38,16 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
 {
     private readonly IHubContext<FleetHub> _hub;
     private readonly IInvestigationNarrativeLog _narratives;
+    private readonly IIncidentLog _incidents;
 
-    public SignalRQualityNotifier(IHubContext<FleetHub> hub, IInvestigationNarrativeLog narratives)
+    public SignalRQualityNotifier(IHubContext<FleetHub> hub, IInvestigationNarrativeLog narratives, IIncidentLog incidents)
     {
         ArgumentNullException.ThrowIfNull(hub);
         ArgumentNullException.ThrowIfNull(narratives);
+        ArgumentNullException.ThrowIfNull(incidents);
         _hub = hub;
         _narratives = narratives;
+        _incidents = incidents;
     }
 
     public Task AlertRaisedAsync(Alert alert, CancellationToken cancellationToken)
@@ -68,15 +72,23 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         var narrative = await _narratives.GetAsync(snapshot.Id, cancellationToken).ConfigureAwait(false);
-        await SendAsync("investigationChanged", null, ContractMapper.ToResponse(snapshot, narrative), cancellationToken)
+        var site = await SiteForAsync(snapshot.IncidentId, cancellationToken).ConfigureAwait(false);
+        await SendAsync("investigationChanged", null, ContractMapper.ToResponse(snapshot, narrative, site), cancellationToken)
             .ConfigureAwait(false);
     }
 
-    public Task CapaChangedAsync(CapaAction capa, string eventName, CancellationToken cancellationToken)
+    public async Task CapaChangedAsync(CapaAction capa, string eventName, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(capa);
         var name = string.IsNullOrWhiteSpace(eventName) ? "capaChanged" : eventName.Trim();
-        return SendAsync(name, null, ContractMapper.ToResponse(capa), cancellationToken);
+        var site = await SiteForAsync(capa.IncidentId, cancellationToken).ConfigureAwait(false);
+        await SendAsync(name, null, ContractMapper.ToResponse(capa, site), cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<string> SiteForAsync(IncidentId incidentId, CancellationToken cancellationToken)
+    {
+        var stored = await _incidents.GetAsync(incidentId, cancellationToken).ConfigureAwait(false);
+        return ContractMapper.SiteForTool(stored?.Incident.ToolId.ToString());
     }
 
     public Task FaultInjectedAsync(Guid faultId, string correlationId, string toolId, CancellationToken cancellationToken) =>
