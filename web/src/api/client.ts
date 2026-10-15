@@ -19,6 +19,9 @@ import type {
   SiteDetail,
   SiteSummary,
   OpenIncidentRequest,
+  PrintoutConfirmation,
+  PrintoutConfirmRequest,
+  PrintoutInspection,
   Problem,
   Ticket,
   Tool,
@@ -43,7 +46,7 @@ export class ApiProblem extends Error {
 export async function apiSend<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   headers.set("accept", "application/json");
-  if (init?.body !== undefined && !headers.has("content-type")) {
+  if (init?.body !== undefined && !(init.body instanceof FormData) && !headers.has("content-type")) {
     headers.set("content-type", "application/json");
   }
 
@@ -97,6 +100,13 @@ export const api = {
     apiSend<Capa>(`/api/capas/${capaId}/advance`, { method: "POST", body: JSON.stringify(body) }),
   injectFault: (body: FaultInjectionRequest) =>
     apiSend<FaultInjectionAccepted>("/api/faults", { method: "POST", body: JSON.stringify(body) }),
+  inspectPrintout: (file: File) => {
+    const body = new FormData();
+    body.append("file", file);
+    return apiSend<PrintoutInspection>("/api/printouts/inspect", { method: "POST", body });
+  },
+  confirmPrintout: (body: PrintoutConfirmRequest) =>
+    apiSend<PrintoutConfirmation>("/api/printouts/confirm", { method: "POST", body: JSON.stringify(body) }),
   getAdminSession: () => apiSend<AdminSession>("/api/admin/session"),
   resetDemo: () => apiSend<DemoResetResult>("/api/admin/reset", { method: "POST" }),
   listScenarios: () => apiSend<ScriptedScenario[]>("/api/injector/scenarios"),

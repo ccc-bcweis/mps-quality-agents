@@ -12,6 +12,7 @@ using Mps.Api.Http;
 using Mps.Api.Hubs;
 using Mps.Api.Live;
 using Mps.Api.Persistence;
+using Mps.Api.Printouts;
 using Mps.Application.Decisions;
 using Mps.Application.Faults;
 using Mps.Application.Intake;
@@ -23,6 +24,7 @@ using Mps.Application.Printouts;
 using Mps.Application.Spc;
 using Mps.Application.Workflow;
 using Mps.Application.Writes;
+using Mps.Connectors.Printouts;
 using Mps.Simulator.Sites;
 
 using Gateway = Mps.ModelGateway.Routing.ModelGateway;
@@ -108,6 +110,11 @@ public static class QualityHost
         builder.Services.AddScoped<ICapaLifecycleService, CapaLifecycleService>();
         builder.Services.AddScoped<IHumanDecisionService, HumanDecisionService>();
         builder.Services.AddSingleton<IManualMeasurementLog, InMemoryManualMeasurementLog>();
+        builder.Services.AddSingleton<IPrintoutTextExtractor, PdfTextExtractor>();
+        builder.Services.AddSingleton<IPrintoutFieldParser, LabeledPrintoutParser>();
+        builder.Services.AddSingleton<IPrintoutModelReader, PrintoutModelReader>();
+        builder.Services.AddSingleton<ISimulationFaultPort, DemoSimulationFaultPort>();
+        builder.Services.AddScoped<IDocumentIntake, DocumentIntakeService>();
         builder.Services.AddScoped<IFaultInjectionService, FaultInjectionService>();
         builder.Services.AddHostedService<QualityDatabaseInitializer>();
     }
