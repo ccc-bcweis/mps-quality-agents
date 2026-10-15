@@ -5,6 +5,7 @@ import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import { approvalSentence } from "../api/labels";
 import { server } from "../test/server";
+import { expandHarness } from "../test/harness";
 import { renderConsole } from "../test/render";
 
 const AT = "2026-10-15T02:42:00.000Z";
@@ -13,7 +14,7 @@ describe("audit log", () => {
   it("opens from the harness and starts empty", async () => {
     const user = userEvent.setup();
     renderConsole("/");
-    const harness = await screen.findByRole("banner", { name: "StatusNeo demo harness" });
+    const harness = await expandHarness();
     await user.click(within(harness).getByRole("link", { name: "Audit log" }));
     const panel = await screen.findByRole("region", { name: "Demo harness panel" });
     expect(within(panel).getByRole("heading", { name: "Audit log" })).toBeInTheDocument();

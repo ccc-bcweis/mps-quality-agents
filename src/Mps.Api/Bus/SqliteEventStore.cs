@@ -141,6 +141,22 @@ public sealed class SqliteEventStore : IDisposable
         }
     }
 
+    public long CountTelemetry() => CountRows("SELECT COUNT(*) FROM telemetry;");
+
+    public long CountLog() => CountRows("SELECT COUNT(*) FROM eventlog;");
+
+    private long CountRows(string sql)
+    {
+        Ready();
+        lock (_gate)
+        {
+            using var command = _connection.CreateCommand();
+            command.CommandText = sql;
+            var raw = command.ExecuteScalar();
+            return raw is long value ? value : Convert.ToInt64(raw, CultureInfo.InvariantCulture);
+        }
+    }
+
     public StoredEvent? Find(string eventId)
     {
         if (string.IsNullOrWhiteSpace(eventId))

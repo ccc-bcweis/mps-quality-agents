@@ -49,7 +49,7 @@ public sealed class InMemoryInvestigationLog : IInvestigationLog
         _ = cancellationToken;
         var match = _snapshots.LastOrDefault(item =>
             item.IncidentId == incidentId
-            && item.Stage is not (InvestigationStage.Rejected or InvestigationStage.Failed));
+            && item.Stage is not (InvestigationStage.Rejected or InvestigationStage.Failed or InvestigationStage.ClosedByDemoReset));
         return Task.FromResult(match);
     }
 

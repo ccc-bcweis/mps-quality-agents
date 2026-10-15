@@ -10,7 +10,7 @@ async function openTickets(page: Page, width: number) {
   await page.setViewportSize({ width, height: 1000 });
   await page.goto("/tickets");
   await expect(page.getByRole("heading", { name: "Tickets" })).toBeVisible();
-  await expect(page.getByText("TKT-1044")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Operator report" })).toBeVisible();
 }
 
 async function layoutFaults(page: Page): Promise<string[]> {

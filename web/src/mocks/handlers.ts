@@ -470,6 +470,7 @@ export const handlers = [
         item.toolId === body.toolId &&
         item.parameter === body.parameter &&
         item.stage !== "closed" &&
+        item.stage !== "closedByDemoReset" &&
         item.stage !== "rejected",
     );
     if (open) return HttpResponse.json(open, { status: 201 });
@@ -632,8 +633,19 @@ export const handlers = [
 
   http.get("/api/audit", () => HttpResponse.json({ entries: [], traces: [] })),
 
-  http.post("/api/admin/reset", () => {
-    resetMockState();
+  http.get("/api/admin/reset/progress", () =>
+    HttpResponse.json({ running: false, kind: null, phase: "idle", message: "Ready." }),
+  ),
+
+  http.post("/api/admin/reset", async ({ request }) => {
+    let kind: "hard" | "soft" = "hard";
+    try {
+      const body = (await request.json()) as { kind?: string };
+      if (body.kind === "soft") kind = "soft";
+    } catch {
+      kind = "hard";
+    }
+    if (kind === "hard") resetMockState();
     return HttpResponse.json({
       seed: 4242,
       simulatedOrigin: "2026-09-01T00:00:00Z",
@@ -642,7 +654,22 @@ export const handlers = [
       investigationCount: 0,
       approvalCount: 0,
       capaCount: 0,
+      telemetryCount: kind === "hard" ? 12000 : 8,
+      eventCount: 1,
+      resetEventId: "reset-event",
+      kind,
     });
+  }),
+
+  http.get("/api/demo/data-mode", () => HttpResponse.json({ mode: "live", scenarioId: null, messageCount: 0 })),
+
+  http.post("/api/demo/data-mode", async ({ request }) => {
+    const body = (await request.json()) as { mode?: string; scenarioId?: string };
+    if (body.mode === "live") return HttpResponse.json({ mode: "live", scenarioId: null, messageCount: 0 });
+    if (body.mode === "replay" && body.scenarioId) {
+      return HttpResponse.json({ mode: "replay", scenarioId: body.scenarioId, messageCount: 12 });
+    }
+    return problem("That scenario has no recording.", 404);
   }),
 
 

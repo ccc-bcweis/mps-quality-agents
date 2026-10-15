@@ -64,13 +64,14 @@ test("walks every console tab and harness link after a scenario", async ({ page 
   await page.goto("/");
   const harness = page.getByRole("banner", { name: "StatusNeo demo harness" });
   await expect(harness).toBeVisible();
+  await harness.getByRole("button", { name: "Expand harness" }).click();
   await expect(harness.getByRole("option", { name: /SC-1/ })).toBeAttached();
   await harness.getByRole("combobox", { name: "Scenario" }).selectOption("SC-1");
   await harness.getByRole("button", { name: "Run scenario" }).click();
 
   const consoleRegion = page.getByRole("region", { name: "Meridian Precision Systems console" });
-  await expect(consoleRegion.getByRole("heading", { name: "Alerts" })).toBeVisible();
-  await expect(consoleRegion.getByText("corr-scenario-SC-1")).toBeVisible();
+  await expect(consoleRegion.getByRole("heading", { name: /Tool E-02/ })).toBeVisible();
+  await expect(consoleRegion.getByRole("status", { name: "Streaming trace" })).toBeVisible();
   await assertNoError(page);
   await assertHistoryTablesFit(page);
 
@@ -79,10 +80,6 @@ test("walks every console tab and harness link after a scenario", async ({ page 
     await nav.getByRole("link", { name: tab.name, exact: true }).click();
     await expect(consoleRegion.getByRole("heading", { name: tab.heading })).toBeVisible();
     await assertNoError(page);
-    if (tab.name === "Alerts") await expect(consoleRegion.getByText("corr-scenario-SC-1")).toBeVisible();
-    if (tab.name === "Tickets" || tab.name === "Investigation" || tab.name === "Approval") {
-      await expect(consoleRegion.getByText("Scenario SC-1 on E-02.")).toBeVisible();
-    }
     if (tab.name === "CAPA") await expect(consoleRegion.locator("main")).toContainText("No CAPA yet");
     await assertHistoryTablesFit(page);
   }

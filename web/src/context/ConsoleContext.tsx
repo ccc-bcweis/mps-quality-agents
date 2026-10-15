@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
 import { api } from "../api/client";
-import type { Alert, Capa, MetricsSummary, RunMode } from "../api/types";
+import type { Alert, Capa, DataMode, MetricsSummary, RunMode } from "../api/types";
 import type { LifecycleView } from "../lifecycle";
 
 export type BannerMode = "replay" | "live" | "mockReasoner";
@@ -26,6 +26,9 @@ type ConsoleValue = {
   rememberLocalAlert: (alert: Alert) => void;
   revision: number;
   clearDemo: () => void;
+  dataMode: DataMode["mode"];
+  dataScenarioId: string | null;
+  setDataMode: (mode: DataMode["mode"], scenarioId?: string) => Promise<DataMode>;
 };
 
 const ConsoleContext = createContext<ConsoleValue | null>(null);
@@ -55,6 +58,24 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
   const [capas, setCapas] = useState<Capa[]>(() => readCapas());
   const [localAlerts, setLocalAlerts] = useState<Alert[]>([]);
   const [revision, setRevision] = useState(0);
+  const [plantData, setPlantData] = useState<DataMode>({ mode: "live", scenarioId: null, messageCount: 0 });
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .getDataMode()
+      .then((next) => {
+        if (cancelled) return;
+        setPlantData(next);
+        if (next.mode === "replay") setRevision((current) => current + 1);
+      })
+      .catch(() => {
+        // Live stays the view until a switch succeeds.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -113,6 +134,13 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
     setRevision((current) => current + 1);
   }, []);
 
+  const setDataMode = useCallback(async (mode: DataMode["mode"], scenarioId?: string) => {
+    const next = await api.setDataMode(mode, scenarioId);
+    setPlantData(next);
+    setRevision((current) => current + 1);
+    return next;
+  }, []);
+
   const value = useMemo<ConsoleValue>(
     () => ({
       metrics,
@@ -131,6 +159,9 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
       rememberLocalAlert,
       revision,
       clearDemo,
+      dataMode: plantData.mode,
+      dataScenarioId: plantData.scenarioId ?? null,
+      setDataMode,
     }),
     [
       metrics,
@@ -150,6 +181,8 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
       rememberLocalAlert,
       revision,
       clearDemo,
+      plantData,
+      setDataMode,
     ],
   );
 

@@ -525,17 +525,40 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AdminSession"
+  /api/admin/reset/progress:
+    get:
+      tags: [admin]
+      operationId: getResetProgress
+      summary: Latest hard or soft reset phase
+      description: |
+        The reset request updates this snapshot while it runs. The harness polls it so the console stays usable.
+        Anyone may read it. Only an admin may start a reset.
+      responses:
+        "200":
+          description: Idle, running, finished, or failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResetProgress"
   /api/admin/reset:
     post:
       tags: [admin]
       operationId: resetDemo
-      summary: Restore the seeded demo baseline
+      summary: Hard or soft demo reset
       description: |
-        Admin only. Restores fleet state, tickets, investigations, approvals, CAPAs, and the
-        simulated clock from Mps:Demo:Seed (default 4242). The same seed is used locally and in Azure.
-        A second call returns the same baseline.
+        Admin only. An empty body or kind hard wipes transactional data, keeps metadata, rebuilds the
+        eight-tool fleet, and fills a week of healthy history. Kind soft deletes nothing. It closes open
+        tickets, investigations, and pending approvals with the status Closed by demo reset, clears live
+        faults, and sends one healthy reading for every sensor. History stays. The same seed is used
+        locally and in Azure (Mps:Demo:Seed, default 4242).
       parameters:
         - $ref: "#/components/parameters/ClientPrincipal"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DemoResetRequest"
       responses:
         "200":
           description: Baseline restored.
@@ -549,6 +572,81 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /api/demo/data-mode:
+    get:
+      tags: [admin]
+      operationId: getDataMode
+      summary: Whether the console is showing live plant data or a recorded scenario
+      description: |
+        Live follows the running plant. Replay shows one recorded scenario.
+        This does not change saved answers versus a live model.
+      responses:
+        "200":
+          description: Current data mode.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataMode"
+    post:
+      tags: [admin]
+      operationId: setDataMode
+      summary: Switch the console between live plant data and a recorded scenario
+      description: |
+        Admin only. Live restores the running plant view. Replay loads data/replay for that scenario.
+        The recording is kept when switching back to live.
+      parameters:
+        - $ref: "#/components/parameters/ClientPrincipal"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataModeRequest"
+      responses:
+        "200":
+          description: The mode now in effect.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataMode"
+        "403":
+          description: The caller is not an admin.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The scenario is unknown or has no recording.
+  /api/admin/replay/{scenarioId}:
+    post:
+      tags: [admin]
+      operationId: recordScenarioReplay
+      summary: Record one scenario run onto the bus and save it
+      description: |
+        Admin only. Runs the scenario and writes the bus messages to data/replay for that scenario.
+        Saved model answers are left alone.
+      parameters:
+        - $ref: "#/components/parameters/ClientPrincipal"
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: How many bus messages were saved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplayCapture"
+        "403":
+          description: The caller is not an admin.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: The scenario is unknown.
   /api/injector/scenarios:
     get:
       tags: [faults]
@@ -969,6 +1067,7 @@ components:
         - approved
         - rejected
         - closed
+        - closedByDemoReset
     Alert:
       type: object
       additionalProperties: false
@@ -1051,6 +1150,9 @@ components:
         siteId:
           type: string
           description: Plant that owns the tool. Derived from the tool id.
+        statusLabel:
+          type: string
+          description: Plain-language status. Present only when a demo reset closed the incident.
     OpenIncidentRequest:
       type: object
       additionalProperties: false
@@ -1246,6 +1348,7 @@ components:
         - approved
         - rejected
         - failed
+        - closedByDemoReset
     Investigation:
       type: object
       additionalProperties: false
@@ -1280,6 +1383,9 @@ components:
         siteId:
           type: string
           description: Plant that owns the incident tool. Derived at the HTTP edge.
+        statusLabel:
+          type: string
+          description: Plain-language status. Present only when a demo reset closed the investigation.
     HumanDecisionKind:
       type: string
       enum: [approve, reject, requestInfo, override]
@@ -1548,10 +1654,32 @@ components:
           type: boolean
         displayName:
           type: string
+    DemoResetRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        kind:
+          type: string
+          enum: [hard, soft]
+          description: Omitted or hard wipes transactional data. Soft closes open work and keeps history.
+    ResetProgress:
+      type: object
+      additionalProperties: false
+      required: [running, phase, message]
+      properties:
+        running:
+          type: boolean
+        kind:
+          type: string
+          nullable: true
+        phase:
+          type: string
+        message:
+          type: string
     DemoResetResult:
       type: object
       additionalProperties: false
-      required: [seed, simulatedOrigin, fleetToolCount, ticketCount, investigationCount, approvalCount, capaCount]
+      required: [seed, simulatedOrigin, fleetToolCount, ticketCount, investigationCount, approvalCount, capaCount, telemetryCount, eventCount, resetEventId, kind]
       properties:
         seed:
           type: integer
@@ -1567,6 +1695,50 @@ components:
         approvalCount:
           type: integer
         capaCount:
+          type: integer
+        telemetryCount:
+          type: integer
+          format: int64
+        eventCount:
+          type: integer
+          format: int64
+        resetEventId:
+          type: string
+        kind:
+          type: string
+          enum: [hard, soft]
+    DataMode:
+      type: object
+      additionalProperties: false
+      required: [mode, messageCount]
+      properties:
+        mode:
+          type: string
+          enum: [live, replay]
+        scenarioId:
+          type: string
+          nullable: true
+        messageCount:
+          type: integer
+    DataModeRequest:
+      type: object
+      additionalProperties: false
+      required: [mode]
+      properties:
+        mode:
+          type: string
+          enum: [live, replay]
+        scenarioId:
+          type: string
+          description: Required when mode is replay.
+    ReplayCapture:
+      type: object
+      additionalProperties: false
+      required: [scenarioId, messageCount]
+      properties:
+        scenarioId:
+          type: string
+        messageCount:
           type: integer
     ScriptedScenario:
       type: object

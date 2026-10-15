@@ -49,7 +49,8 @@ public sealed record IncidentResponse(
     string CorrelationId,
     DateTimeOffset OpenedAt,
     IncidentStage Stage,
-    string SiteId);
+    string SiteId,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? StatusLabel = null);
 
 public sealed record EvidenceResponse(
     Guid Id,
@@ -93,7 +94,8 @@ public sealed record InvestigationResponse(
     string? EscalationReason,
     string CorrelationId,
     IReadOnlyList<EvidenceMatrixResponse> EvidenceMatrix,
-    string SiteId);
+    string SiteId,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? StatusLabel = null);
 
 public sealed record CapaResponse(
     Guid Id,
@@ -280,3 +282,5 @@ public sealed class PrintoutConfirmBody
 
     public string? OperatorInitials { get; set; }
 }
+
+public sealed record ReplayCaptureResponse(string ScenarioId, int MessageCount);

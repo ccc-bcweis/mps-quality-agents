@@ -10,8 +10,8 @@ Navy and gold band above the product. Not part of the Meridian Precision Systems
 
 | Screen | Where | What the presenter uses it for |
 |---|---|---|
-| Harness bar | Every screen | StatusNeo wordmark, fault injector, return on investment, metrics, scenario picker, Reset demo (admin only), live / replay / mock, today's spend against the daily cap. |
-| Fault injector | `/harness/injector` | Free-form fault. Named scenarios run from the bar, then the console opens on alerts. |
+| Harness bar | Every screen | One row until the presenter opens it: a down arrow and a line for plant data, the scenario, and the answer engine. The choice stays in this browser. Opened, the bar holds scenario cards, the fault injector, a sample printout upload, hard and soft reset (admin only), plant data Live or Replay, the answer engine, return on investment, metrics, and the audit log. The open bar stays within about a third of a short screen. The console scrolls on its own. |
+| Fault injector | `/harness/injector` | Free-form fault. Named scenarios run from the bar, then the console opens that tool with the trace streaming. |
 | Return on investment | `/harness/roi` | Illustrative savings sketch. Every figure is synthetic. |
 | Metrics | `/harness/metrics` | How this demo run is scoring, and what it has spent. |
 
@@ -24,7 +24,7 @@ Charcoal application inside the gold frame.
 | Sites | `/sites` | Three plants. The tab sits before Fleet. |
 | Fleet | `/` | Eight tools, two bays. |
 | Tool | `/tools/:toolId` | Schematic and the process window. |
-| Alerts | `/alerts` | Rules-engine alerts, newest first. A missing alert falls back to the list. A scenario run lands here. |
+| Alerts | `/alerts` | Rules-engine alerts, newest first. A missing alert falls back to the list. |
 | Tickets | `/tickets` | Normalized intake, newest first. Operator report and Upload telemetry sit side by side. A missing ticket falls back to the list. |
 | Investigation | `/investigations` | The tab opens the list, newest first. A missing deep link falls back to the list. Detail stays at `/investigations/:id`. |
 | Approval | `/approvals` | The tab opens the list. A missing deep link falls back to the list. The gate stays at `/approvals/:id`. |
@@ -35,4 +35,4 @@ On Tickets, choose a tool and the parameter list shrinks to that tool's sensor c
 
 ## What not to mix
 
-Reset demo, the scenario picker, the fault injector, return on investment, and metrics are presenter tools. They are not console tabs. Deck crops follow `docs/PLAN.md` section 7.
+Hard reset, soft reset, the scenario picker, plant-data replay, the fault injector, return on investment, and metrics are presenter tools. They are not console tabs. A replay banner on the console only says that the numbers on screen are a recording. Deck crops follow `docs/PLAN.md` section 7.

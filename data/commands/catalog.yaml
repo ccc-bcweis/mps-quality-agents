@@ -47,21 +47,25 @@ commands:
         type: string
   - name: command.reset.hard
     kind: system
-    summary: Wipe tickets, investigations, and telemetry, then rebuild the nominal plant.
+    summary: Wipe tickets, investigations, and telemetry, then rebuild a week of healthy plant history. Metadata is kept.
     whoMayIssue:
       - presenter
     emits:
       - command.reset.hard
+      - telemetry.reading
     payload:
       - name: kind
         type: string
   - name: command.reset.soft
     kind: system
-    summary: Clear live faults and keep tickets.
+    summary: Close open tickets and investigations, clear live faults, and keep history.
     whoMayIssue:
       - presenter
     emits:
       - command.reset.soft
+      - incident.changed
+      - investigation.changed
+      - telemetry.reading
     payload:
       - name: kind
         type: string

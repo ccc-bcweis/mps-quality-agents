@@ -19,7 +19,7 @@ import { plainTool } from "../investigation/format";
 import { useSite } from "../context/SiteContext";
 import { pathForIncident, pathForTicket } from "../investigation/ticketRoute";
 import { toolInPlant } from "../sites/selection";
-import { lifecycleForIncident } from "../lifecycle";
+import { isClosedStage, lifecycleForIncident } from "../lifecycle";
 import { parameterLabel } from "../sites/parameters";
 
 export function TicketsPage() {
@@ -108,7 +108,7 @@ export function TicketsPage() {
     return {
       id: ticket.id,
       status: incident ? (
-        <Chip tone={incident.stage === "closed" ? "ok" : severityTone(incident.severity)}>{STAGE_LABEL[incident.stage]}</Chip>
+        <Chip tone={isClosedStage(incident.stage) ? "ok" : severityTone(incident.severity)}>{STAGE_LABEL[incident.stage]}</Chip>
       ) : (
         "—"
       ),
@@ -120,7 +120,7 @@ export function TicketsPage() {
           <Link to={path}>{ticket.title}</Link>
           <div className="mt-1 font-mono text-mps-micro">
             <Link to={path}>{ticket.number}</Link>
-            {stage && stage !== "closed" ? <span> · {stage === "ticketOpened" ? "Start" : "Open"}</span> : null}
+            {stage && !isClosedStage(stage) ? <span> · {stage === "ticketOpened" ? "Start" : "Open"}</span> : null}
             {incident ? <span className="text-mps-muted"> · {severityWord(incident.severity)}</span> : null}
           </div>
         </>
@@ -154,7 +154,7 @@ export function TicketsPage() {
       ) : null}
       {!ticketId || missing ? <RecordList label="Tickets" rows={rows} empty="No tickets yet." /> : null}
       <CaseBriefs
-        incidentIds={incidents.filter((incident) => incident.stage !== "closed").map((incident) => incident.id)}
+        incidentIds={incidents.filter((incident) => !isClosedStage(incident.stage)).map((incident) => incident.id)}
         intro="Evidence linked to these tickets"
       />
       <div className="mt-3 grid gap-3 xl:grid-cols-2">

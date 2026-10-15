@@ -2,6 +2,7 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
+import { expandHarness } from "../test/harness";
 import { renderConsole } from "../test/render";
 
 const TIP = "This does not change the plant data. It only changes how the AI answers.";
@@ -10,6 +11,7 @@ describe("mode banner and spend", () => {
   it("starts in replay at zero spend and previews live without hiding the gateway mode", async () => {
     const user = userEvent.setup();
     renderConsole("/");
+    await expandHarness();
     const engine = await screen.findByRole("group", { name: "AI engine" });
     expect(engine).toHaveAttribute("title", TIP);
     expect(engine.className).not.toMatch(/truncate|overflow-hidden|min-w-0/);

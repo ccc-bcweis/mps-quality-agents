@@ -120,6 +120,67 @@ public sealed class LifecycleMoveTests
     }
 
     [Fact]
+    public void DemoResetClosesAnOpenIncidentWithoutShorteningANormalClose()
+    {
+        var incident = Incident.Open(
+            IncidentId.New(),
+            new ToolId("E-02"),
+            "A",
+            "escTemperature",
+            IncidentChannel.OperatorReport,
+            Severity.Medium,
+            "Open work.",
+            "corr-demo-reset",
+            Now);
+        incident.CloseByDemoReset();
+        incident.Stage.Should().Be(IncidentStage.ClosedByDemoReset);
+        incident.CloseByDemoReset();
+        incident.Stage.Should().Be(IncidentStage.ClosedByDemoReset);
+
+        var closedPath = IncidentStagePath.Between(IncidentStage.TicketOpened, IncidentStage.Closed, blockApproval: false);
+        closedPath.Should().NotContain(IncidentStage.ClosedByDemoReset);
+        closedPath.Should().Equal(
+            IncidentStage.Investigating,
+            IncidentStage.Escalated,
+            IncidentStage.Closed);
+
+        var restored = IncidentRestorer.Restore(
+            IncidentId.New(),
+            new ToolId("E-02"),
+            "A",
+            "escTemperature",
+            IncidentChannel.OperatorReport,
+            Severity.High,
+            "Restored.",
+            "corr-restore-demo",
+            Now,
+            IncidentStage.ClosedByDemoReset);
+        restored.Stage.Should().Be(IncidentStage.ClosedByDemoReset);
+
+        var investigation = new InvestigationSnapshot(
+            InvestigationId.New(),
+            IncidentId.New(),
+            InvestigationStage.RecommendationReady,
+            [],
+            [],
+            null,
+            "corr-demo-reset");
+        var closedInvestigation = InvestigationLifecycle.CloseByDemoReset(investigation);
+        closedInvestigation.Stage.Should().Be(InvestigationStage.ClosedByDemoReset);
+        InvestigationLifecycle.CloseByDemoReset(closedInvestigation).Should().BeSameAs(closedInvestigation);
+        var approved = new InvestigationSnapshot(
+            InvestigationId.New(),
+            IncidentId.New(),
+            InvestigationStage.Approved,
+            [],
+            [],
+            null,
+            "corr-approved");
+        var act = () => InvestigationLifecycle.CloseByDemoReset(approved);
+        act.Should().Throw<Mps.Domain.DomainRuleException>();
+    }
+
+    [Fact]
     public async Task StartingAnInvestigationMovesTheIncidentAndRejectsASecondStart()
     {
         var incidents = new InMemoryIncidentLog();

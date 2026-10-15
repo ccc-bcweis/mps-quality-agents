@@ -1,10 +1,11 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import type { ScriptedScenario } from "../api/types";
 import { lookupTerm } from "../glossary/terms";
 import { Explain } from "./Explain";
+import { visibleProblem } from "../history/copy";
 import { Term } from "./Term";
 
 /** Acronyms go through Explain. The card also links the plain glossary phrases in the story. */
@@ -31,34 +32,23 @@ function CardCopy({ text }: { text: string }) {
   if (nodes.length === 0) return <Explain text={text} />;
   return <>{nodes}</>;
 }
-import { visibleProblem } from "../history/copy";
-
 const harnessBtn =
   "inline-flex shrink-0 items-center whitespace-nowrap rounded border border-sn-gold bg-transparent px-2 py-1 font-pitch text-mps-body text-sn-gold hover:bg-sn-navy-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sn-gold disabled:cursor-not-allowed disabled:opacity-40";
 
-export function ScenarioControl() {
+export function ScenarioControl({
+  scenarios,
+  scenarioId,
+  onScenarioId,
+  loadError,
+}: {
+  scenarios: ScriptedScenario[];
+  scenarioId: string;
+  onScenarioId: (id: string) => void;
+  loadError: string | null;
+}) {
   const navigate = useNavigate();
-  const [scenarios, setScenarios] = useState<ScriptedScenario[]>([]);
-  const [scenarioId, setScenarioId] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    api
-      .listScenarios()
-      .then((next) => {
-        if (cancelled || next.length === 0) return;
-        setScenarios(next);
-        setScenarioId((current) => current || next[0].id);
-      })
-      .catch(() => {
-        if (!cancelled) setError("The scenario list did not load.");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const selected = scenarios.find((item) => item.id === scenarioId);
 
@@ -99,7 +89,7 @@ export function ScenarioControl() {
           aria-label="Scenario"
           value={scenarioId}
           disabled={pending || scenarios.length === 0}
-          onChange={(event) => setScenarioId(event.target.value)}
+          onChange={(event) => onScenarioId(event.target.value)}
         >
           {scenarios.map((item) => (
             <option key={item.id} value={item.id}>
@@ -142,9 +132,9 @@ export function ScenarioControl() {
           </details>
         </section>
       ) : null}
-      {visibleProblem(error) ? (
+      {visibleProblem(error) || visibleProblem(loadError) ? (
         <p className="basis-full text-mps-body text-mps-alarm-text" role="alert">
-          {visibleProblem(error)}
+          {visibleProblem(error) || visibleProblem(loadError)}
         </p>
       ) : null}
     </div>

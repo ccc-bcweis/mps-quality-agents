@@ -59,7 +59,7 @@ internal static class TraceSummaries
                 + (parameter is null ? string.Empty : " for " + parameter) + " at " + when + ".",
             "command.scenario.start" => ScenarioSentence(row, when),
             "command.reset.hard" => "The demo was reset to a clean plant at " + when + ".",
-            "command.reset.soft" => "The live faults were cleared and the tickets were kept at " + when + ".",
+            "command.reset.soft" => "Open tickets were closed by demo reset and the history was kept at " + when + ".",
             "command.operator.report" => "An operator reported " + where + " at " + when + ".",
             "command.document.upload" => "An operator uploaded a bench reading for " + where + " at " + when + ".",
             "command.approval.grant" => "An approver submitted the recommendation at " + when + ".",

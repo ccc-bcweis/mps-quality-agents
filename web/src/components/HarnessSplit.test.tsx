@@ -3,6 +3,7 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { CONSOLE_TABS } from "../shell/navigation";
+import { expandHarness } from "../test/harness";
 import { renderConsole } from "../test/render";
 
 const CONSOLE_TAB_LABELS = ["Sites", "Fleet", "Tool", "Alerts", "Tickets", "Investigation", "Approval", "CAPA", "Rules & Process"];
@@ -10,7 +11,7 @@ const CONSOLE_TAB_LABELS = ["Sites", "Fleet", "Tool", "Alerts", "Tickets", "Inve
 describe("demo harness and console split", () => {
   it("keeps presenter controls out of the console region", async () => {
     renderConsole("/");
-    const harness = await screen.findByRole("banner", { name: "StatusNeo demo harness" });
+    const harness = await expandHarness();
     const consoleRegion = screen.getByRole("region", { name: "Meridian Precision Systems console" });
     expect(consoleRegion.contains(harness)).toBe(false);
     expect(harness.contains(consoleRegion)).toBe(false);
@@ -33,7 +34,10 @@ describe("demo harness and console split", () => {
     expect(within(harness).getByRole("link", { name: "Fault injector" })).toHaveAttribute("href", "/harness/injector");
     expect(within(harness).getByRole("link", { name: "Return on investment" })).toHaveAttribute("href", "/harness/roi");
     expect(within(harness).getByRole("link", { name: "Metrics" })).toHaveAttribute("href", "/harness/metrics");
-    expect(within(harness).getByRole("button", { name: "Reset demo" })).toBeInTheDocument();
+    expect(await within(harness).findByRole("button", { name: "Hard reset" })).toBeInTheDocument();
+    expect(within(harness).getByRole("button", { name: "Soft reset" })).toBeInTheDocument();
+    expect(within(harness).getByRole("group", { name: "Plant data" })).toBeInTheDocument();
+    expect(within(harness).getByLabelText("Sample printout")).toBeInTheDocument();
     expect(within(harness).getByRole("combobox", { name: "Scenario" })).toBeInTheDocument();
     expect(within(harness).getByRole("button", { name: "Replay (saved answers, free, repeatable)" })).toHaveAttribute("aria-pressed", "true");
     expect(within(harness).getByText("Answers only. Plant data stays the same.")).toBeInTheDocument();
@@ -42,7 +46,9 @@ describe("demo harness and console split", () => {
     expect(within(consoleRegion).queryByRole("link", { name: "Fault injector" })).not.toBeInTheDocument();
     expect(within(consoleRegion).queryByRole("link", { name: "Return on investment" })).not.toBeInTheDocument();
     expect(within(consoleRegion).queryByRole("link", { name: "Metrics" })).not.toBeInTheDocument();
-    expect(within(consoleRegion).queryByRole("button", { name: "Reset demo" })).not.toBeInTheDocument();
+    expect(within(consoleRegion).queryByRole("button", { name: "Hard reset" })).not.toBeInTheDocument();
+    expect(within(consoleRegion).queryByRole("button", { name: "Soft reset" })).not.toBeInTheDocument();
+    expect(within(consoleRegion).queryByRole("group", { name: "Plant data" })).not.toBeInTheDocument();
     expect(within(consoleRegion).queryByRole("combobox", { name: "Scenario" })).not.toBeInTheDocument();
     expect(within(consoleRegion).queryByText("Answers only. Plant data stays the same.")).not.toBeInTheDocument();
     expect(within(consoleRegion).queryByRole("group", { name: "AI engine" })).not.toBeInTheDocument();
@@ -53,6 +59,7 @@ describe("demo harness and console split", () => {
   it("opens the fault injector as a harness panel, not a console tab", async () => {
     const user = userEvent.setup();
     renderConsole("/");
+    await expandHarness();
     await user.click(await screen.findByRole("link", { name: "Fault injector" }));
     const panel = await screen.findByRole("region", { name: "Demo harness panel" });
     expect(within(panel).getByRole("heading", { name: "Fault injector" })).toBeInTheDocument();
@@ -73,7 +80,7 @@ describe("demo harness and console split", () => {
   it("runs a named scenario from the harness bar", async () => {
     const user = userEvent.setup();
     renderConsole("/");
-    const harness = await screen.findByRole("banner", { name: "StatusNeo demo harness" });
+    const harness = await expandHarness();
     await within(harness).findByRole("option", { name: /SC-4/ });
     await user.selectOptions(within(harness).getByRole("combobox", { name: "Scenario" }), "SC-4");
     expect(within(harness).getByRole("region", { name: "SC-4 scenario card" })).toHaveTextContent(/etch rate/i);
@@ -88,7 +95,7 @@ describe("demo harness and console split", () => {
   it("opens a scenario card from the picker", async () => {
     const user = userEvent.setup();
     renderConsole("/");
-    const harness = await screen.findByRole("banner", { name: "StatusNeo demo harness" });
+    const harness = await expandHarness();
     await within(harness).findByRole("option", { name: /SC-5/ });
     await user.selectOptions(within(harness).getByRole("combobox", { name: "Scenario" }), "SC-5");
     const card = within(harness).getByRole("region", { name: "SC-5 scenario card" });

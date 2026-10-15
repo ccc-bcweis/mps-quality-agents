@@ -188,7 +188,7 @@ export function InvestigationPage() {
   }
   if (investigation) return <InvestigationDetail investigation={investigation} />;
   if (incident && !error) {
-    const finished = incident.stage === "closed" || incident.stage === "approved";
+    const finished = incident.stage === "closed" || incident.stage === "closedByDemoReset" || incident.stage === "approved";
     return (
       <div>
         <div className="mb-4">

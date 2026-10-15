@@ -16,7 +16,10 @@ globalThis.ResizeObserver = ResizeObserverStub;
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 beforeEach(() => {
   if (typeof sessionStorage !== "undefined") sessionStorage.clear();
-  if (typeof localStorage !== "undefined") localStorage.removeItem("mps.selectedSite");
+  if (typeof localStorage !== "undefined") {
+    localStorage.removeItem("mps.selectedSite");
+    localStorage.removeItem("mps.harness");
+  }
   resetMockState();
 });
 afterEach(() => {

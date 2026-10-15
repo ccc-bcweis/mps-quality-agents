@@ -37,7 +37,10 @@ public sealed class ConsoleApiContractTests
         "/api/printouts/inspect",
         "/api/printouts/confirm",
         "/api/admin/session",
+        "/api/admin/reset/progress",
         "/api/admin/reset",
+        "/api/demo/data-mode",
+        "/api/admin/replay/{scenarioId}",
         "/api/audit",
         "/api/injector/scenarios",
         "/api/injector/scenarios/{scenarioId}",
@@ -96,7 +99,11 @@ public sealed class ConsoleApiContractTests
         Expect(OperationType.Post, "/api/printouts/inspect", "inspectPrintout", "200");
         Expect(OperationType.Post, "/api/printouts/confirm", "confirmPrintout", "200");
         Expect(OperationType.Get, "/api/admin/session", "getAdminSession", "200");
+        Expect(OperationType.Get, "/api/admin/reset/progress", "getResetProgress", "200");
         Expect(OperationType.Post, "/api/admin/reset", "resetDemo", "200");
+        Expect(OperationType.Get, "/api/demo/data-mode", "getDataMode", "200");
+        Expect(OperationType.Post, "/api/demo/data-mode", "setDataMode", "200");
+        Expect(OperationType.Post, "/api/admin/replay/{scenarioId}", "recordScenarioReplay", "200");
         Expect(OperationType.Get, "/api/audit", "getAuditLog", "200");
         Expect(OperationType.Get, "/api/injector/scenarios", "listScenarios", "200");
         Expect(OperationType.Post, "/api/injector/scenarios/{scenarioId}", "runScenario", "202");
@@ -172,7 +179,8 @@ public sealed class ConsoleApiContractTests
             "awaitingApproval",
             "approved",
             "rejected",
-            "closed");
+            "closed",
+            "closedByDemoReset");
         document.Schema("ToolFamily").EnumNames().Should().Equal("deposition", "etch", "strip", "clean");
 
         var incident = document.Schema("Incident");
@@ -301,7 +309,8 @@ public sealed class ConsoleApiContractTests
             "awaitingApproval",
             "approved",
             "rejected",
-            "failed");
+            "failed",
+            "closedByDemoReset");
 
         var investigation = document.Schema("Investigation");
         investigation.AdditionalPropertiesAllowed.Should().BeFalse();
