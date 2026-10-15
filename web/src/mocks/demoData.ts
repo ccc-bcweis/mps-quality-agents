@@ -319,5 +319,5 @@ export const investigations: Investigation[] = [
 ];
 
 export function investigationFor(id: string): Investigation | undefined {
-  return investigations.find((item) => item.id === id || item.incidentId === id);
+  return investigations.find((item) => item.id === id);
 }

@@ -71,6 +71,8 @@ export const api = {
     apiSend<Incident>("/api/incidents", { method: "POST", body: JSON.stringify(body) }),
   getInvestigation: (investigationId: string) =>
     apiSend<Investigation>(`/api/investigations/${investigationId}`),
+  getLatestInvestigation: (incidentId: string) =>
+    apiSend<Investigation>(`/api/incidents/${incidentId}/investigation`),
   startInvestigation: (incidentId: string) =>
     apiSend<Investigation>(`/api/incidents/${incidentId}/investigations`, { method: "POST" }),
   submitDecision: (investigationId: string, body: HumanDecisionRequest) =>

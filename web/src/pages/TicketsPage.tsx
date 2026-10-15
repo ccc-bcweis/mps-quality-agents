@@ -9,6 +9,7 @@ import { Explain } from "../components/Explain";
 import { Term } from "../components/Term";
 import { btn, btnPrimary, field, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
+import { pathForIncident, pathForTicket } from "../investigation/ticketRoute";
 import { lifecycleForIncident } from "../lifecycle";
 
 export function TicketsPage() {
@@ -56,7 +57,7 @@ export function TicketsPage() {
         return;
       }
       setPending(false);
-      if (view.escalated) navigate(`/investigations/${incident.id}`);
+      if (view.escalated) navigate(pathForIncident(incident.id));
     } catch (reason: unknown) {
       setError(reason instanceof ApiProblem ? reason.title : "The report was not accepted.");
       setPending(false);
@@ -94,9 +95,11 @@ export function TicketsPage() {
               const incident = incidents.find((item) => item.id === ticket.incidentId);
               const stage = incident?.stage;
               return (
-                <tr key={ticket.id} className="border-t border-mps-line">
+                <tr key={ticket.id} className="cursor-pointer border-t border-mps-line" onClick={() => navigate(pathForTicket(ticket))}>
                   <td className="py-1.5 font-mono">
-                    <Link to={`/investigations/${ticket.incidentId}`}>{ticket.number}</Link>
+                    <Link to={pathForTicket(ticket)} onClick={(event) => event.stopPropagation()}>
+                      {ticket.number}
+                    </Link>
                   </td>
                   <td className="py-1.5">{incident ? <Explain text={CHANNEL_LABEL[incident.channel]} spellOut={false} /> : "—"}</td>
                   <td className="py-1.5 font-mono">{ticket.toolId}</td>
@@ -104,7 +107,13 @@ export function TicketsPage() {
                   <td className="py-1.5">{incident ? <Chip tone={incident.stage === "closed" ? "ok" : severityTone(incident.severity)}>{incident.stage === "closed" ? "CLOSED" : severityWord(incident.severity)}</Chip> : "—"}</td>
                   <td className="py-1.5">{stage ? STAGE_LABEL[stage] : "—"}</td>
                   <td className="py-1.5">
-                    {stage && stage !== "ticketOpened" && stage !== "closed" ? <Link to={`/investigations/${ticket.incidentId}`}>Open</Link> : "—"}
+                    {stage && stage !== "closed" ? (
+                      <Link to={pathForTicket(ticket)} onClick={(event) => event.stopPropagation()}>
+                        {stage === "ticketOpened" ? "Start" : "Open"}
+                      </Link>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                 </tr>
               );

@@ -6,6 +6,7 @@ import { http, HttpResponse } from "msw";
 import { handlers as contractHandlers } from "../../../contracts/msw/handlers";
 import type { Alert, FaultInjectionRequest, Incident, OpenIncidentRequest, Ticket } from "../api/types";
 import { telemetryForTool } from "../fleet/telemetry";
+import { latestInvestigationForIncident } from "../investigation/ticketRoute";
 import { alerts, incidents, investigationFor, investigations, tickets, tools } from "./demoData";
 import { mockExtras } from "./state";
 
@@ -64,6 +65,13 @@ export const handlers = [
     return HttpResponse.json(incident);
   }),
 
+  http.get("/api/incidents/:incidentId/investigation", ({ params }) => {
+    const incidentId = String(params.incidentId);
+    const latest = latestInvestigationForIncident(incidentId, [...investigations, ...mockExtras().investigations]);
+    if (!latest) return problem("No such record.", 404);
+    return HttpResponse.json(clone(latest));
+  }),
+
   http.post("/api/incidents", async ({ request }) => {
     const body = (await request.json()) as OpenIncidentRequest;
     if (!body.toolId || !body.parameter || !body.summary) {
@@ -107,8 +115,8 @@ export const handlers = [
 
   http.get("/api/investigations/:investigationId", ({ params }) => {
     const id = String(params.investigationId);
-    const found = mockExtras().investigations.find((item) => item.id === id || item.incidentId === id) ?? investigationFor(id);
-    if (!found) return problem("Investigation was not found.", 404);
+    const found = mockExtras().investigations.find((item) => item.id === id) ?? investigationFor(id);
+    if (!found) return problem("No such record.", 404);
     return HttpResponse.json(clone(found));
   }),
 
