@@ -4,7 +4,7 @@ Bryan approved the first Azure deploy. `.github/workflows/deploy.yml` is manual 
 
 Azure budgets have no weekly grain. `monthlyBudgetUsd` defaults to 40, which is the stand-in for the plan's $10/week alert. The budget resource is created only when `budgetContactEmail` is set. The committed parameters file leaves that value empty. The workflow passes the `BUDGET_EMAIL` variable, which can also be empty.
 
-The container setting `Mps__Model__DailyCapUsd` is `2`. That is the $2/day application cap. It is not a Bicep budget. Azure OpenAI is one `gpt-4o-mini` deployment, GlobalStandard, capacity `openAiCapacity` (default 20, about 20,000 tokens per minute). Local key authentication on the account is disabled. The user-assigned managed identity has Cognitive Services OpenAI User. The template declares no model key.
+The container setting `Mps__Model__DailyCapUsd` is `2`. That is the $2/day application cap. It is not a Bicep budget. Azure OpenAI is one `gpt-5.4-mini` deployment (2026-03-17; gpt-4o-mini 2024-07-18 is deprecating and Azure blocks new deployments of it), GlobalStandard, capacity `openAiCapacity` (default 20, about 20,000 tokens per minute). Local key authentication on the account is disabled. The user-assigned managed identity has Cognitive Services OpenAI User. The template declares no model key.
 
 Other cost choices in the template:
 

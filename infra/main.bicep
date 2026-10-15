@@ -27,7 +27,7 @@ param staticWebAppLocation string = 'eastus2'
 @description('Azure SQL database name. Used only when deploySql is true.')
 param sqlDatabaseName string = 'mps'
 
-@description('GlobalStandard capacity for gpt-4o-mini. 20 is about 20,000 tokens per minute.')
+@description('GlobalStandard capacity for gpt-5.4-mini. 20 is about 20,000 tokens per minute.')
 param openAiCapacity int = 20
 
 @description('Entra application (client) id for Container Apps Easy Auth. The workflow passes the azure-demo variable.')
