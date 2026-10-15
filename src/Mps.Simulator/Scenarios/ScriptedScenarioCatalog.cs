@@ -130,8 +130,8 @@ public sealed class ScriptedScenario
 public sealed record ScenarioPoint(string ToolId, string ChamberId, string Parameter, DateTimeOffset At, double Value);
 
 /// <summary>
-/// SC-1 through SC-4. One scenario for each root-cause class. The sample window starts at the demo clock origin
-/// so the series does not depend on when the presenter presses the button.
+/// Named pitch scenarios. The 30 second sample starts at the demo clock origin so the preview does not depend on
+/// when the presenter presses the button. Live ticks use a slower ramp so the chart moves after the button press.
 /// </summary>
 public static class ScriptedScenarioCatalog
 {
@@ -150,7 +150,7 @@ public static class ScriptedScenarioCatalog
             MagnitudeKind.Sigma,
             3.5d,
             confounders: true,
-            periodSeconds: 45d),
+            periodSeconds: 1200d),
         new(
             "SC-2",
             "ESC thermocouple calibration drift",
@@ -162,7 +162,7 @@ public static class ScriptedScenarioCatalog
             MagnitudeKind.Sigma,
             4d,
             confounders: true,
-            rampSeconds: 600d),
+            rampSeconds: 7200d),
         new(
             "SC-3",
             "Bad precursor gas lot",
@@ -185,7 +185,41 @@ public static class ScriptedScenarioCatalog
             MagnitudeKind.Sigma,
             -3.5d,
             confounders: false,
-            rampSeconds: 600d),
+            rampSeconds: 7200d),
+        new(
+            "SC-5",
+            "Precursor lot on two plants",
+            RootCauseCategory.SupplyChainMaterial,
+            "Precursor lot MX4419 is thin, so film thickness steps down on D-03 at Northwater and I-D-01 at Ironwood.",
+            ["D-03", "I-D-01"],
+            "filmThickness",
+            FaultShape.Step,
+            MagnitudeKind.Percent,
+            -8d,
+            confounders: true),
+        new(
+            "SC-7",
+            "Pump bearing wear",
+            RootCauseCategory.EquipmentCalibrationOrAlignment,
+            "Foreline pump vibration on D-02 rises as the bearing runs past its service interval.",
+            ["D-02"],
+            "vibrationRms",
+            FaultShape.Ramp,
+            MagnitudeKind.Sigma,
+            5d,
+            confounders: false,
+            rampSeconds: 9000d),
+        new(
+            "SC-8",
+            "Recipe setpoint edited",
+            RootCauseCategory.ProcessDrift,
+            "An operator raised the RF power setpoint on E-03 in the recipe and did not file an engineering change.",
+            ["E-03"],
+            "rfBiasPower",
+            FaultShape.Step,
+            MagnitudeKind.Sigma,
+            4.5d,
+            confounders: false),
     ];
 
     public static IReadOnlyList<ScriptedScenario> All => Definitions;

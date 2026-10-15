@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Meridian Precision Systems Quality API
-  version: 1.2.0
+  version: 1.3.0
   description: |
     Console API for the fictional Meridian Precision Systems quality-investigation demo.
     Every intake channel becomes one incident. A CAPA is created only after a human approval,
@@ -13,6 +13,8 @@ info:
     contracts-v1.2 adds GET /api/incidents/{incidentId}/investigation (ADR-001 addendum).
     It returns the latest investigation for that incident, or 404 when none exists.
     The path is additive. Earlier clients stay compatible.
+    Contract 1.3 adds presenter copy on each scripted scenario: whatsHappening, whatWeSimulate,
+    whatAiShouldFind, and expectedCause. The fields are additive.
     All names and data are synthetic.
   license:
     name: MIT
@@ -963,7 +965,7 @@ components:
     ScriptedScenario:
       type: object
       additionalProperties: false
-      required: [id, title, rootCauseCategory, toolIds, chamberId, parameter, shape, summary]
+      required: [id, title, rootCauseCategory, toolIds, chamberId, parameter, shape, summary, whatsHappening, whatWeSimulate, whatAiShouldFind, expectedCause]
       properties:
         id:
           type: string
@@ -982,6 +984,14 @@ components:
         shape:
           $ref: "#/components/schemas/FaultShape"
         summary:
+          type: string
+        whatsHappening:
+          type: string
+        whatWeSimulate:
+          type: string
+        whatAiShouldFind:
+          type: string
+        expectedCause:
           type: string
     ScenarioTelemetryPoint:
       type: object

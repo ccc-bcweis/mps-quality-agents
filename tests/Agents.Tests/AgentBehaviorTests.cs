@@ -36,7 +36,10 @@ public sealed class PromptCatalogTests
         catalog.Investigation.Body.Should().Contain("do not diagnose, write, or approve");
         catalog.Investigation.Body.Should().Contain("whyItMatters");
         catalog.Resolution.Id.Should().Be("resolution");
-        catalog.Resolution.Version.Should().Be("1.2.0");
+        catalog.Resolution.Version.Should().Be("1.3.0");
+        catalog.Resolution.Body.Should().Contain("bearing");
+        catalog.Resolution.Body.Should().Contain("recipe setpoint");
+        catalog.Resolution.Body.Should().Contain("precursor");
         catalog.Resolution.Body.Should().Contain("whyItMatters");
         catalog.Resolution.Body.Should().Contain("evidenceMatrix");
         catalog.Resolution.Body.Should().Contain("evidence ids");
@@ -183,6 +186,64 @@ public sealed class RootCauseRankerTests
 
         decision.Escalate.Should().BeTrue();
         decision.Reason.Should().Contain("no primary");
+    }
+
+    [Fact]
+    public void BearingHoursPastIntervalRankAsEquipment()
+    {
+        var pm = Guid.Parse("00000000-0000-0000-0000-000000000005").ToString("D");
+        var decision = RootCauseRanker.Rank(new ResolutionRequest
+        {
+            ScopeKind = "chamber",
+            ScopeKey = "D-02",
+            SignalShape = "ramp",
+            PmSummaries = ["WO-PMP-D02-BRG maintenance: Foreline pump bearing hours are past the service interval."],
+            PmEvidenceIds = [pm],
+            SignalEvidenceIds = [Signal],
+        });
+
+        decision.Escalate.Should().BeFalse();
+        decision.Claim!.Category.Should().Be(RootCauseCategory.EquipmentCalibrationOrAlignment);
+        decision.Claim.Cause.Should().Contain("bearing");
+        decision.Claim.EvidenceIds.Should().Contain(new EvidenceId(Guid.Parse(pm)));
+        decision.Claim.Actions.Should().Contain(action => action.Contains("bearing", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void ARecipeSetpointEditWithNoEcoRanksAsProcessDrift()
+    {
+        var pm = Guid.Parse("00000000-0000-0000-0000-000000000006").ToString("D");
+        var decision = RootCauseRanker.Rank(new ResolutionRequest
+        {
+            ScopeKind = "chamber",
+            ScopeKey = "E-03",
+            SignalShape = "step",
+            PmSummaries = ["WO-RCP-E03-RF process: An operator edited the RF power recipe setpoint and there is no engineering change order."],
+            PmEvidenceIds = [pm],
+        });
+
+        decision.Escalate.Should().BeFalse();
+        decision.Claim!.Category.Should().Be(RootCauseCategory.ProcessDrift);
+        decision.Claim.Actions.Should().Contain(action => action.Contains("recipe setpoint", StringComparison.OrdinalIgnoreCase));
+        decision.Claim.EvidenceIds.Should().Contain(new EvidenceId(Guid.Parse(pm)));
+    }
+
+    [Fact]
+    public void ASharedLotTreatsAOneToolCleanAsAConfounder()
+    {
+        var decision = RootCauseRanker.Rank(new ResolutionRequest
+        {
+            ScopeKind = "materialLot",
+            ScopeKey = "MX4419",
+            SignalShape = "step",
+            LotIds = ["MX4419"],
+            NoticeIds = ["SN-MX4419"],
+            LotEvidenceIds = [Lot],
+            PmSummaries = ["WO-CLN-D03-A clean: Chamber clean on D-03 only."],
+        });
+
+        decision.Claim!.Category.Should().Be(RootCauseCategory.SupplyChainMaterial);
+        decision.Claim.CounterEvidence.Should().Contain(item => item.Contains("clean", StringComparison.OrdinalIgnoreCase) && item.Contains("confounder", StringComparison.OrdinalIgnoreCase));
     }
 }
 
@@ -355,7 +416,7 @@ public sealed class ResolutionAgentTests
 
         result.Escalated.Should().BeFalse();
         result.ModelCalls.Should().Be(1);
-        result.PromptVersion.Should().Be("1.2.0");
+        result.PromptVersion.Should().Be("1.3.0");
         result.Claim!.Category.Should().Be(RootCauseCategory.EngineeringChange);
         result.Claim.EvidenceIds.Should().Contain(id);
         result.Claim.CounterEvidence.Should().NotBeEmpty();

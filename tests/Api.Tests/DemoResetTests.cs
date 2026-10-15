@@ -109,8 +109,10 @@ public sealed class DemoResetTests
         firstBody.GetProperty("scenarioId").GetString().Should().Be("SC-1");
         Values(secondBody).Should().Equal(Values(firstBody));
         Values(otherBody).Should().NotEqual(Values(firstBody));
-        listed.GetArrayLength().Should().Be(4);
-        listed.EnumerateArray().Select(row => row.GetProperty("id").GetString()).Should().Equal("SC-1", "SC-2", "SC-3", "SC-4");
+        listed.GetArrayLength().Should().Be(7);
+        listed.EnumerateArray().Select(row => row.GetProperty("id").GetString()).Should().Equal("SC-1", "SC-2", "SC-3", "SC-4", "SC-5", "SC-7", "SC-8");
+        listed.EnumerateArray().Should().OnlyContain(row => row.GetProperty("whatsHappening").GetString()!.Length > 0);
+        listed.EnumerateArray().Single(row => row.GetProperty("id").GetString() == "SC-5").GetProperty("expectedCause").GetString().Should().Contain("MX4419");
     }
 
     [Fact]

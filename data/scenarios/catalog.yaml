@@ -1,0 +1,38 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Presenter copy for the harness scenario picker. Plain language. Fictional tools and lots only.
+scenarios:
+  - id: SC-1
+    whatsHappening: "An edge ring is the ring around the wafer that shapes the process at the wafer edge. Etch tool E-02 received revision C of that ring. The electrostatic chuck temperature, the temperature of the plate that holds the wafer, now swings up and down."
+    whatWeSimulate: "The chuck temperature sensor on E-02 chamber A oscillates by about 3.5 standard deviations. One full swing takes about 20 seconds of real time, which the demo clock counts as 20 minutes."
+    whatAiShouldFind: "The temperature swing lines up with the engineering change that installed edge ring revision C. A maintenance note from the same week is a distractor."
+    expectedCause: "Edge ring revision C on E-02."
+  - id: SC-2
+    whatsHappening: "The electrostatic chuck is the plate that holds the wafer. Its thermocouple, the sensor that reports wafer temperature, is overdue for calibration on etch tool E-01. The reading drifts away from the true temperature."
+    whatWeSimulate: "Chuck temperature on E-01 chamber A ramps about 4 standard deviations high. The ramp takes about 2 minutes of real time, which the demo clock counts as 2 hours."
+    whatAiShouldFind: "The drift matches an overdue thermocouple calibration. The work order says the calibration was deferred."
+    expectedCause: "Overdue electrostatic chuck thermocouple calibration on E-01."
+  - id: SC-3
+    whatsHappening: "Both etch tools use the same bottle of CF4, a process gas. That bottle, lot PL-2044, arrived out of specification. The gas flow on both tools steps down together."
+    whatWeSimulate: "CF4 flow on E-01 and E-02 steps down by about 12 percent as soon as the scenario starts."
+    whatAiShouldFind: "The shared gas lot and the supplier notice explain both tools. Treat other records as distractors."
+    expectedCause: "Precursor gas lot PL-2044 is out of specification."
+  - id: SC-4
+    whatsHappening: "After a chamber clean, the etch chamber slowly seasons. The walls collect a thin film, and the etch rate falls even though nobody changed the recipe."
+    whatWeSimulate: "Etch rate on E-01 chamber A ramps down by about 3.5 standard deviations over about 2 minutes of real time."
+    whatAiShouldFind: "The slow ramp has no engineering change, no overdue calibration, and no bad material lot. The cause is process drift after the clean."
+    expectedCause: "Chamber seasoning after a clean on E-01."
+  - id: SC-5
+    whatsHappening: "A precursor is the material that becomes the deposited film. Lot MX4419 of that precursor went to deposition tool D-03 at Northwater and tool I-D-01 at Ironwood. Film thickness on both tools steps down. A chamber clean on D-03 happened the same week and can look like the cause."
+    whatWeSimulate: "Film thickness on D-03 and I-D-01 steps down by about 8 percent, about 16 nanometers on a 200 nanometer film, on the next simulator ticks."
+    whatAiShouldFind: "Both plants share precursor lot MX4419 and supplier notice SN-MX4419. The D-03 chamber clean is a confounder because Ironwood was not cleaned."
+    expectedCause: "Precursor lot MX4419 is thin at both plants."
+  - id: SC-7
+    whatsHappening: "The foreline pump is the vacuum pump that pulls gas out of the chamber. Its bearing is a wearing part with a service interval. On deposition tool D-02 the bearing has run past that interval, and pump vibration climbs."
+    whatWeSimulate: "Pump vibration on D-02 ramps up by about 5 standard deviations over about two and a half minutes of real time."
+    whatAiShouldFind: "The maintenance record says the bearing hours are past the service interval. That equipment record explains the rising vibration."
+    expectedCause: "Foreline pump bearing wear on D-02."
+  - id: SC-8
+    whatsHappening: "RF power is the radio-frequency power that drives the etch. An operator edited that setpoint in the recipe on etch tool E-03. A recipe change is supposed to go through an engineering change order. This edit did not."
+    whatWeSimulate: "RF bias power on E-03 steps up by about 4.5 standard deviations, roughly 100 watts, on the next simulator ticks. No other tool moves."
+    whatAiShouldFind: "The maintenance note says the operator changed the recipe setpoint and there is no engineering change order. Rank this as a process change, not as an engineering change."
+    expectedCause: "Unauthorized RF power recipe edit on E-03."

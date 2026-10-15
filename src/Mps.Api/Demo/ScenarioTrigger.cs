@@ -93,4 +93,8 @@ public sealed record ScenarioDescription(
     string ChamberId,
     string Parameter,
     string Shape,
-    string Summary);
+    string Summary,
+    string WhatsHappening,
+    string WhatWeSimulate,
+    string WhatAiShouldFind,
+    string ExpectedCause);

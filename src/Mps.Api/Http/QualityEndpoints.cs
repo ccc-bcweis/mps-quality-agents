@@ -202,17 +202,26 @@ public static class QualityEndpoints
             var baseline = await reset.ResetAsync(cancellationToken).ConfigureAwait(false);
             return Results.Ok(baseline);
         });
-        app.MapGet("/api/injector/scenarios", () =>
+        app.MapGet("/api/injector/scenarios", (ScenarioCardCatalog cards) =>
         {
-            var rows = ScriptedScenarioCatalog.All.Select(scenario => new ScenarioDescription(
-                scenario.Id,
-                scenario.Title,
-                scenario.Category,
-                scenario.ToolIds,
-                ScriptedScenario.ChamberIdFor(scenario.ToolIds[0]),
-                scenario.Parameter,
-                scenario.ShapeName,
-                scenario.Summary)).ToArray();
+            var rows = ScriptedScenarioCatalog.All.Select(scenario =>
+            {
+                var card = cards.TryGet(scenario.Id, out var found) ? found : null;
+                var summary = scenario.Summary;
+                return new ScenarioDescription(
+                    scenario.Id,
+                    scenario.Title,
+                    scenario.Category,
+                    scenario.ToolIds,
+                    ScriptedScenario.ChamberIdFor(scenario.ToolIds[0]),
+                    scenario.Parameter,
+                    scenario.ShapeName,
+                    summary,
+                    card?.WhatsHappening ?? summary,
+                    card?.WhatWeSimulate ?? summary,
+                    card?.WhatAiShouldFind ?? summary,
+                    card?.ExpectedCause ?? summary);
+            }).ToArray();
             return Results.Ok(rows);
         });
         app.MapPost("/api/injector/scenarios/{scenarioId}", async (string scenarioId, ScenarioTrigger scenarios, CancellationToken cancellationToken) =>

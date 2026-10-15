@@ -37,6 +37,21 @@ public sealed class ScenarioEvidenceTests
         board.Activate("SC-4");
         (await tools.GetWorkOrdersAsync(e01, Until.AddDays(-2), Until, CancellationToken.None)).Should().Contain(order => order.WorkOrderId == "WO-CLN-E01-220");
 
+        board.Activate("SC-5");
+        (await tools.GetMaterialLotsAsync(new ToolId("D-03"), Until.AddDays(-2), Until, CancellationToken.None)).Should().Contain(lot => lot.LotId == "MX4419");
+        (await tools.GetMaterialLotsAsync(new ToolId("I-D-01"), Until.AddDays(-2), Until, CancellationToken.None)).Should().Contain(lot => lot.LotId == "MX4419");
+        (await tools.GetSupplierNoticesAsync("PREC-FILM", Until.AddDays(-2), Until, CancellationToken.None)).Should().Contain(notice => notice.NoticeId == "SN-MX4419" && notice.Summary.Contains("Ironwood", StringComparison.Ordinal));
+        (await tools.SearchNcrsAsync(new ToolId("D-03"), Until.AddDays(-2), Until, CancellationToken.None)).Should().Contain(ncr => ncr.NcrId == "QR-MX4419" && ncr.Title.Contains("Northwater", StringComparison.Ordinal) && ncr.Title.Contains("Ironwood", StringComparison.Ordinal));
+        (await tools.SearchNcrsAsync(new ToolId("I-D-01"), Until.AddDays(-2), Until, CancellationToken.None)).Should().Contain(ncr => ncr.NcrId == "QR-MX4419-IW");
+        (await tools.GetWorkOrdersAsync(new ToolId("D-03"), Until.AddDays(-2), Until, CancellationToken.None)).Should().Contain(order => order.WorkOrderId == "WO-CLN-D03-A" && order.Summary.Contains("Ironwood", StringComparison.Ordinal));
+
+        board.Activate("SC-7");
+        (await tools.GetWorkOrdersAsync(new ToolId("D-02"), Until.AddDays(-2), Until, CancellationToken.None)).Should().Contain(order => order.WorkOrderId == "WO-PMP-D02-BRG" && order.Summary.Contains("bearing", StringComparison.OrdinalIgnoreCase));
+
+        board.Activate("SC-8");
+        (await tools.GetWorkOrdersAsync(new ToolId("E-03"), Until.AddDays(-2), Until, CancellationToken.None)).Should().Contain(order => order.WorkOrderId == "WO-RCP-E03-RF" && order.Summary.Contains("recipe setpoint", StringComparison.OrdinalIgnoreCase));
+        (await tools.GetEcosAsync(new ToolId("E-03"), Until.AddDays(-2), Until, CancellationToken.None)).Should().BeEmpty();
+
         board.Clear();
         (await tools.GetCalibrationsAsync(e01, CancellationToken.None)).Should().NotContain(record => record.CalibrationId == "CAL-E01-ESC-TC");
     }
