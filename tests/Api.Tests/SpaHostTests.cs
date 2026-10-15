@@ -113,6 +113,7 @@ public sealed class SpaHostTests : IDisposable
         {
             builder.UseEnvironment("Development");
             builder.UseSetting("Otel:Enabled", "false");
+            builder.UseSetting("Mps:Simulation:RealTime", "false");
             builder.UseWebRoot(_webRoot);
             builder.ConfigureServices(services =>
             {
