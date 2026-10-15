@@ -125,8 +125,9 @@ public sealed class SpcAlertService
     }
 
     /// <summary>Clears active alerts on this signal once the last readings have stayed in control long enough.</summary>
-    private async Task ClearRecoveredAsync(SpcSample sample, CancellationToken cancellationToken)
+    public async Task ClearRecoveredAsync(SpcSample sample, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(sample);
         if (sample.Points.Count < AlertClearing.InControlReadings)
         {
             return;

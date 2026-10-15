@@ -17,6 +17,7 @@ public sealed class MpsApiFactory : WebApplicationFactory<ApiHostMarker>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment(Environments.Development);
+        builder.UseSetting("Mps:Simulation:RealTime", "false");
     }
 }
 
