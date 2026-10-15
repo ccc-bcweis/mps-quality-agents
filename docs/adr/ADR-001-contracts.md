@@ -52,7 +52,7 @@ scenarios: SC-1 SC-2 SC-3 SC-4
 - (lane T1) `GET /api/incidents/{incidentId}/investigation` returns the latest investigation for that incident. 404 when the incident does not exist or no investigation was started. A ticket opens by its incident id; a ticket id or number is not an investigation id.
 - `HumanDecisionKind` gains `override` (ADR-005).
 
-## Addendum: evidence reading fields (2026-10-15, GB-EV)
+## Addendum: evidence reading fields (2026-10-15)
 
 Optional fields on `EvidenceItem`. Required fields are unchanged. OpenAPI `info.version` stays 1.2.0.
 
