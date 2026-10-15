@@ -11,6 +11,8 @@ public static class EventTypes
 
     public const string AlertRaised = "alert.raised";
 
+    public const string RuleMatched = "rule.matched";
+
     public const string TicketCreated = "ticket.created";
 
     public const string IncidentChanged = "incident.changed";

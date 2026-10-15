@@ -10,7 +10,9 @@ commands:
       - command.fault.inject
       - telemetry.reading
       - alert.raised
+      - rule.matched
       - ticket.created
+      - command.investigation.start
     payload:
       - name: toolId
         type: string
@@ -36,6 +38,10 @@ commands:
       - command.scenario.start
       - command.fault.inject
       - telemetry.reading
+      - alert.raised
+      - rule.matched
+      - ticket.created
+      - command.investigation.start
     payload:
       - name: scenarioId
         type: string

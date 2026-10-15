@@ -88,6 +88,16 @@ public sealed class PlantSimulation
         }
     }
 
+    /// <summary>Applies the stream signal, which is a clear statistical step when the catalog magnitude is a percent.</summary>
+    public void ApplyStream(ScriptedScenario scenario)
+    {
+        ArgumentNullException.ThrowIfNull(scenario);
+        lock (_gate)
+        {
+            Runtime.Simulator.InjectAtSimulatedNow(scenario.StreamSignals);
+        }
+    }
+
     public bool TryApplyFreeForm(string toolId, string? chamberId, string parameter, string shape, double magnitude)
     {
         lock (_gate)

@@ -21,6 +21,22 @@ public static class CommandAmbient
         return new Scope(correlationId, eventId);
     }
 
+    /// <summary>
+    /// A publish has to be awaited before its id exists. Setting the ambient inside that awaited method
+    /// does not flow back to the caller, so the caller adopts the id after the publish returns.
+    /// </summary>
+    public static IDisposable? Adopt(Opened? opened)
+    {
+        if (opened is not { } handle)
+        {
+            return null;
+        }
+
+        return Push(handle.CorrelationId, handle.EventId);
+    }
+
+    public readonly record struct Opened(string CorrelationId, string EventId);
+
     private sealed class Frame(string correlationId, string eventId)
     {
         public string CorrelationId { get; } = correlationId;

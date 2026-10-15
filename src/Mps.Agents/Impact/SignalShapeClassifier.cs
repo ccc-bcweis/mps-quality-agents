@@ -53,7 +53,7 @@ public static class SignalShapeClassifier
             return SignalShape.Oscillation;
         }
 
-        if (IsRamp(values, range))
+        if (IsRamp(values, range) || IsCorrelatedRamp(values, range))
         {
             return SignalShape.Ramp;
         }
@@ -136,6 +136,64 @@ public static class SignalShapeClassifier
         return nonzero > 0
             && same >= (SameDirectionShare * nonzero)
             && maxAbs < (StepShare * range);
+    }
+
+    /// <summary>
+    /// A slow ramp buried in sample noise fails the same-direction test. Correlation still sees the trend.
+    /// A single step is classified earlier and is not reclassified here.
+    /// </summary>
+    private static bool IsCorrelatedRamp(IReadOnlyList<double> values, double range)
+    {
+        var net = values[values.Count - 1] - values[0];
+        if (Math.Abs(net) < (RampShare * range))
+        {
+            return false;
+        }
+
+        var maxAbs = 0d;
+        for (var i = 1; i < values.Count; i++)
+        {
+            var abs = Math.Abs(values[i] - values[i - 1]);
+            if (abs > maxAbs)
+            {
+                maxAbs = abs;
+            }
+        }
+
+        if (maxAbs >= (StepShare * range))
+        {
+            return false;
+        }
+
+        return Math.Abs(CorrelationWithIndex(values)) >= 0.6d;
+    }
+
+    private static double CorrelationWithIndex(IReadOnlyList<double> values)
+    {
+        var count = values.Count;
+        double sumX = 0d;
+        double sumY = 0d;
+        double sumXX = 0d;
+        double sumYY = 0d;
+        double sumXY = 0d;
+        for (var i = 0; i < count; i++)
+        {
+            var y = values[i];
+            sumX += i;
+            sumY += y;
+            sumXX += (double)i * i;
+            sumYY += y * y;
+            sumXY += i * y;
+        }
+
+        var numerator = (count * sumXY) - (sumX * sumY);
+        var denominator = Math.Sqrt(((count * sumXX) - (sumX * sumX)) * ((count * sumYY) - (sumY * sumY)));
+        if (denominator <= 0d || double.IsNaN(denominator))
+        {
+            return 0d;
+        }
+
+        return numerator / denominator;
     }
 
     private static bool RepeatsExtremes(IReadOnlyList<double> values)

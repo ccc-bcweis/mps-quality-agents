@@ -94,7 +94,9 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
         var correlation = stored?.Incident.CorrelationId
             ?? CommandAmbient.CorrelationId
             ?? ticket.Id.ToString();
-        var parent = _cascade.FindStep(correlation, "alert") ?? CommandAmbient.EventId;
+        var parent = _cascade.FindStep(correlation, "rule")
+            ?? _cascade.FindStep(correlation, "alert")
+            ?? CommandAmbient.EventId;
         await PublishAsync(
             LifecycleTypes.TicketCreated,
             correlation,

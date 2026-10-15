@@ -46,7 +46,6 @@ public sealed partial class StreamSpcPublisher
 
     public async Task PublishAsync(CancellationToken cancellationToken)
     {
-        var opened = new List<IncidentId>();
         var samples = Capture();
         if (samples.Count == 0)
         {
@@ -58,21 +57,24 @@ public sealed partial class StreamSpcPublisher
         foreach (var sample in samples)
         {
             var outcome = await spc.RaiseAsync(sample, cancellationToken).ConfigureAwait(false);
-            if (outcome.Incident is not null && outcome.Ticket is not null)
-            {
-                opened.Add(outcome.Incident.Id);
-                TicketOpened(_logger, sample.ToolId.ToString(), sample.Parameter);
-            }
-        }
-
-        foreach (var incidentId in opened)
-        {
-            if (!_started.TryAdd(incidentId.Value, 0))
+            if (outcome.Incident is null)
             {
                 continue;
             }
 
-            _pending.Enqueue(InvestigateAsync(incidentId));
+            if (outcome.Ticket is not null)
+            {
+                TicketOpened(_logger, sample.ToolId.ToString(), sample.Parameter);
+            }
+
+            // Start this investigation before the next tool overwrites the shared step pointer.
+            // A printout can open the ticket first. The stream still starts the investigation for that case.
+            if (!_started.TryAdd(outcome.Incident.Id.Value, 0))
+            {
+                continue;
+            }
+
+            await InvestigateAsync(outcome.Incident.Id).ConfigureAwait(false);
         }
     }
 

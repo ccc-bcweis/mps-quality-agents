@@ -34,6 +34,19 @@ public sealed class SignalShapeClassifierTests
     }
 
     [Fact]
+    public void ClassifiesANoisyDeclineAsARamp()
+    {
+        var values = new double[40];
+        for (var i = 0; i < values.Length; i++)
+        {
+            var wobble = (i % 2) == 0 ? 0.8d : -0.8d;
+            values[i] = 20d - (i * 0.4d) + wobble;
+        }
+
+        SignalShapeClassifier.Classify(values).Should().Be(SignalShape.Ramp);
+    }
+
+    [Fact]
     public void ClassifiesAShortOrFlatTraceAsUnknown()
     {
         SignalShapeClassifier.Classify([1d, 2d, 3d]).Should().Be(SignalShape.Unknown);
