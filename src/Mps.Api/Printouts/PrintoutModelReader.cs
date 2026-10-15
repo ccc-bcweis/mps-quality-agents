@@ -14,7 +14,12 @@ namespace Mps.Api.Printouts;
 /// </summary>
 public sealed class PrintoutModelReader : IPrintoutModelReader
 {
-    public const string SystemPrompt = "You are a printout reader. Return one JSON object for the bench reading and do not call tools.";
+    public const string SystemPrompt =
+        "You are a printout reader. Read the bench instrument printout image and return one JSON object only, no prose, no code fence, and do not call tools. "
+        + "Use exactly these keys: toolId (e.g. \"E-01\"), chamberId (e.g. \"E-01-A\" or null), observedAt (ISO 8601 UTC), "
+        + "instrument (one of oscilloscope, rfPowerMeter, particleCounter, thermocoupleLogger), parameter (camelCase id such as rfPower, rfBiasPower, particlesAdders, escTemperature), "
+        + "value (number), unit (as printed, e.g. W, C, count), specMinimum (number), specMaximum (number), shape (oscillation, step, ramp or null), operatorInitials (string or null). "
+        + "Printed labels may be upper case; return ids in the camelCase forms listed. If the sheet cannot be read, return {\"error\": \"<reason>\"}.";
 
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
 
