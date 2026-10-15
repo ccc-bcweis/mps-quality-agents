@@ -97,7 +97,7 @@ Draft outline now; finish after the demo with real screenshots and measured metr
 (Core exec story = slides 1-6 + 8, per the 6-8 recommendation; 7 and 9 support the architecture and code segments.)
 
 - **Design principle slide (K5 #66):** Plain-language operations (ADR-003): a supervisor or manager who isn't an engineer can understand and explain a problem, because nothing is in code. Show glossary hovers, the tool schematic, why-it-matters evidence and plain-word metrics.
-- **Current versus future slides (K6 #75):** Three slides. 1. As-is swimlane, with manual hand-offs and error risks (`docs/diagrams/print/as-is-flow-archD.pdf`). 2. To-be investigation flow, the assisted path (`docs/diagrams/print/investigation-flow-archD.pdf`). 3. Side-by-side with simulated benefits (`docs/diagrams/print/as-is-vs-to-be-archD.pdf`). Narrative and the stage table: `docs/analysis/current-vs-future-state.md`. Every figure on these slides is labeled simulated.
+- **Current versus future slides (K6 #75):** Three slides. 1. As-is swimlane, with manual hand-offs and error risks (`docs/diagrams/print/as-is-flow-archD.pdf`). 2. To-be swimlane (G6), the same stages and lanes plus the MPS agent platform (`docs/diagrams/print/to-be-flow-archD.pdf`). 3. Side-by-side with simulated benefits (`docs/diagrams/print/as-is-vs-to-be-archD.pdf`). Narrative and the stage table: `docs/analysis/current-vs-future-state.md`. Every figure on these slides is labeled simulated. The G4 screen-order sheet (`docs/diagrams/print/investigation-flow-archD.pdf`) stays the architecture flow. It is not the K6 to-be slide.
 
 ## 8. Issue breakdown
 Labels: `lane:*`, `phase:*`, `type:test`, `design-question`, `stretch` (plus `type:design|infra|docs|ci`, `needs-bryan`).
