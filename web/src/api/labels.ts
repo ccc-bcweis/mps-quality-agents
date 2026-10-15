@@ -51,7 +51,7 @@ export const CAPA_STAGE_LABEL: Record<CapaStage, string> = {
 
 export const CATEGORY_LABEL: Record<RootCauseCategory, string> = {
   engineeringChange: "Engineering change",
-  equipmentCalibrationOrAlignment: "Equipment calibration / alignment",
+  equipmentCalibrationOrAlignment: "Equipment (calibration, alignment or wear)",
   supplyChainMaterial: "Supply-chain material",
   processDrift: "Process drift",
 };
