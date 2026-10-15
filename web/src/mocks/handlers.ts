@@ -4,7 +4,7 @@
 
 import { http, HttpResponse } from "msw";
 import { handlers as contractHandlers } from "../../../contracts/msw/handlers";
-import type { Alert, FaultInjectionRequest, Incident, Investigation, OpenIncidentRequest, PrintoutConfirmRequest, PrintoutInspection, ScenarioRun, Ticket } from "../api/types";
+import type { Alert, BusinessRule, CapabilityType, FaultInjectionRequest, Incident, Investigation, MetadataLine, MetadataSite, MetadataToolCard, OpenIncidentRequest, PrintoutConfirmRequest, PrintoutInspection, ProcessMap, ScenarioRun, Ticket } from "../api/types";
 import { telemetryForTool } from "../fleet/telemetry";
 import { latestInvestigationForIncident } from "../investigation/ticketRoute";
 import { incidents, investigationFor, investigations, tools } from "./demoData";
@@ -27,6 +27,223 @@ function problem(title: string, status: number) {
 function clone<T>(value: T): T {
   return structuredClone(value);
 }
+
+function toolCard(id: string, name: string, simulated = true): MetadataToolCard {
+  return { id, name, toolType: "Process tool", simulated };
+}
+
+function flowLine(id: string, name: string, stepNames: string[]): MetadataLine {
+  return {
+    id,
+    name,
+    lineType: "end-to-end",
+    sequence: 0,
+    characteristics: "A wafer visits strip, clean, thin-film deposition, and etch, in that order.",
+    stepNames,
+    tools: [],
+  };
+}
+
+function workLine(id: string, name: string, lineType: string, sequence: number, characteristics: string, tools: MetadataToolCard[]): MetadataLine {
+  return { id, name, lineType, sequence, characteristics, stepNames: [], tools };
+}
+
+function parked(id: string, name: string, type: CapabilityType, description: string) {
+  return { id, name, type, description, simulated: false, lines: [], directTools: [] };
+}
+
+function metadataSites(): MetadataSite[] {
+  return [
+    {
+      id: "northwater",
+      name: "Northwater Fab",
+      purpose: "Run production wafers.",
+      description: "The production plant.",
+      timezone: "America/Denver",
+      capabilities: [
+        {
+          id: "nw-manufacturing",
+          name: "Manufacturing",
+          type: "manufacturing",
+          description: "Wafer strip, clean, deposition, and etch at Northwater Fab.",
+          simulated: true,
+          lines: [
+            flowLine("nw-end-to-end", "Northwater wafer flow", [
+              "Northwater photoresist strip",
+              "Northwater clean",
+              "Northwater thin-film deposition",
+              "Northwater wafer etch",
+            ]),
+            workLine("nw-strip", "Northwater photoresist strip", "photoresist-strip", 1, "Remote plasma removes photoresist before the rinse.", [
+              toolCard("S-01", "Strip tool in bay one"),
+            ]),
+            workLine("nw-clean", "Northwater clean", "clean", 2, "A wet bench rinses the wafer after strip.", [toolCard("C-01", "Clean tool in bay one")]),
+            workLine("nw-deposition", "Northwater thin-film deposition", "thin-film-deposition", 3, "A chemical vapor deposit grows the film.", [
+              toolCard("D-01", "Deposition tool in bay one"),
+            ]),
+            workLine("nw-etch", "Northwater wafer etch", "wafer-etch", 4, "Plasma opens the film where the resist allows it.", [
+              toolCard("E-01", "Etch tool in bay one"),
+            ]),
+          ],
+          directTools: [toolCard("nw-film-check", "Film check bench", false)],
+        },
+        parked("nw-warehousing", "Warehousing", "warehousing", "Stores wafers, gases, and spare parts for Northwater Fab."),
+        parked("nw-research", "Research and development", "researchAndDevelopment", "Process experiments that are not on the production floor."),
+        parked("nw-sales", "Sales", "sales", "Customer orders for Northwater wafers."),
+        parked("nw-back-office", "Back office", "backOffice", "Planning, finance, and records for Northwater Fab."),
+        parked("nw-other", "Other", "other", "Facilities and site services at Northwater Fab."),
+      ],
+    },
+    {
+      id: "ironwood",
+      name: "Ironwood Fab",
+      purpose: "Run production wafers.",
+      description: "The second production plant.",
+      timezone: "America/Chicago",
+      capabilities: [
+        {
+          id: "iw-manufacturing",
+          name: "Manufacturing",
+          type: "manufacturing",
+          description: "Wafer strip, clean, deposition, and etch at Ironwood Fab.",
+          simulated: true,
+          lines: [
+            flowLine("iw-end-to-end", "Ironwood wafer flow", [
+              "Ironwood photoresist strip",
+              "Ironwood clean",
+              "Ironwood thin-film deposition",
+              "Ironwood wafer etch",
+            ]),
+            workLine("iw-deposition", "Ironwood thin-film deposition", "thin-film-deposition", 3, "A chemical vapor deposit grows the film.", [
+              toolCard("I-D-01", "Ironwood deposition tool, first"),
+            ]),
+          ],
+          directTools: [],
+        },
+        parked("iw-warehousing", "Warehousing", "warehousing", "Stores wafers, gases, and spare parts for Ironwood Fab."),
+        parked("iw-research", "Research and development", "researchAndDevelopment", "Process experiments that are not on the Ironwood production floor."),
+        parked("iw-sales", "Sales", "sales", "Customer orders for Ironwood wafers."),
+        parked("iw-back-office", "Back office", "backOffice", "Planning, finance, and records for Ironwood Fab."),
+        parked("iw-other", "Other", "other", "Facilities and site services at Ironwood Fab."),
+      ],
+    },
+    {
+      id: "lumen",
+      name: "Lumen Pilot Works",
+      purpose: "Run research wafers.",
+      description: "The pilot plant.",
+      timezone: "America/Los_Angeles",
+      capabilities: [
+        {
+          id: "lm-manufacturing",
+          name: "Manufacturing",
+          type: "manufacturing",
+          description: "Wafer strip, clean, deposition, and etch at Lumen Pilot Works.",
+          simulated: true,
+          lines: [
+            flowLine("lm-end-to-end", "Lumen wafer flow", [
+              "Lumen photoresist strip",
+              "Lumen clean",
+              "Lumen deposition leg",
+              "Lumen wafer etch",
+            ]),
+            workLine("lm-deposition", "Lumen deposition leg", "thin-film-deposition", 3, "A chemical vapor deposit grows the film before etch.", [
+              toolCard("P-D-01", "Lumen deposition tool, first"),
+            ]),
+          ],
+          directTools: [],
+        },
+        parked("lm-warehousing", "Warehousing", "warehousing", "Stores wafers, gases, and spare parts for the pilot works."),
+        parked("lm-research", "Research and development", "researchAndDevelopment", "Research planning for the pilot works. The pilot tools sit under manufacturing."),
+        parked("lm-sales", "Sales", "sales", "Customer orders for pilot wafers."),
+        parked("lm-back-office", "Back office", "backOffice", "Planning, finance, and records for the pilot works."),
+        parked("lm-other", "Other", "other", "Facilities and site services at the pilot works."),
+      ],
+    },
+  ];
+}
+
+const metadataRules: BusinessRule[] = [
+  {
+    id: "rule-critical-human",
+    name: "Critical signal needs a person",
+    order: 10,
+    whenPlain: "When the severity is critical.",
+    thenPlain: "Open a ticket, set the priority to critical, send it to the shift lead, ask a person to review it, and start an investigation.",
+    why: "A critical signal can affect the wafers or the tool, so a person reviews it before any corrective action.",
+    actions: [
+      { type: "open-ticket" },
+      { type: "set-priority", priority: "critical" },
+      { type: "route-to-queue", queue: "Shift lead" },
+      { type: "escalate-to-human" },
+      { type: "auto-investigate" },
+    ],
+  },
+  {
+    id: "rule-sc1-edge-ring",
+    name: "Edge ring temperature on the second etch tool",
+    order: 110,
+    whenPlain: "When a high alert is on chuck temperature at the etch tool in bay two.",
+    thenPlain: "Open a ticket, set the priority to high, send it to process engineering, and start an investigation.",
+    why: "That pattern matches an edge ring or an engineering change on one chamber. A person is not required yet.",
+    actions: [
+      { type: "open-ticket" },
+      { type: "set-priority", priority: "high" },
+      { type: "route-to-queue", queue: "Process engineering" },
+      { type: "auto-investigate" },
+    ],
+  },
+];
+
+const metadataMaps: ProcessMap[] = [
+  {
+    id: "current-quality-path",
+    name: "How a quality issue moves today",
+    state: "current",
+    steps: [
+      { id: "notice", name: "Someone notices the excursion", order: 1, highlightStages: [] },
+      { id: "search", name: "Search each system", order: 2, highlightStages: [] },
+      { id: "email", name: "Hand off by email", order: 3, highlightStages: [] },
+      { id: "draft", name: "Draft a cause", order: 4, highlightStages: [] },
+      { id: "ask", name: "Ask a manager", order: 5, highlightStages: [] },
+      { id: "write", name: "Write the corrective action", order: 6, highlightStages: [] },
+    ],
+    transitions: [
+      { from: "notice", to: "search", name: "Then" },
+      { from: "search", to: "email", name: "Then" },
+      { from: "search", to: "ask", name: "The records disagree, so the engineer stops and asks." },
+      { from: "email", to: "draft", name: "Then" },
+      { from: "draft", to: "ask", name: "Then" },
+      { from: "ask", to: "write", name: "Then" },
+    ],
+  },
+  {
+    id: "future-quality-path",
+    name: "How a quality issue moves with rules",
+    state: "future",
+    steps: [
+      { id: "rule", name: "A rule opens the ticket", order: 1, highlightStages: ["ticketOpened"] },
+      { id: "investigate", name: "The investigation gathers evidence", order: 2, highlightStages: ["investigating"] },
+      { id: "rank", name: "A ranked cause is ready", order: 3, highlightStages: ["recommendationReady"] },
+      {
+        id: "person",
+        name: "A person decides",
+        order: 4,
+        detail: "An escalated case cannot skip this step.",
+        highlightStages: ["escalated", "awaitingApproval", "rejected"],
+      },
+      { id: "action", name: "The corrective action opens", order: 5, highlightStages: ["approved", "closed"] },
+    ],
+    transitions: [
+      { from: "rule", to: "investigate", name: "Then" },
+      { from: "investigate", to: "rank", name: "The evidence is enough" },
+      { from: "investigate", to: "person", name: "The evidence is thin or the records disagree" },
+      { from: "rank", to: "person", name: "Then" },
+      { from: "person", to: "action", name: "The person approves" },
+      { from: "person", to: "investigate", name: "The person asks for more evidence." },
+    ],
+  },
+];
 
 /** Live queue only. Scripted S1 and S2 records stay available by id for a direct link. */
 function allAlerts(): Alert[] {
@@ -460,6 +677,49 @@ export const handlers = [
         : null;
     return HttpResponse.json({ investigation: next, capa });
   }),
+
+  http.get("/api/metadata/company", () =>
+    HttpResponse.json({
+      id: "meridian",
+      name: "Meridian Precision Systems",
+      purpose: "Make precision semiconductor wafers.",
+      description: "Three fictional plants.",
+      industry: "Semiconductor manufacturing",
+      loadMilliseconds: 1,
+    }),
+  ),
+  http.get("/api/metadata/sites", () => HttpResponse.json(metadataSites())),
+  http.get("/api/metadata/tools/:toolId", () =>
+    HttpResponse.json({
+      id: "E-01",
+      name: "Etch tool in bay one",
+      toolType: "Conductor etch",
+      siteId: "northwater",
+      siteName: "Northwater Fab",
+      lineId: "nw-etch",
+      lineName: "Northwater wafer etch",
+      capabilityId: "nw-manufacturing",
+      simulated: true,
+      inputs: [{ name: "Patterned wafer", description: "A wafer with resist still on the film." }],
+      outputs: [{ name: "Etched wafer", description: "A wafer with the film opened." }],
+      parameters: [
+        {
+          id: "escTemperature",
+          name: "Chuck temperature",
+          parameterClass: "temperature",
+          unit: "C",
+          lcl: 40,
+          ucl: 60,
+          alertLow: 42,
+          alertHigh: 58,
+          nominal: 50,
+          telemetry: true,
+        },
+      ],
+    }),
+  ),
+  http.get("/api/metadata/rules", () => HttpResponse.json(metadataRules)),
+  http.get("/api/metadata/process-maps", () => HttpResponse.json(metadataMaps)),
 
   ...contractHandlers,
 ];

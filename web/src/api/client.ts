@@ -28,6 +28,11 @@ import type {
   Problem,
   Ticket,
   Tool,
+  BusinessRule,
+  CompanyMetadata,
+  MetadataSite,
+  MetadataTool,
+  ProcessMap,
 } from "./types";
 
 const base = import.meta.env.VITE_API_BASE ?? "";
@@ -127,6 +132,11 @@ export const api = {
   getAdminSession: () => apiSend<AdminSession>("/api/admin/session"),
   getAuditLog: () => apiSend<AuditLog>("/api/audit"),
   resetDemo: () => apiSend<DemoResetResult>("/api/admin/reset", { method: "POST" }),
+  companyMetadata: () => apiSend<CompanyMetadata>("/api/metadata/company"),
+  metadataSites: () => apiSend<MetadataSite[]>("/api/metadata/sites"),
+  metadataTool: (toolId: string) => apiSend<MetadataTool>(`/api/metadata/tools/${encodeURIComponent(toolId)}`),
+  businessRules: () => apiSend<BusinessRule[]>("/api/metadata/rules"),
+  processMaps: () => apiSend<ProcessMap[]>("/api/metadata/process-maps"),
   listScenarios: () => apiSend<ScriptedScenario[]>("/api/injector/scenarios"),
   runScenario: (scenarioId: string) =>
     apiSend<ScenarioRun>(`/api/injector/scenarios/${encodeURIComponent(scenarioId)}`, { method: "POST" }),

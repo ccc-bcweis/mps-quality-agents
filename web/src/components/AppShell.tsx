@@ -38,7 +38,7 @@ function useAdminSession(): AdminSession | null {
 }
 
 function mainWidth(path: string): string {
-  if (path.startsWith("/sites")) return "max-w-[1920px]";
+  if (path.startsWith("/sites") || path.startsWith("/rules")) return "max-w-[1920px]";
   if (path.startsWith("/tools/")) return "max-w-[1680px]";
   return "max-w-[1200px]";
 }
