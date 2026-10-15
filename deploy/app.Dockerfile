@@ -28,6 +28,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=api /app/publish .
 COPY --from=web /src/web/dist ./wwwroot
+# Seed, evidence templates and the document index the live agent reads. /app/data stays the writable SQLite folder.
+COPY data/ /app/content/data/
+ENV Mps__DataDirectory=/app/content/data
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ConnectionStrings__Mps=Data Source=/app/data/mps.db
