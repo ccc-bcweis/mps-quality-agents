@@ -41,6 +41,7 @@ export const RULE_LABEL: Record<string, string> = {
   westernElectric4: "WE-4 · 8 on one side",
   nelsonTrend: "Nelson · 6 rising",
   specWindow: "Spec window",
+  manualMeasurement: "Manual measurement outside the printed spec",
 };
 
 export function ruleLabel(rule: string): string {
