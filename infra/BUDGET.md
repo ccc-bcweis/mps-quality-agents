@@ -16,4 +16,4 @@ Other cost choices in the template:
 - Key Vault is standard, RBAC, 7-day soft delete. The managed identity has Key Vault Secrets User.
 - `deployStaticWeb` defaults to false. The console is in the API image. Turning the parameter on creates a Standard Static Web App in `eastus2`, which is a fixed cost the demo does not need.
 
-Names derived from `namePrefix` (`mpsdemo` in the parameters file) must be globally unique at deploy time, including the registry (`mpsdemoacr`), the Key Vault, and the Azure OpenAI custom subdomain. Change the prefix before deploy if a name is taken. Do not put secrets in the parameters file. With `maxReplicas` of 3, each replica has its own SQLite file.
+Names derived from `namePrefix` (`mpsdemo` in the parameters file) must be globally unique at deploy time, including the registry (`mpsdemoacr`), the Key Vault, and the Azure OpenAI custom subdomain. Change the prefix before deploy if a name is taken. Do not put secrets in the parameters file. The API runs exactly one replica (`minReplicas` 1, `maxReplicas` 1) so demo state lives in one SQLite file and is not lost to scale-to-zero. One always-on replica adds a small idle cost.
