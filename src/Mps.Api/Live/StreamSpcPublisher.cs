@@ -125,12 +125,16 @@ public sealed partial class StreamSpcPublisher
                 continue;
             }
 
+            var lastWindow = _plant.WindowAt(fault.ToolId, fault.Parameter, points[^1].At);
             samples.Add(new SpcSample(
                 new ToolId(fault.ToolId),
                 chamber,
                 fault.Parameter,
                 new ControlBaseline(0d, 1d, null, null),
-                zPoints));
+                zPoints)
+            {
+                Display = lastWindow is null ? null : new SpcDisplay(lastWindow.Nominal, Math.Max(lastWindow.Sigma, 1e-6), lastWindow.Unit, _plant.FamilyLabel(fault.ToolId)),
+            });
         }
 
         return samples;

@@ -501,7 +501,10 @@ public sealed class HumanDecisionService : IHumanDecisionService
             }
         }
 
-        return "Hold the affected material and apply the recommended corrective action.";
+        var top = snapshot.Hypotheses.FirstOrDefault(hypothesis => !string.IsNullOrWhiteSpace(hypothesis.Cause));
+        return top is null
+            ? "Hold the affected material and apply the recommended corrective action."
+            : "Correct the confirmed cause: " + top.Cause.Trim();
     }
 
     private async Task<HumanDecisionOutcome> RejectAsync(

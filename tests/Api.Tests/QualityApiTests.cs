@@ -321,6 +321,10 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         repeat.StatusCode.Should().Be(HttpStatusCode.OK);
         repeated.GetProperty("capa").GetProperty("id").GetString().Should().Be(body.GetProperty("capa").GetProperty("id").GetString());
         incident.GetProperty("stage").GetString().Should().Be("approved");
+        body.GetProperty("capa").GetProperty("toolId").GetString().Should().Be("C-01");
+        var listed = await client.GetFromJsonAsync<JsonElement>("/api/capas");
+        listed.EnumerateArray().Should().NotBeEmpty();
+        listed.EnumerateArray().Should().OnlyContain(capa => capa.GetProperty("toolId").ValueKind == JsonValueKind.String && capa.GetProperty("toolId").GetString()!.Length > 0, "no CAPA may exist without a tool");
     }
 
     [Fact]

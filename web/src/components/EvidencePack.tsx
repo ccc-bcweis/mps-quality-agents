@@ -12,6 +12,7 @@ import {
   valueVsSpec,
   whatItShows,
 } from "../investigation/format";
+import { groupEvidence, rangeText } from "../investigation/evidenceGroups";
 
 function hoverRecord(item: EvidenceItem): string {
   return [item.externalRef, item.id].filter((part) => part && part.length > 0).join(" · ");
@@ -26,9 +27,10 @@ function fullText(item: EvidenceItem): string {
 
 export function EvidencePack({ items }: { items: EvidenceItem[] }) {
   const [traceItem, setTraceItem] = useState<EvidenceItem | null>(null);
+  const rows = groupEvidence(items);
   return (
     <div>
-      <h2 className="mb-2 text-mps-title font-semibold">Evidence pack ({items.length})</h2>
+      <h2 className="mb-2 text-mps-title font-semibold">Evidence pack ({rows.length}{rows.length !== items.length ? ` signals from ${items.length} records` : ""})</h2>
       {items.length === 0 ? <p>No evidence yet.</p> : null}
       <div className="overflow-x-auto">
         <table aria-label="Evidence pack" className="w-full table-fixed text-left">
@@ -42,13 +44,17 @@ export function EvidencePack({ items }: { items: EvidenceItem[] }) {
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => (
+            {rows.map((row) => {
+              const item = row.item;
+              const range = rangeText(row);
+              return (
               <tr key={item.id} title={hoverRecord(item)} className="border-t border-mps-line align-top">
                 <td className="break-words py-2 pr-2">{SOURCE_LABEL[item.source]}</td>
                 <td className="break-words py-2 pr-2">
                   <Explain text={whatItShows(item)} spellOut={false} />
+                  {range ? <div className="text-mps-micro text-mps-muted">{range}</div> : null}
                   <details className="mt-1">
-                    <summary className="cursor-pointer list-none text-mps-nominal [&::-webkit-details-marker]:hidden">Details</summary>
+                    <summary className={`${btn} inline-flex list-none [&::-webkit-details-marker]:hidden`}>Details</summary>
                     <p className="mt-1 break-words text-mps-secondary">{readableExcerpt(fullText(item))}</p>
                   </details>
                   <button
@@ -60,12 +66,13 @@ export function EvidencePack({ items }: { items: EvidenceItem[] }) {
                   </button>
                 </td>
                 <td className="break-words py-2 pr-2">{valueVsSpec(item)}</td>
-                <td className="break-words py-2 pr-2">{formatLocalWhen(item.observedAt)}</td>
+                <td className="break-words py-2 pr-2">{row.count > 1 ? `${formatLocalWhen(row.first)} – ${formatLocalWhen(row.last)}` : formatLocalWhen(item.observedAt)}</td>
                 <td className="break-words py-2 pr-2">
                   {item.whyItMatters ? <Explain text={plainNarrative(item.whyItMatters)} spellOut={false} /> : "—"}
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

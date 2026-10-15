@@ -30,7 +30,7 @@ describe("tickets", () => {
     expect(await screen.findByText("TKT-1044")).toBeInTheDocument();
 
     expect(screen.queryByRole("heading", { name: "Evidence for this ticket" })).not.toBeInTheDocument();
-    await user.click(screen.getByText("ESC temperature oscillation after a recipe revision."));
+    await user.click(screen.getByRole("link", { name: "TKT-1044" }));
     expect(await screen.findByRole("heading", { name: "Evidence for this ticket" })).toBeInTheDocument();
     expect(await screen.findByRole("table", { name: "Evidence pack" })).toHaveTextContent("Product records");
     expect(screen.getAllByRole("table", { name: "Evidence pack" })).toHaveLength(1);
@@ -49,7 +49,7 @@ describe("tickets", () => {
     renderConsole("/tickets");
     expect(await screen.findByText("TKT-1038")).toBeInTheDocument();
 
-    await user.click(screen.getByText("Supplier notice: gas lot NF-3317 moisture out of spec."));
+    await user.click(screen.getByRole("link", { name: "TKT-1038" }));
     await user.click(await screen.findByRole("link", { name: "Open the investigation" }));
 
     expect(await screen.findByRole("heading", { name: "Investigation" })).toBeInTheDocument();

@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+import { btn } from "../components/ui";
 import { Link } from "react-router-dom";
 import { useSetLifecycle } from "../context/ConsoleContext";
 
@@ -8,7 +9,7 @@ export function NotFoundPage() {
     <div>
       <h1 className="text-mps-display font-semibold">Screen not found</h1>
       <p className="mt-2">
-        <Link to="/">Return to the fleet</Link>
+        <Link className={btn} to="/">Return to the fleet</Link>
       </p>
     </div>
   );

@@ -112,8 +112,8 @@ public static class ContractMapper
             snapshot.Stage == InvestigationStage.ClosedByDemoReset ? DemoReset.StatusLabel : null);
     }
 
-    public static CapaResponse ToResponse(CapaAction capa, string siteId) =>
-        new(capa.Id.Value, capa.IncidentId.Value, capa.Summary, capa.ApprovalTokenId.Value, capa.ActionHash, capa.Stage, capa.OpenedAt, SiteForTool(siteId));
+    public static CapaResponse ToResponse(CapaAction capa, string siteId, string? toolId = null) =>
+        new(capa.Id.Value, capa.IncidentId.Value, capa.Summary, capa.ApprovalTokenId.Value, capa.ActionHash, capa.Stage, capa.OpenedAt, SiteForTool(siteId), ToolId: string.IsNullOrWhiteSpace(toolId) ? null : toolId);
 
     /// <summary>Plant id for a tool, or the site id itself when the caller already resolved it.</summary>
     public static string SiteForTool(string? toolOrSiteId)

@@ -34,7 +34,7 @@ public sealed class PlantSimulationTests
         var tickets = await client.GetFromJsonAsync<JsonElement>("/api/tickets", Json);
         var incidents = await client.GetFromJsonAsync<JsonElement>("/api/incidents", Json);
         alerts.EnumerateArray().Should().Contain(alert => alert.GetProperty("parameter").GetString() == "escTemperature");
-        tickets.EnumerateArray().Should().Contain(ticket => ticket.GetProperty("title").GetString()!.Contains("escTemperature", StringComparison.Ordinal));
+        tickets.EnumerateArray().Should().Contain(ticket => ticket.GetProperty("title").GetString()!.Contains("ESC temperature", StringComparison.Ordinal));
         incidents.EnumerateArray().Should().Contain(incident => incident.GetProperty("parameter").GetString() == "escTemperature");
 
         var tools = new DemoSignalTools(

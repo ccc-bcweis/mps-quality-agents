@@ -107,7 +107,8 @@ public sealed record CapaResponse(
     DateTimeOffset OpenedAt,
     string SiteId,
     string? ApprovedBy = null,
-    DateTimeOffset? ApprovedAt = null);
+    DateTimeOffset? ApprovedAt = null,
+    string? ToolId = null);
 
 public sealed record AuditEventResponse(
     DateTimeOffset At,

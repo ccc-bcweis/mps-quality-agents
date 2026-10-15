@@ -3,13 +3,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { FAMILY_PROCESS } from "../api/labels";
-import type { Alert, Tool } from "../api/types";
+import type { Alert, Incident, Investigation, Ticket, Tool } from "../api/types";
+import { linkedForTool } from "../fleet/linkedRecords";
+import { ruleLabel } from "../api/labels";
 import { SpcChart } from "../components/SpcChart";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
 import { PlainMetrics } from "../components/PlainMetrics";
 import { ToolSchematic } from "../components/ToolSchematic";
-import { btn, panel } from "../components/ui";
+import { btn, panel, btnSm } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { visibleProblem } from "../history/copy";
 import { useSite } from "../context/SiteContext";
@@ -29,6 +31,7 @@ export function ToolPage() {
   const { siteId } = useSite();
   const [tool, setTool] = useState<Tool | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [records, setRecords] = useState<{ tickets: Ticket[]; incidents: Incident[]; investigations: Investigation[] }>({ tickets: [], incidents: [], investigations: [] });
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const focused = useRef(false);
@@ -59,6 +62,20 @@ export function ToolPage() {
           setError(visibleProblem(title) ?? "Tool was not found.");
         }
       });
+    return () => {
+      cancelled = true;
+    };
+  }, [toolId, siteId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      api.listTickets(siteId).catch(() => [] as Ticket[]),
+      api.listIncidents(siteId).catch(() => [] as Incident[]),
+      api.listInvestigations(siteId).catch(() => [] as Investigation[]),
+    ]).then(([tickets, incidents, investigations]) => {
+      if (!cancelled) setRecords({ tickets, incidents, investigations });
+    });
     return () => {
       cancelled = true;
     };
@@ -99,6 +116,7 @@ export function ToolPage() {
   const pointCount = livePoints && livePoints.length > 0 ? livePoints.length : 60;
   const readings = liveReadingMap(live?.readings);
   const windows = overlayWindows(windowRows(tool), live?.readings);
+  const linked = linkedForTool(tool.id, { ...records, alerts });
 
   function showSensor(sensor: (typeof toolSensors)[number]) {
     setSelectedId(sensor.id);
@@ -111,7 +129,7 @@ export function ToolPage() {
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">
-            <Link to="/">Fleet</Link> · {tool.bay} · {tool.model}
+            <Link className={btnSm} to="/">Fleet</Link> · {tool.bay} · {tool.model}
           </p>
           <h1 className="text-mps-display font-semibold">
             Tool {tool.id} · {FAMILY_PROCESS[tool.family]}
@@ -196,7 +214,36 @@ export function ToolPage() {
         </div>
         <div className={panel}>
           <h2 className="mb-2 text-mps-title font-semibold">Linked records</h2>
-          {story.ticketNumber ? <p>Ticket <Link to="/tickets">{story.ticketNumber}</Link></p> : <p className="text-mps-muted">No open ticket on this tile.</p>}
+          {linked.tickets.length + linked.alerts.length + linked.investigations.length === 0 ? (
+            <p className="text-mps-muted">No tickets, alerts or investigations on this tool yet.</p>
+          ) : (
+            <ul aria-label="Linked records" className="grid gap-1.5">
+              {linked.tickets.slice(0, 5).map((ticket) => (
+                <li key={ticket.id} className="flex flex-wrap items-center gap-2">
+                  <Link className={btnSm} to={`/tickets/${encodeURIComponent(ticket.id)}`}>
+                    {ticket.number}
+                  </Link>
+                  <span className="min-w-0 flex-1 break-words">{ticket.title}</span>
+                </li>
+              ))}
+              {linked.alerts.slice(0, 5).map((alert) => (
+                <li key={alert.id} className="flex flex-wrap items-center gap-2">
+                  <Link className={btnSm} to={`/alerts/${alert.id}`}>
+                    Alert
+                  </Link>
+                  <span className="min-w-0 flex-1 break-words">{ruleLabel(alert.rule)}</span>
+                </li>
+              ))}
+              {linked.investigations.slice(0, 5).map((investigation) => (
+                <li key={investigation.id} className="flex flex-wrap items-center gap-2">
+                  <Link className={btnSm} to={`/investigations/${investigation.id}`}>
+                    Investigation
+                  </Link>
+                  <span className="min-w-0 flex-1 break-words">{investigation.statusLabel ?? investigation.stage}</span>
+                </li>
+              ))}
+            </ul>
+          )}
           <p className="mt-3 font-mono text-mps-micro text-mps-muted">Deterministic rules draw the chart. The model has not written anything.</p>
           <div className="mt-3 flex gap-2">
             <Link className={btn} to="/alerts">
