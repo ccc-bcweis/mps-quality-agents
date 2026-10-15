@@ -238,7 +238,7 @@ export function drawLogical(sheet) {
   );
 
   const models = [
-    ['Azure OpenAI', 'gpt-4o-mini and gpt-4o'],
+    ['Azure OpenAI', 'gpt-5.4-mini, one deployment'],
     ['OpenAI', 'Same gateway route'],
     ['Replay', 'Over cap, or local default'],
     ['Mock reasoner', 'No recording for this fault'],
@@ -355,7 +355,7 @@ export function drawPhysical(sheet) {
     ['queue', 'Storage queue', 'API hands off the investigation'],
     ['sql', 'Azure SQL serverless', 'Incidents, audit, spend ledger'],
     ['search', 'AI Search or in-proc', 'Hybrid index, or the local file'],
-    ['aoai', 'Azure OpenAI', 'gpt-4o-mini and gpt-4o, TPM quota'],
+    ['aoai', 'Azure OpenAI', 'gpt-5.4-mini, TPM quota'],
   ];
   const dGap = 14;
   const dW = (rgW - 32 - dGap * 3) / 4;
