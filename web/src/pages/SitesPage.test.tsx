@@ -29,9 +29,9 @@ describe("sites overview", () => {
     const nominal = screen.getByRole("link", { name: /Deposition D-01/ });
     expect(nominal).toHaveAttribute("data-status", "nominal");
     expect(nominal).toHaveTextContent("Nominal");
-    const alarm = screen.getByRole("link", { name: /Deposition D-03/ });
-    expect(alarm).toHaveAttribute("data-status", "alarm");
-    expect(alarm).toHaveTextContent("Alarm");
+    const quiet = screen.getByRole("link", { name: /Deposition D-03/ });
+    expect(quiet).toHaveAttribute("data-status", "nominal");
+    expect(quiet).toHaveTextContent("Nominal");
 
     expect(screen.getByText(/12 degrees hotter/)).toBeInTheDocument();
     expect(screen.getByText(/4\.9 degrees hotter/)).toBeInTheDocument();

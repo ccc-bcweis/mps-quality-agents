@@ -165,6 +165,7 @@ export function HarnessFrame() {
 export function AppShell() {
   const location = useLocation();
   const session = useAdminSession();
+  const { revision } = useConsole();
   const outlet: ShellOutletContext = { session };
   return (
     <GlossaryScope key={location.pathname}>
@@ -174,7 +175,7 @@ export function AppShell() {
         </a>
         <HarnessBar session={session} />
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-2 pt-2">
-          <Outlet context={outlet} />
+          <Outlet context={outlet} key={revision} />
         </div>
       </div>
     </GlossaryScope>

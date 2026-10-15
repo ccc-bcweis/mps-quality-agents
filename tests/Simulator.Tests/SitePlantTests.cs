@@ -26,8 +26,8 @@ public sealed class SitePlantTests
         original!.SiteId.Should().Be(SiteIds.Northwater);
         original.BayId.Should().Be("Bay-1");
         original.Status.Should().Be("nominal");
-        world.FindTool("D-03")!.Status.Should().Be("alarm");
-        world.FindTool("I-D-01")!.Status.Should().Be("alarm");
+        world.FindTool("D-03")!.Status.Should().Be("nominal");
+        world.FindTool("I-D-01")!.Status.Should().Be("nominal");
         world.FindTool("I-E-01")!.Status.Should().Be("warning");
         world.FindTool("E-01")!.SiteId.Should().Be(SiteIds.Northwater);
         world.FindTool("P-S-01")!.SiteId.Should().Be(SiteIds.Lumen);

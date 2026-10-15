@@ -27,6 +27,7 @@ export function ApprovalPage() {
   useSetLifecycle(investigation?.stage === "approved" ? "capa" : "approval", investigation ? lifecycleForInvestigation(investigation.stage).escalated : false);
 
   useEffect(() => {
+    if (!investigationId) return undefined;
     let cancelled = false;
     api
       .getInvestigation(investigationId)
@@ -70,6 +71,15 @@ export function ApprovalPage() {
   const escalated = investigation?.stage === "escalated";
   const justified = note.trim().length >= OVERRIDE_MIN;
   const top = investigation?.hypotheses.slice().sort((a, b) => b.confidence - a.confidence)[0];
+
+  if (!investigationId) {
+    return (
+      <div>
+        <h1 className="text-mps-display font-semibold">Approval</h1>
+        <p className="max-w-3xl text-mps-secondary">No approval is waiting.</p>
+      </div>
+    );
+  }
 
   return (
     <div>

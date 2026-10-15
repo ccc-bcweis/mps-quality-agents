@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { FAMILY_PROCESS } from "../api/labels";
-import type { Tool } from "../api/types";
+import type { Alert, Tool } from "../api/types";
 import { mpsColor } from "../brand/colors";
 import { Chip } from "../components/Chip";
 import { Sparkline } from "../components/Sparkline";
@@ -16,16 +16,18 @@ import { bayCaption, statusTone, storyFor } from "../fleet/catalog";
 export function FleetPage() {
   useSetLifecycle("alert");
   const [tools, setTools] = useState<Tool[] | null>(null);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [tickets, setTickets] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([api.listTools(), api.listTickets()])
-      .then(([nextTools, nextTickets]) => {
+    Promise.all([api.listTools(), api.listTickets(), api.listAlerts()])
+      .then(([nextTools, nextTickets, nextAlerts]) => {
         if (cancelled) return;
         setTools(nextTools);
         setTickets(nextTickets.length);
+        setAlerts(nextAlerts);
       })
       .catch((reason: unknown) => {
         if (!cancelled) setError(reason instanceof ApiProblem ? reason.title : "The fleet did not load.");
@@ -36,7 +38,7 @@ export function FleetPage() {
   }, []);
 
   const rows = tools ?? [];
-  const stories = rows.map((tool) => ({ tool, story: storyFor(tool) }));
+  const stories = rows.map((tool) => ({ tool, story: storyFor(tool, alerts) }));
   const bays = [...new Set(rows.map((tool) => tool.bay))];
 
   return (

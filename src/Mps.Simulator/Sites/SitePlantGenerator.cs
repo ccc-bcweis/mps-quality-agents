@@ -38,12 +38,8 @@ public static class SitePlantGenerator
         var fleetDirectory = Path.Combine(dataDirectory, "fleet");
         var fleet = FleetCatalogLoader.Load(fleetDirectory);
         var layout = SiteLayoutLoader.Load(Path.Combine(fleetDirectory, "sites.yaml"));
-        var faults = Faults.FaultCatalogLoader.Load(Path.Combine(dataDirectory, "faults"), fleet, layout.Families);
-        var alarms = faults.Faults
-            .Where(fault => string.Equals(fault.Scenario, "SC-5", StringComparison.Ordinal))
-            .SelectMany(fault => fault.ToolIds)
-            .ToArray();
-        return Generate(fleet, layout, seed, alarms);
+        // Catalog faults are a library. They are not active until a scenario or a manual injection.
+        return Generate(fleet, layout, seed);
     }
 
     private static SimulatedSite Build(FleetCatalog fleet, SitePlan plan, int seed, HashSet<string> alarms)

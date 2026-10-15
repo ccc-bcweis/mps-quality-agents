@@ -8,7 +8,6 @@ import { Term } from "../components/Term";
 import { btn, panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
 import { CAPA_STAGES, nextCapaStage } from "../lifecycle";
-import { S1_INVESTIGATION_ID } from "../mocks/demoData";
 
 export function CapaPage() {
   useSetLifecycle("capa");
@@ -78,7 +77,7 @@ export function CapaPage() {
     <div>
       <div className="mb-4">
         <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">
-          <Link to={`/approvals/${S1_INVESTIGATION_ID}`}>Approval</Link> · mock <Explain text="QMS" spellOut={false} />
+          <Link to="/approvals">Approval</Link> · mock <Explain text="QMS" spellOut={false} />
         </p>
         <h1 className="text-mps-display font-semibold">
           <Term id="CAPA" spellOut={false} />

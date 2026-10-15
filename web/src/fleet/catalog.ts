@@ -33,13 +33,14 @@ const nominalSpark = [12, 16, 24, 8, 12, 20, 16, 4, 12, 20, 16, 8];
 const watchSpark = [16, 15, 16, 14, 9, 6, 12, 21, 24, 18, 8, 4];
 const alarmSpark = [24, 23, 22, 23, 22, 22, 23, 10, 6, 5, 6, 4];
 
-export const stories: Record<string, ToolStory> = {
+/** Readings used only after a fault is active on that tool. First load stays on `stories`. */
+const faultStories: Record<string, ToolStory> = {
   "D-01": {
     status: "alarm",
     recipe: "DEP-SIO-2",
-    note: "Chamber pressure stepped outside the 2–6 Torr window. Scenario S2.",
-    lifecycle: "investigation",
-    escalated: true,
+    note: "Chamber pressure stepped outside the 2–6 Torr window.",
+    lifecycle: "alert",
+    escalated: false,
     params: [
       { label: "Chamber P", value: "6.52 Torr", tone: "alarm" },
       { label: "Heater", value: "372 °C" },
@@ -47,7 +48,37 @@ export const stories: Record<string, ToolStory> = {
     ],
     spark: alarmSpark,
     chart: { parameter: "chamberPressure", label: "Chamber pressure", unit: "Torr", mean: 4, sigma: 0.4, shape: "step", endValue: 6.52 },
-    ticketNumber: "TKT-1042",
+  },
+  "E-02": {
+    status: "watch",
+    recipe: "ETCH-OX-14",
+    note: "Western Electric rule 2 on ESC temperature, still inside 40–60 °C.",
+    lifecycle: "alert",
+    escalated: false,
+    params: [
+      { label: "P", value: "44 mTorr" },
+      { label: "ESC", value: "53.1 °C osc", tone: "warn" },
+      { label: "Src RF", value: "1.5 kW" },
+    ],
+    spark: watchSpark,
+    chart: { parameter: "escTemperature", label: "ESC temperature", unit: "°C", mean: 50, sigma: 1.2, shape: "oscillation", endValue: 53.1 },
+  },
+};
+
+export const stories: Record<string, ToolStory> = {
+  "D-01": {
+    status: "nominal",
+    recipe: "DEP-SIO-2",
+    note: "In window.",
+    lifecycle: "alert",
+    escalated: false,
+    params: [
+      { label: "Chamber P", value: "4.10 Torr" },
+      { label: "Heater", value: "372 °C" },
+      { label: "RF", value: "448 W" },
+    ],
+    spark: nominalSpark,
+    chart: { parameter: "chamberPressure", label: "Chamber pressure", unit: "Torr", mean: 4, sigma: 0.4, shape: "nominal" },
   },
   "D-02": {
     status: "nominal",
@@ -78,19 +109,18 @@ export const stories: Record<string, ToolStory> = {
     chart: { parameter: "escTemperature", label: "ESC temperature", unit: "°C", mean: 50, sigma: 1.1, shape: "nominal" },
   },
   "E-02": {
-    status: "watch",
+    status: "nominal",
     recipe: "ETCH-OX-14",
-    note: "Western Electric rule 2 on ESC temperature, still inside 40–60 °C. Scenario S1.",
-    lifecycle: "recommendation",
+    note: "In window.",
+    lifecycle: "alert",
     escalated: false,
     params: [
       { label: "P", value: "44 mTorr" },
-      { label: "ESC", value: "53.1 °C osc", tone: "warn" },
+      { label: "ESC", value: "51.0 °C" },
       { label: "Src RF", value: "1.5 kW" },
     ],
-    spark: watchSpark,
-    chart: { parameter: "escTemperature", label: "ESC temperature", unit: "°C", mean: 50, sigma: 1.2, shape: "oscillation", endValue: 53.1 },
-    ticketNumber: "TKT-1044",
+    spark: nominalSpark,
+    chart: { parameter: "escTemperature", label: "ESC temperature", unit: "°C", mean: 50, sigma: 1.2, shape: "nominal" },
   },
   "S-01": {
     status: "nominal",
@@ -150,17 +180,25 @@ export const stories: Record<string, ToolStory> = {
   },
 };
 
-export function storyFor(tool: Tool): ToolStory {
+export function storyFor(tool: Tool, alerts: { toolId: string }[] = []): ToolStory {
+  const base = stories[tool.id] ?? {
+    status: "nominal" as const,
+    recipe: "—",
+    note: "No local snapshot. The tile is the API record.",
+    lifecycle: "alert" as const,
+    escalated: false,
+    params: [{ label: "Chambers", value: String(tool.chambers.length) }],
+    spark: nominalSpark,
+    chart: { parameter: "value", label: "Signal", unit: "", mean: 0, sigma: 1, shape: "nominal" as const },
+  };
+  if (!alerts.some((alert) => alert.toolId === tool.id)) return base;
   return (
-    stories[tool.id] ?? {
-      status: "nominal",
-      recipe: "—",
-      note: "No local snapshot. The tile is the API record.",
+    faultStories[tool.id] ?? {
+      ...base,
+      status: "alarm",
+      note: "A fault is active on this tool.",
       lifecycle: "alert",
       escalated: false,
-      params: [{ label: "Chambers", value: String(tool.chambers.length) }],
-      spark: nominalSpark,
-      chart: { parameter: "value", label: "Signal", unit: "", mean: 0, sigma: 1, shape: "nominal" },
     }
   );
 }
@@ -203,14 +241,14 @@ const WINDOWS: Record<ToolFamily, { parameter: string; label: string; window: st
 
 const NOW: Record<string, Record<string, { value: string; tone: Tone }>> = {
   "D-01": {
-    chamberPressure: { value: "6.52 Torr", tone: "alarm" },
+    chamberPressure: { value: "4.10 Torr", tone: "nominal" },
     heaterTemperature: { value: "372 °C", tone: "nominal" },
     rfPower: { value: "448 W", tone: "nominal" },
     particles: { value: "4", tone: "nominal" },
   },
   "E-02": {
     chamberPressure: { value: "44 mTorr", tone: "nominal" },
-    escTemperature: { value: "53.1 °C osc", tone: "warn" },
+    escTemperature: { value: "51.0 °C", tone: "nominal" },
     wallTemperature: { value: "60.2 °C", tone: "nominal" },
     sourceRf: { value: "1.50 kW", tone: "nominal" },
     biasRf: { value: "320 W", tone: "nominal" },

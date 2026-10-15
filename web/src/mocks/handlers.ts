@@ -7,9 +7,9 @@ import { handlers as contractHandlers } from "../../../contracts/msw/handlers";
 import type { Alert, FaultInjectionRequest, Incident, OpenIncidentRequest, ScenarioRun, Ticket } from "../api/types";
 import { telemetryForTool } from "../fleet/telemetry";
 import { latestInvestigationForIncident } from "../investigation/ticketRoute";
-import { alerts, incidents, investigationFor, investigations, tickets, tools } from "./demoData";
+import { incidents, investigationFor, investigations, tools } from "./demoData";
 import { familyComparison, siteDetail, siteSummaries, toolRecord } from "./sites/fixtures";
-import { mockExtras } from "./state";
+import { mockExtras, resetMockState } from "./state";
 
 function problem(title: string, status: number) {
   return HttpResponse.json(
@@ -22,16 +22,21 @@ function clone<T>(value: T): T {
   return structuredClone(value);
 }
 
+/** Live queue only. Scripted S1 and S2 records stay available by id for a direct link. */
 function allAlerts(): Alert[] {
-  return [...clone(alerts), ...mockExtras().alerts];
+  return mockExtras().alerts;
 }
 
 function allTickets(): Ticket[] {
-  return [...clone(tickets), ...mockExtras().tickets];
+  return mockExtras().tickets;
 }
 
 function allIncidents(): Incident[] {
-  return [...clone(incidents), ...mockExtras().incidents];
+  return mockExtras().incidents;
+}
+
+function knownIncidents(): Incident[] {
+  return [...mockExtras().incidents, ...incidents];
 }
 
 const FAMILIES = new Set(["deposition", "etch", "strip", "clean"]);
@@ -66,7 +71,8 @@ export const handlers = [
 
   http.get("/api/tools/:toolId/telemetry", ({ params }) => {
     const toolId = String(params.toolId);
-    const rows = telemetryForTool(toolId);
+    const faulted = allAlerts().some((alert) => alert.toolId === toolId);
+    const rows = telemetryForTool(toolId, { applyDemoFault: faulted });
     if (rows.length === 0) return problem("Tool was not found.", 404);
     return HttpResponse.json(rows);
   }),
@@ -82,7 +88,7 @@ export const handlers = [
   http.get("/api/incidents", () => HttpResponse.json(allIncidents())),
 
   http.get("/api/incidents/:incidentId", ({ params }) => {
-    const incident = allIncidents().find((item) => item.id === params.incidentId);
+    const incident = knownIncidents().find((item) => item.id === params.incidentId);
     if (!incident) return problem("Incident was not found.", 404);
     return HttpResponse.json(incident);
   }),
@@ -99,7 +105,7 @@ export const handlers = [
     if (!body.toolId || !body.parameter || !body.summary) {
       return problem("Tool, parameter, and summary are required.", 400);
     }
-    const open = allIncidents().find(
+    const open = knownIncidents().find(
       (item) =>
         item.toolId === body.toolId &&
         item.parameter === body.parameter &&
@@ -144,7 +150,7 @@ export const handlers = [
 
   http.post("/api/incidents/:incidentId/investigations", ({ params }) => {
     const incidentId = String(params.incidentId);
-    const incident = allIncidents().find((item) => item.id === incidentId);
+    const incident = knownIncidents().find((item) => item.id === incidentId);
     if (!incident) return problem("Incident was not found.", 404);
     const existing =
       mockExtras().investigations.find((item) => item.incidentId === incidentId) ??
@@ -161,7 +167,7 @@ export const handlers = [
       correlationId: incident.correlationId,
     };
     mockExtras().investigations.push(created);
-    const stored = allIncidents().find((item) => item.id === incidentId);
+    const stored = knownIncidents().find((item) => item.id === incidentId);
     if (stored && mockExtras().incidents.includes(stored)) stored.stage = "investigating";
     return HttpResponse.json(created, { status: 201 });
   }),
@@ -234,6 +240,19 @@ export const handlers = [
       telemetry: [],
     };
     return HttpResponse.json(run, { status: 202 });
+  }),
+
+  http.post("/api/admin/reset", () => {
+    resetMockState();
+    return HttpResponse.json({
+      seed: 4242,
+      simulatedOrigin: "2026-09-01T00:00:00Z",
+      fleetToolCount: 8,
+      ticketCount: 0,
+      investigationCount: 0,
+      approvalCount: 0,
+      capaCount: 0,
+    });
   }),
 
   ...contractHandlers,

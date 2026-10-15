@@ -42,6 +42,11 @@ export function InvestigationPage() {
     setReady(false);
     setStartError(null);
 
+    if (!routeIncidentId && !routeInvestigationId) {
+      setReady(true);
+      return;
+    }
+
     const applyError = (reason: unknown) => {
       if (cancelled) return;
       setError(reason instanceof ApiProblem ? reason.title : "Investigation did not load.");
@@ -131,6 +136,15 @@ export function InvestigationPage() {
     } finally {
       setStarting(false);
     }
+  }
+
+  if (!routeIncidentId && !routeInvestigationId) {
+    return (
+      <div>
+        <h1 className="text-mps-display font-semibold">Investigation</h1>
+        <p className="max-w-3xl text-mps-secondary">No investigation is open. Faults show up here after a scenario or a manual injection.</p>
+      </div>
+    );
   }
 
   if (!ready) return <p className="text-mps-muted">Loading investigation…</p>;
