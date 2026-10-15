@@ -8,7 +8,7 @@ import { CaseBriefs } from "../components/CaseBriefs";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
 import { HistoryNote, RecordList } from "../components/RecordList";
-import { panel } from "../components/ui";
+import { panel, btn, btnSm } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
 import { MISSING_ALERT, visibleProblem } from "../history/copy";
 import { byNewestTime, toolPlainName } from "../history/order";
@@ -73,9 +73,9 @@ export function AlertsPage() {
         <>
           <Explain text={ruleLabel(alert.rule)} />
           <div className="mt-1">
-            {matched ? <Link to={`/tickets/${matched.id}`}>{matched.number}</Link> : "—"}
+            {matched ? <Link className={btnSm} to={`/tickets/${matched.id}`}>{matched.number}</Link> : "—"}
             {" · "}
-            <Link to={`/alerts/${alert.id}`}>Open</Link>
+            <Link className={btnSm} to={`/alerts/${alert.id}`}>Open</Link>
           </div>
         </>
       ),
@@ -107,7 +107,7 @@ export function AlertsPage() {
             <Explain text={ruleLabel(selected.rule)} /> · {selected.parameter}
           </p>
           <p className="mt-2">
-            <Link to="/alerts">All alerts</Link>
+            <Link className={btn} to="/alerts">All alerts</Link>
           </p>
         </section>
       ) : null}

@@ -9,7 +9,7 @@ import { EvidencePack } from "../components/EvidencePack";
 import { Explain } from "../components/Explain";
 import { HistoryNote, RecordList } from "../components/RecordList";
 import { Term } from "../components/Term";
-import { btn, panel } from "../components/ui";
+import { btn, panel, btnSm, btnPrimary } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
 import { hiddenMissingTitle, MISSING_CAPA, visibleProblem } from "../history/copy";
 import { byNewestTime, toolPlainName } from "../history/order";
@@ -27,6 +27,7 @@ export function CapaPage() {
   capasRef.current = capas;
   const [capa, setCapa] = useState<Capa | null>(null);
   const [listed, setListed] = useState<Capa[]>([]);
+  const [serverListed, setServerListed] = useState(false);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [tools, setTools] = useState<Tool[]>([]);
   const [homeTool, setHomeTool] = useState<string | null>(null);
@@ -44,6 +45,7 @@ export function CapaPage() {
       .then(([nextCapas, nextIncidents, nextTools]) => {
         if (cancelled) return;
         setListed(nextCapas);
+        setServerListed(true);
         setIncidents(nextIncidents);
         setTools(nextTools);
       })
@@ -184,10 +186,12 @@ export function CapaPage() {
     byNewestTime((item) => item.openedAt),
   );
   const showList = !capa;
-  const toolFor = (item: Capa) => incidents.find((row) => row.id === item.incidentId)?.toolId ?? capaTools[item.incidentId];
+  const toolFor = (item: Capa) => item.toolId ?? incidents.find((row) => row.id === item.incidentId)?.toolId ?? capaTools[item.incidentId];
   const visible = merged.filter((item) => {
     const toolId = toolFor(item);
-    return !toolId || toolInPlant(siteId, toolId);
+    // A CAPA remembered in this tab whose incident is gone (the demo was reset) has no tool: drop it rather than show "Unknown tool".
+    if (!toolId) return !serverListed;
+    return toolInPlant(siteId, toolId);
   });
   const elsewhere = merged.length - visible.length;
   const problem = visibleProblem(error);
@@ -202,7 +206,7 @@ export function CapaPage() {
       detail: (
         <>
           <div>{item.summary}</div>
-          <Link to={`/capas/${item.id}`}>Open</Link>
+          <Link className={btnSm} to={`/capas/${item.id}`}>Open</Link>
         </>
       ),
     };
@@ -241,7 +245,7 @@ export function CapaPage() {
     <div>
       <div className="mb-4">
         <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">
-          <Link to="/approvals">Approval</Link> · mock <Explain text="QMS" spellOut={false} />
+          <Link className={btnSm} to="/approvals">Approval</Link> · mock <Explain text="QMS" spellOut={false} />
         </p>
         <h1 className="text-mps-display font-semibold">
           <Term id="CAPA" spellOut={false} />
@@ -296,7 +300,7 @@ export function CapaPage() {
               <p>{capa.summary}</p>
               <p className="mt-2 text-mps-secondary">Opened {formatLocalWhen(capa.openedAt)}</p>
               <p className="mt-2">
-                <Link to={`/investigations/incident/${capa.incidentId}`} title={capa.incidentId}>
+                <Link className={btnPrimary} to={`/investigations/incident/${capa.incidentId}`} title={capa.incidentId}>
                   Open the investigation
                 </Link>
               </p>

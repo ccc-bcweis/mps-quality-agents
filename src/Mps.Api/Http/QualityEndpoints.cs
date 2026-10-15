@@ -238,13 +238,19 @@ public static class QualityEndpoints
                 throw new IntakeValidationException("Decision kind is required.");
             }
 
-            commands.Ensure(LifecycleTypes.ApprovalGrant, Caller(http, configuration));
+            var approvalCaller = Caller(http, configuration);
+            commands.Ensure(LifecycleTypes.ApprovalGrant, approvalCaller);
             var id = new InvestigationId(investigationId);
+
+            // One role: the approver is always the signed-in user in the hosted demo. Local runs may name one.
+            var approver = string.Equals(approvalCaller.Mode, EasyAuthPrincipal.AzureMode, StringComparison.OrdinalIgnoreCase)
+                ? approvalCaller.DisplayName
+                : body.ApproverId;
             var outcome = await decisions.DecideAsync(
                 id,
                 body.Kind.Value,
                 body.Comment,
-                body.ApproverId,
+                approver,
                 cancellationToken).ConfigureAwait(false);
             var site = await SiteForIncidentAsync(incidents, outcome.Investigation.IncidentId, cancellationToken).ConfigureAwait(false);
             if (outcome.Superseded)
@@ -258,7 +264,7 @@ public static class QualityEndpoints
             var narrative = await narratives.GetAsync(id, cancellationToken).ConfigureAwait(false);
             return Results.Ok(new DecisionResponse(
                 ContractMapper.ToResponse(outcome.Investigation, narrative, site),
-                outcome.Capa is null ? null : await WithApprovalAsync(db, ContractMapper.ToResponse(outcome.Capa.Capa, site), cancellationToken).ConfigureAwait(false)));
+                outcome.Capa is null ? null : await WithApprovalAsync(db, ContractMapper.ToResponse(outcome.Capa.Capa, site, await ToolForIncidentAsync(incidents, outcome.Capa.Capa.IncidentId, cancellationToken).ConfigureAwait(false)), cancellationToken).ConfigureAwait(false)));
         });
         app.MapGet("/api/capas", async (string? siteId, ICapaLifecycleService capas, IIncidentLog incidents, QualityDbContext db, CancellationToken cancellationToken) =>
         {
@@ -269,7 +275,7 @@ public static class QualityEndpoints
                 var site = await SiteForIncidentAsync(incidents, row.Capa.IncidentId, cancellationToken).ConfigureAwait(false);
                 if (MatchesSite(siteId, site))
                 {
-                    mapped.Add(await WithApprovalAsync(db, ContractMapper.ToResponse(row.Capa, site), cancellationToken).ConfigureAwait(false));
+                    mapped.Add(await WithApprovalAsync(db, ContractMapper.ToResponse(row.Capa, site, await ToolForIncidentAsync(incidents, row.Capa.IncidentId, cancellationToken).ConfigureAwait(false)), cancellationToken).ConfigureAwait(false));
                 }
             }
 
@@ -279,7 +285,7 @@ public static class QualityEndpoints
         {
             var stored = await capas.GetAsync(new CapaId(capaId), cancellationToken).ConfigureAwait(false);
             var site = await SiteForIncidentAsync(incidents, stored.Capa.IncidentId, cancellationToken).ConfigureAwait(false);
-            return Results.Ok(await WithApprovalAsync(db, ContractMapper.ToResponse(stored.Capa, site), cancellationToken).ConfigureAwait(false));
+            return Results.Ok(await WithApprovalAsync(db, ContractMapper.ToResponse(stored.Capa, site, await ToolForIncidentAsync(incidents, stored.Capa.IncidentId, cancellationToken).ConfigureAwait(false)), cancellationToken).ConfigureAwait(false));
         });
         app.MapPost("/api/capas/{capaId:guid}/advance", async (
             Guid capaId,
@@ -314,7 +320,7 @@ public static class QualityEndpoints
                 token => capas.AdvanceAsync(new CapaId(capaId), body.Stage.Value, token),
                 cancellationToken).ConfigureAwait(false);
             var site = await SiteForIncidentAsync(incidents, stored.Capa.IncidentId, cancellationToken).ConfigureAwait(false);
-            return Results.Ok(await WithApprovalAsync(db, ContractMapper.ToResponse(stored.Capa, site), cancellationToken).ConfigureAwait(false));
+            return Results.Ok(await WithApprovalAsync(db, ContractMapper.ToResponse(stored.Capa, site, await ToolForIncidentAsync(incidents, stored.Capa.IncidentId, cancellationToken).ConfigureAwait(false)), cancellationToken).ConfigureAwait(false));
         });
         app.MapGet("/api/admin/session", (HttpContext http, IConfiguration configuration) =>
         {
@@ -630,6 +636,12 @@ public static class QualityEndpoints
         string.IsNullOrWhiteSpace(requested)
         || string.Equals(requested.Trim(), "all", StringComparison.OrdinalIgnoreCase)
         || string.Equals(requested.Trim(), actual, StringComparison.OrdinalIgnoreCase);
+
+    private static async Task<string?> ToolForIncidentAsync(IIncidentLog incidents, IncidentId incidentId, CancellationToken cancellationToken)
+    {
+        var stored = await incidents.GetAsync(incidentId, cancellationToken).ConfigureAwait(false);
+        return stored?.Incident.ToolId.ToString();
+    }
 
     private static async Task<string> SiteForIncidentAsync(IIncidentLog incidents, IncidentId incidentId, CancellationToken cancellationToken)
     {

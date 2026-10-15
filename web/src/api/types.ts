@@ -240,6 +240,8 @@ export type Capa = {
   openedAt: string;
   approvedBy?: string | null;
   approvedAt?: string | null;
+  /** Tool the CAPA belongs to, resolved from its incident by the API. */
+  toolId?: string | null;
 };
 
 export type AuditEvent = {

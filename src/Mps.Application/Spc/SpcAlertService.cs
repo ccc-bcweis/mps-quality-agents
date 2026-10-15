@@ -105,7 +105,7 @@ public sealed class SpcAlertService
         }
 
         await PublishRuleAsync(sample, correlationId, decision, at, cancellationToken).ConfigureAwait(false);
-        var summary = "SPC " + rule + " on " + sample.ToolId + " " + sample.Parameter + ".";
+        var summary = SpcSummary.Describe(sample, violations);
         var intake = await _intake.AcceptAsync(
             new IntakeSubmission(
                 IncidentChannel.IotSpcAlert,

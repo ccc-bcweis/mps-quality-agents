@@ -1,4 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+import { formatStamp } from "../api/labels";
+import { btnSm } from "./ui";
+import {  } from "./ui";
 import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { api } from "../api/client";
@@ -16,6 +19,28 @@ import { Term } from "./Term";
 export type ShellOutletContext = {
   session: AdminSession | null;
 };
+
+/** Plant simulation clock, polled so the header shows the time every record is stamped with. */
+function useSimNow(): string | null {
+  const [now, setNow] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const read = () =>
+      api
+        .listFleetLive()
+        .then((live) => {
+          if (!cancelled && live?.simulatedNow) setNow(live.simulatedNow);
+        })
+        .catch(() => undefined);
+    void read();
+    const timer = window.setInterval(read, 15000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
+  return now;
+}
 
 function useAdminSession(): AdminSession | null {
   const [session, setSession] = useState<AdminSession | null>(null);
@@ -48,6 +73,7 @@ function NavLabel({ label }: { label: string }) {
 }
 
 export function ConsoleFrame() {
+  const simNow = useSimNow();
   const location = useLocation();
   const navigate = useNavigate();
   const { session } = useOutletContext<ShellOutletContext>();
@@ -110,18 +136,18 @@ export function ConsoleFrame() {
             </select>
           </label>
           <span className="whitespace-nowrap">
-            <Led tone={healthOn ? "nominal" : "off"} /> Sim clock · 1 s = 1 min
+            <Led tone={healthOn ? "nominal" : "off"} /> Sim time <b className="font-medium text-mps-secondary" title="Every record is stamped on this plant clock. 1 s = 1 min.">{simNow ? formatStamp(simNow) : "…"}</b>
           </span>
           <span className="whitespace-nowrap">
             Plants <b className="font-medium text-mps-secondary">3</b>
           </span>
           <span className="whitespace-nowrap">
-            Engineer <b className="font-medium text-mps-secondary">{session?.displayName ?? "dev-user"}</b>
+            Signed in <b className="font-medium text-mps-secondary">{session?.displayName ?? "…"}</b>
           </span>
           <Link
             to="/glossary"
             aria-current={location.pathname.startsWith("/glossary") ? "page" : undefined}
-            className="whitespace-nowrap text-mps-nominal"
+            className={btnSm}
           >
             Glossary
           </Link>
@@ -168,7 +194,7 @@ export function ConsoleFrame() {
         <span>
           Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · <Explain text="MIT" /> · Fictional demonstration. All companies and data are synthetic.
         </span>
-        <a className="whitespace-nowrap text-mps-nominal" href="https://github.com/ccc-bcweis/mps-quality-agents">
+        <a className={btnSm} href="https://github.com/ccc-bcweis/mps-quality-agents">
           How we built it
         </a>
       </footer>
@@ -185,7 +211,7 @@ export function HarnessFrame() {
     >
       <p className="shrink-0 border-b border-sn-gold/40 px-4 py-2 font-pitch text-mps-body text-sn-gold">
         Presenter tool. This is not a Meridian Precision Systems console screen.{" "}
-        <Link className="whitespace-nowrap text-sn-gold-wash underline" to="/">
+        <Link className="whitespace-nowrap rounded border border-sn-gold px-2 py-0.5 text-sn-gold no-underline hover:bg-sn-navy-soft" to="/">
           Open the console
         </Link>
       </p>

@@ -10,14 +10,12 @@ export type DecisionMode = "approve" | "reject";
 export function ApprovalDialog({
   mode,
   approverId,
-  onApproverId,
   onCancel,
   onApprove,
   onReject,
 }: {
   mode: DecisionMode;
   approverId: string;
-  onApproverId: (value: string) => void;
   onCancel: () => void;
   onApprove: () => void;
   onReject: (comment: string) => void;
@@ -55,7 +53,7 @@ export function ApprovalDialog({
             </p>
             <label className="mt-3 block text-mps-label text-mps-muted">
               Approver name
-              <input ref={firstField as RefObject<HTMLInputElement>} className={field} value={approverId} onChange={(event) => onApproverId(event.target.value)} />
+              <input ref={firstField as RefObject<HTMLInputElement>} className={field} value={approverId} readOnly title="The approver is the signed-in user." />
             </label>
             <label className="mt-3 block text-mps-label text-mps-muted">
               Type APPROVE to confirm

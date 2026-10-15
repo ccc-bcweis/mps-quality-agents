@@ -45,7 +45,13 @@ public sealed class SpcSample
     public ControlBaseline Baseline { get; }
 
     public IReadOnlyList<TelemetryPoint> Points { get; }
+
+    /// <summary>Optional engineering-unit context so the ticket title can say the real value and limit. Points may be z-scores.</summary>
+    public SpcDisplay? Display { get; init; }
 }
+
+/// <summary>Real-unit context for a sample whose points are z-scores: the nominal, one sigma, the unit, and the tool family label.</summary>
+public sealed record SpcDisplay(double Nominal, double Sigma, string Unit, string? FamilyLabel);
 
 public sealed class SpcAlertOutcome
 {

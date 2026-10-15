@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { panel } from "./ui";
+import { panel, btnSm } from "./ui";
 
 export type HistoryRow = {
   id: string;
@@ -41,7 +41,7 @@ export function RecordList({ label, rows, empty }: { label: string; rows: Histor
               <td className="break-words py-1.5 pr-3">
                 {row.toolId ? (
                   <>
-                    <Link to={`/tools/${row.toolId}`}>{row.toolId}</Link>
+                    <Link className={btnSm} to={`/tools/${row.toolId}`}>{row.toolId}</Link>
                     {row.toolName !== row.toolId ? <span className="block text-mps-micro text-mps-muted">{row.toolName}</span> : null}
                   </>
                 ) : (

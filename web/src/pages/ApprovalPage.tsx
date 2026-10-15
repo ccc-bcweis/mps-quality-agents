@@ -10,7 +10,7 @@ import { EvidencePack } from "../components/EvidencePack";
 import { Explain } from "../components/Explain";
 import { HistoryNote } from "../components/RecordList";
 import { Term } from "../components/Term";
-import { btnDanger, btnOk, panel } from "../components/ui";
+import { btnDanger, btnOk, panel, btnSm, btnPrimary } from "../components/ui";
 import { plainNarrative } from "../investigation/format";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
 import { hiddenMissingTitle, MISSING_INVESTIGATION, visibleProblem } from "../history/copy";
@@ -28,7 +28,19 @@ export function ApprovalPage() {
   const [error, setError] = useState<string | null>(null);
   const [missing, setMissing] = useState(false);
   const [mode, setMode] = useState<DecisionMode | null>(null);
-  const [approverId, setApproverId] = useState("dev-user");
+  const [approverId, setApproverId] = useState("");
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .getAdminSession()
+      .then((next) => {
+        if (!cancelled) setApproverId(next.displayName);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [pending, setPending] = useState(false);
   const [note, setNote] = useState("");
   useSetLifecycle(investigation?.stage === "approved" ? "capa" : "approval", investigation ? lifecycleForInvestigation(investigation.stage).escalated : false);
@@ -116,7 +128,7 @@ export function ApprovalPage() {
     <div>
       <div className="mb-4">
         <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">
-          <Link to={`/investigations/${investigationId}`}>Investigation</Link> · human-gated write
+          <Link className={btnSm} to={`/investigations/${investigationId}`}>Investigation</Link> · human-gated write
         </p>
         <h1 className="text-mps-display font-semibold">Approval</h1>
         <p className="max-w-3xl text-mps-secondary">
@@ -173,7 +185,7 @@ export function ApprovalPage() {
               </label>
               <label className="mt-2 block">
                 <span className="text-mps-secondary">Approver name</span>
-                <input aria-label="Approver name" className="mt-1 block w-full rounded border border-mps-line bg-transparent p-2" value={approverId} onChange={(event) => setApproverId(event.target.value)} />
+                <input aria-label="Approver name" className="mt-1 block w-full rounded border border-mps-line bg-transparent p-2" value={approverId} readOnly title="The approver is the signed-in user." />
               </label>
               <div className="mt-3 flex flex-wrap gap-2">
                 <button type="button" className={btnOk} disabled={pending} onClick={() => void decide("requestInfo", note.trim() || "More evidence requested.")}>
@@ -194,7 +206,7 @@ export function ApprovalPage() {
               Reject
             </button>
             {!escalated ? (
-              <button type="button" className="text-mps-nominal underline" disabled={pending || !investigation} onClick={() => void decide("requestInfo", "Need another evidence source.")}>
+              <button type="button" className={btnPrimary} disabled={pending || !investigation} onClick={() => void decide("requestInfo", "Need another evidence source.")}>
                 Request info
               </button>
             ) : null}
@@ -230,7 +242,6 @@ export function ApprovalPage() {
         <ApprovalDialog
           mode={mode}
           approverId={approverId}
-          onApproverId={setApproverId}
           onCancel={() => setMode(null)}
           onApprove={() => void decide("approve")}
           onReject={(comment) => void decide("reject", comment)}

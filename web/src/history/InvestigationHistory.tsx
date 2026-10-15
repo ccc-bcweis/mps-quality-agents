@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+import { btnSm } from "../components/ui";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
@@ -57,7 +58,7 @@ export function InvestigationHistory({ detail }: { detail: "investigation" | "ap
           <>
             <div>{incident?.summary ?? "Investigation"}</div>
             <div className="mt-1">
-              <Link to={detail === "approval" ? `/approvals/${investigation.id}` : `/investigations/${investigation.id}`}>Open</Link>
+              <Link to={detail === "approval" ? `/approvals/${investigation.id}` : `/investigations/${investigation.id}`} className={btnSm}>Open</Link>
             </div>
           </>
         ),

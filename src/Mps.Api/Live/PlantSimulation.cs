@@ -182,6 +182,13 @@ public sealed class PlantSimulation
         }
     }
 
+    /// <summary>Plain family word for a tool, such as Etch or Deposition. Null when the tool is unknown.</summary>
+    public string? FamilyLabel(string toolId)
+    {
+        var tool = Runtime.Fleet.Tools.FirstOrDefault(candidate => string.Equals(candidate.Id, toolId, StringComparison.Ordinal));
+        return tool?.Family.ToString();
+    }
+
     public string DefaultChamber(string toolId)
     {
         var tool = Runtime.Fleet.Tools.FirstOrDefault(candidate => string.Equals(candidate.Id, toolId, StringComparison.Ordinal));

@@ -8,7 +8,7 @@ import { CaseBriefs } from "../components/CaseBriefs";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
 import { HistoryNote, RecordList } from "../components/RecordList";
-import { btnPrimary, field, panel } from "../components/ui";
+import { btnPrimary, field, panel, btn, btnSm } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { fleetSensors } from "virtual:fleet-sensors";
 import { sensorOptionLabel, sensorsFor } from "../fleet/sensorOptions";
@@ -116,9 +116,9 @@ export function TicketsPage() {
       time: formatStamp(ticket.openedAt),
       detail: (
         <>
-          <Link to={`/tickets/${encodeURIComponent(ticket.id)}`}>{ticket.title}</Link>
+          <div>{ticket.title}</div>
           <div className="mt-1 font-mono text-mps-micro">
-            <Link to={path}>{ticket.number}</Link>
+            <Link className={btnSm} to={`/tickets/${encodeURIComponent(ticket.id)}`}>{ticket.number}</Link>{" "}<Link className={btnSm} to={path}>Investigation</Link>
             {stage && !isClosedStage(stage) ? <span> · {stage === "ticketOpened" ? "Start" : "Open"}</span> : null}
             {incident ? <span className="text-mps-muted"> · {severityWord(incident.severity)}</span> : null}
           </div>
@@ -144,10 +144,9 @@ export function TicketsPage() {
             {toolPlainName(tools, selectedTicket.toolId)} · {formatStamp(selectedTicket.openedAt)}
           </p>
           <p className="mt-2">{selectedTicket.title}</p>
-          <p className="mt-2">
-            <Link to={pathForTicket(selectedTicket)}>Open the investigation</Link>
-            {" · "}
-            <Link to="/tickets">All tickets</Link>
+          <p className="mt-3 flex flex-wrap gap-2">
+            <Link className={btnPrimary} to={pathForTicket(selectedTicket)}>Open the investigation</Link>
+            <Link className={btn} to="/tickets">All tickets</Link>
           </p>
           <CaseBriefs incidentIds={[selectedTicket.incidentId]} intro="Evidence for this ticket" />
         </section>

@@ -195,7 +195,7 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
             new
             {
                 signal = name,
-                body = ContractMapper.ToResponse(capa, site),
+                body = ContractMapper.ToResponse(capa, site, toolId),
             },
             created ? "capa" : null,
             cancellationToken).ConfigureAwait(false);
