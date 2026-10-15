@@ -1,0 +1,69 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 554 >>
+stream
+BT
+/F1 11 Tf
+48 760 Td
+14 TL
+(HEARTHLINE PARTICLE WORKS) Tj
+T*
+(Model: HP-12 Particle counter) Tj
+T*
+(Printout) Tj
+T*
+(Tool: D-01) Tj
+T*
+(Chamber: D-01-A) Tj
+T*
+(Observed at: 2026-10-11T18:10:00Z) Tj
+T*
+(Instrument: particleCounter) Tj
+T*
+(Parameter: particlesAdders) Tj
+T*
+(Plain name: Particle adders) Tj
+T*
+(Value: 3) Tj
+T*
+(Unit: count) Tj
+T*
+(Spec minimum: 0) Tj
+T*
+(Spec maximum: 10) Tj
+T*
+(Operator: BN) Tj
+T*
+(Reading table) Tj
+T*
+(Channel Particle adders  value 3 count  spec 0-10) Tj
+T*
+(Trace: Adder count is inside the printed window.) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000845 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+915
+%%EOF
