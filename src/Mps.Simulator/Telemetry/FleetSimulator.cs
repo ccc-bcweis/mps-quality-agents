@@ -30,6 +30,7 @@ public sealed class FleetSimulator : ITelemetrySource
     private readonly List<FaultSignal> _faults = [];
     private readonly Channel<TelemetryFrame> _channel;
     private DateTimeOffset _now;
+    private SeededRng? _excursions;
 
     public FleetSimulator(FleetCatalog fleet, int seed, DateTimeOffset origin, int channelCapacity = 65536)
     {
@@ -165,7 +166,7 @@ public sealed class FleetSimulator : ITelemetrySource
                             values[sensor.Id] = value;
                             if (keep)
                             {
-                                AddFrame(frames, tool.Id, chamber.Id, parameter, sensor.Unit, sensor.Id, at, value, schedule, runId, lotId);
+                                AddFrame(frames, tool.Id, chamber.Id, parameter, sensor.Unit, sensor.Id, at, value + Excursion(window), schedule, runId, lotId);
                             }
                         }
 
@@ -179,7 +180,7 @@ public sealed class FleetSimulator : ITelemetrySource
                             var tracked = tool.Sensors.First(sensor => string.Equals(sensor.Id, reflected.TracksSensorId, StringComparison.Ordinal));
                             var key = TelemetryMath.SeriesKey(tool.Id, chamber.Id, reflected.Id);
                             var noise = Cursor(key).NextDeviation(reflected.Limits.Sigma);
-                            var value = (forward * (reflected.Limits.Nominal / tracked.Limits.Nominal)) + noise;
+                            var value = Math.Max(reflected.Limits.Minimum, (forward * (reflected.Limits.Nominal / tracked.Limits.Nominal)) + noise);
                             if (keep)
                             {
                                 AddFrame(frames, tool.Id, chamber.Id, reflected.Id, reflected.Unit, reflected.Id, at, value, schedule, runId, lotId);
@@ -214,6 +215,26 @@ public sealed class FleetSimulator : ITelemetrySource
 
             return frames;
         }
+    }
+
+    /// <summary>Baseline noise stays well inside spec. Rarely one kept point jumps past the watch line and the next is back to normal.</summary>
+    private double Excursion(OperatingWindow window)
+    {
+        _excursions ??= SeededRng.Create(Seed, "lone-excursions");
+        if (_excursions.NextUnit() >= TelemetryMath.ExcursionChance)
+        {
+            return 0d;
+        }
+
+        var size = TelemetryMath.ExcursionSigma * window.Sigma;
+        var up = _excursions.NextUnit() < 0.5d;
+        var candidate = window.Nominal + (up ? size : -size);
+        if (candidate > window.Maximum || candidate < window.Minimum)
+        {
+            return 0d;
+        }
+
+        return up ? size : -size;
     }
 
     private SeriesCursor Cursor(string key)

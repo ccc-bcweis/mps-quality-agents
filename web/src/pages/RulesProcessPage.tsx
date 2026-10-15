@@ -4,6 +4,7 @@ import { api, ApiProblem } from "../api/client";
 import type { BusinessRule, Incident, ProcessMap, Ticket } from "../api/types";
 import { btn, btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
+import { useSite } from "../context/SiteContext";
 import { visibleProblem } from "../history/copy";
 import { ProcessFlow } from "../rules/ProcessFlow";
 
@@ -15,6 +16,7 @@ export function RulesProcessPage() {
   const [maps, setMaps] = useState<ProcessMap[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const { siteId } = useSite();
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [mapState, setMapState] = useState<MapState>("current");
@@ -22,7 +24,7 @@ export function RulesProcessPage() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([api.businessRules(), api.processMaps(), api.listTickets(), api.listIncidents()])
+    Promise.all([api.businessRules(), api.processMaps(), api.listTickets(siteId), api.listIncidents(siteId)])
       .then(([nextRules, nextMaps, nextTickets, nextIncidents]) => {
         if (cancelled) return;
         setRules(nextRules);
@@ -39,7 +41,7 @@ export function RulesProcessPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [siteId]);
 
   const map = maps.find((item) => item.state === mapState) ?? null;
   const ticket = tickets.find((item) => item.id === ticketId) ?? null;

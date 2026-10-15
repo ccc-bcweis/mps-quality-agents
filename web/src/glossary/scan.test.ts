@@ -73,3 +73,14 @@ describe("glossary coverage", () => {
     expect(hits, hits.map((hit) => `${hit.token} in ${hit.file}`).join("\n")).toEqual([]);
   });
 });
+
+describe("Western Electric rules term", () => {
+  it("links the phrase, singular or plural, to the handbook definition", async () => {
+    const { splitGlossary } = await import("./split");
+    const { lookupTerm } = await import("./terms");
+    const parts = splitGlossary("Western Electric rule 2 tripped. The Western Electric rules watch drift.");
+    const terms = parts.filter((part) => part.kind === "term").map((part) => (part as { term: string }).term);
+    expect(terms).toEqual(["Western Electric rule", "Western Electric rules"]);
+    expect(lookupTerm("Western Electric rule")?.definition).toMatch(/1956 quality handbook/);
+  });
+});

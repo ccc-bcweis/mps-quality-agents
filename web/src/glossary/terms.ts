@@ -17,6 +17,7 @@ export function ruleCodeBase(id: string): string | undefined {
 export function lookupTerm(id: string): GlossaryTerm | undefined {
   const direct = byTerm.get(id.toLowerCase());
   if (direct) return direct;
+  if (/^western electric rules?$/i.test(id)) return byTerm.get("western electric rules");
   const base = ruleCodeBase(id);
   return base ? byTerm.get(base.toLowerCase()) : undefined;
 }

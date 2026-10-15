@@ -80,7 +80,7 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         var tools = await client.GetFromJsonAsync<JsonElement>("/api/tools");
         var missing = await client.GetAsync("/api/tools/Z-99");
 
-        tools.GetArrayLength().Should().Be(8);
+        tools.GetArrayLength().Should().Be(32);
         tools.EnumerateArray().Select(tool => tool.GetProperty("model").GetString()).Should().OnlyContain(model => model != null && model.StartsWith("MPS-", StringComparison.Ordinal));
         missing.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

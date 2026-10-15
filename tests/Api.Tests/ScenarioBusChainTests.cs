@@ -165,6 +165,7 @@ public sealed class ScenarioBusChainTests
             return 300;
         }
 
-        return 120;
+        // A quiet baseline means an oscillation needs a few recipe steps that use the parameter before a rule trips.
+        return scenario.Shape == FaultShape.Oscillation ? 600 : 120;
     }
 }

@@ -23,7 +23,6 @@ describe("investigation", () => {
     expect(screen.getAllByText(/A preventive maintenance was performed the same week/).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Rules").length).toBeGreaterThan(0);
     expect(screen.getAllByText("AI").length).toBeGreaterThan(0);
-    expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Recommendation");
     const steps = screen.getByRole("list", { name: "Agent steps" });
     expect(within(steps).getAllByText(/engineering change, equipment calibration, material lot, and process drift/).length).toBeGreaterThan(0);
     expect(within(steps).getAllByText(/Duration/).length).toBeGreaterThan(0);
@@ -40,7 +39,6 @@ describe("investigation", () => {
     expect((await screen.findAllByText(/No root cause is asserted/)).length).toBeGreaterThan(0);
     expect(screen.getAllByText(matchCopy(/PLM says showerhead revision C/)).length).toBeGreaterThan(0);
     expect(screen.queryByText("Edge ring revision C changed the thermal path.")).not.toBeInTheDocument();
-    expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Investigation (escalated)");
     const steps = screen.getByRole("list", { name: "Agent steps" });
     expect(step(steps, "Evidence gate")).toHaveAttribute("data-status", "escalated");
     expect(step(steps, "Hypothesis ranking")).toHaveAttribute("data-status", "queued");

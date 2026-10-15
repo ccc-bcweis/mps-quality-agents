@@ -4,11 +4,25 @@ using Mps.Simulator.Fleet;
 
 namespace Mps.Simulator.Telemetry;
 
+/// <summary>Baseline telemetry settings the console and its tests can read.</summary>
+public static class BaselineNoise
+{
+    /// <summary>Chance that one kept chamber reading is a lone excursion. About 3 to 4 per wall-clock hour across all 32 tools.</summary>
+    public const double ExcursionChance = 4e-7d;
+
+    /// <summary>Size of a lone excursion in sigma: past the 2 sigma watch line, inside the 3 sigma control limit and the spec.</summary>
+    public const double ExcursionSigma = 2.4d;
+}
+
 internal static class TelemetryMath
 {
     public const double Phi = 0.82d;
 
-    public const double NoiseScale = 0.35d;
+    public const double NoiseScale = 0.12d;
+
+public const double ExcursionChance = BaselineNoise.ExcursionChance;
+
+    public const double ExcursionSigma = BaselineNoise.ExcursionSigma;
 
     public static string SeriesKey(string toolId, string chamberId, string parameter)
     {
@@ -64,7 +78,9 @@ internal sealed class SeriesCursor
 
     public double Next(OperatingWindow window, DateTimeOffset at, IReadOnlyList<FaultSignal> faults, string toolId, string chamberId, string parameter)
     {
-        return window.Nominal + NextDeviation(window.Sigma) + TelemetryMath.Offset(window, faults, at, toolId, chamberId, parameter);
+        // Baseline noise never leaves the spec window (a count with nominal zero never goes negative). Faults still can.
+        var noise = Math.Clamp(NextDeviation(window.Sigma), window.Minimum - window.Nominal, window.Maximum - window.Nominal);
+        return window.Nominal + noise + TelemetryMath.Offset(window, faults, at, toolId, chamberId, parameter);
     }
 
     public double NextDeviation(double sigma)

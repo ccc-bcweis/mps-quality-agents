@@ -15,7 +15,7 @@ public sealed class PrintoutParserTests
     {
         { "oscilloscope-e01.pdf", PrintoutReading.Oscilloscope, "E-01", "rfPower", 2140d, true },
         { "rf-power-meter-e02.pdf", PrintoutReading.RfPowerMeter, "E-02", "rfBiasPower", 510d, true },
-        { "particle-counter-d01.pdf", PrintoutReading.ParticleCounter, "D-01", "particlesAdders", 3d, false },
+        { "particle-counter-d01.pdf", PrintoutReading.ParticleCounter, "D-01", "particlesAdders", 18d, true },
         { "thermocouple-logger-e01.pdf", PrintoutReading.ThermocoupleLogger, "E-01", "escTemperature", 68d, true },
     };
 

@@ -18,7 +18,8 @@ const DATA_TIP =
   "Live follows the running plant. Replay shows a recorded scenario. This does not change how the AI answers.";
 const REPLAY_TIP =
   "Show the recorded messages for the scenario picked above. The recording stays when you switch back to Live.";
-const HARD_TIP = "Wipes tickets, alerts, and history, then fills a week of healthy readings. Company rules stay.";
+const HARD_TIP =
+  "Wipes tickets, alerts, and history, then fills a week of healthy readings. Company rules stay.";
 const SOFT_TIP =
   "Closes open tickets and investigations as Closed by demo reset. Deletes nothing. History stays, and every tool returns to nominal.";
 
@@ -53,7 +54,8 @@ function engineLabel(mode: BannerMode): string {
 export function HarnessBar({ session }: { session: AdminSession | null }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { bannerMode, clearDemo, dataMode, dataScenarioId, setDataMode } = useConsole();
+  const { bannerMode, clearDemo, dataMode, dataScenarioId, setDataMode } =
+    useConsole();
   const [expanded, setExpanded] = useState(readExpanded);
   const [scenarios, setScenarios] = useState<ScriptedScenario[]>([]);
   const [scenarioId, setScenarioId] = useState("");
@@ -85,7 +87,10 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
     setExpanded((current) => {
       const next = !current;
       try {
-        localStorage.setItem(HARNESS_STORAGE_KEY, next ? "expanded" : "collapsed");
+        localStorage.setItem(
+          HARNESS_STORAGE_KEY,
+          next ? "expanded" : "collapsed",
+        );
       } catch {
         // A private browser can refuse storage. The row still toggles for this visit.
       }
@@ -141,13 +146,20 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
     try {
       await setDataMode(mode, mode === "replay" ? scenarioId : undefined);
     } catch (reason: unknown) {
-      setDataMessage(reason instanceof ApiProblem ? reason.title : "The data view was not changed.");
+      setDataMessage(
+        reason instanceof ApiProblem
+          ? reason.title
+          : "The data view was not changed.",
+      );
     } finally {
       setDataPending(false);
     }
   }
 
-  const activeScenario = dataMode === "replay" && dataScenarioId ? dataScenarioId : scenarioId || "No scenario";
+  const activeScenario =
+    dataMode === "replay" && dataScenarioId
+      ? dataScenarioId
+      : scenarioId || "No scenario";
   const statusLine = `${dataMode === "replay" ? "Replay" : "Live"} · ${activeScenario} · ${engineLabel(bannerMode)}`;
   const admin = session?.isAdmin === true;
   const dialogCopy = resetKind === "soft" ? SOFT_COPY : HARD_COPY;
@@ -166,7 +178,9 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
           >
             Powered by StatusNeo
           </span>
-          <span className="whitespace-nowrap font-pitch text-mps-micro uppercase tracking-wider text-sn-gold">Demo harness</span>
+          <span className="whitespace-nowrap font-pitch text-mps-micro uppercase tracking-wider text-sn-gold">
+            Demo harness
+          </span>
         </div>
         <button
           type="button"
@@ -178,14 +192,24 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
         >
           <span aria-hidden="true">{expanded ? "▲" : "▼"}</span>
         </button>
-        <p className="shrink-0 whitespace-nowrap text-mps-body text-sn-gold-wash" role="status" aria-label="Harness status">
+        <p
+          className="shrink-0 whitespace-nowrap text-mps-body text-sn-gold-wash"
+          role="status"
+          aria-label="Harness status"
+        >
           {statusLine}
         </p>
       </div>
       {expanded ? (
-        <div data-region="harness-controls" className="max-h-[190px] overflow-y-auto border-t border-white/10 px-4 py-2">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <nav aria-label="Demo harness" className="flex flex-wrap items-center gap-1">
+        <div
+          data-region="harness-controls"
+          className="grid grid-cols-1 gap-x-4 gap-y-2 border-t border-white/10 px-4 py-2 lg:grid-cols-2"
+        >
+          <div className="flex min-w-0 flex-wrap content-start items-center gap-x-4 gap-y-2">
+            <nav
+              aria-label="Demo harness"
+              className="flex flex-wrap items-center gap-1"
+            >
               {HARNESS_LINKS.map((item) => {
                 const active = item.match(location.pathname);
                 return (
@@ -206,7 +230,13 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
                 );
               })}
             </nav>
-            <ScenarioControl scenarios={scenarios} scenarioId={scenarioId} onScenarioId={setScenarioId} loadError={scenarioError} />
+            <ScenarioControl
+              part="controls"
+              scenarios={scenarios}
+              scenarioId={scenarioId}
+              onScenarioId={setScenarioId}
+              loadError={scenarioError}
+            />
             <HarnessPrintout />
             {admin ? (
               <div className="flex flex-wrap items-center gap-2">
@@ -230,8 +260,15 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
                 </button>
               </div>
             ) : null}
-            <div role="group" aria-label="Plant data" title={DATA_TIP} className="flex flex-wrap items-center gap-2">
-              <span className="shrink-0 whitespace-nowrap text-mps-body">Plant data:</span>
+            <div
+              role="group"
+              aria-label="Plant data"
+              title={DATA_TIP}
+              className="flex flex-wrap items-center gap-2"
+            >
+              <span className="shrink-0 whitespace-nowrap text-mps-body">
+                Plant data:
+              </span>
               <button
                 type="button"
                 aria-pressed={dataMode === "live"}
@@ -255,29 +292,69 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
             </div>
             <ModeBanner />
             {resetMessage ? (
-              <p className="basis-full text-mps-body text-sn-gold-wash" role="status">
+              <p
+                className="basis-full text-mps-body text-sn-gold-wash"
+                role="status"
+              >
                 {resetMessage}
               </p>
             ) : null}
             {dataMessage ? (
-              <p className="basis-full text-mps-body text-mps-alarm-text" role="alert">
+              <p
+                className="basis-full text-mps-body text-mps-alarm-text"
+                role="alert"
+              >
                 {dataMessage}
               </p>
             ) : null}
           </div>
+          <div className="min-w-0">
+            <ScenarioControl
+              part="card"
+              scenarios={scenarios}
+              scenarioId={scenarioId}
+              onScenarioId={setScenarioId}
+              loadError={null}
+            />
+          </div>
         </div>
       ) : null}
       {resetKind ? (
-        <div className="fixed inset-0 z-toast flex items-center justify-center bg-black/60 p-4" role="presentation">
-          <div role="dialog" aria-modal="true" aria-labelledby="reset-title" className="w-full max-w-lg rounded border border-sn-gold bg-sn-navy p-4 text-sn-gold-wash shadow-panel">
-            <h2 id="reset-title" className="font-pitch text-mps-title font-semibold text-sn-gold">
+        <div
+          className="fixed inset-0 z-toast flex items-center justify-center bg-black/60 p-4"
+          role="presentation"
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reset-title"
+            className="w-full max-w-lg rounded border border-sn-gold bg-sn-navy p-4 text-sn-gold-wash shadow-panel"
+          >
+            <h2
+              id="reset-title"
+              className="font-pitch text-mps-title font-semibold text-sn-gold"
+            >
               {dialogCopy}
             </h2>
             <div className="mt-4 flex flex-wrap gap-2">
-              <button type="button" className={btn} disabled={resetPending} onClick={() => void confirmReset()}>
-                {resetPending ? "Resetting…" : resetKind === "soft" ? "Confirm soft reset" : "Confirm hard reset"}
+              <button
+                type="button"
+                className={btn}
+                disabled={resetPending}
+                onClick={() => void confirmReset()}
+              >
+                {resetPending
+                  ? "Resetting…"
+                  : resetKind === "soft"
+                    ? "Confirm soft reset"
+                    : "Confirm hard reset"}
               </button>
-              <button type="button" className={btn} disabled={resetPending} onClick={() => setResetKind(null)}>
+              <button
+                type="button"
+                className={btn}
+                disabled={resetPending}
+                onClick={() => setResetKind(null)}
+              >
                 Cancel
               </button>
             </div>

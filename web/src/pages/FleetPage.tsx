@@ -72,22 +72,25 @@ export function FleetPage() {
   const stories = rows.map((tool) => ({ tool, story: storyWithLive(storyFor(tool, visibleAlerts), liveById.get(tool.id), sparks[tool.id]) }));
   const plantName = PLANTS.find((plant) => plant.id === siteId)?.name ?? "All sites";
   const bays = [...new Set(rows.map((tool) => tool.bay))];
+  const families = new Set(rows.map((tool) => tool.family)).size;
+  // Same rows the Alerts page lists for this plant, so the button and the page always agree.
+  const openAlerts = new Set(visibleAlerts.map((alert) => alert.correlationId)).size;
 
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">
-            {siteId === "all" ? "Northwater teaching floor · eight tools" : plantName}
+            {plantName} · {rows.length} tools · {families} families
           </p>
           <h1 className="text-mps-display font-semibold">Fleet overview</h1>
           <p className="text-mps-secondary">
-            <Explain text="Eight tools, four families. SPC windows and Western Electric rules watch chamber pressure, ESC temperature, and RF power. Tiles open tool detail." />
+            <Explain text={`${rows.length} tools, ${families} families. SPC windows and Western Electric rules watch chamber pressure, ESC temperature, and RF power. Tiles open tool detail.`} />
           </p>
         </div>
         <div className="flex gap-2">
           <Link className={btnPrimary} to="/alerts">
-            Open alerts ({stories.filter((item) => item.story.status !== "nominal").length})
+            Open alerts ({openAlerts})
           </Link>
         </div>
       </div>

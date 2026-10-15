@@ -44,8 +44,8 @@ describe("harness collapse, replay, and soft reset", () => {
     expect(within(harness).getByRole("button", { name: "Collapse harness" })).toHaveAttribute("aria-expanded", "true");
     expect(within(harness).getByRole("combobox", { name: "Scenario" })).toBeInTheDocument();
     const controls = harness.querySelector("[data-region='harness-controls']");
-    expect(controls?.className).toContain("max-h-[190px]");
-    expect(controls?.className).toContain("overflow-y-auto");
+    expect(controls?.className).not.toMatch(/overflow-(y-)?auto|max-h-/);
+    expect(controls?.className).toContain("lg:grid-cols-2");
     first.unmount();
     renderConsole("/");
     const again = await screen.findByRole("button", { name: "Collapse harness" });

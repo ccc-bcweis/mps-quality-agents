@@ -43,8 +43,8 @@ public sealed class LiveSiteTests
 
         (await client.GetAsync("/api/tools/Z-99/live")).StatusCode.Should().Be(HttpStatusCode.NotFound);
 
-        var eight = await client.GetFromJsonAsync<JsonElement>("/api/tools", Json);
-        eight.GetArrayLength().Should().Be(8);
+        var everyTool = await client.GetFromJsonAsync<JsonElement>("/api/tools", Json);
+        everyTool.GetArrayLength().Should().Be(32);
 
         var ironwood = await client.GetFromJsonAsync<JsonElement>("/api/tools?siteId=ironwood", Json);
         ironwood.EnumerateArray().Should().Contain(tool => tool.GetProperty("id").GetString() == "I-D-01" && tool.GetProperty("siteId").GetString() == "ironwood");

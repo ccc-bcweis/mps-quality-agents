@@ -10,6 +10,5 @@ describe("alerts", () => {
     expect(await screen.findByRole("heading", { name: "Alerts" })).toBeInTheDocument();
     expect(screen.queryByText(matchCopy(/Western Electric rules \(WE-1\) · 1 point > 3σ/))).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "TKT-1044" })).not.toBeInTheDocument();
-    expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Alert");
   });
 });

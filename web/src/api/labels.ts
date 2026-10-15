@@ -56,13 +56,27 @@ export const CATEGORY_LABEL: Record<RootCauseCategory, string> = {
   processDrift: "Process drift",
 };
 
+const WE1 = "Western Electric rules, rule 1: one point is more than 3σ from the average";
+const WE2 = "Western Electric rules, rule 2: 2 of the last 3 points are more than 2σ out on the same side";
+const WE3 = "Western Electric rules, rule 3: 4 of the last 5 points are more than 1σ out on the same side";
+const WE4 = "Western Electric rules, rule 4: 8 points in a row on one side of the average";
+const NELSON = "Trend rule: 6 points in a row each higher than the last";
+const WINDOW = "Reading outside the spec window";
+
+/** Plain words for the rule that fired. Keys cover both the API names and the older camel-case names. */
 export const RULE_LABEL: Record<string, string> = {
-  westernElectric1: "WE-1 · 1 point > 3σ",
-  westernElectric2: "WE-2 · 2 of 3 > 2σ",
-  westernElectric3: "WE-3 · 4 of 5 > 1σ",
-  westernElectric4: "WE-4 · 8 on one side",
-  nelsonTrend: "Nelson · 6 rising",
-  specWindow: "Spec window",
+  westernElectric1: WE1,
+  westernElectric2: WE2,
+  westernElectric3: WE3,
+  westernElectric4: WE4,
+  "western-electric-1": WE1,
+  "western-electric-2": WE2,
+  "western-electric-3": WE3,
+  "western-electric-4": WE4,
+  nelsonTrend: NELSON,
+  "nelson-6-rising": NELSON,
+  specWindow: WINDOW,
+  window: WINDOW,
   manualMeasurement: "Manual measurement outside the printed spec",
 };
 

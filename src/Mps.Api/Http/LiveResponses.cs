@@ -80,8 +80,14 @@ public static class LiveResponses
             reading.Unit,
             reading.At,
             reading.Value,
-            StatusOf(reading.Value, window));
+            IsCounter(reading.Parameter, reading.SensorId) ? "nominal" : StatusOf(reading.Value, window));
     }
+
+    /// <summary>The wafer output counter climbs all hour by design, so it never sets a watch or alarm.</summary>
+    private static bool IsCounter(string parameter, string? sensorId) =>
+        string.Equals(parameter, SensorCatalog.Output, StringComparison.OrdinalIgnoreCase)
+        || parameter.EndsWith("-OUTPUT", StringComparison.OrdinalIgnoreCase)
+        || (sensorId?.EndsWith("-OUTPUT", StringComparison.OrdinalIgnoreCase) ?? false);
 
     private static string StatusOf(double value, OperatingWindow? window)
     {

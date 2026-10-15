@@ -48,19 +48,23 @@ describe("site selection", () => {
     expect(within(plant).getByRole("option", { name: "Lumen Pilot Works" })).toBeInTheDocument();
   });
 
-  it("keeps a floor link from changing the plant until a card is clicked", async () => {
+  it("keeps the Sites page and the header plant on one shared choice, including a floor link and reload", async () => {
     const user = userEvent.setup();
     renderConsole("/sites?site=lumen");
     expect(await screen.findByRole("heading", { name: "Lumen Pilot Works" })).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Plant" })).toHaveValue("all");
+    expect(screen.getByRole("combobox", { name: "Plant" })).toHaveValue("lumen");
+    expect(screen.getByRole("tab", { name: "Lumen Pilot Works", selected: true })).toBeInTheDocument();
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Plant" }), "northwater");
     expect(await screen.findByRole("heading", { name: "Northwater Fab" })).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Plant" })).toHaveValue("northwater");
+    expect(screen.getByRole("tab", { name: "Northwater Fab", selected: true })).toBeInTheDocument();
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Plant" }), "all");
-    expect(screen.getByRole("heading", { name: "Northwater Fab" })).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Plant" })).toHaveValue("all");
+    expect(await screen.findByRole("tab", { name: "All sites", selected: true })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Northwater Fab" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Ironwood Fab" }));
+    expect(screen.getByRole("combobox", { name: "Plant" })).toHaveValue("ironwood");
+    expect(localStorage.getItem(SITE_STORAGE_KEY)).toBe("ironwood");
   });
 
   it("remembers the plant across console tabs, reload, and another browser tab", async () => {

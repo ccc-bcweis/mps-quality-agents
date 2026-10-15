@@ -75,7 +75,7 @@ public sealed class DemoResetTests
         incidents.GetArrayLength().Should().Be(0);
         tickets.GetArrayLength().Should().Be(0);
         capas.GetArrayLength().Should().Be(0);
-        tools.GetArrayLength().Should().Be(8);
+        tools.GetArrayLength().Should().Be(32);
     }
 
     [Fact]
