@@ -15,6 +15,9 @@ public interface IInvestigationLog
     Task<InvestigationSnapshot?> GetAsync(InvestigationId id, CancellationToken cancellationToken);
 
     Task<InvestigationSnapshot?> FindActiveByIncidentAsync(IncidentId incidentId, CancellationToken cancellationToken);
+
+    /// <summary>The latest investigation for the incident, or null when none has been started.</summary>
+    Task<InvestigationSnapshot?> FindLatestByIncidentAsync(IncidentId incidentId, CancellationToken cancellationToken);
 }
 
 public interface ICapaLog

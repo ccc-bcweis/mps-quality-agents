@@ -35,3 +35,9 @@ Parallel lanes need one shape for incidents, evidence, approvals, and the consol
 - `EvidenceItem.whyItMatters` (nullable, <=240 chars) and `EvidenceItem.signalId` (fleet sensor id) per ADR-003 / UX3.
 - `EvidenceStance`, `EvidenceMatrixEntry`, optional `Investigation.evidenceMatrix` (UX3).
 - All additions are optional, so v1 clients remain compatible. Spec version 0.2.0.
+
+## Addendum: contracts-v1.2 (2026-10-14, lane T1)
+- `GET /api/incidents/{incidentId}/investigation` returns the latest investigation for that incident.
+- 404 when the incident does not exist, or when no investigation has been started.
+- The path is additive. v1 and v1.1 clients stay compatible. Spec version 0.3.0.
+- A ticket opens by its incident id. A ticket id or a ticket number is not an investigation id.

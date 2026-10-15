@@ -103,6 +103,7 @@ export const handlers = [
     );
   }),
   http.get("/api/incidents/:incidentId", () => HttpResponse.json(incident)),
+  http.get("/api/incidents/:incidentId/investigation", () => HttpResponse.json(investigation)),
   http.post("/api/incidents/:incidentId/investigations", () =>
     HttpResponse.json({ ...investigation, stage: "started", hypotheses: [] }, { status: 201 }),
   ),
