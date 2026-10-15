@@ -81,7 +81,7 @@ public sealed class InvestigationService : IInvestigationService
             throw new LifecycleConflictException($"Cannot start an investigation from {stored.Incident.Stage}.");
         }
 
-        var startedAt = _time.GetUtcNow();
+        var watch = System.Diagnostics.Stopwatch.StartNew();
         using var activity = QualityDiagnostics.ActivitySource.StartActivity("investigation.start");
         var started = await _workflow.StartAsync(incidentId, cancellationToken).ConfigureAwait(false);
         if (started.IncidentId != incidentId)
@@ -104,7 +104,7 @@ public sealed class InvestigationService : IInvestigationService
         await _investigations.AddAsync(aligned, cancellationToken).ConfigureAwait(false);
         await _notifier.InvestigationChangedAsync(aligned, cancellationToken).ConfigureAwait(false);
         await _notifier.IncidentChangedAsync(stored.Incident, cancellationToken).ConfigureAwait(false);
-        var elapsed = (_time.GetUtcNow() - startedAt).TotalMilliseconds;
+        var elapsed = watch.Elapsed.TotalMilliseconds;
         await _metrics.RecordAsync(
             new InvestigationObservation(
                 aligned.Id.Value,

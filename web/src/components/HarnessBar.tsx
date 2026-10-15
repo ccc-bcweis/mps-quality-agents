@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { useEffect, useState } from "react";
+import { readRunning, readScenario, RUNNING_EVENT, storeRunning, storeScenario } from "./harnessSession";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import type { AdminSession, ResetKind, ScriptedScenario } from "../api/types";
@@ -58,7 +59,17 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
     useConsole();
   const [expanded, setExpanded] = useState(readExpanded);
   const [scenarios, setScenarios] = useState<ScriptedScenario[]>([]);
-  const [scenarioId, setScenarioId] = useState("");
+  const [scenarioId, setScenarioIdState] = useState(readScenario);
+  const [running, setRunning] = useState(readRunning);
+  const setScenarioId = (id: string) => {
+    storeScenario(id);
+    setScenarioIdState(id);
+  };
+  useEffect(() => {
+    const sync = () => setRunning(readRunning());
+    window.addEventListener(RUNNING_EVENT, sync);
+    return () => window.removeEventListener(RUNNING_EVENT, sync);
+  }, []);
   const [scenarioError, setScenarioError] = useState<string | null>(null);
   const [resetKind, setResetKind] = useState<ResetKind | null>(null);
   const [resetPending, setResetPending] = useState(false);
@@ -73,7 +84,7 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
       .then((next) => {
         if (cancelled) return;
         setScenarios(next);
-        setScenarioId((current) => current || next[0]?.id || "");
+        setScenarioIdState((current) => (current && next.some((item) => item.id === current) ? current : next[0]?.id || ""));
       })
       .catch(() => {
         if (!cancelled) setScenarioError("The scenario list did not load.");
@@ -119,6 +130,7 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
     const timer = window.setInterval(poll, 400);
     try {
       const result = await api.resetDemo(kind);
+      storeRunning("");
       active = false;
       clearDemo();
       setResetMessage(
@@ -159,7 +171,9 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
   const activeScenario =
     dataMode === "replay" && dataScenarioId
       ? dataScenarioId
-      : scenarioId || "No scenario";
+      : running
+        ? `Running ${running}`
+        : scenarioId || "No scenario";
   const statusLine = `${dataMode === "replay" ? "Replay" : "Live"} · ${activeScenario} · ${engineLabel(bannerMode)}`;
   const admin = session?.isAdmin === true;
   const dialogCopy = resetKind === "soft" ? SOFT_COPY : HARD_COPY;

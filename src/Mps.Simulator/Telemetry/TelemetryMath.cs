@@ -20,7 +20,7 @@ internal static class TelemetryMath
 
     public const double NoiseScale = 0.12d;
 
-public const double ExcursionChance = BaselineNoise.ExcursionChance;
+    public const double ExcursionChance = BaselineNoise.ExcursionChance;
 
     public const double ExcursionSigma = BaselineNoise.ExcursionSigma;
 

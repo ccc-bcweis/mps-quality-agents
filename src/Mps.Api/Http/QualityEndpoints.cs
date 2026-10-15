@@ -354,7 +354,7 @@ public static class QualityEndpoints
             return Results.Ok(baseline);
         });
         app.MapGet("/api/demo/data-mode", (ConsoleDataMode mode) => Results.Ok(mode.Snapshot()));
-        app.MapPost("/api/demo/data-mode", async (HttpContext http, IConfiguration configuration, ConsoleDataMode mode, ReplayStore store, CancellationToken cancellationToken) =>
+        app.MapPost("/api/demo/data-mode", async (HttpContext http, IConfiguration configuration, ConsoleDataMode mode, ReplayStore store, Mps.Api.Live.PlantSimulation plant, CancellationToken cancellationToken) =>
         {
             var caller = Caller(http, configuration);
             if (!caller.IsAdmin)
@@ -388,7 +388,7 @@ public static class QualityEndpoints
                 return Results.NotFound();
             }
 
-            mode.UseReplay(scenario.Id, messages);
+            mode.UseReplay(scenario.Id, ReplayRebase.OntoNow(messages, plant.SimulatedNow));
             return Results.Ok(mode.Snapshot());
         });
         app.MapPost("/api/admin/replay/{scenarioId}", async (string scenarioId, HttpContext http, IConfiguration configuration, ScenarioReplayRecorder recorder, ScenarioTrigger trigger, Mps.Api.Live.PlantSimulation plant, Mps.Api.Bus.TelemetryPublisher publisher, CancellationToken cancellationToken) =>

@@ -93,6 +93,11 @@ public static class QualityHost
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddSingleton(SimulationOptions.From(builder.Configuration));
         builder.Services.AddSingleton<PlantSimulation>();
+        builder.Services.AddSingleton(services =>
+        {
+            var plant = services.GetRequiredService<PlantSimulation>();
+            return new Mps.Application.RecordClock(() => plant.SimulatedNow);
+        });
         builder.Services.AddSingleton(services => services.GetRequiredService<PlantSimulation>().Runtime);
         builder.Services.AddSingleton<StreamSpcPublisher>();
         builder.Services.AddSingleton<ScriptedScenarioContext>();
@@ -105,11 +110,11 @@ public static class QualityHost
         builder.Services.AddScoped<DemoResetService>();
         builder.Services.AddSingleton(ScenarioCardCatalog.Load(Path.Combine(dataDirectory, "scenarios", "catalog.yaml")));
         builder.Services.AddSingleton<ScenarioEvidenceBoard>();
-        builder.Services.AddScoped<ScenarioTrigger>();
+        builder.Services.AddScoped<ScenarioTrigger>(services => ActivatorUtilities.CreateInstance<ScenarioTrigger>(services, (TimeProvider)services.GetRequiredService<Mps.Application.RecordClock>()));
         builder.Services.AddSingleton<IMetadataStore>(new YamlMetadataStore(Path.Combine(dataDirectory, "metadata")));
         builder.Services.AddSingleton<IBusinessRuleEngine>(services => new BusinessRuleEngine(services.GetRequiredService<IMetadataStore>()));
         builder.Services.AddScoped<IQualityNotifier, SignalRQualityNotifier>();
-        builder.Services.AddScoped<IIntakeService, IntakeService>();
+        builder.Services.AddScoped<IIntakeService>(services => ActivatorUtilities.CreateInstance<IntakeService>(services, (TimeProvider)services.GetRequiredService<Mps.Application.RecordClock>()));
         builder.Services.AddScoped(services =>
         {
             var minutes = services.GetRequiredService<IConfiguration>().GetValue("Spc:DebounceMinutes", 10);
@@ -125,10 +130,10 @@ public static class QualityHost
         });
         if (!builder.TryAddLiveInvestigation())
         {
-            builder.Services.AddScoped<IInvestigationWorkflow, FakeInvestigationWorkflow>();
+            builder.Services.AddScoped<IInvestigationWorkflow>(services => ActivatorUtilities.CreateInstance<FakeInvestigationWorkflow>(services, (TimeProvider)services.GetRequiredService<Mps.Application.RecordClock>()));
         }
 
-        builder.Services.AddScoped<IInvestigationService, InvestigationService>();
+        builder.Services.AddScoped<IInvestigationService>(services => ActivatorUtilities.CreateInstance<InvestigationService>(services, (TimeProvider)services.GetRequiredService<Mps.Application.RecordClock>()));
         builder.Services.AddScoped<ICapaLifecycleService, CapaLifecycleService>();
         builder.Services.AddScoped<IHumanDecisionService, HumanDecisionService>();
         builder.Services.AddSingleton<IManualMeasurementLog, InMemoryManualMeasurementLog>();
@@ -136,16 +141,16 @@ public static class QualityHost
         builder.Services.AddSingleton<IPrintoutFieldParser, LabeledPrintoutParser>();
         builder.Services.AddSingleton<IPrintoutModelReader, PrintoutModelReader>();
         builder.Services.AddSingleton<ISimulationFaultPort, DemoSimulationFaultPort>();
-        builder.Services.AddScoped<IDocumentIntake, DocumentIntakeService>();
-        builder.Services.AddScoped<IFaultInjectionService, FaultInjectionService>();
+        builder.Services.AddScoped<IDocumentIntake>(services => ActivatorUtilities.CreateInstance<DocumentIntakeService>(services, (TimeProvider)services.GetRequiredService<Mps.Application.RecordClock>()));
+        builder.Services.AddScoped<IFaultInjectionService>(services => ActivatorUtilities.CreateInstance<FaultInjectionService>(services, (TimeProvider)services.GetRequiredService<Mps.Application.RecordClock>()));
         builder.Services.AddSingleton<IEventBus>(services =>
             new InProcessEventBus(time: services.GetRequiredService<TimeProvider>()));
         builder.Services.AddSingleton(_ => new SqliteEventStore(connectionString));
         builder.Services.AddSingleton<CascadeRegistry>();
         builder.Services.AddSingleton<ICascadeDirectory>(services => services.GetRequiredService<CascadeRegistry>());
-        builder.Services.AddSingleton<ILifecycleEventSink, BusEventSink>();
+        builder.Services.AddSingleton<ILifecycleEventSink>(services => ActivatorUtilities.CreateInstance<BusEventSink>(services, (TimeProvider)services.GetRequiredService<Mps.Application.RecordClock>()));
         builder.Services.AddSingleton(CommandCatalog.Load(dataDirectory));
-        builder.Services.AddScoped<CommandGateway>();
+        builder.Services.AddScoped<CommandGateway>(services => ActivatorUtilities.CreateInstance<CommandGateway>(services, (TimeProvider)services.GetRequiredService<Mps.Application.RecordClock>()));
         builder.Services.AddSingleton<TelemetryPublisher>();
         builder.Services.AddSingleton<INominalHistorySeeder, NominalHistorySeeder>();
         builder.Services.AddSingleton<CausalTraceService>();

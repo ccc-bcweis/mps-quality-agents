@@ -60,6 +60,9 @@ public sealed class HumanDecisionService : IHumanDecisionService
     private readonly ILifecycleEventSink? _events;
     private readonly ICascadeDirectory? _cascade;
 
+    /// <summary>Stamps decisions and CAPA on the plant clock so they sort after the alert. Approval tokens stay on wall time.</summary>
+    private readonly TimeProvider _records;
+
     public HumanDecisionService(
         IInvestigationLog investigations,
         IIncidentLog incidents,
@@ -71,8 +74,10 @@ public sealed class HumanDecisionService : IHumanDecisionService
         ApprovalPolicy policy,
         IMetricsLog metrics,
         ILifecycleEventSink? events = null,
-        ICascadeDirectory? cascade = null)
+        ICascadeDirectory? cascade = null,
+        RecordClock? recordClock = null)
     {
+        _records = (TimeProvider?)recordClock ?? time;
         ArgumentNullException.ThrowIfNull(investigations);
         ArgumentNullException.ThrowIfNull(incidents);
         ArgumentNullException.ThrowIfNull(capas);
@@ -129,15 +134,15 @@ public sealed class HumanDecisionService : IHumanDecisionService
             case HumanDecisionKind.Reject:
                 using (QualityDiagnostics.ActivitySource.StartActivity("decision.reject"))
                 {
-                    return await RejectAsync(snapshot, stored, _time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+                    return await RejectAsync(snapshot, stored, _records.GetUtcNow(), cancellationToken).ConfigureAwait(false);
                 }
             case HumanDecisionKind.RequestInfo:
                 if (snapshot.Stage == InvestigationStage.Escalated)
                 {
-                    return await SupersedeForMoreEvidenceAsync(snapshot, stored, comment, _time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+                    return await SupersedeForMoreEvidenceAsync(snapshot, stored, comment, _records.GetUtcNow(), cancellationToken).ConfigureAwait(false);
                 }
 
-                return await RequestInfoAsync(snapshot, stored, comment, _time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+                return await RequestInfoAsync(snapshot, stored, comment, _records.GetUtcNow(), cancellationToken).ConfigureAwait(false);
             case HumanDecisionKind.Override:
                 if (snapshot.Stage != InvestigationStage.Escalated)
                 {
@@ -242,7 +247,7 @@ public sealed class HumanDecisionService : IHumanDecisionService
                 return new HumanDecisionOutcome(snapshot, capa);
             }
 
-            var now = _time.GetUtcNow();
+            var now = _records.GetUtcNow();
             LifecycleMoves.WalkTo(stored, IncidentStage.Approved);
             await _incidents.SaveAsync(stored, now, cancellationToken).ConfigureAwait(false);
             var approved = snapshot.Stage == InvestigationStage.Approved
@@ -373,7 +378,7 @@ public sealed class HumanDecisionService : IHumanDecisionService
                 null,
                 toolId,
                 stored.Incident.ChamberId,
-                _time.GetUtcNow(),
+                _records.GetUtcNow(),
                 new { investigationId = snapshot.Id.Value, approverId = approval.Token.ApproverId, capaId = capa.Id.Value }),
             cancellationToken).ConfigureAwait(false);
         var grantedId = await _events.PublishAsync(
@@ -386,7 +391,7 @@ public sealed class HumanDecisionService : IHumanDecisionService
                 null,
                 toolId,
                 stored.Incident.ChamberId,
-                _time.GetUtcNow(),
+                _records.GetUtcNow(),
                 new { investigationId = snapshot.Id.Value, approverId = approval.Token.ApproverId, capaId = capa.Id.Value }),
             cancellationToken).ConfigureAwait(false);
         _cascade?.RememberStep(correlation, "approval", grantedId);
@@ -460,7 +465,7 @@ public sealed class HumanDecisionService : IHumanDecisionService
             throw new ApprovalForbiddenException(exception.Message, exception);
         }
 
-        var openedAt = _time.GetUtcNow();
+        var openedAt = _records.GetUtcNow();
         try
         {
             var capa = CapaAction.Open(

@@ -122,4 +122,24 @@ describe("harness collapse, replay, and soft reset", () => {
     release();
     expect(await screen.findByText("Demo baseline restored. Seed 4242.")).toBeInTheDocument();
   });
+
+  it("keeps the chosen scenario and shows the running one across tab changes and a remount", async () => {
+    const user = userEvent.setup();
+    const first = renderConsole("/alerts");
+    let harness = await expandHarness();
+    await within(harness).findByRole("option", { name: /SC-4/ });
+    await user.selectOptions(within(harness).getByRole("combobox", { name: "Scenario" }), "SC-4");
+    await user.click(screen.getByRole("link", { name: "Tickets" }));
+    await screen.findByRole("heading", { name: "Tickets" });
+    expect(screen.getByRole("combobox", { name: "Scenario" })).toHaveValue("SC-4");
+    await user.click(screen.getByRole("button", { name: "Run scenario" }));
+    await waitFor(() => expect(screen.getByRole("status", { name: "Harness status" })).toHaveTextContent("Running SC-4"));
+    first.unmount();
+
+    renderConsole("/");
+    harness = await expandHarness();
+    await within(harness).findByRole("option", { name: /SC-4/ });
+    expect(within(harness).getByRole("combobox", { name: "Scenario" })).toHaveValue("SC-4");
+    expect(screen.getByRole("status", { name: "Harness status" })).toHaveTextContent("Running SC-4");
+  });
 });
