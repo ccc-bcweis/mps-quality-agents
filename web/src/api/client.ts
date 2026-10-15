@@ -8,6 +8,7 @@ import type {
   DemoResetResult,
   FaultInjectionAccepted,
   FaultInjectionRequest,
+  FamilyComparison,
   Health,
   ScenarioRun,
   ScriptedScenario,
@@ -15,6 +16,8 @@ import type {
   Incident,
   Investigation,
   MetricsSummary,
+  SiteDetail,
+  SiteSummary,
   OpenIncidentRequest,
   Problem,
   Ticket,
@@ -64,6 +67,10 @@ export async function apiSend<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   health: () => apiSend<Health>("/health"),
+  listSites: () => apiSend<SiteSummary[]>("/api/sites"),
+  getSite: (siteId: string) => apiSend<SiteDetail>(`/api/sites/${encodeURIComponent(siteId)}`),
+  compareSites: (family: string) =>
+    apiSend<FamilyComparison>(`/api/sites/compare?family=${encodeURIComponent(family)}`),
   listTools: () => apiSend<Tool[]>("/api/tools"),
   getTool: (toolId: string) => apiSend<Tool>(`/api/tools/${encodeURIComponent(toolId)}`),
   listAlerts: (toolId?: string) =>

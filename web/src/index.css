@@ -18,6 +18,10 @@ body {
   min-height: 100vh;
 }
 
+.floor-canvas {
+  container-type: inline-size;
+}
+
 .mps-term {
   cursor: help;
   outline: none;

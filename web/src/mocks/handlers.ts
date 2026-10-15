@@ -8,6 +8,7 @@ import type { Alert, FaultInjectionRequest, Incident, OpenIncidentRequest, Scena
 import { telemetryForTool } from "../fleet/telemetry";
 import { latestInvestigationForIncident } from "../investigation/ticketRoute";
 import { alerts, incidents, investigationFor, investigations, tickets, tools } from "./demoData";
+import { familyComparison, siteDetail, siteSummaries, toolRecord } from "./sites/fixtures";
 import { mockExtras } from "./state";
 
 function problem(title: string, status: number) {
@@ -33,11 +34,32 @@ function allIncidents(): Incident[] {
   return [...clone(incidents), ...mockExtras().incidents];
 }
 
+const FAMILIES = new Set(["deposition", "etch", "strip", "clean"]);
+
 export const handlers = [
+  http.get("/api/sites", () => HttpResponse.json(siteSummaries())),
+
+  http.get("/api/sites/compare", ({ request }) => {
+    const family = new URL(request.url).searchParams.get("family") ?? "";
+    if (!FAMILIES.has(family)) {
+      return problem("Query family must be deposition, etch, strip, or clean.", 400);
+    }
+    const comparison = familyComparison(family);
+    if (!comparison) return problem("Query family must be deposition, etch, strip, or clean.", 400);
+    return HttpResponse.json(comparison);
+  }),
+
+  http.get("/api/sites/:siteId", ({ params }) => {
+    const site = siteDetail(String(params.siteId));
+    if (!site) return problem("Plant was not found.", 404);
+    return HttpResponse.json(site);
+  }),
+
   http.get("/api/tools", () => HttpResponse.json(clone(tools))),
 
   http.get("/api/tools/:toolId", ({ params }) => {
-    const tool = tools.find((item) => item.id === params.toolId);
+    const toolId = String(params.toolId);
+    const tool = tools.find((item) => item.id === toolId) ?? toolRecord(toolId);
     if (!tool) return problem("Tool was not found.", 404);
     return HttpResponse.json(clone(tool));
   }),

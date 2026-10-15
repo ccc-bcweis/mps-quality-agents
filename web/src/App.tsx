@@ -12,6 +12,7 @@ import { InvestigationPage } from "./pages/InvestigationPage";
 import { MetricsPage } from "./pages/MetricsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { RoiPage } from "./pages/RoiPage";
+import { SitesPage } from "./pages/SitesPage";
 import { TicketsPage } from "./pages/TicketsPage";
 import { ToolPage } from "./pages/ToolPage";
 
@@ -28,6 +29,7 @@ export function AppRoutes() {
         <Route path="/roi" element={<Navigate to="/harness/roi" replace />} />
         <Route path="/metrics" element={<Navigate to="/harness/metrics" replace />} />
         <Route element={<ConsoleFrame />}>
+          <Route path="/sites" element={<SitesPage />} />
           <Route path="/" element={<FleetPage />} />
           <Route path="/tools/:toolId" element={<ToolPage />} />
           <Route path="/alerts" element={<AlertsPage />} />
