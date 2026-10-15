@@ -6,7 +6,7 @@ Copyright (c) 2026 Bryan C. Weis and Common Consulting Company. MIT.
 
 ## Seed
 
-`Mps:Demo:Seed` defaults to 4242. Telemetry for a tool, chamber, parameter, and window is a function of that seed. `POST /api/admin/reset` puts the simulated clock back at 2026-09-01T00:00:00Z. Scale stays 60, so one real second is one simulated minute. The call clears tickets, investigations, approvals, corrective actions, alerts, faults, and metric samples, then reseeds the eight-tool fleet. Ticket numbers start again at TKT-1001.
+`Mps:Demo:Seed` defaults to 4242. Telemetry for a tool, chamber, parameter, and window is a function of that seed. `POST /api/admin/reset` takes `kind`. Omitted or `hard` wipes transactional data, keeps metadata, puts the simulated clock back at 2026-09-01T00:00:00Z, rebuilds the eight-tool fleet, and fills a week of healthy history. Ticket numbers start again at TKT-1001. Scale stays 60, so one real second is one simulated minute. `kind: soft` deletes nothing. It closes open tickets, investigations, and pending approvals with the status Closed by demo reset, clears live faults, and sends one healthy reading for every sensor. History stays browsable. The harness polls `GET /api/admin/reset/progress` while either reset runs.
 
 The same seed produces the same scenario telemetry. Live model wording can still vary slightly. Every live call is pinned to temperature 0. The OpenAI seed parameter is set when the provider supports it (`Mps:Model:Seed`, falling back to `Mps:Demo:Seed`). Pinning reduces variation. It does not make every provider return the same sentences.
 
@@ -29,6 +29,10 @@ SC-4 process drift
 Trigger a scenario from the demo harness bar (the scenario picker sits above the console) or from `POST /api/injector/scenarios/{id}`. The free-form fault form is the harness fault-injector panel and still posts `POST /api/faults`. Unknown ids return 404. Which screens are the harness and which are the application: `docs/demo/SCREENS.md`.
 
 The sample window is the first 30 seconds after 2026-09-01T00:00:00Z, so the series does not depend on when the button is pressed.
+
+## Plant-data replay
+
+Live is the running plant. Replay swaps the fleet, the tool charts, and the alerts to a recorded scenario. Recordings are bus messages in `data/replay/<scenario>/messages.jsonl`, written by `tools/ReplayRecorder` or `POST /api/admin/replay/{scenarioId}`. Saved model answers stay in `data/replay/scripted/` and are not those files. `POST /api/demo/data-mode` with `live` puts the console back on the running plant and leaves the recording in place. The answer engine (saved answers or a live model) is a separate switch.
 
 ## Model replay
 

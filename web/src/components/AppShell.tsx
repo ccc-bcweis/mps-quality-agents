@@ -52,7 +52,7 @@ export function ConsoleFrame() {
   const location = useLocation();
   const navigate = useNavigate();
   const { session } = useOutletContext<ShellOutletContext>();
-  const { lifecycle } = useConsole();
+  const { lifecycle, dataMode, dataScenarioId } = useConsole();
   const { siteId, setSiteId } = useSite();
   const [healthOn, setHealthOn] = useState(false);
 
@@ -148,6 +148,17 @@ export function ConsoleFrame() {
         })}
       </nav>
       <LifecycleBar current={lifecycle.current} escalated={lifecycle.escalated} />
+      {dataMode === "replay" ? (
+        <p
+          role="status"
+          aria-label="Replay banner"
+          data-region="replay-banner"
+          className="shrink-0 border-b border-mps-nominal bg-mps-panel px-4 py-2 text-mps-body text-mps-text"
+        >
+          Replay. The console is showing the recorded run
+          {dataScenarioId ? ` for ${dataScenarioId}` : ""}. Switch to Live in the harness to see the running plant.
+        </p>
+      ) : null}
       <main
         id="main"
         data-scroll="content"

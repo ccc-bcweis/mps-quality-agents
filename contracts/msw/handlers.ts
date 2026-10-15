@@ -318,8 +318,18 @@ export const handlers = [
   http.get("/api/admin/session", () =>
     HttpResponse.json({ mode: "local", isAdmin: true, displayName: "dev-user" }),
   ),
-  http.post("/api/admin/reset", () =>
-    HttpResponse.json({
+  http.get("/api/admin/reset/progress", () =>
+    HttpResponse.json({ running: false, kind: null, phase: "idle", message: "Ready." }),
+  ),
+  http.post("/api/admin/reset", async ({ request }) => {
+    let kind: "hard" | "soft" = "hard";
+    try {
+      const body = (await request.json()) as { kind?: string };
+      if (body.kind === "soft") kind = "soft";
+    } catch {
+      kind = "hard";
+    }
+    return HttpResponse.json({
       seed: 4242,
       simulatedOrigin: "2026-09-01T00:00:00Z",
       fleetToolCount: 8,
@@ -330,8 +340,20 @@ export const handlers = [
       telemetryCount: 0,
       eventCount: 1,
       resetEventId: "reset-event",
-      kind: "hard",
-    }),
+      kind,
+    });
+  }),
+  http.get("/api/demo/data-mode", () => HttpResponse.json({ mode: "live", scenarioId: null, messageCount: 0 })),
+  http.post("/api/demo/data-mode", async ({ request }) => {
+    const body = (await request.json()) as { mode?: string; scenarioId?: string };
+    if (body.mode === "live") return HttpResponse.json({ mode: "live", scenarioId: null, messageCount: 0 });
+    if (body.mode === "replay" && body.scenarioId) {
+      return HttpResponse.json({ mode: "replay", scenarioId: body.scenarioId, messageCount: 12 });
+    }
+    return HttpResponse.json({ title: "That scenario has no recording.", status: 404 }, { status: 404 });
+  }),
+  http.post("/api/admin/replay/:scenarioId", ({ params }) =>
+    HttpResponse.json({ scenarioId: String(params.scenarioId), messageCount: 12 }),
   ),
   http.get("/api/injector/scenarios", () =>
     HttpResponse.json([

@@ -304,6 +304,22 @@ export type DemoResetResult = {
   kind: "hard" | "soft";
 };
 
+export type ResetKind = "hard" | "soft";
+
+export type ResetProgress = {
+  running: boolean;
+  kind?: ResetKind | null;
+  phase: string;
+  message: string;
+};
+
+/** Live follows the running plant. Replay shows one recorded scenario. */
+export type DataMode = {
+  mode: "live" | "replay";
+  scenarioId?: string | null;
+  messageCount: number;
+};
+
 export type ScriptedScenario = {
   id: string;
   title: string;

@@ -7,7 +7,10 @@ import type {
   AdminSession,
   AuditLog,
   CausalTrace,
+  DataMode,
   DemoResetResult,
+  ResetKind,
+  ResetProgress,
   FaultInjectionAccepted,
   FaultInjectionRequest,
   FamilyComparison,
@@ -132,7 +135,15 @@ export const api = {
     apiSend<PrintoutConfirmation>("/api/printouts/confirm", { method: "POST", body: JSON.stringify(body) }),
   getAdminSession: () => apiSend<AdminSession>("/api/admin/session"),
   getAuditLog: () => apiSend<AuditLog>("/api/audit"),
-  resetDemo: () => apiSend<DemoResetResult>("/api/admin/reset", { method: "POST" }),
+  resetDemo: (kind: ResetKind) =>
+    apiSend<DemoResetResult>("/api/admin/reset", { method: "POST", body: JSON.stringify({ kind }) }),
+  getResetProgress: () => apiSend<ResetProgress>("/api/admin/reset/progress"),
+  getDataMode: () => apiSend<DataMode>("/api/demo/data-mode"),
+  setDataMode: (mode: DataMode["mode"], scenarioId?: string) =>
+    apiSend<DataMode>("/api/demo/data-mode", {
+      method: "POST",
+      body: JSON.stringify(scenarioId ? { mode, scenarioId } : { mode }),
+    }),
   companyMetadata: () => apiSend<CompanyMetadata>("/api/metadata/company"),
   metadataSites: () => apiSend<MetadataSite[]>("/api/metadata/sites"),
   metadataTool: (toolId: string) => apiSend<MetadataTool>(`/api/metadata/tools/${encodeURIComponent(toolId)}`),
