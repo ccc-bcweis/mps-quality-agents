@@ -1,34 +1,54 @@
 flowchart LR
+  subgraph CTX["Around this path"]
+    direction TB
+    NW["Northwater Fab"]
+    IW["Ironwood Fab"]
+    LM["Lumen Pilot Works"]
+    SITES["Sites API"]
+    EVD["Scenario evidence"]
+    HRN["Harness starts the run"]
+    EG["Escalation gate"]
+  end
   subgraph OP["Operator"]
-    ALERT["Alert on the console. MX-400 etch."]
+    ALERT["Alert on the console"]
   end
   subgraph TECH["Technician"]
-    TNOTE["No hand-off on this path."]
+    TNOTE["No hand-off"]
   end
   subgraph PE["Process engineer"]
-    PNOTE["Reads the rank. Does not state it."]
+    PNOTE["Reads the rank"]
   end
   subgraph QE["Quality engineer"]
-    OPEN["Opens the ticket. HUMAN 3."]
+    OPEN["Opens the ticket"]
   end
-  subgraph SC["Supply chain"]
-    SNOTE["No email lookup on this path."]
+  subgraph Supply["Supply chain"]
+    SNOTE["Lot already joined"]
   end
   subgraph MGMT["Management"]
-    APPR["Approves on the pack. HUMAN 11."]
+    APPR["Approves on the pack"]
   end
-  subgraph AG["MPS agent platform (StatusNeo)"]
-    A1["SPC opens the ticket. AGENT 1."]
-    A2["Ticket is the alert. AGENT 2."]
-    A4["Reads the MES. AGENT 4."]
-    A5["Reads historian, SPC, and the ECN. AGENT 5."]
-    A6["Retrieves prior cases. AGENT 6."]
-    A7["Joins the supplier lot. AGENT 7."]
-    A8["One evidence pack. AGENT 8."]
-    A9["Ranks four cause classes. AGENT 9."]
-    A10["Pack is the ask. AGENT 10."]
-    A12["Writes the CAPA. AGENT 12."]
-    A13["Token is the signature. AGENT 13."]
+  subgraph AG["Agent platform"]
+    A1["Opens the ticket"]
+    A2["Ticket is the alert"]
+    A4["Reads the run"]
+    A5["Reads chart and change"]
+    A6["Prior cases"]
+    A7["Joins the supplier lot"]
+    A8["One evidence pack"]
+    A9["Ranks four classes"]
+    A10["Pack is the ask"]
+    A12["Writes the record"]
+    A13["Token is the signature"]
   end
 
-  ALERT --> A1 --> A2 --> OPEN --> A4 --> A5 --> A6 --> A7 --> A8 --> A9 --> A10 --> APPR --> A12 --> A13
+  NW --> SITES
+  IW --> SITES
+  LM --> SITES
+  SITES --> ALERT
+  HRN --> ALERT
+  EVD --> A8
+  ALERT --> A1 --> A2 --> OPEN --> A4 --> A5 --> A6 --> A7 --> A8 --> A9 --> A10 --> APPR
+  APPR -->|"not escalated"| A12 --> A13
+  APPR -->|"escalated"| EG
+  EG -->|"request info"| OPEN
+  EG -->|"override with reason"| A12
