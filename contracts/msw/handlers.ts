@@ -108,15 +108,21 @@ export const handlers = [
   ),
   http.get("/api/investigations/:investigationId", () => HttpResponse.json(investigation)),
   http.post("/api/investigations/:investigationId/decisions", async ({ request }) => {
-    const body = (await request.json()) as { kind?: string; approverId?: string };
-    if (body.kind === "approve" && !body.approverId) {
+    const body = (await request.json()) as { kind?: string; approverId?: string; comment?: string | null };
+    if (body.kind === "override" && (body.comment ?? "").trim().length < 20) {
+      return HttpResponse.json(
+        { title: "Override needs a written justification of at least 20 characters.", status: 400 },
+        { status: 400, headers: { "Content-Type": "application/problem+json" } },
+      );
+    }
+    if ((body.kind === "approve" || body.kind === "override") && !body.approverId) {
       return HttpResponse.json(
         { title: "Approval requires an approver.", status: 400 },
         { status: 400, headers: { "Content-Type": "application/problem+json" } },
       );
     }
     const capa =
-      body.kind === "approve"
+      body.kind === "approve" || body.kind === "override"
         ? {
             id: "66666666-6666-4666-8666-666666666666",
             incidentId: incident.id,
@@ -130,7 +136,7 @@ export const handlers = [
     return HttpResponse.json({
       investigation: {
         ...investigation,
-        stage: body.kind === "approve" ? "approved" : body.kind === "reject" ? "rejected" : "escalated",
+        stage: body.kind === "approve" || body.kind === "override" ? "approved" : body.kind === "reject" ? "rejected" : "escalated",
       },
       capa,
     });
