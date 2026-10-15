@@ -52,7 +52,7 @@ scenarios: SC-1 SC-2 SC-3 SC-4
 - (lane T1) `GET /api/incidents/{incidentId}/investigation` returns the latest investigation for that incident. 404 when the incident does not exist or no investigation was started. A ticket opens by its incident id; a ticket id or number is not an investigation id.
 - `HumanDecisionKind` gains `override` (ADR-005).
 
-## Addendum: contracts-v1.3 (2026-10-15, GB-HIST)
+## Addendum: contracts-v1.3 (2026-10-15, history lists)
 
 Additive console paths and query parameters. Existing operations are unchanged. OpenAPI `info.version` is 1.3.0.
 
