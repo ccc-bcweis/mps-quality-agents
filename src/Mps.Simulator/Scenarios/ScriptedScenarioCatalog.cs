@@ -122,6 +122,31 @@ public sealed class ScriptedScenario
             PeriodSeconds,
             RampSeconds)).ToArray();
     }
+
+    /// <summary>
+    /// The live stream has to cross a process-control limit. A percent change such as a 12 percent flow drop
+    /// can sit inside a wide window, so the stream uses the same 4.5 sigma step the fault command already records.
+    /// Catalog samples keep the percent so the scenario card stays the physical story.
+    /// </summary>
+    public IReadOnlyList<FaultSignal> StreamSignals(DateTimeOffset onset)
+    {
+        if (MagnitudeKind != MagnitudeKind.Percent)
+        {
+            return Signals(onset);
+        }
+
+        var magnitude = Math.CopySign(4.5d, Magnitude);
+        return ToolIds.Select(toolId => new FaultSignal(
+            toolId,
+            ChamberIdFor(toolId),
+            Parameter,
+            Shape,
+            MagnitudeKind.Sigma,
+            magnitude,
+            onset,
+            PeriodSeconds,
+            RampSeconds)).ToArray();
+    }
 }
 
 /// <summary>

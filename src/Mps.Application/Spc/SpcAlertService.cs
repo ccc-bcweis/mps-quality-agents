@@ -23,6 +23,7 @@ public sealed class SpcAlertService
     private readonly TimeSpan _debounce;
     private readonly IBusinessRuleEngine _rules;
     private readonly ICascadeDirectory? _hints;
+    private readonly ILifecycleEventSink? _events;
 
     public SpcAlertService(
         IAlertLog alerts,
@@ -30,7 +31,8 @@ public sealed class SpcAlertService
         IQualityNotifier notifier,
         TimeSpan debounce,
         IBusinessRuleEngine rules,
-        ICascadeDirectory? hints = null)
+        ICascadeDirectory? hints = null,
+        ILifecycleEventSink? events = null)
     {
         ArgumentNullException.ThrowIfNull(alerts);
         ArgumentNullException.ThrowIfNull(intake);
@@ -47,6 +49,7 @@ public sealed class SpcAlertService
         _debounce = debounce;
         _rules = rules;
         _hints = hints;
+        _events = events;
     }
 
     public async Task<SpcAlertOutcome> RaiseAsync(SpcSample sample, CancellationToken cancellationToken)
@@ -101,6 +104,7 @@ public sealed class SpcAlertService
             return new SpcAlertOutcome(violations, alert, null, null, debounced: false, decision);
         }
 
+        await PublishRuleAsync(sample, correlationId, decision, at, cancellationToken).ConfigureAwait(false);
         var summary = "SPC " + rule + " on " + sample.ToolId + " " + sample.Parameter + ".";
         var intake = await _intake.AcceptAsync(
             new IntakeSubmission(
@@ -117,5 +121,40 @@ public sealed class SpcAlertService
                 repeatCount: history.Count),
             cancellationToken).ConfigureAwait(false);
         return new SpcAlertOutcome(violations, alert, intake.Incident, intake.Ticket, debounced: false, decision);
+    }
+
+    private async Task PublishRuleAsync(
+        SpcSample sample,
+        string correlationId,
+        RuleDecision decision,
+        DateTimeOffset at,
+        CancellationToken cancellationToken)
+    {
+        if (_events is null)
+        {
+            return;
+        }
+
+        var parent = _hints?.FindStep(correlationId, "alert");
+        var eventId = await _events.PublishAsync(
+            new LifecycleEvent(
+                LifecycleTypes.RuleMatched,
+                correlationId,
+                parent,
+                parent,
+                "rules",
+                null,
+                sample.ToolId.ToString(),
+                sample.ChamberId,
+                at,
+                new
+                {
+                    ruleId = decision.RuleId,
+                    name = decision.RuleName,
+                    why = decision.Why,
+                    queue = decision.Queue,
+                }),
+            cancellationToken).ConfigureAwait(false);
+        _hints?.RememberStep(correlationId, "rule", eventId);
     }
 }

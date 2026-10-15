@@ -123,7 +123,47 @@ public sealed class DocumentIntakeService : IDocumentIntake
         var catalogParameter = PrintoutReading.CatalogParameter(reading.ToolId, reading.Parameter);
         var summary = Summary(reading, catalogParameter);
         var severity = reading.OutOfSpec ? Severity.High : Severity.Low;
-        using var command = await OpenCommandAsync(reading, catalogParameter, cancellationToken).ConfigureAwait(false);
+        var opened = await OpenCommandAsync(reading, catalogParameter, cancellationToken).ConfigureAwait(false);
+        using var command = CommandAmbient.Adopt(opened);
+
+        // The fault, the reading, and the alert land before intake so the business rule hangs off the alert.
+        Guid? faultId = null;
+        string? faultCorrelation = null;
+        var applied = false;
+        Alert? alert = null;
+        if (reading.OutOfSpec)
+        {
+            var shape = reading.Shape ?? "step";
+            var magnitude = reading.MagnitudeSigma();
+            var accepted = await _faults.InjectAsync(
+                new FaultInjectionRequest(
+                    reading.ToolId,
+                    reading.ChamberId,
+                    catalogParameter,
+                    shape,
+                    magnitude,
+                    RootCauseCategory.EquipmentCalibrationOrAlignment,
+                    false),
+                cancellationToken).ConfigureAwait(false);
+            faultId = accepted.FaultId;
+            faultCorrelation = accepted.CorrelationId;
+            // A hosted bus applies the fault while the command is published. Applying it here as well stacks the signal.
+            applied = _events is not null
+                || _simulation.TryApply(reading.ToolId, reading.ChamberId, catalogParameter, shape, magnitude);
+            await PublishReadingAsync(reading, catalogParameter, accepted.CorrelationId, cancellationToken).ConfigureAwait(false);
+            alert = new Alert(
+                AlertId.New(),
+                new ToolId(reading.ToolId),
+                reading.ChamberId,
+                catalogParameter,
+                Severity.High,
+                ManualMeasurement.AlertRule,
+                _time.GetUtcNow(),
+                accepted.CorrelationId);
+            await _alerts.AddAsync(alert, cancellationToken).ConfigureAwait(false);
+            await _notifier.AlertRaisedAsync(alert, cancellationToken).ConfigureAwait(false);
+        }
+
         var intake = await _intake.AcceptAsync(
             new IntakeSubmission(
                 IncidentChannel.OperatorReport,
@@ -133,7 +173,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
                 summary,
                 severity,
                 signalSeverity: null,
-                CommandAmbient.CorrelationId,
+                faultCorrelation ?? CommandAmbient.CorrelationId,
                 reading.ObservedAt),
             cancellationToken).ConfigureAwait(false);
 
@@ -149,7 +189,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
             .ConfigureAwait(false);
         _measurements.Add(new ManualMeasurement(evidence, intake.Incident.Id.Value));
 
-        if (!reading.OutOfSpec)
+        if (!reading.OutOfSpec || alert is null || faultId is null)
         {
             return new PrintoutConfirmation(
                 evidence.Id.Value,
@@ -163,36 +203,11 @@ public sealed class DocumentIntakeService : IDocumentIntake
                 catalogParameter);
         }
 
-        var shape = reading.Shape ?? "step";
-        var magnitude = reading.MagnitudeSigma();
-        var accepted = await _faults.InjectAsync(
-            new FaultInjectionRequest(
-                reading.ToolId,
-                reading.ChamberId,
-                catalogParameter,
-                shape,
-                magnitude,
-                RootCauseCategory.EquipmentCalibrationOrAlignment,
-                false),
-            cancellationToken).ConfigureAwait(false);
-        var applied = _simulation.TryApply(reading.ToolId, reading.ChamberId, catalogParameter, shape, magnitude);
-        await PublishReadingAsync(reading, catalogParameter, intake.Incident.CorrelationId, cancellationToken).ConfigureAwait(false);
-        var alert = new Alert(
-            AlertId.New(),
-            intake.Incident.ToolId,
-            reading.ChamberId,
-            catalogParameter,
-            Severity.High,
-            ManualMeasurement.AlertRule,
-            _time.GetUtcNow(),
-            accepted.CorrelationId);
-        await _alerts.AddAsync(alert, cancellationToken).ConfigureAwait(false);
-        await _notifier.AlertRaisedAsync(alert, cancellationToken).ConfigureAwait(false);
         return new PrintoutConfirmation(
             evidence.Id.Value,
             intake.Incident.Id.Value,
-            accepted.FaultId,
-            accepted.CorrelationId,
+            faultId,
+            faultCorrelation,
             alert.Id.Value,
             applied,
             true,
@@ -200,7 +215,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
             catalogParameter);
     }
 
-    private async ValueTask<IDisposable?> OpenCommandAsync(
+    private async ValueTask<CommandAmbient.Opened?> OpenCommandAsync(
         PrintoutReading reading,
         string catalogParameter,
         CancellationToken cancellationToken)
@@ -224,7 +239,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
                 reading.ObservedAt,
                 new { toolId = reading.ToolId, parameter = catalogParameter, value = reading.Value, unit = reading.Unit }),
             cancellationToken).ConfigureAwait(false);
-        return CommandAmbient.Push(correlationId, eventId);
+        return new CommandAmbient.Opened(correlationId, eventId);
     }
 
     private async Task<EvidenceItem> StampDocumentAsync(
