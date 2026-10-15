@@ -151,7 +151,13 @@ public static class LiveModelHost
                 }),
                 lastCalls = entries.OrderByDescending(entry => entry.OccurredAt).Take(10).Select(entry => new
                 {
-                    entry.Route, entry.Model, entry.InputTokens, entry.OutputTokens, entry.CostUsd, entry.OccurredAt, entry.LiveCallRefused,
+                    entry.Route,
+                    entry.Model,
+                    entry.InputTokens,
+                    entry.OutputTokens,
+                    entry.CostUsd,
+                    entry.OccurredAt,
+                    entry.LiveCallRefused,
                 }),
             });
         });
