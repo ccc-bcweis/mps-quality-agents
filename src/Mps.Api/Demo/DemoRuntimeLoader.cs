@@ -37,6 +37,17 @@ public static class DemoRuntimeLoader
 
     private static string? FindOptional(params string[] relative)
     {
+        // The container copies data/ to Mps__DataDirectory; /app/data is the writable SQLite folder.
+        var configured = Environment.GetEnvironmentVariable("Mps__DataDirectory");
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            var direct = Path.Combine(new[] { configured }.Concat(relative).ToArray());
+            if (Directory.Exists(direct))
+            {
+                return direct;
+            }
+        }
+
         foreach (var start in new[] { AppContext.BaseDirectory, Directory.GetCurrentDirectory() })
         {
             var dir = new DirectoryInfo(start);
