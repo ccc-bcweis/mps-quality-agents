@@ -13,39 +13,59 @@ The current sheet is [`as-is-flow.md`](as-is-flow.md). The screen-order drawing 
 
 ```mermaid
 flowchart LR
+  subgraph CTX["Around this path"]
+    direction TB
+    NW["Northwater Fab"]
+    IW["Ironwood Fab"]
+    LM["Lumen Pilot Works"]
+    SITES["Sites API"]
+    EVD["Scenario evidence"]
+    HRN["Harness starts the run"]
+    EG["Escalation gate"]
+  end
   subgraph OP["Operator"]
-    ALERT["Alert on the console. MX-400 etch."]
+    ALERT["Alert on the console"]
   end
   subgraph TECH["Technician"]
-    TNOTE["No hand-off on this path."]
+    TNOTE["No hand-off"]
   end
   subgraph PE["Process engineer"]
-    PNOTE["Reads the rank. Does not state it."]
+    PNOTE["Reads the rank"]
   end
   subgraph QE["Quality engineer"]
-    OPEN["Opens the ticket. HUMAN 3."]
+    OPEN["Opens the ticket"]
   end
-  subgraph SC["Supply chain"]
-    SNOTE["No email lookup on this path."]
+  subgraph Supply["Supply chain"]
+    SNOTE["Lot already joined"]
   end
   subgraph MGMT["Management"]
-    APPR["Approves on the pack. HUMAN 11."]
+    APPR["Approves on the pack"]
   end
-  subgraph AG["MPS agent platform (StatusNeo)"]
-    A1["SPC opens the ticket. AGENT 1."]
-    A2["Ticket is the alert. AGENT 2."]
-    A4["Reads the MES. AGENT 4."]
-    A5["Reads historian, SPC, and the ECN. AGENT 5."]
-    A6["Retrieves prior cases. AGENT 6."]
-    A7["Joins the supplier lot. AGENT 7."]
-    A8["One evidence pack. AGENT 8."]
-    A9["Ranks four cause classes. AGENT 9."]
-    A10["Pack is the ask. AGENT 10."]
-    A12["Writes the CAPA. AGENT 12."]
-    A13["Token is the signature. AGENT 13."]
+  subgraph AG["Agent platform"]
+    A1["Opens the ticket"]
+    A2["Ticket is the alert"]
+    A4["Reads the run"]
+    A5["Reads chart and change"]
+    A6["Prior cases"]
+    A7["Joins the supplier lot"]
+    A8["One evidence pack"]
+    A9["Ranks four classes"]
+    A10["Pack is the ask"]
+    A12["Writes the record"]
+    A13["Token is the signature"]
   end
 
-  ALERT --> A1 --> A2 --> OPEN --> A4 --> A5 --> A6 --> A7 --> A8 --> A9 --> A10 --> APPR --> A12 --> A13
+  NW --> SITES
+  IW --> SITES
+  LM --> SITES
+  SITES --> ALERT
+  HRN --> ALERT
+  EVD --> A8
+  ALERT --> A1 --> A2 --> OPEN --> A4 --> A5 --> A6 --> A7 --> A8 --> A9 --> A10 --> APPR
+  APPR -->|"not escalated"| A12 --> A13
+  APPR -->|"escalated"| EG
+  EG -->|"request info"| OPEN
+  EG -->|"override with reason"| A12
 ```
 
 Violet **AGENT** badges, teal **HUMAN** badges, and green **ERROR REMOVED** badges are on the print sheet. Mermaid cannot carry those badges. The plotter file does. The technician, the process engineer, and supply chain stay on the sheet. They have no numbered step on this path.
@@ -102,7 +122,7 @@ The four cause classes, checked on every incident, are an engineering change, eq
 
 ## Narrative
 
-The operator still sees the alarm first. It is on the console, for the MX-400 etch, with the chamber and the recipe. Nobody repeats it in the aisle. AGENT 1 is the statistical process control alert that opens the ticket. E1 is removed because the chamber is a field on that ticket, not a sentence heard and written later.
+The operator still sees the alarm first. It is on the console, for the MX-400 etch at Northwater Fab, with the chamber and the recipe. The harness bar may have started the scenario. It is not a lane on this sheet. Nobody repeats the alarm in the aisle. AGENT 1 is the statistical process control alert that opens the ticket. E1 is removed because the chamber is a field on that ticket, not a sentence heard and written later.
 
 AGENT 2 keeps the ticket equal to the alert: tool, time, and symptom. E2 is removed because nobody retypes it. The quality engineer opens the ticket and takes the investigation. HUMAN 3. E3 is removed because the recipe step is already on the record. A reply-all cannot drop a field that was never retyped. That open, and the later approval, are the two human steps on this path.
 
@@ -115,6 +135,12 @@ AGENT 10 puts the pack in front of the approver, with the citations attached. Th
 AGENT 12 writes the corrective and preventive action from the approved pack, through the action service, and only because the token is present. E11 is removed because the narrative is not re-keyed. The files do not stay behind in a mail thread. AGENT 13 records that the token was the signature. Management does not sign a second time, and does not sign a record that hides the files.
 
 Eleven violet badges. Two teal badges. Eleven green badges, one for each error on the current sheet. The print sheet's callout box is the legend for how E1 through E11 are removed.
+
+## Around this path
+
+This numbered path is one etch alarm at Northwater Fab. It is the sufficient-evidence path. Ironwood Fab is the other front-end fab. Lumen Pilot Works is strip, clean, and a pilot line. The Sites API is how a reader lists the three and compares one family. Scenario SC-5 is a different story: one supplier lot that reaches Northwater and Ironwood. It is not the MX-400 etch on this sheet.
+
+Scripted scenarios carry their own evidence. That text is in the pack the resolution agent reads. An escalated case does not continue into the record write. The escalation gate offers more evidence, or an override with a written reason. Management remains the approver either way.
 
 ## Glossary on the sheet
 
@@ -130,7 +156,7 @@ Historian, supplier lot, signed token, and the MX-400 etch are already plain wor
 
 ## Large-format print
 
-ARCH D sheet (36 by 24 in, landscape), **v1.0**, 2026-10-14. The mermaid block above is the review source. The plotter file is hand-composed so labels do not cross.
+ARCH D sheet (36 by 24 in, landscape), **v1.1**, 2026-10-14. The mermaid block above is the review source. The plotter file is hand-composed so labels do not cross. v1.1 names Northwater on the alert, keeps the harness bar outside the lanes, and notes the escalation gate and the SC-5 lot in the glossary strip.
 
 - [`print/to-be-flow-archD.pdf`](print/to-be-flow-archD.pdf)
 - [`print/to-be-flow-archD.svg`](print/to-be-flow-archD.svg)

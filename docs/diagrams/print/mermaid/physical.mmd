@@ -1,39 +1,59 @@
 flowchart TB
-  subgraph Public["Public edge"]
-    REV["Invited reviewer - B2B guest"]
-    GH["GitHub Actions - ci.yml + deploy.yml - OIDC"]
+  subgraph Plants["Simulated plants, not regions"]
+    direction LR
+    NW["Northwater Fab"]
+    IW["Ironwood Fab"]
+    LM["Lumen Pilot Works"]
   end
 
-  subgraph IdP["Entra ID tenant"]
-    APP["App registration - single-tenant, assignment required"]
-    GUESTS["Guest invites only - uninvited users blocked"]
+  subgraph Public["Public edge"]
+    REV["Invited reviewer"]
+    GH["GitHub Actions"]
+  end
+
+  subgraph IdP["Sign-in tenant"]
+    APP["App registration"]
+    GUESTS["Invited guests only"]
   end
 
   REV -->|sign-in| APP
   APP --> GUESTS
-  GUESTS --> SWA
 
-  subgraph RG["rg-mps-demo isolated resource group"]
-    subgraph Net["Network boundary: Container Apps environment"]
-      APIc["api - .NET 8 Minimal API + SignalR, scale 0-3"]
-      WRK["investigation-worker - scale on queue"]
-      SIMc["simulator - 1 replica"]
-      MOCK["mock enterprise APIs - QMS ticketing ERP MES PLM CMMS"]
+  subgraph RG["rg-mps-demo"]
+    subgraph Edge["Static Web App"]
+      HRN["Harness bar"]
+      CON["Meridian console"]
     end
 
-    SWA["Static Web App Standard - React console"]
-    Q["Storage queue - Service Bus at production scale"]
-    SQL[("Azure SQL serverless - incidents, lifecycle, approvals, audit, spend ledger")]
-    SRCH[("AI Search Basic or in-proc index")]
-    AOAI["Azure OpenAI - gpt-4o-mini + gpt-4o, TPM quota"]
-    KV["Key Vault - no keys in images"]
-    MI["Managed identity - ACA and SWA"]
-    AI["App Insights + Log Analytics - OTel GenAI traces"]
-    BUD["Cost budget alert + gateway hard cap"]
+    subgraph Net["Container Apps"]
+      APIc["API"]
+      SITES["Sites API"]
+      EGATE["Escalation gate"]
+      WRK["Investigation worker"]
+      SIMc["Simulator, one replica"]
+      MOCK["Mock enterprise"]
+      EVD["Scenario evidence"]
+    end
+
+    Q["Storage queue"]
+    SQL[("Serverless SQL")]
+    SRCH[("Search index")]
+    AOAI["Azure OpenAI"]
+    KV["Key Vault"]
+    MI["Managed identity"]
+    AI["Traces"]
+    BUD["Spend cap"]
     ACR["Container Registry"]
   end
 
-  SWA -->|linked backend, Entra token| APIc
+  GUESTS --> HRN
+  GUESTS --> CON
+  CON -->|token| APIc
+  NW --> SIMc
+  IW --> SIMc
+  LM --> SIMc
+  APIc --> SITES
+  APIc --> EGATE
   APIc --> Q
   Q --> WRK
   SIMc --> APIc
@@ -41,18 +61,19 @@ flowchart TB
   WRK --> SRCH
   WRK --> SQL
   WRK --> MOCK
+  MOCK --> EVD
   APIc --> SQL
   APIc --> MOCK
 
-  MI -->|RBAC via Key Vault, no connection strings in code| KV
+  MI --> KV
   MI --> AOAI
   MI --> SQL
   MI --> SRCH
   APIc --> AI
   WRK --> AI
-  SWA --> AI
+  CON --> AI
   BUD --> AI
 
-  GH -->|OIDC gated deploy, environment demo| ACR
+  GH -->|manual deploy| ACR
   GH --> APIc
-  GH --> SWA
+  GH --> HRN
