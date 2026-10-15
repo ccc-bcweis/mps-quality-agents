@@ -1,32 +1,35 @@
-# Lane report: GB-4 round 4
+# Lane report: GB-F round 2 (Z1)
 
-Branch `lane/4d-schematic`. Local commits only. Nothing was pushed.
+Branch `lane/z1-deploy`. Local commits only. Nothing was pushed. No `az` command was run. Docker was not started.
 
 Copyright (c) 2026 Bryan C. Weis and Common Consulting Company. MIT.
 
-Detail is in `docs/lane-reports/GB-4-r4.md`. The telemetry contract question is in `docs/design-questions/GB-4-r4.md`.
+Detail is in `docs/lane-reports/GB-F-r2.md`. No contract file was changed.
 
 ## Done
 
-| Issue | Commit | What |
-|---|---|---|
-| UX2 (#60) | `1972bb1` | Tool Detail loads the real `data/fleet` sensor catalog at build time. `web/src/fleet/sensors.fallback.json` is deleted. Deposition, etch, strip, and clean each have an instrumented schematic. Every catalog `schematicAnchor` has a matching SVG anchor, and the SVG has no extra anchor. Each faceplate shows value, catalog unit, and in-spec / warning / out-of-spec color. A click opens that sensor's SPC chart. MSW telemetry uses the same sensor ids and units. Clean tools have no RF generator. |
+| Issue | What |
+|---|---|
+| Z1 (#36) | One container for the API and the built console. Easy Auth on that origin. SQLite in the container. SQL and Static Web Apps off unless a parameter turns them on. Manual OIDC workflow. |
 
-No contract files were changed.
+`deploy/app.Dockerfile` builds the console in live API mode and publishes `Mps.Api` into a non-root `aspnet:8.0` image. The API serves `wwwroot` and falls back to `index.html` only when that folder exists. The registry is Basic with admin disabled and AcrPull on the app identity. Azure OpenAI is keyless (`gpt-4o-mini`, capacity 20). Container settings include `Mps__Model__Mode=Live` and `Mps__Model__DailyCapUsd=2`. Anonymous `/health` is expected to be 401 or 302.
 
 ## How it was verified
 
-From `web/`, before `1972bb1`: `npm run lint`, `npm test` (26 files, 57 tests), `npm run build`.
+Bicep CLI 0.47.16 compiled `infra/main.bicep`, built `infra/main.bicepparam`, and linted clean. CI still compiles with Bicep 0.48.1.
 
-From the repo root, before that commit: `dotnet format MPS.sln --verify-no-changes`, `dotnet build MPS.sln --configuration Release` (0 warnings, 0 errors), `dotnet test MPS.sln --configuration Release --no-build`. Domain 19, ModelGateway 13, Application 167, Simulator 47, Agents 77, Orchestration 15, MockEnterprise 4, Connectors 7, Architecture 10, Contract 39, Api 13. Api.IntegrationTests matched no `Category!=PendingLane` tests and the run exited 0.
+`dotnet format MPS.sln --verify-no-changes` exited 0. `dotnet build MPS.sln --configuration Release` exited 0 with 0 warnings. `dotnet test MPS.sln --configuration Release` exited 0: Domain 19, ModelGateway 13, Application 167, Simulator 47, Agents 77, Orchestration 15, MockEnterprise 4, Connectors 7, Architecture 14, Contract 39, Api 15. Api.IntegrationTests matched no `Category!=PendingLane` tests and the run stayed green.
 
-The production bundle warns that the main chunk is about 870 kB. The build still exits 0.
-
-No browser tools were available. A person has not clicked through Tool Detail. Vitest (jsdom) and the production build are the check that was run.
+From `web/`: `npm ci`, `npm run lint`, `npm test` (26 files, 57 tests), and `npm run build` exited 0. The image itself was not built here.
 
 ## Open questions for Bob
 
-- OpenAPI has no telemetry snapshot. The page reads a shared generator, and MSW exposes `GET /api/tools/{toolId}/telemetry` for tests. The page does not call that route. Recommendation: leave the contract for this lane. Blocking: no. Detail is in `docs/design-questions/GB-4-r4.md`.
-- E-02 chamber A ESC is 53.1 C, inside the 42–58 warning band, so the faceplate is in spec. The story tile above it stays "53.1 °C osc" and WATCH for Western Electric rule 2. Say if those two should agree.
-- The strip remote-plasma tile still says "3.1 kW" and the clean megasonic tile still says "720 W". The faceplates use catalog watts (nominal 2800 W and 700 W) and a sample inside the warning band.
-- D-01 chamber A pressure on the drawing is 6.52 Torr and out of spec (maximum 6).
+1. The OpenAI adapter still requires an API key. The template disables local keys and grants Cognitive Services OpenAI User. Live calls need the gateway to use that identity. Deploy of the container is not blocked.
+2. Easy Auth is client id plus issuer only. There is no client secret in the template. If the login redirect cannot exchange a code, add a secret from the GitHub environment, not from git.
+3. The `gpt-4o` deployment was removed. Both roles use `gpt-4o-mini`. Lower `openAiCapacity` if quota 20 is refused.
+4. Each replica has its own SQLite file. Max replicas is 3. Scale-to-zero drops the file.
+5. The smoke check proves the auth gate, not that an invited user can load the console. That remains Z2.
+6. The workflow identity needs Contributor (or equivalent) on the resource group for the deploy and `az acr build`. AcrPull is only the pull identity.
+7. Derived names use prefix `mpsdemo` (`mpsdemoacr`, `mpsdemo-aoai`). Change the prefix if a name is taken.
+8. Diagrams were not updated. They still mention a Static Web App.
+9. `Mps__Model__Mode` is the Linux form of `Mps:Model:Mode`. The API metrics route reads `LLM_MODE`, which is also set to `live`. Nothing binds the `Mps:Model` section yet.
