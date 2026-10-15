@@ -137,10 +137,10 @@ describe("site selection", () => {
   it("hides an investigation that belongs to another plant", async () => {
     const user = userEvent.setup();
     renderConsole(`/investigations/${S1_INVESTIGATION_ID}`);
-    expect(await screen.findByText("ECO-4471 edge ring rev C")).toBeInTheDocument();
+    expect((await screen.findAllByRole("table", { name: "Evidence pack" })).length).toBeGreaterThan(0);
     await user.selectOptions(screen.getByRole("combobox", { name: "Plant" }), "lumen");
     expect(await screen.findByText(/another plant/)).toBeInTheDocument();
-    expect(screen.queryByText("ECO-4471 edge ring rev C")).not.toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "Evidence pack" })).not.toBeInTheDocument();
   });
 
   it("hides a corrective action that belongs to another plant", async () => {

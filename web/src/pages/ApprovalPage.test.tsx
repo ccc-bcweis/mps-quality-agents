@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { approvalSentence } from "../api/labels";
@@ -30,6 +30,11 @@ describe("approval dialog", () => {
     expect(await screen.findAllByText(APPROVED)).not.toHaveLength(0);
     expect(screen.queryByText("77777777-7777-4777-8777-777777777777")).not.toBeInTheDocument();
     expect(screen.getByText(/Hold the affected lots and confirm the edge ring revision/)).toBeInTheDocument();
+    const steps = await screen.findByRole("list", { name: "Agent steps" });
+    const approval = within(steps)
+      .getAllByRole("listitem")
+      .find((item) => item.textContent?.includes("Human approval"));
+    expect(approval).toHaveAttribute("data-status", "done");
   });
 
   it("rejects without creating a CAPA", async () => {
@@ -40,7 +45,7 @@ describe("approval dialog", () => {
     expect(reject).toBeDisabled();
     await user.type(screen.getByLabelText("Reject reason"), "The confounder is not addressed.");
     await user.click(reject);
-    expect(await screen.findByText(/Stage rejected/)).toBeInTheDocument();
+    expect(await screen.findByText(/Stage: Rejected/)).toBeInTheDocument();
     expect(screen.queryByText("77777777-7777-4777-8777-777777777777")).not.toBeInTheDocument();
   });
 

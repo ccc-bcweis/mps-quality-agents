@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-// Browser mocks. List routes use the demo fleet. Decision, CAPA, health, and
-// metrics routes fall through to contracts/msw/handlers.ts.
+// Browser mocks. List routes use the demo fleet. Health, metrics, and the
+// CAPA advance route fall through to contracts/msw/handlers.ts.
 
 import { http, HttpResponse } from "msw";
 import { handlers as contractHandlers } from "../../../contracts/msw/handlers";
@@ -271,6 +271,39 @@ export const handlers = [
       approvalCount: 0,
       capaCount: 0,
     });
+  }),
+
+
+  http.post("/api/investigations/:investigationId/decisions", async ({ params, request }) => {
+    const body = (await request.json()) as { kind?: string; approverId?: string; comment?: string | null };
+    if (body.kind === "override" && (body.comment ?? "").trim().length < 20) {
+      return problem("Override needs a written justification of at least 20 characters.", 400);
+    }
+    if ((body.kind === "approve" || body.kind === "override") && !body.approverId) {
+      return problem("Approval requires an approver.", 400);
+    }
+    const id = String(params.investigationId);
+    const current = mockExtras().investigations.find((item) => item.id === id) ?? investigationFor(id);
+    if (!current) return problem("No such record.", 404);
+    const next = clone(current);
+    next.stage =
+      body.kind === "approve" || body.kind === "override" ? "approved" : body.kind === "reject" ? "rejected" : "escalated";
+    mockExtras().investigations.push(next);
+    const capa =
+      body.kind === "approve" || body.kind === "override"
+        ? {
+            id: "66666666-6666-4666-8666-666666666666",
+            incidentId: current.incidentId,
+            summary: "Hold the affected lots and confirm the edge ring revision.",
+            approvalTokenId: "77777777-7777-4777-8777-777777777777",
+            actionHash: "ABC123",
+            stage: "open" as const,
+            openedAt: "2026-10-14T15:05:00Z",
+            approvedBy: body.approverId ?? null,
+            approvedAt: "2026-10-15T02:42:00.000Z",
+          }
+        : null;
+    return HttpResponse.json({ investigation: next, capa });
   }),
 
   ...contractHandlers,

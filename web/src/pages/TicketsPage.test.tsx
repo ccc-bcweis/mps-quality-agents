@@ -33,7 +33,7 @@ describe("tickets", () => {
     await user.click(screen.getByText("ESC temperature oscillation after a recipe revision."));
 
     expect(await screen.findByRole("heading", { name: "Investigation" })).toBeInTheDocument();
-    expect(await screen.findByText("ECO-4471 edge ring rev C")).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "Evidence pack" })).toHaveTextContent("Product records");
     expect(screen.queryByText("No such record.")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Start investigation" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Tickets" })).not.toBeInTheDocument();

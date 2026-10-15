@@ -124,8 +124,15 @@ export type EvidenceItem = {
   observedAt: string;
   toolId?: string | null;
   externalRef?: string | null;
-  /** Local demo field. The frozen evidence schema does not carry this yet. */
   whyItMatters?: string;
+  signalId?: string | null;
+  /** Optional reading. Older packs omit these. See ADR-001. */
+  value?: number | null;
+  unit?: string | null;
+  specLow?: number | null;
+  specHigh?: number | null;
+  toolName?: string | null;
+  chamberName?: string | null;
 };
 
 export type Hypothesis = {
