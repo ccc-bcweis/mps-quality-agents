@@ -23,6 +23,14 @@ describe("sites overview", () => {
     const throughput = screen.getByRole("region", { name: "Northwater Fab throughput" });
     expect(throughput).toHaveTextContent("57.9 per hour");
     expect(throughput).toHaveTextContent("140 wafers");
+    const structure = await screen.findByRole("region", { name: "Plant structure" });
+    expect(await within(structure).findByText("Deposition tool in bay one")).toBeInTheDocument();
+    expect(within(structure).getByText("Film check bench")).toBeInTheDocument();
+    expect(within(structure).getByText(/Attached directly to manufacturing/)).toBeInTheDocument();
+    expect(within(structure).getAllByText("Not simulated in this demo").length).toBeGreaterThan(1);
+    expect(within(structure).queryByText("nw-manufacturing")).not.toBeInTheDocument();
+    expect(within(structure).queryByText("D-01")).not.toBeInTheDocument();
+
     expect(screen.getByText("Bay 3 deposition")).toBeInTheDocument();
     expect(screen.getByText(/Deposited wafers move to bay 1 for etch/)).toBeInTheDocument();
 
@@ -45,6 +53,9 @@ describe("sites overview", () => {
     expect(await screen.findByRole("tooltip")).toHaveTextContent(/met the requirement/i);
 
     await user.click(screen.getByRole("tab", { name: "Ironwood Fab" }));
+    const ironwood = await screen.findByRole("region", { name: "Plant structure" });
+    expect(await within(ironwood).findByText("Ironwood deposition tool, first")).toBeInTheDocument();
+    expect(within(ironwood).queryByText("Deposition tool in bay one")).not.toBeInTheDocument();
     const watch = await screen.findByRole("link", { name: /Etch I-E-01/ });
     expect(watch).toHaveAttribute("data-status", "warning");
     expect(watch).toHaveTextContent("Watch");
@@ -67,6 +78,8 @@ describe("sites overview", () => {
     renderConsole("/sites?site=lumen");
     expect(await screen.findByRole("heading", { name: "Lumen Pilot Works" })).toBeInTheDocument();
     expect(screen.getByText("Pilot deposition")).toBeInTheDocument();
+    expect(await within(await screen.findByRole("region", { name: "Plant structure" })).findByText("Lumen deposition leg")).toBeInTheDocument();
+    expect(screen.getAllByText("Pilot deposition")).toHaveLength(1);
     const pilot = screen.getAllByText(matchCopy(/pilot line/i))[0];
     expect(pilot).toBeTruthy();
     if (!pilot) return;

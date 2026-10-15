@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Meridian Precision Systems Quality API
-  version: 1.3.0
+  version: 1.4.0
   description: |
     Console API for the fictional Meridian Precision Systems quality-investigation demo.
     Every intake channel becomes one incident. A CAPA is created only after a human approval,
@@ -28,7 +28,10 @@ info:
     Clients that ignore unknown fields stay compatible.
     Contract 1.3 adds printout inspect and confirm. Both are additive. A confirmed bench
     reading is stored as evidence with source manualMeasurement.
-    Contract 1.3 also adds GET /api/trace/{eventId}. The path returns the ancestors of one
+    Contract 1.4 adds read-only plant metadata: the company, each site with its capabilities,
+    production lines, and tools, one tool with its limits, the business rules, and the process maps.
+    The paths are additive. Earlier clients stay compatible.
+    Contract 1.5 adds GET /api/trace/{eventId}. The path returns the ancestors of one
     event and the tree of events that followed it. EvidenceItem gains optional sourceEventIds,
     the events that item was derived from. Both additions are optional for older clients.
     All names and data are synthetic.
@@ -607,6 +610,76 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MetricsSummary"
+  /api/metadata/company:
+    get:
+      tags: [metadata]
+      operationId: getCompanyMetadata
+      summary: Company profile and metadata load time
+      responses:
+        "200":
+          description: The company, plus how long the metadata load took.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyMetadata"
+  /api/metadata/sites:
+    get:
+      tags: [metadata]
+      operationId: listMetadataSites
+      summary: Sites, capabilities, production lines, and tools
+      responses:
+        "200":
+          description: Every site with its capabilities. Manufacturing lines include their tools.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MetadataSite"
+  /api/metadata/tools/{toolId}:
+    get:
+      tags: [metadata]
+      operationId: getMetadataTool
+      summary: One tool, with limits, inputs, and outputs
+      parameters:
+        - $ref: "#/components/parameters/ToolId"
+      responses:
+        "200":
+          description: The tool and its parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataTool"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/metadata/rules:
+    get:
+      tags: [metadata]
+      operationId: listBusinessRules
+      summary: Business rules in plain language
+      responses:
+        "200":
+          description: Rules in the order they are evaluated. The first match wins.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BusinessRule"
+  /api/metadata/process-maps:
+    get:
+      tags: [metadata]
+      operationId: listProcessMaps
+      summary: Current-state and future-state process maps
+      responses:
+        "200":
+          description: Ordered steps and the transitions between them.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProcessMap"
   /api/trace/{eventId}:
     get:
       tags: [trace]
@@ -1785,3 +1858,256 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ParameterComparison"
+    CompanyMetadata:
+      type: object
+      additionalProperties: false
+      required: [id, name, purpose, description, industry, loadMilliseconds]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        purpose:
+          type: string
+        description:
+          type: string
+        industry:
+          type: string
+        loadMilliseconds:
+          type: number
+          minimum: 0
+    MetadataToolCard:
+      type: object
+      additionalProperties: false
+      required: [id, name, toolType, simulated]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        toolType:
+          type: string
+        simulated:
+          type: boolean
+    MetadataLine:
+      type: object
+      additionalProperties: false
+      required: [id, name, lineType, sequence, characteristics, stepNames, tools]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        lineType:
+          type: string
+        sequence:
+          type: integer
+        characteristics:
+          type: string
+        stepNames:
+          type: array
+          items:
+            type: string
+        tools:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetadataToolCard"
+    MetadataCapability:
+      type: object
+      additionalProperties: false
+      required: [id, name, type, description, simulated, lines, directTools]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [manufacturing, warehousing, researchAndDevelopment, sales, backOffice, other]
+        description:
+          type: string
+        simulated:
+          type: boolean
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetadataLine"
+        directTools:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetadataToolCard"
+    MetadataSite:
+      type: object
+      additionalProperties: false
+      required: [id, name, purpose, description, timezone, capabilities]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        purpose:
+          type: string
+        description:
+          type: string
+        timezone:
+          type: string
+        capabilities:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetadataCapability"
+    MetadataPort:
+      type: object
+      additionalProperties: false
+      required: [name, description]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+    MetadataParameter:
+      type: object
+      additionalProperties: false
+      required: [id, name, parameterClass, unit, lcl, ucl, alertLow, alertHigh, nominal, telemetry]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        parameterClass:
+          type: string
+        unit:
+          type: string
+        lcl:
+          type: number
+        ucl:
+          type: number
+        alertLow:
+          type: number
+        alertHigh:
+          type: number
+        nominal:
+          type: number
+        telemetry:
+          type: boolean
+    MetadataTool:
+      type: object
+      additionalProperties: false
+      required: [id, name, toolType, siteId, siteName, simulated, inputs, outputs, parameters]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        toolType:
+          type: string
+        siteId:
+          type: string
+        siteName:
+          type: string
+        lineId:
+          type: string
+          nullable: true
+        lineName:
+          type: string
+          nullable: true
+        capabilityId:
+          type: string
+          nullable: true
+        simulated:
+          type: boolean
+        inputs:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetadataPort"
+        outputs:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetadataPort"
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetadataParameter"
+    RuleAction:
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [open-ticket, set-priority, route-to-queue, escalate-to-human, auto-investigate]
+        priority:
+          type: string
+          nullable: true
+        queue:
+          type: string
+          nullable: true
+    BusinessRule:
+      type: object
+      additionalProperties: false
+      required: [id, name, whenPlain, thenPlain, why, order, actions]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        whenPlain:
+          type: string
+        thenPlain:
+          type: string
+        why:
+          type: string
+        order:
+          type: integer
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/RuleAction"
+    ProcessStep:
+      type: object
+      additionalProperties: false
+      required: [id, name, order, highlightStages]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        order:
+          type: integer
+        detail:
+          type: string
+          nullable: true
+        highlightStages:
+          type: array
+          items:
+            $ref: "#/components/schemas/IncidentStage"
+    ProcessTransition:
+      type: object
+      additionalProperties: false
+      required: [from, to, name]
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        name:
+          type: string
+    ProcessMap:
+      type: object
+      additionalProperties: false
+      required: [id, name, state, steps, transitions]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        state:
+          type: string
+          enum: [current, future]
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProcessStep"
+        transitions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProcessTransition"

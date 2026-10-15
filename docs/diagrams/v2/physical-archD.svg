@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36in" height="24in" viewBox="0 0 2592 1728" font-family="IBM Plex Sans, Inter, Arial, sans-serif">
+<title>Physical architecture, target Azure deployment - Meridian Precision Systems</title>
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0,0L10,5L0,10z" fill="#334155"/></marker></defs>
+<rect width="2592" height="1728" fill="#F7F4EA"/><rect x="24" y="24" width="2544" height="1680" fill="none" stroke="#0B1B33" stroke-width="3"/>
+<text x="56" y="88" font-size="22" font-weight="700" fill="#7A5C00" letter-spacing="3">PHYSICAL ARCHITECTURE &#183; BASELINE V2 &#183; DRAFT</text>
+<text x="56" y="134" font-size="40" font-weight="700" fill="#0B1B33">Physical architecture, target Azure deployment</text>
+<text x="2536" y="134" font-size="20" fill="#1F2937" text-anchor="end">* marks target-design items that the running demo implements in a thinner form (see notes)</text>
+<g id="gP"><rect x="56" y="170" width="440" height="396" rx="14" fill="#E8F0FE" stroke="#1D4ED8" stroke-width="2.5"/><text x="74" y="206" font-size="24" font-weight="700" fill="#1E3A8A">Outside Azure</text></g>
+<g id="gF"><rect x="566" y="170" width="440" height="426" rx="14" fill="#FFF1E6" stroke="#C2410C" stroke-width="2.5"/><text x="584" y="206" font-size="24" font-weight="700" fill="#9A3412">Edge and identity</text></g>
+<g id="gC"><rect x="1076" y="170" width="440" height="620" rx="14" fill="#E7F8FB" stroke="#0E7490" stroke-width="2.5"/><text x="1094" y="206" font-size="24" font-weight="700" fill="#155E75">Container Apps environment</text></g>
+<g id="gM"><rect x="1586" y="170" width="440" height="508" rx="14" fill="#FFF6D8" stroke="#A16207" stroke-width="2.5"/><text x="1604" y="206" font-size="24" font-weight="700" fill="#7A5C00">Messaging and AI</text></g>
+<g id="gS"><rect x="2096" y="170" width="440" height="650" rx="14" fill="#E7F8EF" stroke="#047857" stroke-width="2.5"/><text x="2114" y="206" font-size="24" font-weight="700" fill="#065F46">Data, secrets and monitoring</text></g>
+<g id="gR"><rect x="566" y="622" width="440" height="284" rx="14" fill="#F1F5F9" stroke="#475569" stroke-width="2.5"/><text x="584" y="658" font-size="24" font-weight="700" fill="#1E293B">Deployment</text></g>
+<polyline points="476.0,273.0 586.0,273.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="476.0,497.0 551.0,497.0 551.0,725.0 586.0,725.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="986.0,273.0 1096.0,273.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="986.0,527.0 1061.0,527.0 1061.0,497.0 1096.0,497.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="1496.0,385.0 1571.0,385.0 1571.0,497.0 1606.0,497.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="1496.0,609.0 1571.0,609.0 1571.0,385.0 1606.0,385.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="1496.0,497.0 1571.0,497.0 1571.0,609.0 1606.0,609.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="2006.0,273.0 2081.0,273.0 2081.0,385.0 2116.0,385.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="2006.0,385.0 2116.0,385.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="2006.0,497.0 2081.0,497.0 2081.0,273.0 2116.0,273.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="2006.0,609.0 2116.0,609.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<g id="p0"><rect x="76" y="226" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#1D4ED8" stroke-width="2"/><rect x="76" y="226" width="8" height="94" fill="#1D4ED8"/>
+<text x="96" y="258" font-size="22" font-weight="600" fill="#1E3A8A">Invited reviewers and operators</text>
+<text x="96" y="286" font-size="18" fill="#1F2937">Browser, Entra ID sign-in</text>
+</g>
+<g id="p1"><rect x="76" y="338" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#1D4ED8" stroke-width="2"/><rect x="76" y="338" width="8" height="94" fill="#1D4ED8"/>
+<text x="96" y="370" font-size="22" font-weight="600" fill="#1E3A8A">Plant IoT gateways <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="96" y="398" font-size="18" fill="#1F2937">Three plants, tool sensors</text>
+</g>
+<g id="p2"><rect x="76" y="450" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#1D4ED8" stroke-width="2"/><rect x="76" y="450" width="8" height="94" fill="#1D4ED8"/>
+<text x="96" y="482" font-size="22" font-weight="600" fill="#1E3A8A">GitHub Actions</text>
+<text x="96" y="510" font-size="18" fill="#1F2937">Build, test, eval gate, OIDC</text>
+</g>
+<g id="f0"><rect x="586" y="226" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#C2410C" stroke-width="2"/><rect x="586" y="226" width="8" height="94" fill="#C2410C"/>
+<text x="606" y="258" font-size="22" font-weight="600" fill="#9A3412">Azure Front Door and WAF <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="606" y="286" font-size="18" fill="#1F2937">Global entry, TLS, rate limits</text>
+</g>
+<g id="f1"><rect x="586" y="338" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#C2410C" stroke-width="2"/><rect x="586" y="338" width="8" height="124" fill="#C2410C"/>
+<text x="606" y="370" font-size="22" font-weight="600" fill="#9A3412">Microsoft Entra ID</text>
+<text x="606" y="398" font-size="18" fill="#1F2937">Single-tenant app, assignment</text>
+<text x="606" y="424" font-size="18" fill="#1F2937">required, B2B guests</text>
+</g>
+<g id="f2"><rect x="586" y="480" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#C2410C" stroke-width="2"/><rect x="586" y="480" width="8" height="94" fill="#C2410C"/>
+<text x="606" y="512" font-size="22" font-weight="600" fill="#9A3412">API Management AI gateway <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="606" y="540" font-size="18" fill="#1F2937">Token limits, model routing</text>
+</g>
+<g id="c0"><rect x="1096" y="226" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#0E7490" stroke-width="2"/><rect x="1096" y="226" width="8" height="94" fill="#0E7490"/>
+<text x="1116" y="258" font-size="22" font-weight="600" fill="#155E75">Web console</text>
+<text x="1116" y="286" font-size="18" fill="#1F2937">React, served by the API container</text>
+</g>
+<g id="c1"><rect x="1096" y="338" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#0E7490" stroke-width="2"/><rect x="1096" y="338" width="8" height="94" fill="#0E7490"/>
+<text x="1116" y="370" font-size="22" font-weight="600" fill="#155E75">API service <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="1116" y="398" font-size="18" fill="#1F2937">.NET 8, SignalR, scale 1 to 3</text>
+</g>
+<g id="c2"><rect x="1096" y="450" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#0E7490" stroke-width="2"/><rect x="1096" y="450" width="8" height="94" fill="#0E7490"/>
+<text x="1116" y="482" font-size="22" font-weight="600" fill="#155E75">Investigation workers <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="1116" y="510" font-size="18" fill="#1F2937">Scale on queue depth</text>
+</g>
+<g id="c3"><rect x="1096" y="562" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#0E7490" stroke-width="2"/><rect x="1096" y="562" width="8" height="94" fill="#0E7490"/>
+<text x="1116" y="594" font-size="22" font-weight="600" fill="#155E75">Simulator service <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="1116" y="622" font-size="18" fill="#1F2937">Telemetry and scenarios, 1 replica</text>
+</g>
+<g id="c4"><rect x="1096" y="674" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#0E7490" stroke-width="2"/><rect x="1096" y="674" width="8" height="94" fill="#0E7490"/>
+<text x="1116" y="706" font-size="22" font-weight="600" fill="#155E75">Mock enterprise APIs</text>
+<text x="1116" y="734" font-size="18" fill="#1F2937">MES, QMS, PLM, ERP, maintenance</text>
+</g>
+<g id="m0"><rect x="1606" y="226" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="1606" y="226" width="8" height="94" fill="#A16207"/>
+<text x="1626" y="258" font-size="22" font-weight="600" fill="#7A5C00">Azure IoT Hub <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="1626" y="286" font-size="18" fill="#1F2937">Device ingress from gateways</text>
+</g>
+<g id="m1"><rect x="1606" y="338" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="1606" y="338" width="8" height="94" fill="#A16207"/>
+<text x="1626" y="370" font-size="22" font-weight="600" fill="#7A5C00">Azure Event Hubs <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="1626" y="398" font-size="18" fill="#1F2937">Telemetry stream, per-tool partitions</text>
+</g>
+<g id="m2"><rect x="1606" y="450" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="1606" y="450" width="8" height="94" fill="#A16207"/>
+<text x="1626" y="482" font-size="22" font-weight="600" fill="#7A5C00">Azure Service Bus <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="1626" y="510" font-size="18" fill="#1F2937">Command and domain event topics</text>
+</g>
+<g id="m3"><rect x="1606" y="562" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="1606" y="562" width="8" height="94" fill="#A16207"/>
+<text x="1626" y="594" font-size="22" font-weight="600" fill="#7A5C00">Azure OpenAI</text>
+<text x="1626" y="622" font-size="18" fill="#1F2937">gpt-5.4-mini, eastus2, quota capped</text>
+</g>
+<g id="s0"><rect x="2116" y="226" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="2116" y="226" width="8" height="94" fill="#047857"/>
+<text x="2136" y="258" font-size="22" font-weight="600" fill="#065F46">Azure SQL <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="2136" y="286" font-size="18" fill="#1F2937">Metadata, transactions, audit</text>
+</g>
+<g id="s1"><rect x="2116" y="338" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="2116" y="338" width="8" height="94" fill="#047857"/>
+<text x="2136" y="370" font-size="22" font-weight="600" fill="#065F46">Azure Data Explorer <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="2136" y="398" font-size="18" fill="#1F2937">Telemetry time series</text>
+</g>
+<g id="s2"><rect x="2116" y="450" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="2116" y="450" width="8" height="94" fill="#047857"/>
+<text x="2136" y="482" font-size="22" font-weight="600" fill="#065F46">Azure AI Search <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="2136" y="510" font-size="18" fill="#1F2937">Document index</text>
+</g>
+<g id="s3"><rect x="2116" y="562" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="2116" y="562" width="8" height="94" fill="#047857"/>
+<text x="2136" y="594" font-size="22" font-weight="600" fill="#065F46">Key Vault and managed identity</text>
+<text x="2136" y="622" font-size="18" fill="#1F2937">No keys in code or Git</text>
+</g>
+<g id="s4"><rect x="2116" y="674" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="2116" y="674" width="8" height="124" fill="#047857"/>
+<text x="2136" y="706" font-size="22" font-weight="600" fill="#065F46">Monitoring</text>
+<text x="2136" y="734" font-size="18" fill="#1F2937">App Insights, Log Analytics,</text>
+<text x="2136" y="760" font-size="18" fill="#1F2937">budget alert</text>
+</g>
+<g id="r0"><rect x="586" y="678" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#475569" stroke-width="2"/><rect x="586" y="678" width="8" height="94" fill="#475569"/>
+<text x="606" y="710" font-size="22" font-weight="600" fill="#1E293B">Container Registry</text>
+<text x="606" y="738" font-size="18" fill="#1F2937">Signed images, revisions</text>
+</g>
+<g id="r1"><rect x="586" y="790" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#475569" stroke-width="2"/><rect x="586" y="790" width="8" height="94" fill="#475569"/>
+<text x="606" y="822" font-size="22" font-weight="600" fill="#1E293B">Resource group rg-mps-demo</text>
+<text x="606" y="850" font-size="18" fill="#1F2937">Isolated, own identity</text>
+</g>
+<rect x="48" y="1486" width="1580" height="210" fill="#FFFFFF" stroke="#0B1B33" stroke-width="2"/><text x="64" y="1516" font-size="20" font-weight="700" fill="#0B1B33">NOTES</text>
+<text x="64" y="1548" font-size="19" fill="#111827">* Running demo today: ONE Container App (mpsdemo-api, 1 replica) in rg-mps-demo holds the web console, API, simulator, agents and mock systems.</text>
+<text x="64" y="1578" font-size="19" fill="#111827">* Demo messaging: in-process bus in that container instead of IoT Hub, Event Hubs and Service Bus. Same envelope, so it can be swapped later.</text>
+<text x="64" y="1608" font-size="19" fill="#111827">* Demo storage: SQLite on the container plus YAML metadata instead of Azure SQL and Data Explorer; data resets on redeploy by design.</text>
+<text x="64" y="1638" font-size="19" fill="#111827">* Not deployed in the demo: Front Door, WAF, API Management, AI Search, separate workers. Deployed: Entra ID, Key Vault, managed identity,</text>
+<text x="64" y="1668" font-size="19" fill="#111827">  Container Registry, Azure OpenAI, App Insights and Log Analytics. Deploys run from GitHub Actions with OIDC, no stored cloud secrets.</text>
+<rect x="1644" y="1486" width="900" height="210" fill="#0B1B33"/><text x="1668" y="1528" font-size="26" font-weight="700" fill="#FAC400">Meridian Precision Systems &#183; FabOps</text><text x="1668" y="1566" font-size="20" fill="#FFFFFF">Physical architecture, target Azure deployment</text><text x="1668" y="1600" font-size="18" fill="#F3E8C2">Prepared by StatusNeo with Common Consulting &#183; Draft 2026-10-15</text><text x="1668" y="1634" font-size="18" fill="#F3E8C2">Sheet ARCH D 36 x 24 in &#183; Fictional company, synthetic data</text><text x="1668" y="1668" font-size="16" fill="#F3E8C2">Copyright (c) 2026 Bryan C. Weis and Common Consulting Company</text>
+</svg>

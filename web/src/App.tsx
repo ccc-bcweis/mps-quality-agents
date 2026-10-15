@@ -13,6 +13,7 @@ import { InvestigationPage } from "./pages/InvestigationPage";
 import { MetricsPage } from "./pages/MetricsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { RoiPage } from "./pages/RoiPage";
+import { RulesProcessPage } from "./pages/RulesProcessPage";
 import { SitesPage } from "./pages/SitesPage";
 import { TicketsPage } from "./pages/TicketsPage";
 import { ToolPage } from "./pages/ToolPage";
@@ -45,6 +46,7 @@ export function AppRoutes() {
           <Route path="/approvals/:investigationId" element={<ApprovalPage />} />
           <Route path="/capas" element={<CapaPage />} />
           <Route path="/capas/:capaId" element={<CapaPage />} />
+          <Route path="/rules" element={<RulesProcessPage />} />
           <Route path="/glossary" element={<GlossaryPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>

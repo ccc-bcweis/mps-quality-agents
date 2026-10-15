@@ -467,3 +467,127 @@ export type FamilyComparison = {
   referenceSiteId: string;
   parameters: ParameterComparison[];
 };
+
+export type CapabilityType =
+  | "manufacturing"
+  | "warehousing"
+  | "researchAndDevelopment"
+  | "sales"
+  | "backOffice"
+  | "other";
+
+export type CompanyMetadata = {
+  id: string;
+  name: string;
+  purpose: string;
+  description: string;
+  industry: string;
+  loadMilliseconds: number;
+};
+
+export type MetadataToolCard = {
+  id: string;
+  name: string;
+  toolType: string;
+  simulated: boolean;
+};
+
+export type MetadataLine = {
+  id: string;
+  name: string;
+  lineType: string;
+  sequence: number;
+  characteristics: string;
+  stepNames: string[];
+  tools: MetadataToolCard[];
+};
+
+export type MetadataCapability = {
+  id: string;
+  name: string;
+  type: CapabilityType;
+  description: string;
+  simulated: boolean;
+  lines: MetadataLine[];
+  directTools: MetadataToolCard[];
+};
+
+export type MetadataSite = {
+  id: string;
+  name: string;
+  purpose: string;
+  description: string;
+  timezone: string;
+  capabilities: MetadataCapability[];
+};
+
+export type MetadataPort = {
+  name: string;
+  description: string;
+};
+
+export type MetadataParameter = {
+  id: string;
+  name: string;
+  parameterClass: string;
+  unit: string;
+  lcl: number;
+  ucl: number;
+  alertLow: number;
+  alertHigh: number;
+  nominal: number;
+  telemetry: boolean;
+};
+
+export type MetadataTool = {
+  id: string;
+  name: string;
+  toolType: string;
+  siteId: string;
+  siteName: string;
+  lineId: string | null;
+  lineName: string | null;
+  capabilityId: string | null;
+  simulated: boolean;
+  inputs: MetadataPort[];
+  outputs: MetadataPort[];
+  parameters: MetadataParameter[];
+};
+
+export type RuleAction = {
+  type: string;
+  priority?: string | null;
+  queue?: string | null;
+};
+
+export type BusinessRule = {
+  id: string;
+  name: string;
+  whenPlain: string;
+  thenPlain: string;
+  why: string;
+  order: number;
+  actions: RuleAction[];
+};
+
+export type ProcessStep = {
+  id: string;
+  name: string;
+  order: number;
+  detail?: string | null;
+  highlightStages: IncidentStage[];
+};
+
+export type ProcessTransition = {
+  from: string;
+  to: string;
+  name: string;
+};
+
+export type ProcessMap = {
+  id: string;
+  name: string;
+  state: "current" | "future";
+  steps: ProcessStep[];
+  transitions: ProcessTransition[];
+};

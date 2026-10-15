@@ -19,6 +19,7 @@ using Mps.Application.Decisions;
 using Mps.Application.Faults;
 using Mps.Application.Intake;
 using Mps.Application.Lifecycle;
+using Mps.Application.Metadata;
 using Mps.Application.Metrics;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
@@ -95,6 +96,8 @@ public static class QualityHost
         builder.Services.AddSingleton(ScenarioCardCatalog.Load(Path.Combine(dataDirectory, "scenarios", "catalog.yaml")));
         builder.Services.AddSingleton<ScenarioEvidenceBoard>();
         builder.Services.AddScoped<ScenarioTrigger>();
+        builder.Services.AddSingleton<IMetadataStore>(new YamlMetadataStore(Path.Combine(dataDirectory, "metadata")));
+        builder.Services.AddSingleton<IBusinessRuleEngine>(services => new BusinessRuleEngine(services.GetRequiredService<IMetadataStore>()));
         builder.Services.AddScoped<IQualityNotifier, SignalRQualityNotifier>();
         builder.Services.AddScoped<IIntakeService, IntakeService>();
         builder.Services.AddScoped(services =>
@@ -106,6 +109,7 @@ public static class QualityHost
                 services.GetRequiredService<IIntakeService>(),
                 services.GetRequiredService<IQualityNotifier>(),
                 debounce,
+                services.GetRequiredService<IBusinessRuleEngine>(),
                 services.GetRequiredService<ICascadeDirectory>());
         });
         if (!builder.TryAddLiveInvestigation())

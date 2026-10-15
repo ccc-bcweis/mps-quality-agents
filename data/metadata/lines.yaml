@@ -1,0 +1,124 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Process order is photoresist strip, clean, thin-film deposition, then etch.
+# The floor still shows where each tool sits.
+lines:
+  - id: nw-end-to-end
+    capabilityId: nw-manufacturing
+    name: Northwater wafer flow
+    lineType: end-to-end
+    sequence: 0
+    characteristics: A wafer visits strip, clean, thin-film deposition, and etch, in that order.
+    includesLineIds: [nw-strip, nw-clean, nw-deposition, nw-etch]
+    toolIds: []
+  - id: nw-strip
+    capabilityId: nw-manufacturing
+    name: Northwater photoresist strip
+    lineType: photoresist-strip
+    sequence: 1
+    characteristics: Remote plasma removes photoresist before the rinse.
+    includesLineIds: []
+    toolIds: [S-01, S-02]
+  - id: nw-clean
+    capabilityId: nw-manufacturing
+    name: Northwater clean
+    lineType: clean
+    sequence: 2
+    characteristics: A wet bench rinses the wafer after strip.
+    includesLineIds: []
+    toolIds: [C-01, C-02]
+  - id: nw-deposition
+    capabilityId: nw-manufacturing
+    name: Northwater thin-film deposition
+    lineType: thin-film-deposition
+    sequence: 3
+    characteristics: A chemical vapor deposit grows the film.
+    includesLineIds: []
+    toolIds: [D-01, D-02, D-03, D-04]
+  - id: nw-etch
+    capabilityId: nw-manufacturing
+    name: Northwater wafer etch
+    lineType: wafer-etch
+    sequence: 4
+    characteristics: Plasma opens the film where the resist allows it.
+    includesLineIds: []
+    toolIds: [E-01, E-02, E-03, E-04]
+  - id: iw-end-to-end
+    capabilityId: iw-manufacturing
+    name: Ironwood wafer flow
+    lineType: end-to-end
+    sequence: 0
+    characteristics: A wafer visits strip, clean, thin-film deposition, and etch, in that order.
+    includesLineIds: [iw-strip, iw-clean, iw-deposition, iw-etch]
+    toolIds: []
+  - id: iw-strip
+    capabilityId: iw-manufacturing
+    name: Ironwood photoresist strip
+    lineType: photoresist-strip
+    sequence: 1
+    characteristics: Remote plasma removes photoresist before the rinse.
+    includesLineIds: []
+    toolIds: [I-S-01]
+  - id: iw-clean
+    capabilityId: iw-manufacturing
+    name: Ironwood clean
+    lineType: clean
+    sequence: 2
+    characteristics: A wet bench rinses the wafer after strip.
+    includesLineIds: []
+    toolIds: [I-C-01]
+  - id: iw-deposition
+    capabilityId: iw-manufacturing
+    name: Ironwood thin-film deposition
+    lineType: thin-film-deposition
+    sequence: 3
+    characteristics: A chemical vapor deposit grows the film.
+    includesLineIds: []
+    toolIds: [I-D-01, I-D-02, I-D-03, I-D-04]
+  - id: iw-etch
+    capabilityId: iw-manufacturing
+    name: Ironwood wafer etch
+    lineType: wafer-etch
+    sequence: 4
+    characteristics: Plasma opens the film where the resist allows it.
+    includesLineIds: []
+    toolIds: [I-E-01, I-E-02, I-E-03, I-E-04]
+  - id: lm-end-to-end
+    capabilityId: lm-manufacturing
+    name: Lumen wafer flow
+    lineType: end-to-end
+    sequence: 0
+    characteristics: A pilot wafer visits strip, clean, thin-film deposition, and etch, in that order.
+    includesLineIds: [lm-strip, lm-clean, lm-deposition, lm-etch]
+    toolIds: []
+  - id: lm-strip
+    capabilityId: lm-manufacturing
+    name: Lumen photoresist strip
+    lineType: photoresist-strip
+    sequence: 1
+    characteristics: Remote plasma removes photoresist before the pilot rinse.
+    includesLineIds: []
+    toolIds: [P-S-01, P-S-02, P-S-03]
+  - id: lm-clean
+    capabilityId: lm-manufacturing
+    name: Lumen clean
+    lineType: clean
+    sequence: 2
+    characteristics: A wet bench rinses the pilot wafer after strip.
+    includesLineIds: []
+    toolIds: [P-C-01, P-C-02, P-C-03]
+  - id: lm-deposition
+    capabilityId: lm-manufacturing
+    name: Lumen deposition leg
+    lineType: thin-film-deposition
+    sequence: 3
+    characteristics: A short deposition leg grows the pilot film.
+    includesLineIds: []
+    toolIds: [P-D-01, P-D-02]
+  - id: lm-etch
+    capabilityId: lm-manufacturing
+    name: Lumen wafer etch
+    lineType: wafer-etch
+    sequence: 4
+    characteristics: Plasma opens the pilot film.
+    includesLineIds: []
+    toolIds: [P-E-01, P-E-02]

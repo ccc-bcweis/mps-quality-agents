@@ -474,6 +474,46 @@ export const handlers = [
       spendCapUsd: 2,
     }),
   ),
+  http.get("/api/metadata/company", () =>
+    HttpResponse.json({
+      id: "meridian",
+      name: "Meridian Precision Systems",
+      purpose: "Make precision semiconductor wafers.",
+      description: "Three fictional plants.",
+      industry: "Semiconductor manufacturing",
+      loadMilliseconds: 1,
+    }),
+  ),
+  http.get("/api/metadata/sites", () =>
+    HttpResponse.json([
+      {
+        id: "northwater",
+        name: "Northwater Fab",
+        purpose: "Run production wafers.",
+        description: "The production plant.",
+        timezone: "America/Denver",
+        capabilities: [],
+      },
+    ]),
+  ),
+  http.get("/api/metadata/tools/:toolId", () =>
+    HttpResponse.json({
+      id: "E-01",
+      name: "Etch tool in bay one",
+      toolType: "Conductor etch",
+      siteId: "northwater",
+      siteName: "Northwater Fab",
+      lineId: "nw-etch",
+      lineName: "Northwater wafer etch",
+      capabilityId: null,
+      simulated: true,
+      inputs: [{ name: "Patterned wafer", description: "A wafer." }],
+      outputs: [{ name: "Etched wafer", description: "An opened film." }],
+      parameters: [],
+    }),
+  ),
+  http.get("/api/metadata/rules", () => HttpResponse.json([])),
+  http.get("/api/metadata/process-maps", () => HttpResponse.json([])),
   http.get("/api/trace/:eventId", () =>
     HttpResponse.json({
       focusEventId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",

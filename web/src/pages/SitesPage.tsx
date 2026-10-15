@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import type { FamilyComparison, SiteDetail, SiteSummary, ToolFamily } from "../api/types";
+import type { FamilyComparison, MetadataSite, SiteDetail, SiteSummary, ToolFamily } from "../api/types";
 import { Term } from "../components/Term";
 import { btn, btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
@@ -10,6 +10,7 @@ import { visibleProblem } from "../history/copy";
 import { useSite } from "../context/SiteContext";
 import { ComparisonPanel } from "../sites/ComparisonPanel";
 import { FloorPlan } from "../sites/FloorPlan";
+import { PlantStructure } from "../sites/PlantStructure";
 import { formatPct } from "../sites/floorLayout";
 import { FAMILY_OPTIONS } from "../sites/parameters";
 
@@ -45,6 +46,23 @@ export function SitesPage() {
   const [listError, setListError] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [compareError, setCompareError] = useState<string | null>(null);
+  const [structure, setStructure] = useState<MetadataSite[] | null>(null);
+  const [structureError, setStructureError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .metadataSites()
+      .then((next) => {
+        if (!cancelled) setStructure(next);
+      })
+      .catch(() => {
+        if (!cancelled) setStructureError("The plant structure did not load.");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -197,6 +215,10 @@ export function SitesPage() {
               Alarm, a scripted fault
             </li>
           </ul>
+          <PlantStructure
+            site={structure?.find((item) => item.id === siteId) ?? null}
+            error={structureError}
+          />
         </>
       ) : detailError ? null : (
         <p className="mt-4 text-mps-muted">Loading the plant…</p>

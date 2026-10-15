@@ -2,6 +2,7 @@
 
 using Mps.Application.Bus;
 using Mps.Application.Intake;
+using Mps.Application.Metadata;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
 using Mps.Domain.Identity;
@@ -10,7 +11,7 @@ using Mps.Domain.Incidents;
 namespace Mps.Application.Spc;
 
 /// <summary>
-/// Evaluates a sample, debounces per tool and parameter, and opens one intake ticket when severity is high or critical.
+/// Evaluates a sample, debounces per tool and parameter, and opens one intake ticket when a business rule says to.
 /// </summary>
 public sealed class SpcAlertService
 {
@@ -20,6 +21,7 @@ public sealed class SpcAlertService
     private readonly IIntakeService _intake;
     private readonly IQualityNotifier _notifier;
     private readonly TimeSpan _debounce;
+    private readonly IBusinessRuleEngine _rules;
     private readonly ICascadeDirectory? _hints;
 
     public SpcAlertService(
@@ -27,11 +29,13 @@ public sealed class SpcAlertService
         IIntakeService intake,
         IQualityNotifier notifier,
         TimeSpan debounce,
+        IBusinessRuleEngine rules,
         ICascadeDirectory? hints = null)
     {
         ArgumentNullException.ThrowIfNull(alerts);
         ArgumentNullException.ThrowIfNull(intake);
         ArgumentNullException.ThrowIfNull(notifier);
+        ArgumentNullException.ThrowIfNull(rules);
         if (debounce < TimeSpan.Zero)
         {
             throw new ArgumentOutOfRangeException(nameof(debounce), "Debounce window cannot be negative.");
@@ -41,6 +45,7 @@ public sealed class SpcAlertService
         _intake = intake;
         _notifier = notifier;
         _debounce = debounce;
+        _rules = rules;
         _hints = hints;
     }
 
@@ -82,9 +87,18 @@ public sealed class SpcAlertService
         await _alerts.AddAsync(alert, cancellationToken).ConfigureAwait(false);
         await _notifier.AlertRaisedAsync(alert, cancellationToken).ConfigureAwait(false);
 
-        if (!SeverityRules.OpensTicketFromSignal(severity))
+        var decision = _rules.Evaluate(new RuleContext
         {
-            return new SpcAlertOutcome(violations, alert, null, null, debounced: false);
+            AlertRuleId = rule,
+            Severity = severity,
+            ParameterId = sample.Parameter,
+            ToolId = sample.ToolId.ToString(),
+            RepeatCount = history.Count,
+            Channel = IncidentChannel.IotSpcAlert.ToString(),
+        });
+        if (!decision.OpensTicket)
+        {
+            return new SpcAlertOutcome(violations, alert, null, null, debounced: false, decision);
         }
 
         var summary = "SPC " + rule + " on " + sample.ToolId + " " + sample.Parameter + ".";
@@ -98,8 +112,10 @@ public sealed class SpcAlertService
                 requestedSeverity: null,
                 signalSeverity: severity,
                 correlationId,
-                at),
+                at,
+                alertRuleId: rule,
+                repeatCount: history.Count),
             cancellationToken).ConfigureAwait(false);
-        return new SpcAlertOutcome(violations, alert, intake.Incident, intake.Ticket, debounced: false);
+        return new SpcAlertOutcome(violations, alert, intake.Incident, intake.Ticket, debounced: false, decision);
     }
 }

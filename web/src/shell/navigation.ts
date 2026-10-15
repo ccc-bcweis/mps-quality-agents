@@ -26,6 +26,7 @@ export const CONSOLE_TABS: ConsoleTab[] = [
   { to: "/investigations", label: "Investigation", match: (path) => path.startsWith("/investigations") },
   { to: "/approvals", label: "Approval", match: (path) => path.startsWith("/approvals") },
   { to: "/capas", label: "CAPA", match: (path) => path.startsWith("/capas") },
+  { to: "/rules", label: "Rules & Process", match: (path) => path.startsWith("/rules") },
 ];
 
 export const HARNESS_LINKS: HarnessLink[] = [

@@ -7,6 +7,7 @@ using Mps.Application.Persistence;
 using Mps.Application.Printouts;
 using Mps.Application.Spc;
 using Mps.Application.Tests.Fakes;
+using Mps.Application.Tests.Metadata;
 using Mps.Domain.Equipment;
 using Mps.Domain.Evidence;
 using Mps.Domain.Identity;
@@ -108,7 +109,7 @@ public sealed class DocumentIntakeServiceTests
             fleet.Add(new Tool(new ToolId("E-01"), "Etch 01", ToolFamily.Etch, "MPS-E7", "Bay-1", [new Chamber("A", "Chamber A")]));
             fleet.Add(new Tool(new ToolId("D-01"), "Dep 01", ToolFamily.Deposition, "MPS-D7", "Bay-3", [new Chamber("A", "Chamber A")]));
             var clock = new FixedClock(Now);
-            var intake = new IntakeService(fleet, Incidents, new InMemoryTicketingPort(), NullQualityNotifier.Instance, clock);
+            var intake = new IntakeService(fleet, Incidents, new InMemoryTicketingPort(), NullQualityNotifier.Instance, clock, DemoRules.Engine);
             var faults = new FaultInjectionService(fleet, Faults, NullQualityNotifier.Instance, clock);
             Service = new DocumentIntakeService(
                 new EmptyExtractor(),

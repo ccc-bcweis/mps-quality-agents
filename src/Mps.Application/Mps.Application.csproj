@@ -5,4 +5,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Mps.Domain\Mps.Domain.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
 </Project>

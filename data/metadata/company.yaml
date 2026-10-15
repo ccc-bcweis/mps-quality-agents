@@ -1,0 +1,7 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+company:
+  id: meridian
+  name: Meridian Precision Systems
+  purpose: Make precision semiconductor wafers and keep each lot inside its process limits.
+  description: Meridian Precision Systems runs three fictional plants. Northwater Fab and Ironwood Fab are production plants. Lumen Pilot Works proves a process before it moves to production.
+  industry: Semiconductor manufacturing

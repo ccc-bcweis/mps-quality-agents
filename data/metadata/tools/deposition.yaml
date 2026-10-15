@@ -1,0 +1,107 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+tools:
+  - id: D-01
+    name: Deposition tool in bay one
+    siteId: northwater
+    lineId: nw-deposition
+    toolType: Thin-film deposition
+    simulated: true
+    inputs: &depositionInputs
+      - name: Clean wafer
+        description: A rinsed wafer ready for the film.
+      - name: Precursor
+        description: The material that becomes the deposited film.
+    outputs: &depositionOutputs
+      - name: Coated wafer
+        description: The wafer leaves with a new film.
+    parameters: &depositionParameters
+      - { id: heaterTemperature, name: Heater temperature, parameterClass: temperature, unit: C, telemetry: true, lcl: 350, ucl: 400, alertLow: 355, alertHigh: 395, nominal: 375 }
+      - { id: chamberPressure, name: Chamber pressure, parameterClass: pressure, unit: Torr, telemetry: true, lcl: 2, ucl: 6, alertLow: 2.4, alertHigh: 5.6, nominal: 3.5 }
+      - { id: rfPower, name: Plasma power, parameterClass: power, unit: W, telemetry: true, lcl: 300, ucl: 600, alertLow: 350, alertHigh: 550, nominal: 480 }
+      - { id: sih4Flow, name: Silane flow, parameterClass: flow, unit: sccm, telemetry: true, lcl: 0, ucl: 100, alertLow: 15, alertHigh: 40, nominal: 24 }
+      - { id: n2oFlow, name: Nitrous oxide flow, parameterClass: flow, unit: sccm, telemetry: true, lcl: 200, ucl: 1200, alertLow: 500, alertHigh: 1000, nominal: 750 }
+      - { id: vibrationRms, name: Vibration, parameterClass: vibration, unit: mm/s, telemetry: true, lcl: 0, ucl: 2.5, alertLow: 0.25, alertHigh: 2.25, nominal: 0.7 }
+      - { id: filmThickness, name: Film thickness, parameterClass: output, unit: nm, telemetry: true, lcl: 50, ucl: 800, alertLow: 125, alertHigh: 725, nominal: 200 }
+      - { id: filmUniformity, name: Film uniformity, parameterClass: output, unit: percent, telemetry: true, lcl: 0, ucl: 5, alertLow: 0.2, alertHigh: 3, nominal: 0.8 }
+      - { id: particlesAdders, name: Particle adders, parameterClass: particles, unit: count, telemetry: true, lcl: 0, ucl: 10, alertLow: 1, alertHigh: 8, nominal: 2 }
+  - id: D-02
+    name: Deposition tool in bay two
+    siteId: northwater
+    lineId: nw-deposition
+    toolType: Thin-film deposition
+    simulated: true
+    inputs: *depositionInputs
+    outputs: *depositionOutputs
+    parameters: *depositionParameters
+  - id: D-03
+    name: Extra deposition tool, left
+    siteId: northwater
+    lineId: nw-deposition
+    toolType: Thin-film deposition
+    simulated: true
+    inputs: *depositionInputs
+    outputs: *depositionOutputs
+    parameters: *depositionParameters
+  - id: D-04
+    name: Extra deposition tool, right
+    siteId: northwater
+    lineId: nw-deposition
+    toolType: Thin-film deposition
+    simulated: true
+    inputs: *depositionInputs
+    outputs: *depositionOutputs
+    parameters: *depositionParameters
+  - id: I-D-01
+    name: Ironwood deposition tool, first
+    siteId: ironwood
+    lineId: iw-deposition
+    toolType: Thin-film deposition
+    simulated: true
+    inputs: *depositionInputs
+    outputs: *depositionOutputs
+    parameters: *depositionParameters
+  - id: I-D-02
+    name: Ironwood deposition tool, second
+    siteId: ironwood
+    lineId: iw-deposition
+    toolType: Thin-film deposition
+    simulated: true
+    inputs: *depositionInputs
+    outputs: *depositionOutputs
+    parameters: *depositionParameters
+  - id: I-D-03
+    name: Ironwood deposition tool, third
+    siteId: ironwood
+    lineId: iw-deposition
+    toolType: Thin-film deposition
+    simulated: true
+    inputs: *depositionInputs
+    outputs: *depositionOutputs
+    parameters: *depositionParameters
+  - id: I-D-04
+    name: Ironwood deposition tool, fourth
+    siteId: ironwood
+    lineId: iw-deposition
+    toolType: Thin-film deposition
+    simulated: true
+    inputs: *depositionInputs
+    outputs: *depositionOutputs
+    parameters: *depositionParameters
+  - id: P-D-01
+    name: Lumen deposition tool, first
+    siteId: lumen
+    lineId: lm-deposition
+    toolType: Thin-film deposition
+    simulated: true
+    inputs: *depositionInputs
+    outputs: *depositionOutputs
+    parameters: *depositionParameters
+  - id: P-D-02
+    name: Lumen deposition tool, second
+    siteId: lumen
+    lineId: lm-deposition
+    toolType: Thin-film deposition
+    simulated: true
+    inputs: *depositionInputs
+    outputs: *depositionOutputs
+    parameters: *depositionParameters

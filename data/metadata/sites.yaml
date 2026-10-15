@@ -1,0 +1,17 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+sites:
+  - id: northwater
+    name: Northwater Fab
+    purpose: Run production wafers through deposition and etch.
+    description: The production plant in the mountain time zone. Four bays hold deposition and etch, with strip and clean beside them.
+    timezone: America/Denver
+  - id: ironwood
+    name: Ironwood Fab
+    purpose: Run a second production plant with the same tool families.
+    description: The production plant in the central time zone. Deposition and etch share the floor with one strip tool and one clean tool.
+    timezone: America/Chicago
+  - id: lumen
+    name: Lumen Pilot Works
+    purpose: Prove a new process before it moves to the production plants.
+    description: The pilot works in the pacific time zone. Strip, clean, deposition, and etch run as a short line.
+    timezone: America/Los_Angeles
