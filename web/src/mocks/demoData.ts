@@ -155,6 +155,9 @@ export const tickets: Ticket[] = [
   },
 ];
 
+const etchB = { toolName: "Etch tool E-02", chamberName: "Chamber B" };
+const depA = { toolName: "Deposition tool D-01", chamberName: "Chamber A" };
+
 const s1Evidence: EvidenceItem[] = [
   {
     id: TEL_ID,
@@ -165,6 +168,12 @@ const s1Evidence: EvidenceItem[] = [
     observedAt: "2026-10-14T14:08:00Z",
     toolId: "E-02",
     externalRef: "TEL-E02-ESC",
+    signalId: "escTemperature",
+    value: 53.1,
+    unit: "C",
+    specLow: 40,
+    specHigh: 60,
+    ...etchB,
   },
   {
     id: S1_EVIDENCE_ID,
@@ -175,6 +184,7 @@ const s1Evidence: EvidenceItem[] = [
     observedAt: "2026-10-12T08:00:00Z",
     toolId: "E-02",
     externalRef: "ECO-4471",
+    ...etchB,
   },
   {
     id: MES_ID,
@@ -185,6 +195,7 @@ const s1Evidence: EvidenceItem[] = [
     observedAt: "2026-10-14T13:40:00Z",
     toolId: "E-02",
     externalRef: "L-4419",
+    ...etchB,
   },
   {
     id: PM_ID,
@@ -195,6 +206,7 @@ const s1Evidence: EvidenceItem[] = [
     observedAt: "2026-10-11T16:00:00Z",
     toolId: "E-02",
     externalRef: "PM-3381",
+    ...etchB,
   },
   {
     id: CAL_ID,
@@ -205,6 +217,7 @@ const s1Evidence: EvidenceItem[] = [
     observedAt: "2026-09-02T10:00:00Z",
     toolId: "E-02",
     externalRef: "CAL-ESC-02",
+    ...etchB,
   },
   {
     id: ERP_ID,
@@ -215,6 +228,7 @@ const s1Evidence: EvidenceItem[] = [
     observedAt: "2026-10-09T08:00:00Z",
     toolId: "E-02",
     externalRef: "NF3-220",
+    ...etchB,
   },
   {
     id: DOC_ID,
@@ -225,6 +239,7 @@ const s1Evidence: EvidenceItem[] = [
     observedAt: "2026-08-01T00:00:00Z",
     toolId: "E-02",
     externalRef: "SB-441",
+    ...etchB,
   },
 ];
 
@@ -292,6 +307,7 @@ export const investigations: Investigation[] = [
         observedAt: "2026-10-08T12:00:00Z",
         toolId: "D-01",
         externalRef: "PLM-SH-C",
+        ...depA,
       },
       {
         id: "c2222222-2222-4222-8222-222222222222",
@@ -302,6 +318,7 @@ export const investigations: Investigation[] = [
         observedAt: "2026-10-14T14:20:00Z",
         toolId: "D-01",
         externalRef: "MES-D01-B",
+        ...depA,
       },
       {
         id: "c3333333-3333-4333-8333-333333333333",
@@ -312,6 +329,12 @@ export const investigations: Investigation[] = [
         observedAt: "2026-10-14T14:40:00Z",
         toolId: "D-01",
         externalRef: "SPC-D01-P",
+        signalId: "chamberPressure",
+        value: 6.52,
+        unit: "Torr",
+        specLow: 2,
+        specHigh: 6,
+        ...depA,
       },
     ],
     hypotheses: [],

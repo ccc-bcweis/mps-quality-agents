@@ -4,9 +4,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { CHANNEL_LABEL, STAGE_LABEL, severityTone, severityWord } from "../api/labels";
 import type { Incident, Severity, Ticket, Tool } from "../api/types";
+import { CaseBriefs } from "../components/CaseBriefs";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
 import { Term } from "../components/Term";
+import { plainTool } from "../investigation/format";
 import { btnPrimary, field, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { pathForIncident, pathForTicket } from "../investigation/ticketRoute";
@@ -121,6 +123,10 @@ export function TicketsPage() {
           </tbody>
         </table>
       </div>
+      <CaseBriefs
+        incidentIds={incidents.filter((incident) => incident.stage !== "closed").map((incident) => incident.id)}
+        intro="Evidence linked to these tickets"
+      />
       <form className={`${panel} mt-3 grid gap-3 md:grid-cols-2`} onSubmit={onSubmit}>
         <h2 className="text-mps-title font-semibold md:col-span-2">Operator report</h2>
         <label className="text-mps-label text-mps-muted">
@@ -128,7 +134,7 @@ export function TicketsPage() {
           <select className={field} value={toolId} onChange={(event) => setToolId(event.target.value)}>
             {tools.map((tool) => (
               <option key={tool.id} value={tool.id}>
-                {tool.id} · {tool.model}
+                {plainTool(tool.id) ?? tool.name} · {tool.model}
               </option>
             ))}
           </select>

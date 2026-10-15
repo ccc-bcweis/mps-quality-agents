@@ -2,11 +2,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import type { Capa, CapaStage } from "../api/types";
+import type { Capa, CapaStage, Investigation } from "../api/types";
+import { AgentTimeline } from "../components/AgentTimeline";
+import { EvidencePack } from "../components/EvidencePack";
 import { Explain } from "../components/Explain";
 import { Term } from "../components/Term";
 import { btn, panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
+import { formatLocalWhen } from "../investigation/format";
 import { CAPA_STAGES, nextCapaStage } from "../lifecycle";
 import { S1_INVESTIGATION_ID } from "../mocks/demoData";
 
@@ -17,6 +20,7 @@ export function CapaPage() {
   const capasRef = useRef(capas);
   capasRef.current = capas;
   const [capa, setCapa] = useState<Capa | null>(null);
+  const [investigation, setInvestigation] = useState<Investigation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -53,6 +57,26 @@ export function CapaPage() {
     };
   }, [capaId, rememberCapa]);
 
+  const incidentId = capa?.incidentId ?? "";
+  useEffect(() => {
+    if (!incidentId) {
+      setInvestigation(null);
+      return undefined;
+    }
+    let cancelled = false;
+    api
+      .getLatestInvestigation(incidentId)
+      .then((next) => {
+        if (!cancelled) setInvestigation(next);
+      })
+      .catch(() => {
+        if (!cancelled) setInvestigation(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [incidentId]);
+
   async function advance(stage: CapaStage) {
     if (!capa) return;
     setPending(true);
@@ -62,7 +86,8 @@ export function CapaPage() {
       const next = await api.advanceCapa(capa.id, { stage });
       setCapa(next);
       rememberCapa(next);
-      setNotice(`Moved to ${next.stage}.`);
+      const label = CAPA_STAGES.find((item) => item.id === next.stage)?.label ?? next.stage;
+      setNotice(`Moved to ${label}.`);
     } catch (reason: unknown) {
       setError(reason instanceof ApiProblem ? reason.title : "The stage change was rejected.");
     } finally {
@@ -99,9 +124,7 @@ export function CapaPage() {
         </p>
       ) : (
         <>
-          <p className="mb-3 rounded border border-mps-ok bg-mps-panel px-3 py-2">
-            Approval token consumed (single-use). Token <span className="font-mono">{capa.approvalTokenId}</span>. Action hash <span className="font-mono">{capa.actionHash}</span>.
-          </p>
+          <p className="mb-3 rounded border border-mps-ok bg-mps-panel px-3 py-2">Approval token consumed. It can be used once.</p>
           <section className={`${panel} mb-3`}>
             <h2 className="mb-2 text-mps-title font-semibold">
               <Explain text="CAPA stages" spellOut={false} />
@@ -129,20 +152,37 @@ export function CapaPage() {
             <section className={panel}>
               <h2 className="mb-2 text-mps-title font-semibold">Record</h2>
               <p>{capa.summary}</p>
-              <p className="mt-2 font-mono text-mps-micro text-mps-muted">Opened {capa.openedAt}</p>
-              <p className="font-mono text-mps-micro text-mps-muted">Incident {capa.incidentId}</p>
-            </section>
-            <section className={panel}>
-              <h2 className="mb-2 text-mps-title font-semibold">Audit</h2>
-              <p className="font-mono text-mps-micro text-mps-muted">
-                Token {capa.approvalTokenId}
-                <br />
-                actionHash {capa.actionHash}
-                <br />
-                stage {capa.stage}
+              <p className="mt-2 text-mps-secondary">Opened {formatLocalWhen(capa.openedAt)}</p>
+              <p className="mt-2">
+                <Link to={`/investigations/incident/${capa.incidentId}`} title={capa.incidentId}>
+                  Open the investigation
+                </Link>
               </p>
             </section>
+            <section className={panel} data-audit="log" aria-label="Audit log">
+              <h2 className="mb-2 text-mps-title font-semibold">Audit log</h2>
+              <p>
+                Token <span className="font-mono">{capa.approvalTokenId}</span>
+              </p>
+              <p>
+                Action hash <span className="font-mono">{capa.actionHash}</span>
+              </p>
+              <p>
+                Incident <span className="font-mono">{capa.incidentId}</span>
+              </p>
+              <p>Stage {CAPA_STAGES.find((item) => item.id === capa.stage)?.label ?? capa.stage}</p>
+            </section>
           </div>
+          {investigation ? (
+            <>
+              <section className={`${panel} mt-3`}>
+                <EvidencePack items={investigation.evidence} />
+              </section>
+              <section className={`${panel} mt-3`}>
+                <AgentTimeline investigation={investigation} />
+              </section>
+            </>
+          ) : null}
         </>
       )}
     </div>

@@ -21,6 +21,10 @@ describe("agent step timeline", () => {
       "queued",
     ]);
     expect(s1.find((step) => step.id === "hypotheses")?.detail).toMatch(/process drift/);
+    expect(s1.find((step) => step.id === "toolCalls")?.payload).toContain("TEL-E02-ESC");
+    expect(s1.find((step) => step.id === "ranking")?.prompt).toMatch(/resolution agent/);
+    expect(s1.find((step) => step.id === "ticket")?.prompt).toBeNull();
+    expect(s1.find((step) => step.id === "toolCalls")?.seconds).toBe(12);
     expect(s1.some((step) => step.status === "running")).toBe(false);
 
     const s2 = buildAgentSteps(investigations[1]);

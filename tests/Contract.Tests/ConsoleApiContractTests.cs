@@ -222,6 +222,8 @@ public sealed class ConsoleApiContractTests
         var evidence = document.Schema("EvidenceItem");
         evidence.AdditionalPropertiesAllowed.Should().BeFalse();
         evidence.Required.Should().BeEquivalentTo("id", "source", "title", "excerpt", "observedAt");
+        evidence.Properties.Keys.Should().Contain(["value", "unit", "specLow", "specHigh", "toolName", "chamberName"]);
+        evidence.Required.Should().NotContain(["value", "unit", "specLow", "specHigh", "toolName", "chamberName"]);
 
         document.Schema("RootCauseCategory").EnumNames().Should().Equal(
             "engineeringChange",
