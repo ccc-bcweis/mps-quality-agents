@@ -78,6 +78,12 @@ public sealed record FaultSignal
         DutyCycle = dutyCycle;
     }
 
+    /// <summary>Same fault with its period and ramp shortened by <paramref name="pace"/>, so it develops that many times faster.</summary>
+    public FaultSignal Paced(double pace) =>
+        pace is > 0 and not 1d && double.IsFinite(pace)
+            ? new FaultSignal(ToolId, ChamberId, Parameter, Shape, MagnitudeKind, Magnitude, Onset, PeriodSeconds / pace, RampSeconds / pace, DutyCycle)
+            : this;
+
     public string ToolId { get; }
 
     public string? ChamberId { get; }
