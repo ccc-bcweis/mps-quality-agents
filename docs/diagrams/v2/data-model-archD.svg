@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36in" height="24in" viewBox="0 0 2592 1728" font-family="IBM Plex Sans, Inter, Arial, sans-serif">
+<title>Data model, entities and relationships - Meridian Precision Systems</title>
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0,0L10,5L0,10z" fill="#334155"/></marker></defs>
+<rect width="2592" height="1728" fill="#F7F4EA"/><rect x="24" y="24" width="2544" height="1680" fill="none" stroke="#0B1B33" stroke-width="3"/>
+<text x="56" y="88" font-size="22" font-weight="700" fill="#7A5C00" letter-spacing="3">DATA MODEL &#183; BASELINE V2 &#183; DRAFT</text>
+<text x="56" y="134" font-size="40" font-weight="700" fill="#0B1B33">Data model, entities and relationships</text>
+<text x="2536" y="134" font-size="20" fill="#1F2937" text-anchor="end">* marks target-design items that the running demo implements in a thinner form (see notes)</text>
+<g id="gm"><rect x="56" y="170" width="950" height="1150" rx="14" fill="#E7F8EF" stroke="#047857" stroke-width="2.5"/><text x="74" y="206" font-size="24" font-weight="700" fill="#065F46">Metadata (durable, kept by every reset)</text></g>
+<g id="gt"><rect x="1076" y="170" width="1460" height="1150" rx="14" fill="#FFF6D8" stroke="#A16207" stroke-width="2.5"/><text x="1094" y="206" font-size="24" font-weight="700" fill="#7A5C00">Transactions and telemetry (purged by hard reset)</text></g>
+<polyline points="276.0,350.0 276.0,400.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<text x="284.0" y="369.0" font-size="15" fill="#1F2937">1 to many</text>
+<polyline points="276.0,520.0 276.0,570.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<text x="284.0" y="539.0" font-size="15" fill="#1F2937">1 to many</text>
+<polyline points="276.0,718.0 276.0,790.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<text x="284.0" y="748.0" font-size="15" fill="#1F2937">1 to many</text>
+<polyline points="476.0,864.0 551.0,864.0 551.0,304.0 586.0,304.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<text x="576.5" y="298.0" font-size="15" fill="#1F2937">1 to many</text>
+<polyline points="786.0,378.0 786.0,460.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<text x="794.0" y="413.0" font-size="15" fill="#1F2937">1 to many</text>
+<polyline points="786.0,608.0 786.0,690.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="786.0,838.0 786.0,920.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="1296.0,378.0 1296.0,490.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<text x="1304.0" y="428.0" font-size="15" fill="#1F2937">1 to 1</text>
+<polyline points="1296.0,610.0 1296.0,690.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<text x="1304.0" y="644.0" font-size="15" fill="#1F2937">causes</text>
+<polyline points="1496.0,750.0 1571.0,750.0 1571.0,304.0 1606.0,304.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<text x="1596.5" y="298.0" font-size="15" fill="#1F2937">opens</text>
+<polyline points="1806.0,378.0 1806.0,490.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<text x="1814.0" y="428.0" font-size="15" fill="#1F2937">1 to many</text>
+<polyline points="1806.0,610.0 1806.0,720.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<text x="1814.0" y="659.0" font-size="15" fill="#1F2937">1 to many</text>
+<polyline points="2006.0,304.0 2081.0,304.0 2081.0,290.0 2116.0,290.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="2316.0,350.0 2316.0,460.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<text x="2324.0" y="399.0" font-size="15" fill="#1F2937">1 to 1</text>
+<polyline points="476.0,1110.0 1061.0,1110.0 1061.0,304.0 1096.0,304.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<text x="1086.5" y="298.0" font-size="15" fill="#1F2937">emits</text>
+<g id="company"><rect x="76" y="230" width="400" height="120" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="76" y="230" width="8" height="120" fill="#047857"/>
+<text x="96" y="262" font-size="22" font-weight="600" fill="#065F46">Company</text>
+<text x="96" y="290" font-size="18" fill="#1F2937">name, purpose, industry</text>
+<text x="96" y="316" font-size="18" fill="#1F2937">description</text>
+</g>
+<g id="site"><rect x="76" y="400" width="400" height="120" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="76" y="400" width="8" height="120" fill="#047857"/>
+<text x="96" y="432" font-size="22" font-weight="600" fill="#065F46">Site</text>
+<text x="96" y="460" font-size="18" fill="#1F2937">name, region, timezone</text>
+<text x="96" y="486" font-size="18" fill="#1F2937">company (FK)</text>
+</g>
+<g id="cap"><rect x="76" y="570" width="400" height="148" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="76" y="570" width="8" height="148" fill="#047857"/>
+<text x="96" y="602" font-size="22" font-weight="600" fill="#065F46">Capability</text>
+<text x="96" y="630" font-size="18" fill="#1F2937">type: Manufacturing, Warehousing,</text>
+<text x="96" y="656" font-size="18" fill="#1F2937">R and D, Sales, Back office, Other</text>
+<text x="96" y="682" font-size="18" fill="#1F2937">simulated (yes or no), site (FK)</text>
+</g>
+<g id="line"><rect x="76" y="790" width="400" height="148" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="76" y="790" width="8" height="148" fill="#047857"/>
+<text x="96" y="822" font-size="22" font-weight="600" fill="#065F46">Production line</text>
+<text x="96" y="850" font-size="18" fill="#1F2937">type: etch, deposition, strip,</text>
+<text x="96" y="876" font-size="18" fill="#1F2937">clean, end-to-end; characteristics</text>
+<text x="96" y="902" font-size="18" fill="#1F2937">capability (FK)</text>
+</g>
+<g id="tool"><rect x="586" y="230" width="400" height="148" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="586" y="230" width="8" height="148" fill="#047857"/>
+<text x="606" y="262" font-size="22" font-weight="600" fill="#065F46">Tool</text>
+<text x="606" y="290" font-size="18" fill="#1F2937">identity, model, tool type</text>
+<text x="606" y="316" font-size="18" fill="#1F2937">line (FK) or capability (FK)</text>
+<text x="606" y="342" font-size="18" fill="#1F2937">inputs, outputs (wafer, gas, power)</text>
+</g>
+<g id="param"><rect x="586" y="460" width="400" height="148" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="586" y="460" width="8" height="148" fill="#047857"/>
+<text x="606" y="492" font-size="22" font-weight="600" fill="#065F46">Tool parameter</text>
+<text x="606" y="520" font-size="18" fill="#1F2937">name, unit, nominal</text>
+<text x="606" y="546" font-size="18" fill="#1F2937">UCL, LCL, alert thresholds</text>
+<text x="606" y="572" font-size="18" fill="#1F2937">tool (FK), chamber</text>
+</g>
+<g id="rule"><rect x="586" y="690" width="400" height="148" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="586" y="690" width="8" height="148" fill="#047857"/>
+<text x="606" y="722" font-size="22" font-weight="600" fill="#065F46">Business rule</text>
+<text x="606" y="750" font-size="18" fill="#1F2937">when (condition), then (action)</text>
+<text x="606" y="776" font-size="18" fill="#1F2937">priority, plain-language reason</text>
+<text x="606" y="802" font-size="18" fill="#1F2937">applies to site, tool or class</text>
+</g>
+<g id="pmap"><rect x="586" y="920" width="400" height="148" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="586" y="920" width="8" height="148" fill="#047857"/>
+<text x="606" y="952" font-size="22" font-weight="600" fill="#065F46">Process map</text>
+<text x="606" y="980" font-size="18" fill="#1F2937">current or future state</text>
+<text x="606" y="1006" font-size="18" fill="#1F2937">ordered steps and transitions</text>
+<text x="606" y="1032" font-size="18" fill="#1F2937">rule (FK) per transition</text>
+</g>
+<g id="cmd"><rect x="76" y="1050" width="400" height="120" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="76" y="1050" width="8" height="120" fill="#047857"/>
+<text x="96" y="1082" font-size="22" font-weight="600" fill="#065F46">Command catalog</text>
+<text x="96" y="1110" font-size="18" fill="#1F2937">name, system or application</text>
+<text x="96" y="1136" font-size="18" fill="#1F2937">payload schema, events emitted</text>
+</g>
+<g id="evt"><rect x="1096" y="230" width="400" height="148" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="1096" y="230" width="8" height="148" fill="#A16207"/>
+<text x="1116" y="262" font-size="22" font-weight="600" fill="#7A5C00">Event (bus envelope)</text>
+<text x="1116" y="290" font-size="18" fill="#1F2937">eventId, type, sequence, time</text>
+<text x="1116" y="316" font-size="18" fill="#1F2937">correlationId, causationId,</text>
+<text x="1116" y="342" font-size="18" fill="#1F2937">parentEventId, source, site, tool</text>
+</g>
+<g id="tel"><rect x="1096" y="490" width="400" height="120" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="1096" y="490" width="8" height="120" fill="#A16207"/>
+<text x="1116" y="522" font-size="22" font-weight="600" fill="#7A5C00">Telemetry reading</text>
+<text x="1116" y="550" font-size="18" fill="#1F2937">tool parameter (FK), time, value</text>
+<text x="1116" y="576" font-size="18" fill="#1F2937">eventId (FK)</text>
+</g>
+<g id="alert"><rect x="1096" y="690" width="400" height="120" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="1096" y="690" width="8" height="120" fill="#A16207"/>
+<text x="1116" y="722" font-size="22" font-weight="600" fill="#7A5C00">Alert</text>
+<text x="1116" y="750" font-size="18" fill="#1F2937">SPC rule, severity, value vs limit</text>
+<text x="1116" y="776" font-size="18" fill="#1F2937">triggering event (FK)</text>
+</g>
+<g id="ticket"><rect x="1606" y="230" width="400" height="148" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="1606" y="230" width="8" height="148" fill="#A16207"/>
+<text x="1626" y="262" font-size="22" font-weight="600" fill="#7A5C00">Ticket</text>
+<text x="1626" y="290" font-size="18" fill="#1F2937">source: SPC, operator, upload,</text>
+<text x="1626" y="316" font-size="18" fill="#1F2937">QMS, supplier; status, priority</text>
+<text x="1626" y="342" font-size="18" fill="#1F2937">rule fired (FK)</text>
+</g>
+<g id="inv"><rect x="1606" y="490" width="400" height="120" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="1606" y="490" width="8" height="120" fill="#A16207"/>
+<text x="1626" y="522" font-size="22" font-weight="600" fill="#7A5C00">Investigation</text>
+<text x="1626" y="550" font-size="18" fill="#1F2937">status, confidence, cause</text>
+<text x="1626" y="576" font-size="18" fill="#1F2937">ticket (FK), escalated (yes or no)</text>
+</g>
+<g id="evid"><rect x="1606" y="720" width="400" height="120" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="1606" y="720" width="8" height="120" fill="#A16207"/>
+<text x="1626" y="752" font-size="22" font-weight="600" fill="#7A5C00">Evidence item</text>
+<text x="1626" y="780" font-size="18" fill="#1F2937">finding, value vs spec, time</text>
+<text x="1626" y="806" font-size="18" fill="#1F2937">source events (FK to Event)</text>
+</g>
+<g id="appr"><rect x="2116" y="230" width="400" height="120" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="2116" y="230" width="8" height="120" fill="#A16207"/>
+<text x="2136" y="262" font-size="22" font-weight="600" fill="#7A5C00">Approval</text>
+<text x="2136" y="290" font-size="18" fill="#1F2937">decision, approver, reason</text>
+<text x="2136" y="316" font-size="18" fill="#1F2937">investigation (FK)</text>
+</g>
+<g id="capa"><rect x="2116" y="460" width="400" height="120" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="2116" y="460" width="8" height="120" fill="#A16207"/>
+<text x="2136" y="492" font-size="22" font-weight="600" fill="#7A5C00">CAPA</text>
+<text x="2136" y="520" font-size="18" fill="#1F2937">action, owner, due, status</text>
+<text x="2136" y="546" font-size="18" fill="#1F2937">approval (FK)</text>
+</g>
+<g id="scen"><rect x="2116" y="690" width="400" height="120" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="2116" y="690" width="8" height="120" fill="#A16207"/>
+<text x="2136" y="722" font-size="22" font-weight="600" fill="#7A5C00">Scenario</text>
+<text x="2136" y="750" font-size="18" fill="#1F2937">plain-language card, sensors moved</text>
+<text x="2136" y="776" font-size="18" fill="#1F2937">recorded messages for replay</text>
+</g>
+<g id="doc"><rect x="1096" y="930" width="400" height="120" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="1096" y="930" width="8" height="120" fill="#A16207"/>
+<text x="1116" y="962" font-size="22" font-weight="600" fill="#7A5C00">Uploaded document</text>
+<text x="1116" y="990" font-size="18" fill="#1F2937">instrument printout, readings found</text>
+<text x="1116" y="1016" font-size="18" fill="#1F2937">confirmed by (person)</text>
+</g>
+<rect x="48" y="1486" width="1580" height="210" fill="#FFFFFF" stroke="#0B1B33" stroke-width="2"/><text x="64" y="1516" font-size="20" font-weight="700" fill="#0B1B33">NOTES</text>
+<text x="64" y="1548" font-size="19" fill="#111827">* Demo store is intentionally thin: metadata lives in YAML files with exactly this structure; transactions and telemetry live in SQLite.</text>
+<text x="64" y="1578" font-size="19" fill="#111827">* Target store: relational (Azure SQL) for metadata and transactions, time series for telemetry, optional graph store for event lineage.</text>
+<text x="64" y="1608" font-size="19" fill="#111827">* Every transaction row keeps the eventId that created it, so any item can be traced back through causationId and parentEventId to its root.</text>
+<text x="64" y="1638" font-size="19" fill="#111827">* Hard reset keeps every metadata entity and purges every transaction entity, then seeds nominal telemetry. Soft reset keeps all rows.</text>
+<text x="64" y="1668" font-size="19" fill="#111827">FK = reference to another entity. Capability types are all modeled; only Manufacturing is simulated in the demo.</text>
+<rect x="1644" y="1486" width="900" height="210" fill="#0B1B33"/><text x="1668" y="1528" font-size="26" font-weight="700" fill="#FAC400">Meridian Precision Systems &#183; FabOps</text><text x="1668" y="1566" font-size="20" fill="#FFFFFF">Data model, entities and relationships</text><text x="1668" y="1600" font-size="18" fill="#F3E8C2">Prepared by StatusNeo with Common Consulting &#183; Draft 2026-10-15</text><text x="1668" y="1634" font-size="18" fill="#F3E8C2">Sheet ARCH D 36 x 24 in &#183; Fictional company, synthetic data</text><text x="1668" y="1668" font-size="16" fill="#F3E8C2">Copyright (c) 2026 Bryan C. Weis and Common Consulting Company</text>
+</svg>

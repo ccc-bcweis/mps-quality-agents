@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36in" height="24in" viewBox="0 0 2592 1728" font-family="IBM Plex Sans, Inter, Arial, sans-serif">
+<title>Logical architecture, target design - Meridian Precision Systems</title>
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0,0L10,5L0,10z" fill="#334155"/></marker></defs>
+<rect width="2592" height="1728" fill="#F7F4EA"/><rect x="24" y="24" width="2544" height="1680" fill="none" stroke="#0B1B33" stroke-width="3"/>
+<text x="56" y="88" font-size="22" font-weight="700" fill="#7A5C00" letter-spacing="3">LOGICAL ARCHITECTURE &#183; BASELINE V2 &#183; DRAFT</text>
+<text x="56" y="134" font-size="40" font-weight="700" fill="#0B1B33">Logical architecture, target design</text>
+<text x="2536" y="134" font-size="20" fill="#1F2937" text-anchor="end">* marks target-design items that the running demo implements in a thinner form (see notes)</text>
+<g id="gE"><rect x="56" y="170" width="440" height="710" rx="14" fill="#E8F0FE" stroke="#1D4ED8" stroke-width="2.5"/><text x="74" y="206" font-size="24" font-weight="700" fill="#1E3A8A">Plant edge and intake</text></g>
+<g id="gB"><rect x="566" y="170" width="440" height="830" rx="14" fill="#FFF6D8" stroke="#A16207" stroke-width="2.5"/><text x="584" y="206" font-size="24" font-weight="700" fill="#7A5C00">Event backbone (single entry point)</text></g>
+<g id="gD"><rect x="1076" y="170" width="440" height="710" rx="14" fill="#E7F8FB" stroke="#0E7490" stroke-width="2.5"/><text x="1094" y="206" font-size="24" font-weight="700" fill="#155E75">Application layer, deterministic</text></g>
+<g id="gA"><rect x="1586" y="170" width="440" height="568" rx="14" fill="#F3EEFF" stroke="#6D28D9" stroke-width="2.5"/><text x="1604" y="206" font-size="24" font-weight="700" fill="#5B21B6">Agent layer, probabilistic</text></g>
+<g id="gM"><rect x="1586" y="764" width="440" height="284" rx="14" fill="#F8FAFC" stroke="#64748B" stroke-width="2.5"/><text x="1604" y="800" font-size="24" font-weight="700" fill="#334155">Enterprise context</text></g>
+<g id="gS"><rect x="2096" y="170" width="440" height="658" rx="14" fill="#E7F8EF" stroke="#047857" stroke-width="2.5"/><text x="2114" y="206" font-size="24" font-weight="700" fill="#065F46">Data stores</text></g>
+<g id="gU"><rect x="2096" y="854" width="440" height="344" rx="14" fill="#E7F7F4" stroke="#0F766E" stroke-width="2.5"/><text x="2114" y="890" font-size="24" font-weight="700" fill="#115E59">Experience</text></g>
+<g id="gX"><rect x="566" y="1270" width="1970" height="190" rx="14" fill="#FFF6D8" stroke="#A16207" stroke-width="2.5"/><text x="584" y="1306" font-size="24" font-weight="700" fill="#7A5C00">Publish and subscribe on the backbone</text></g>
+<polyline points="476.0,288.0 586.0,288.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="476.0,430.0 586.0,430.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="476.0,557.0 551.0,557.0 551.0,430.0 586.0,430.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="476.0,669.0 551.0,669.0 551.0,430.0 586.0,430.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="476.0,796.0 551.0,796.0 551.0,430.0 586.0,430.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="986.0,288.0 1061.0,288.0 1061.0,273.0 1096.0,273.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="986.0,430.0 1061.0,430.0 1061.0,400.0 1096.0,400.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<polyline points="1496.0,400.0 1571.0,400.0 1571.0,273.0 1606.0,273.0" fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#ar)"/>
+<g id="e0"><rect x="76" y="226" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#1D4ED8" stroke-width="2"/><rect x="76" y="226" width="8" height="124" fill="#1D4ED8"/>
+<text x="96" y="258" font-size="22" font-weight="600" fill="#1E3A8A">Tool fleet, three plants <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="96" y="286" font-size="18" fill="#1F2937">Etch, deposition, strip, clean tools</text>
+<text x="96" y="312" font-size="18" fill="#1F2937">Sensors via plant IoT gateways</text>
+</g>
+<g id="e1"><rect x="76" y="368" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#1D4ED8" stroke-width="2"/><rect x="76" y="368" width="8" height="124" fill="#1D4ED8"/>
+<text x="96" y="400" font-size="22" font-weight="600" fill="#1E3A8A">Offline instruments</text>
+<text x="96" y="428" font-size="18" fill="#1F2937">Oscilloscope, RF meter printouts</text>
+<text x="96" y="454" font-size="18" fill="#1F2937">Upload telemetry, read and confirmed</text>
+</g>
+<g id="e2"><rect x="76" y="510" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#1D4ED8" stroke-width="2"/><rect x="76" y="510" width="8" height="94" fill="#1D4ED8"/>
+<text x="96" y="542" font-size="22" font-weight="600" fill="#1E3A8A">Operator report</text>
+<text x="96" y="570" font-size="18" fill="#1F2937">Manual ticket with tool and sensor</text>
+</g>
+<g id="e3"><rect x="76" y="622" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#1D4ED8" stroke-width="2"/><rect x="76" y="622" width="8" height="94" fill="#1D4ED8"/>
+<text x="96" y="654" font-size="22" font-weight="600" fill="#1E3A8A">Quality and supplier events</text>
+<text x="96" y="682" font-size="18" fill="#1F2937">QMS nonconformance, supplier notice</text>
+</g>
+<g id="e4"><rect x="76" y="734" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#1D4ED8" stroke-width="2"/><rect x="76" y="734" width="8" height="124" fill="#1D4ED8"/>
+<text x="96" y="766" font-size="22" font-weight="600" fill="#1E3A8A">Simulator control plane <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="96" y="794" font-size="18" fill="#1F2937">Scenarios, fault injection, hard and</text>
+<text x="96" y="820" font-size="18" fill="#1F2937">soft reset, replay vs live</text>
+</g>
+<g id="b0"><rect x="586" y="226" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="586" y="226" width="8" height="124" fill="#A16207"/>
+<text x="606" y="258" font-size="22" font-weight="600" fill="#7A5C00">Telemetry stream <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="606" y="286" font-size="18" fill="#1F2937">Azure Event Hubs (IoT Hub ingress)</text>
+<text x="606" y="312" font-size="18" fill="#1F2937">Partitioned by tool, ordered</text>
+</g>
+<g id="b1"><rect x="586" y="368" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="586" y="368" width="8" height="124" fill="#A16207"/>
+<text x="606" y="400" font-size="22" font-weight="600" fill="#7A5C00">Command and event topics <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="606" y="428" font-size="18" fill="#1F2937">Azure Service Bus topics</text>
+<text x="606" y="454" font-size="18" fill="#1F2937">System and application commands</text>
+</g>
+<g id="b2"><rect x="586" y="510" width="400" height="184" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="586" y="510" width="8" height="184" fill="#A16207"/>
+<text x="606" y="542" font-size="22" font-weight="600" fill="#7A5C00">Message envelope</text>
+<text x="606" y="570" font-size="18" fill="#1F2937">eventId, type, correlationId,</text>
+<text x="606" y="596" font-size="18" fill="#1F2937">causationId, parentEventId,</text>
+<text x="606" y="622" font-size="18" fill="#1F2937">sequence, source, site, tool, time,</text>
+<text x="606" y="648" font-size="18" fill="#1F2937">payload, schema version</text>
+</g>
+<g id="b3"><rect x="586" y="712" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="586" y="712" width="8" height="124" fill="#A16207"/>
+<text x="606" y="744" font-size="22" font-weight="600" fill="#7A5C00">Command catalog</text>
+<text x="606" y="772" font-size="18" fill="#1F2937">Defined as data: who may issue</text>
+<text x="606" y="798" font-size="18" fill="#1F2937">it and which events it emits</text>
+</g>
+<g id="b4"><rect x="586" y="854" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="586" y="854" width="8" height="124" fill="#A16207"/>
+<text x="606" y="886" font-size="22" font-weight="600" fill="#7A5C00">Event log</text>
+<text x="606" y="914" font-size="18" fill="#1F2937">Append-only, indexed by correlation</text>
+<text x="606" y="940" font-size="18" fill="#1F2937">Rebuilds every causal chain</text>
+</g>
+<g id="d0"><rect x="1096" y="226" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#0E7490" stroke-width="2"/><rect x="1096" y="226" width="8" height="94" fill="#0E7490"/>
+<text x="1116" y="258" font-size="22" font-weight="600" fill="#155E75">SPC monitoring</text>
+<text x="1116" y="286" font-size="18" fill="#1F2937">Control limits, Western Electric rules</text>
+</g>
+<g id="d1"><rect x="1096" y="338" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#0E7490" stroke-width="2"/><rect x="1096" y="338" width="8" height="124" fill="#0E7490"/>
+<text x="1116" y="370" font-size="22" font-weight="600" fill="#155E75">Business rules engine</text>
+<text x="1116" y="398" font-size="18" fill="#1F2937">Ticket creation, escalation, routing</text>
+<text x="1116" y="424" font-size="18" fill="#1F2937">Rules and process maps are data</text>
+</g>
+<g id="d2"><rect x="1096" y="480" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#0E7490" stroke-width="2"/><rect x="1096" y="480" width="8" height="124" fill="#0E7490"/>
+<text x="1116" y="512" font-size="22" font-weight="600" fill="#155E75">Lifecycle state machines</text>
+<text x="1116" y="540" font-size="18" fill="#1F2937">Alert, ticket, investigation,</text>
+<text x="1116" y="566" font-size="18" fill="#1F2937">approval, CAPA</text>
+</g>
+<g id="d3"><rect x="1096" y="622" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#0E7490" stroke-width="2"/><rect x="1096" y="622" width="8" height="124" fill="#0E7490"/>
+<text x="1116" y="654" font-size="22" font-weight="600" fill="#155E75">Evidence gate and grounding check</text>
+<text x="1116" y="682" font-size="18" fill="#1F2937">Weak or conflicting evidence</text>
+<text x="1116" y="708" font-size="18" fill="#1F2937">escalates to a person</text>
+</g>
+<g id="d4"><rect x="1096" y="764" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#0E7490" stroke-width="2"/><rect x="1096" y="764" width="8" height="94" fill="#0E7490"/>
+<text x="1116" y="796" font-size="22" font-weight="600" fill="#155E75">Approval and action service</text>
+<text x="1116" y="824" font-size="18" fill="#1F2937">Human approves before any CAPA</text>
+</g>
+<g id="a0"><rect x="1606" y="226" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#6D28D9" stroke-width="2"/><rect x="1606" y="226" width="8" height="94" fill="#6D28D9"/>
+<text x="1626" y="258" font-size="22" font-weight="600" fill="#5B21B6">Investigation orchestrator</text>
+<text x="1626" y="286" font-size="18" fill="#1F2937">Microsoft Agent Framework</text>
+</g>
+<g id="a1"><rect x="1606" y="338" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#6D28D9" stroke-width="2"/><rect x="1606" y="338" width="8" height="124" fill="#6D28D9"/>
+<text x="1626" y="370" font-size="22" font-weight="600" fill="#5B21B6">Investigation agent</text>
+<text x="1626" y="398" font-size="18" fill="#1F2937">Read-only tools over enterprise</text>
+<text x="1626" y="424" font-size="18" fill="#1F2937">systems and documents below</text>
+</g>
+<g id="a2"><rect x="1606" y="480" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#6D28D9" stroke-width="2"/><rect x="1606" y="480" width="8" height="94" fill="#6D28D9"/>
+<text x="1626" y="512" font-size="22" font-weight="600" fill="#5B21B6">Resolution agent</text>
+<text x="1626" y="540" font-size="18" fill="#1F2937">Ranks root cause, no tools</text>
+</g>
+<g id="a3"><rect x="1606" y="592" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#6D28D9" stroke-width="2"/><rect x="1606" y="592" width="8" height="124" fill="#6D28D9"/>
+<text x="1626" y="624" font-size="22" font-weight="600" fill="#5B21B6">Model gateway</text>
+<text x="1626" y="652" font-size="18" fill="#1F2937">Routing, retries, daily spend cap</text>
+<text x="1626" y="678" font-size="18" fill="#1F2937">Azure OpenAI gpt-5.4-mini, replay</text>
+</g>
+<g id="m0"><rect x="1606" y="820" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#64748B" stroke-width="2"/><rect x="1606" y="820" width="8" height="94" fill="#64748B"/>
+<text x="1626" y="852" font-size="22" font-weight="600" fill="#334155">Mocked enterprise systems</text>
+<text x="1626" y="880" font-size="18" fill="#1F2937">MES, QMS, PLM, ERP, maintenance</text>
+</g>
+<g id="m1"><rect x="1606" y="932" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#64748B" stroke-width="2"/><rect x="1606" y="932" width="8" height="94" fill="#64748B"/>
+<text x="1626" y="964" font-size="22" font-weight="600" fill="#334155">Document store <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="1626" y="992" font-size="18" fill="#1F2937">SOPs, FMEA, bulletins, search index</text>
+</g>
+<g id="s0"><rect x="2116" y="226" width="400" height="154" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="2116" y="226" width="8" height="154" fill="#047857"/>
+<text x="2136" y="258" font-size="22" font-weight="600" fill="#065F46">Metadata store <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="2136" y="286" font-size="18" fill="#1F2937">Company, site, capability, line, tool,</text>
+<text x="2136" y="312" font-size="18" fill="#1F2937">parameter, limits, rules, process maps</text>
+<text x="2136" y="338" font-size="18" fill="#1F2937">Relational (Azure SQL)</text>
+</g>
+<g id="s1"><rect x="2116" y="398" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="2116" y="398" width="8" height="124" fill="#047857"/>
+<text x="2136" y="430" font-size="22" font-weight="600" fill="#065F46">Telemetry store <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="2136" y="458" font-size="18" fill="#1F2937">Time series (Azure Data Explorer)</text>
+<text x="2136" y="484" font-size="18" fill="#1F2937">Retention policy, fast windows</text>
+</g>
+<g id="s2"><rect x="2116" y="540" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="2116" y="540" width="8" height="124" fill="#047857"/>
+<text x="2136" y="572" font-size="22" font-weight="600" fill="#065F46">Transaction store <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="2136" y="600" font-size="18" fill="#1F2937">Alerts, tickets, investigations,</text>
+<text x="2136" y="626" font-size="18" fill="#1F2937">approvals, CAPA, audit (Azure SQL)</text>
+</g>
+<g id="s3"><rect x="2116" y="682" width="400" height="124" rx="8" fill="#FFFFFF" stroke="#047857" stroke-width="2"/><rect x="2116" y="682" width="8" height="124" fill="#047857"/>
+<text x="2136" y="714" font-size="22" font-weight="600" fill="#065F46">Causal graph <tspan fill="#B45309" font-weight="700">*</tspan></text>
+<text x="2136" y="742" font-size="18" fill="#1F2937">Event lineage and genealogy</text>
+<text x="2136" y="768" font-size="18" fill="#1F2937">Graph store, optional (Cosmos DB)</text>
+</g>
+<g id="u0"><rect x="2116" y="910" width="400" height="154" rx="8" fill="#FFFFFF" stroke="#0F766E" stroke-width="2"/><rect x="2116" y="910" width="8" height="154" fill="#0F766E"/>
+<text x="2136" y="942" font-size="22" font-weight="600" fill="#115E59">Meridian FabOps console</text>
+<text x="2136" y="970" font-size="18" fill="#1F2937">Sites, fleet, alerts, tickets,</text>
+<text x="2136" y="996" font-size="18" fill="#1F2937">investigation, approval, CAPA,</text>
+<text x="2136" y="1022" font-size="18" fill="#1F2937">rules and process, causal trace</text>
+</g>
+<g id="u1"><rect x="2116" y="1082" width="400" height="94" rx="8" fill="#FFFFFF" stroke="#0F766E" stroke-width="2"/><rect x="2116" y="1082" width="8" height="94" fill="#0F766E"/>
+<text x="2136" y="1114" font-size="22" font-weight="600" fill="#115E59">Live push</text>
+<text x="2136" y="1142" font-size="18" fill="#1F2937">SignalR fed by bus subscriptions</text>
+</g>
+<g id="x0"><rect x="586" y="1318" width="1930" height="124" rx="8" fill="#FFFFFF" stroke="#A16207" stroke-width="2"/><rect x="586" y="1318" width="8" height="124" fill="#A16207"/>
+<text x="606" y="1350" font-size="22" font-weight="600" fill="#7A5C00">Every layer is a bus participant</text>
+<text x="606" y="1378" font-size="18" fill="#1F2937">Rules, SPC, lifecycle, agents, stores and live push subscribe to typed topics and publish results with causationId set to the triggering event,</text>
+<text x="606" y="1404" font-size="18" fill="#1F2937">so one fault command fans out into readings, alert, ticket, investigation steps, approval and CAPA, all on one correlationId.</text>
+</g>
+<rect x="48" y="1486" width="1580" height="210" fill="#FFFFFF" stroke="#0B1B33" stroke-width="2"/><text x="64" y="1516" font-size="20" font-weight="700" fill="#0B1B33">NOTES</text>
+<text x="64" y="1548" font-size="19" fill="#111827">* The running demo is intentionally thin. One Azure Container App, one replica, hosts the API, simulator and agents.</text>
+<text x="64" y="1578" font-size="19" fill="#111827">* Demo bus: an in-process bus with the same envelope and command catalog. It swaps to Event Hubs and Service Bus without changing messages.</text>
+<text x="64" y="1608" font-size="19" fill="#111827">* Demo stores: metadata in YAML files (same entity model), telemetry and transactions in SQLite, causal chain rebuilt from the event log.</text>
+<text x="64" y="1638" font-size="19" fill="#111827">* Demo tools: three simulated plants; only the Manufacturing capability is simulated. Document search runs in process.</text>
+<text x="64" y="1668" font-size="19" fill="#111827">Every telemetry reading, alert, ticket, investigation step, approval, CAPA and command travels through the event backbone.</text>
+<rect x="1644" y="1486" width="900" height="210" fill="#0B1B33"/><text x="1668" y="1528" font-size="26" font-weight="700" fill="#FAC400">Meridian Precision Systems &#183; FabOps</text><text x="1668" y="1566" font-size="20" fill="#FFFFFF">Logical architecture, target design</text><text x="1668" y="1600" font-size="18" fill="#F3E8C2">Prepared by StatusNeo with Common Consulting &#183; Draft 2026-10-15</text><text x="1668" y="1634" font-size="18" fill="#F3E8C2">Sheet ARCH D 36 x 24 in &#183; Fictional company, synthetic data</text><text x="1668" y="1668" font-size="16" fill="#F3E8C2">Copyright (c) 2026 Bryan C. Weis and Common Consulting Company</text>
+</svg>
