@@ -42,18 +42,28 @@ public sealed partial class StreamSpcPublisher
         _logger = logger;
     }
 
-    public void Clear() => _started.Clear();
+    public void Clear()
+    {
+        _started.Clear();
+        _watch.Clear();
+    }
 
     public async Task PublishAsync(CancellationToken cancellationToken)
     {
         var samples = Capture();
-        if (samples.Count == 0)
+        var recovering = CaptureRecovering();
+        if (samples.Count == 0 && recovering.Count == 0)
         {
             return;
         }
 
         await using var scope = _scopes.CreateAsyncScope();
         var spc = scope.ServiceProvider.GetRequiredService<SpcAlertService>();
+        foreach (var sample in recovering)
+        {
+            await spc.ClearRecoveredAsync(sample, cancellationToken).ConfigureAwait(false);
+        }
+
         foreach (var sample in samples)
         {
             var outcome = await spc.RaiseAsync(sample, cancellationToken).ConfigureAwait(false);
@@ -86,10 +96,16 @@ public sealed partial class StreamSpcPublisher
         }
     }
 
+    /// <summary>Signals whose fault was removed. Watched for a while so their alerts can clear; never re-raised.</summary>
+    private readonly ConcurrentDictionary<string, (string ToolId, string Chamber, string Parameter, DateTimeOffset Onset, DateTimeOffset LastSeen)> _watch = new(StringComparer.Ordinal);
+
+    private static readonly TimeSpan WatchFor = TimeSpan.FromMinutes(30);
+
     private List<SpcSample> Capture()
     {
         var samples = new List<SpcSample>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
+        var now = _plant.SimulatedNow;
         foreach (var fault in _plant.Runtime.Simulator.ActiveFaults)
         {
             var chamber = string.IsNullOrWhiteSpace(fault.ChamberId) ? _plant.DefaultChamber(fault.ToolId) : fault.ChamberId;
@@ -99,45 +115,87 @@ public sealed partial class StreamSpcPublisher
                 continue;
             }
 
-            var points = _plant.Log.Window(fault.ToolId, chamber, fault.Parameter)
-                .Where(point => point.At >= fault.Onset)
-                .ToArray();
-            if (points.Length == 0)
+            _watch[key] = (fault.ToolId, chamber, fault.Parameter, fault.Onset, now);
+            var sample = BuildSample(fault.ToolId, chamber, fault.Parameter, fault.Onset);
+            if (sample is not null)
             {
-                continue;
+                samples.Add(sample);
             }
-
-            var zPoints = new List<TelemetryPoint>(points.Length);
-            foreach (var point in points)
-            {
-                var window = _plant.WindowAt(fault.ToolId, fault.Parameter, point.At);
-                if (window is null)
-                {
-                    continue;
-                }
-
-                var sigma = Math.Max(window.Sigma, 1e-6);
-                zPoints.Add(new TelemetryPoint(point.At, (point.Value - window.Nominal) / sigma));
-            }
-
-            if (zPoints.Count == 0)
-            {
-                continue;
-            }
-
-            var lastWindow = _plant.WindowAt(fault.ToolId, fault.Parameter, points[^1].At);
-            samples.Add(new SpcSample(
-                new ToolId(fault.ToolId),
-                chamber,
-                fault.Parameter,
-                new ControlBaseline(0d, 1d, null, null),
-                zPoints)
-            {
-                Display = lastWindow is null ? null : new SpcDisplay(lastWindow.Nominal, Math.Max(lastWindow.Sigma, 1e-6), lastWindow.Unit, _plant.FamilyLabel(fault.ToolId)),
-            });
         }
 
         return samples;
+    }
+
+    /// <summary>Samples for signals whose fault is gone, used only to clear their alerts.</summary>
+    private List<SpcSample> CaptureRecovering()
+    {
+        var samples = new List<SpcSample>();
+        var active = new HashSet<string>(
+            _plant.Runtime.Simulator.ActiveFaults.Select(fault =>
+                fault.ToolId + "|" + (string.IsNullOrWhiteSpace(fault.ChamberId) ? _plant.DefaultChamber(fault.ToolId) : fault.ChamberId) + "|" + fault.Parameter),
+            StringComparer.Ordinal);
+        var now = _plant.SimulatedNow;
+        foreach (var pair in _watch)
+        {
+            if (active.Contains(pair.Key))
+            {
+                continue;
+            }
+
+            if (now - pair.Value.LastSeen > WatchFor)
+            {
+                _watch.TryRemove(pair.Key, out _);
+                continue;
+            }
+
+            var sample = BuildSample(pair.Value.ToolId, pair.Value.Chamber, pair.Value.Parameter, pair.Value.Onset);
+            if (sample is not null)
+            {
+                samples.Add(sample);
+            }
+        }
+
+        return samples;
+    }
+
+    private SpcSample? BuildSample(string toolId, string chamber, string parameter, DateTimeOffset onset)
+    {
+        var points = _plant.Log.Window(toolId, chamber, parameter)
+            .Where(point => point.At >= onset)
+            .ToArray();
+        if (points.Length == 0)
+        {
+            return null;
+        }
+
+        var zPoints = new List<TelemetryPoint>(points.Length);
+        foreach (var point in points)
+        {
+            var window = _plant.WindowAt(toolId, parameter, point.At);
+            if (window is null)
+            {
+                continue;
+            }
+
+            var sigma = Math.Max(window.Sigma, 1e-6);
+            zPoints.Add(new TelemetryPoint(point.At, (point.Value - window.Nominal) / sigma));
+        }
+
+        if (zPoints.Count == 0)
+        {
+            return null;
+        }
+
+        var lastWindow = _plant.WindowAt(toolId, parameter, points[^1].At);
+        return new SpcSample(
+            new ToolId(toolId),
+            chamber,
+            parameter,
+            new ControlBaseline(0d, 1d, null, null),
+            zPoints)
+        {
+            Display = lastWindow is null ? null : new SpcDisplay(lastWindow.Nominal, Math.Max(lastWindow.Sigma, 1e-6), lastWindow.Unit, _plant.FamilyLabel(toolId)),
+        };
     }
 
     private async Task InvestigateAsync(IncidentId incidentId)

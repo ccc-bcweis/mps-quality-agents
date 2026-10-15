@@ -33,6 +33,7 @@ public sealed class QualityDatabaseInitializer : IHostedService
         }
 
         await EnsureInvestigationSequenceAsync(db, cancellationToken).ConfigureAwait(false);
+        await EnsureAlertStatusColumnAsync(db, cancellationToken).ConfigureAwait(false);
         await SeedToolsAsync(db, cancellationToken).ConfigureAwait(false);
 
         // Real time: every app load refills a week of healthy history ending at now().
@@ -75,6 +76,37 @@ public sealed class QualityDatabaseInitializer : IHostedService
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    /// <summary>A database file from before alert status existed lacks Alerts.ClearedAt. Add it in place.</summary>
+    private static async Task EnsureAlertStatusColumnAsync(QualityDbContext db, CancellationToken cancellationToken)
+    {
+        var connection = db.Database.GetDbConnection();
+        var openedHere = connection.State != ConnectionState.Open;
+        if (openedHere)
+        {
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        try
+        {
+            await using var check = connection.CreateCommand();
+            check.CommandText = "SELECT COUNT(*) FROM pragma_table_info('Alerts') WHERE name = 'ClearedAt';";
+            var found = Convert.ToInt64(await check.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture);
+            if (found == 0)
+            {
+                await using var alter = connection.CreateCommand();
+                alter.CommandText = "ALTER TABLE Alerts ADD COLUMN ClearedAt TEXT NULL;";
+                await alter.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            if (openedHere)
+            {
+                await connection.CloseAsync().ConfigureAwait(false);
+            }
+        }
+    }
 
     private static async Task<bool> TableExistsAsync(QualityDbContext db, string name, CancellationToken cancellationToken)
     {
