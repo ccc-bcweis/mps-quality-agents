@@ -4,7 +4,17 @@ import { createPortal } from "react-dom";
 import { isAcronymTerm, lookupTerm } from "../glossary/terms";
 import { useFirstUse } from "./GlossaryScope";
 
-export function Term({ id, spellOut = true, children }: { id: string; spellOut?: boolean; children?: ReactNode }) {
+export function Term({
+  id,
+  spellOut = true,
+  focusable = true,
+  children,
+}: {
+  id: string;
+  spellOut?: boolean;
+  focusable?: boolean;
+  children?: ReactNode;
+}) {
   const entry = lookupTerm(id);
   const acronym = entry ? isAcronymTerm(entry.term) : false;
   const first = useFirstUse(entry?.term ?? id, spellOut && acronym && Boolean(entry));
@@ -42,7 +52,7 @@ export function Term({ id, spellOut = true, children }: { id: string; spellOut?:
     <span
       className={first ? "mps-term" : "mps-term mps-term-token"}
       style={first ? undefined : { borderBottom: "1px dotted currentColor" }}
-      tabIndex={0}
+      tabIndex={focusable ? 0 : undefined}
       data-term={entry.term}
       data-first-use={first ? "true" : "false"}
       aria-describedby={open ? tipId : undefined}

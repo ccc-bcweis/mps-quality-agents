@@ -5,6 +5,7 @@
 import { http, HttpResponse } from "msw";
 import { handlers as contractHandlers } from "../../../contracts/msw/handlers";
 import type { Alert, FaultInjectionRequest, Incident, OpenIncidentRequest, Ticket } from "../api/types";
+import { telemetryForTool } from "../fleet/telemetry";
 import { alerts, incidents, investigationFor, investigations, tickets, tools } from "./demoData";
 import { mockExtras } from "./state";
 
@@ -38,6 +39,13 @@ export const handlers = [
     const tool = tools.find((item) => item.id === params.toolId);
     if (!tool) return problem("Tool was not found.", 404);
     return HttpResponse.json(clone(tool));
+  }),
+
+  http.get("/api/tools/:toolId/telemetry", ({ params }) => {
+    const toolId = String(params.toolId);
+    const rows = telemetryForTool(toolId);
+    if (rows.length === 0) return problem("Tool was not found.", 404);
+    return HttpResponse.json(rows);
   }),
 
   http.get("/api/alerts", ({ request }) => {
