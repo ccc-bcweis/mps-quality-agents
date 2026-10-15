@@ -206,6 +206,12 @@ function badgeBox(id: string, text: string, x: number, y: number): LabelBox {
   };
 }
 
+/** Clear space kept around a flow number so two numbers never read as touching. */
+const BADGE_GAP = 6;
+
+/** How far each of two crossing flow numbers slides along its own arrow, away from the shared midpoint. */
+const CROSSING_SHIFT = 24;
+
 /** Crossing arrows share a midpoint. Step the number off that point until it clears every label. */
 function chooseBadge(
   id: string,
@@ -215,6 +221,7 @@ function chooseBadge(
   taken: LabelBox[],
   width: number,
   height: number,
+  preferredShift = 0,
 ): { x: number; y: number } {
   const midX = (start.x + end.x) / 2;
   const midY = (start.y + end.y) / 2;
@@ -225,15 +232,26 @@ function chooseBadge(
   const py = dx / length;
   const tx = dx / length;
   const ty = dy / length;
-  const offsets: Array<[number, number]> = [[0, 0]];
-  for (const dist of [20, 36, 52, 68]) {
-    offsets.push([px * dist, py * dist], [-px * dist, -py * dist], [tx * dist, ty * dist], [-tx * dist, -ty * dist]);
+  const offsets: Array<[number, number]> = [];
+  if (preferredShift !== 0) {
+    // Crossing arrows: push the pair apart along their own lines so the two numbers sit side by side.
+    const sign = Math.sign(tx) === 0 ? 1 : Math.sign(tx);
+    offsets.push([tx * preferredShift * sign, ty * preferredShift * sign]);
+  }
+  // Slide along the arrow first so the number stays on its own line; step sideways only as a last resort.
+  for (const dist of [0, 16, 20, 24, 28, 32, 36, 40, 44, 48, 56, 64]) {
+    offsets.push([tx * dist, ty * dist], [-tx * dist, -ty * dist]);
+  }
+  offsets.push([0, 0]);
+  for (const dist of [20, 36, 52, 68, 84, 100, 116, 132]) {
+    offsets.push([px * dist, py * dist], [-px * dist, -py * dist]);
   }
   const fallback = { x: midX - BADGE / 2, y: midY - BADGE / 2 };
   for (const [ox, oy] of offsets) {
     const spot = { x: midX + ox - BADGE / 2, y: midY + oy - BADGE / 2 };
     const box = badgeBox(id, text, spot.x, spot.y);
-    const clear = labelInside(box, width, height, 8) && taken.every((other) => !intersects(box, other));
+    const padded = { ...box, x: box.x - BADGE_GAP, y: box.y - BADGE_GAP, w: box.w + BADGE_GAP * 2, h: box.h + BADGE_GAP * 2 };
+    const clear = labelInside(box, width, height, 8) && taken.every((other) => !intersects(padded, other));
     if (clear) return spot;
   }
   return fallback;
@@ -351,6 +369,24 @@ export function layoutFloor(site: SiteDetail): FloorLayout {
   const byId = new Map(bays.map((bay) => [bay.id, bay]));
   const bandTop = PAD + rows * BAY_H + Math.max(0, rows - 1) * GUTTER + PAD;
   const flows: FloorFlow[] = [];
+  const midpoints = site.flows.map((flow) => {
+    const from = byId.get(flow.fromBayId);
+    const to = byId.get(flow.toBayId);
+    if (!from || !to) return null;
+    const a = port(from, to);
+    const b = port(to, from);
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  });
+  const shiftFor = (index: number): number => {
+    const mine = midpoints[index];
+    if (!mine) return 0;
+    const group = midpoints
+      .map((point, i) => ({ point, i }))
+      .filter(({ point }) => point && Math.hypot(point.x - mine.x, point.y - mine.y) < 4)
+      .map(({ i }) => i);
+    if (group.length < 2) return 0;
+    return group.indexOf(index) % 2 === 0 ? -CROSSING_SHIFT : CROSSING_SHIFT;
+  };
   site.flows.forEach((flow, index) => {
     const sentence = `${index + 1}. ${flow.label}`;
     labels.push({
@@ -371,7 +407,7 @@ export function layoutFloor(site: SiteDetail): FloorLayout {
     const start = port(from, to);
     const end = port(to, from);
     const badgeId = `badge-${flow.fromBayId}-${flow.toBayId}`;
-    const badge = chooseBadge(badgeId, String(index + 1), start, end, labels, DESIGN_WIDTH, height);
+    const badge = chooseBadge(badgeId, String(index + 1), start, end, labels, DESIGN_WIDTH, height, shiftFor(index));
     flows.push({
       index: index + 1,
       label: flow.label,
