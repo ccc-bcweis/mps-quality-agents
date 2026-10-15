@@ -155,6 +155,42 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task LatestInvestigationFollowsTheIncidentAndReturnsTheNewest()
+    {
+        await using var factory = new ApiFactory();
+        var client = factory.CreateClient();
+        var opened = await OpenIncidentAsync(client, "E-02", "vibration");
+        var incidentId = opened.GetProperty("id").GetGuid();
+        var unknown = await client.GetAsync("/api/incidents/" + Guid.NewGuid().ToString("D") + "/investigation");
+        var before = await client.GetAsync("/api/incidents/" + incidentId.ToString("D") + "/investigation");
+
+        var firstResponse = await client.PostAsync("/api/incidents/" + incidentId.ToString("D") + "/investigations", null);
+        var first = await firstResponse.Content.ReadFromJsonAsync<JsonElement>(Json);
+        var firstId = first.GetProperty("id").GetGuid();
+        var afterFirst = await client.GetFromJsonAsync<JsonElement>("/api/incidents/" + incidentId.ToString("D") + "/investigation");
+        var rejected = await client.PostAsJsonAsync("/api/investigations/" + firstId.ToString("D") + "/decisions", new
+        {
+            kind = "reject",
+            comment = "The signal returned to the window.",
+        });
+        var secondResponse = await client.PostAsync("/api/incidents/" + incidentId.ToString("D") + "/investigations", null);
+        var second = await secondResponse.Content.ReadFromJsonAsync<JsonElement>(Json);
+        var latest = await client.GetFromJsonAsync<JsonElement>("/api/incidents/" + incidentId.ToString("D") + "/investigation");
+
+        unknown.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        before.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await before.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("title").GetString().Should().Be("No such record.");
+        firstResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        afterFirst.GetProperty("id").GetGuid().Should().Be(firstId);
+        afterFirst.GetProperty("incidentId").GetGuid().Should().Be(incidentId);
+        rejected.StatusCode.Should().Be(HttpStatusCode.OK);
+        secondResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        latest.GetProperty("id").GetGuid().Should().Be(second.GetProperty("id").GetGuid());
+        latest.GetProperty("id").GetGuid().Should().NotBe(firstId);
+        latest.GetProperty("incidentId").GetGuid().Should().Be(incidentId);
+    }
+
+    [Fact]
     public async Task InvestigationKeepsWhyItMattersSignalIdAndTheEvidenceMatrix()
     {
         var client = _factory.CreateClient();

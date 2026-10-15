@@ -8,6 +8,9 @@ info:
     and the server issues the approval token. Clients do not send token signatures.
     The fleet stream is SignalR at `/hubs/fleet` and is not a REST operation.
     Contracts v1.2 adds admin reset and named injector scenarios. Both are additive.
+    contracts-v1.2 adds GET /api/incidents/{incidentId}/investigation (ADR-001 addendum).
+    It returns the latest investigation for that incident, or 404 when none exists.
+    The path is additive. Earlier clients stay compatible.
     All names and data are synthetic.
   license:
     name: MIT
@@ -144,6 +147,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Incident"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/incidents/{incidentId}/investigation:
+    get:
+      tags: [investigations]
+      operationId: getLatestInvestigation
+      summary: Latest investigation for an incident
+      description: |
+        Additive in contracts-v1.2 (ADR-001 addendum). Returns the latest investigation
+        started for the incident. 404 when the incident is missing or no investigation
+        has been started. A ticket id or a ticket number is not this path.
+      parameters:
+        - $ref: "#/components/parameters/IncidentId"
+      responses:
+        "200":
+          description: The latest investigation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Investigation"
         "404":
           $ref: "#/components/responses/NotFound"
   /api/investigations/{investigationId}:

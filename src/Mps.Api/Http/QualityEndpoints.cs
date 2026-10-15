@@ -80,6 +80,16 @@ public static class QualityEndpoints
             var stored = await incidents.GetAsync(new IncidentId(incidentId), cancellationToken).ConfigureAwait(false);
             return stored is null ? Results.NotFound() : Results.Ok(ContractMapper.ToResponse(stored.Incident));
         });
+        app.MapGet("/api/incidents/{incidentId:guid}/investigation", async (
+            Guid incidentId,
+            IInvestigationService investigations,
+            IInvestigationNarrativeLog narratives,
+            CancellationToken cancellationToken) =>
+        {
+            var snapshot = await investigations.GetLatestByIncidentAsync(new IncidentId(incidentId), cancellationToken).ConfigureAwait(false);
+            var narrative = await narratives.GetAsync(snapshot.Id, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(ContractMapper.ToResponse(snapshot, narrative));
+        });
         app.MapPost("/api/incidents/{incidentId:guid}/investigations", async (
             Guid incidentId,
             IInvestigationService investigations,
