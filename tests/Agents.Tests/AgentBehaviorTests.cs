@@ -36,7 +36,7 @@ public sealed class PromptCatalogTests
         catalog.Investigation.Body.Should().Contain("do not diagnose, write, or approve");
         catalog.Investigation.Body.Should().Contain("whyItMatters");
         catalog.Resolution.Id.Should().Be("resolution");
-        catalog.Resolution.Version.Should().Be("1.3.0");
+        catalog.Resolution.Version.Should().Be("1.4.0");
         catalog.Resolution.Body.Should().Contain("whyItMatters");
         catalog.Resolution.Body.Should().Contain("evidenceMatrix");
         catalog.Resolution.Body.Should().Contain("evidence ids");
@@ -355,7 +355,7 @@ public sealed class ResolutionAgentTests
 
         result.Escalated.Should().BeFalse();
         result.ModelCalls.Should().Be(1);
-        result.PromptVersion.Should().Be("1.3.0");
+        result.PromptVersion.Should().Be("1.4.0");
         result.Claim!.Category.Should().Be(RootCauseCategory.EngineeringChange);
         result.Claim.EvidenceIds.Should().Contain(id);
         result.Claim.CounterEvidence.Should().NotBeEmpty();
