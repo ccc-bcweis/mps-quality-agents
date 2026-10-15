@@ -28,9 +28,9 @@ function item(partial: Partial<EvidenceItem> & Pick<EvidenceItem, "title" | "exc
 
 describe("evidence formatting", () => {
   it("prints a local clock time", () => {
-    expect(formatLocalWhen("2026-10-14T09:42:00Z", "UTC")).toBe("Oct 14, 9:42 AM");
-    expect(formatLocalWhen("2026-10-14T21:42:00Z", "UTC")).toBe("Oct 14, 9:42 PM");
-    expect(formatLocalWhen("2026-10-14T21:42:00Z", "America/New_York")).toBe("Oct 14, 5:42 PM");
+    expect(formatLocalWhen("2026-10-14T09:42:00Z", "UTC")).toBe("Oct 14, 9:42 AM UTC");
+    expect(formatLocalWhen("2026-10-14T21:42:00Z", "UTC")).toBe("Oct 14, 9:42 PM UTC");
+    expect(formatLocalWhen("2026-10-14T21:42:00Z", "America/New_York")).toBe("Oct 14, 5:42 PM EDT");
     expect(formatLocalWhen("not-a-date", "UTC")).toBe("—");
   });
 
@@ -66,7 +66,7 @@ describe("evidence formatting", () => {
 
   it("rewrites an inline timestamp and prefers the structured place and parameter", () => {
     expect(readableExcerpt("effective 2026-10-14 21:42 UTC on the tool", "UTC")).toBe(
-      "effective Oct 14, 9:42 PM on the tool",
+      "effective Oct 14, 9:42 PM UTC on the tool",
     );
     const reading = item({
       title: "westernElectric1 chamberPressure",

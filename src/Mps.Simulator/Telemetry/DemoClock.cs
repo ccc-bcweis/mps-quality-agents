@@ -10,7 +10,8 @@ public sealed class DemoClock
 {
     public const double DefaultScale = 60d;
 
-    public static readonly DateTimeOffset BaselineOrigin = new(2026, 9, 1, 0, 0, 0, TimeSpan.Zero);
+    /// <summary>Start of the authored scenario day, moved to today when real time is on.</summary>
+    public static DateTimeOffset BaselineOrigin => RecordDates.Shift(RecordDates.ReferenceOrigin);
 
     private readonly TimeProvider _time;
     private readonly double _scale;

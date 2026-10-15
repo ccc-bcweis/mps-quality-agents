@@ -92,7 +92,17 @@ public static class QualityHost
         builder.Services.AddScoped<IMetricsLog, EfMetricsLog>();
         builder.Services.AddSingleton<IQmsCapaWriter, FakeQmsCapaWriter>();
         builder.Services.AddSingleton(TimeProvider.System);
-        builder.Services.AddSingleton(SimulationOptions.From(builder.Configuration));
+        var simulation = SimulationOptions.From(builder.Configuration);
+        if (simulation.RealTime)
+        {
+            Mps.Simulator.Telemetry.RecordDates.UseToday();
+        }
+        else
+        {
+            Mps.Simulator.Telemetry.RecordDates.UseReference();
+        }
+
+        builder.Services.AddSingleton(simulation);
         builder.Services.AddSingleton<PlantSimulation>();
         builder.Services.AddSingleton(services =>
         {

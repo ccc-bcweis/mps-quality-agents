@@ -25,7 +25,7 @@ export function JoinPage() {
   return (
     <div className="flex min-h-full items-center justify-center bg-mps-canvas p-6">
       <section className={`${panel} max-w-lg`}>
-        <h1 className="text-mps-display font-semibold">Join the MPS quality demo</h1>
+        <h1 className="text-mps-display font-semibold">Join the MPS quality console</h1>
         <p className="mt-3" role="status">
           {state ? state.text : "Checking your link…"}
         </p>

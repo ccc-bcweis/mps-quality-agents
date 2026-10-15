@@ -136,7 +136,7 @@ export function ConsoleFrame() {
             </select>
           </label>
           <span className="whitespace-nowrap">
-            <Led tone={healthOn ? "nominal" : "off"} /> Sim time <b className="font-medium text-mps-secondary" title="Every record is stamped on this plant clock. 1 s = 1 min.">{simNow ? formatStamp(simNow) : "…"}</b>
+            <Led tone={healthOn ? "nominal" : "off"} /> Plant time <b className="font-medium text-mps-secondary" title="Readings are stamped as they arrive, in your local time.">{simNow ? formatStamp(simNow) : "…"}</b>
           </span>
           <span className="whitespace-nowrap">
             Plants <b className="font-medium text-mps-secondary">3</b>
@@ -192,7 +192,7 @@ export function ConsoleFrame() {
       </main>
       <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-mps-line px-4 py-3 text-mps-micro text-mps-muted">
         <span>
-          Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · <Explain text="MIT" /> · Fictional demonstration. All companies and data are synthetic.
+          Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · <Explain text="MIT" />
         </span>
         <a className={btnSm} href="https://github.com/ccc-bcweis/mps-quality-agents">
           How we built it
@@ -219,7 +219,7 @@ export function HarnessFrame() {
         <Outlet />
       </main>
       <footer className="shrink-0 px-4 py-3 font-sans text-mps-micro text-sn-gold-wash">
-        Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · <Explain text="MIT" /> · Fictional demonstration. All companies and data are synthetic.
+        Copyright (c) 2026 Bryan C. Weis and Common Consulting Company · <Explain text="MIT" />
       </footer>
     </section>
   );
@@ -234,8 +234,8 @@ export function AppShell() {
     return (
       <div className="flex h-full items-center justify-center bg-mps-canvas p-6">
         <section className="max-w-lg rounded border border-mps-line bg-mps-panel p-6">
-          <h1 className="text-mps-display font-semibold">Not part of this demo yet</h1>
-          <p className="mt-3">You are signed in as {session.displayName}, but this account has not been invited. Open a join link from the demo owner.</p>
+          <h1 className="text-mps-display font-semibold">Not part of this workspace yet</h1>
+          <p className="mt-3">You are signed in as {session.displayName}, but this account has not been invited. Ask the owner for a join link.</p>
         </section>
       </div>
     );

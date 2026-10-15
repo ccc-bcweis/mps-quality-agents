@@ -5,5 +5,5 @@ namespace Mps.Domain.Lifecycle;
 /// <summary>Words the demo reset uses when it closes work without deleting it.</summary>
 public static class DemoReset
 {
-    public const string StatusLabel = "Closed by demo reset";
+    public const string StatusLabel = "Closed by reset";
 }

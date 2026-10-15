@@ -198,6 +198,9 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
           <span className="whitespace-nowrap font-pitch text-mps-micro uppercase tracking-wider text-sn-gold">
             Demo harness
           </span>
+          <span className="whitespace-nowrap font-pitch text-mps-micro text-sn-gold-wash">
+            Fictional demonstration. All companies and data are synthetic.
+          </span>
         </div>
         <button
           type="button"

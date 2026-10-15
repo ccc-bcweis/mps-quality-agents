@@ -53,6 +53,7 @@ public sealed class ScenarioBusChainTests
         await using var factory = new ApiFactory().WithWebHostBuilder(builder =>
         {
             builder.UseSetting("Mps:Simulation:SampleStrideSeconds", "120");
+            builder.UseSetting("Mps:Simulation:RealTime", "false");
             builder.UseSetting("Mps:Simulation:PrimeSeconds", "0");
         });
         var client = factory.CreateClient();

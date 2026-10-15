@@ -26,7 +26,7 @@ public static class AccessEndpoints
         {
             if (!AccessGate.IsAdmin(http, configuration))
             {
-                return Results.Problem(title: "Only the demo admin can manage join links.", statusCode: StatusCodes.Status403Forbidden);
+                return Results.Problem(title: "Only the admin can manage join links.", statusCode: StatusCodes.Status403Forbidden);
             }
 
             return Results.Ok(await ListAsync(http, store, cancellationToken).ConfigureAwait(false));
@@ -35,7 +35,7 @@ public static class AccessEndpoints
         {
             if (!AccessGate.IsAdmin(http, configuration))
             {
-                return Results.Problem(title: "Only the demo admin can manage join links.", statusCode: StatusCodes.Status403Forbidden);
+                return Results.Problem(title: "Only the admin can manage join links.", statusCode: StatusCodes.Status403Forbidden);
             }
 
             var hours = body?.Hours ?? 72d;
@@ -53,7 +53,7 @@ public static class AccessEndpoints
         {
             if (!AccessGate.IsAdmin(http, configuration))
             {
-                return Results.Problem(title: "Only the demo admin can manage join links.", statusCode: StatusCodes.Status403Forbidden);
+                return Results.Problem(title: "Only the admin can manage join links.", statusCode: StatusCodes.Status403Forbidden);
             }
 
             return await store.RevokeAsync(id, cancellationToken).ConfigureAwait(false)
@@ -71,8 +71,8 @@ public static class AccessEndpoints
             var result = await store.RedeemAsync(token, identity, cancellationToken).ConfigureAwait(false);
             return result switch
             {
-                RedeemResult.Joined => Results.Ok(new RedeemResponse("joined", "You have joined the demo.")),
-                RedeemResult.AlreadyMember => Results.Ok(new RedeemResponse("alreadyMember", "You are already in the demo.")),
+                RedeemResult.Joined => Results.Ok(new RedeemResponse("joined", "You have joined.")),
+                RedeemResult.AlreadyMember => Results.Ok(new RedeemResponse("alreadyMember", "You are already a member.")),
                 RedeemResult.Expired => Results.Problem(title: "This join link has expired. Ask for a new one.", statusCode: StatusCodes.Status410Gone),
                 RedeemResult.UsedUp => Results.Problem(title: "This join link has been used the maximum number of times. Ask for a new one.", statusCode: StatusCodes.Status410Gone),
                 RedeemResult.Revoked => Results.Problem(title: "This join link was revoked. Ask for a new one.", statusCode: StatusCodes.Status410Gone),

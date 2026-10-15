@@ -28,7 +28,7 @@ public static class SeedJson
 
     public static EnterpriseSeed Read(string path)
     {
-        return JsonSerializer.Deserialize<EnterpriseSeed>(File.ReadAllText(path), Options)
+        return JsonSerializer.Deserialize<EnterpriseSeed>(Mps.Simulator.Telemetry.RecordDates.Rebase(File.ReadAllText(path)), Options)
             ?? throw new InvalidDataException($"Empty enterprise seed {path}.");
     }
 

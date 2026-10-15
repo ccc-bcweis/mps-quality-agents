@@ -34,7 +34,7 @@ function Manufacturing({ capability }: { capability: MetadataCapability }) {
             <li key={tool.id} className="break-words">
               <p className="font-semibold">{tool.name}</p>
               <p>Attached directly to manufacturing, not to a production line.</p>
-              {tool.simulated ? null : <p>Not simulated in this demo</p>}
+              {tool.simulated ? null : <p>No live data</p>}
             </li>
           ))}
         </ul>
@@ -64,7 +64,7 @@ export function PlantStructure({ site, error }: { site: MetadataSite | null; err
               <article key={capability.id} className={panel}>
                 <h3 className="text-mps-body font-semibold">{capability.name}</h3>
                 <p className="mt-1 break-words text-mps-secondary">{capability.description}</p>
-                <p className="mt-2">Not simulated in this demo</p>
+                <p className="mt-2">No live data</p>
               </article>
             ),
           )}

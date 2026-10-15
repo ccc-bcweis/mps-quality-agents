@@ -15,7 +15,7 @@ export type ToolPerformance = {
   mttrHours: number;
 };
 
-export const PERFORMANCE_CAPTION = "Illustrative demo readings, not a live tool counter.";
+export const PERFORMANCE_CAPTION = "Illustrative readings, not a live tool counter.";
 
 export const TOOL_PERFORMANCE: readonly ToolPerformance[] = [
   { toolId: "D-01", runRate: 22.0, uptime: 88, oee: 71, firstPassYield: 94.2, mtbfHours: 140, mttrHours: 4.6 },

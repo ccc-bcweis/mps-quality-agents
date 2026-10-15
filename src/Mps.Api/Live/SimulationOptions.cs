@@ -9,6 +9,12 @@ public sealed class SimulationOptions
 {
     public bool Enabled { get; init; } = true;
 
+    /// <summary>
+    /// When true the plant clock follows the wall clock: it starts at now() on load and on every reset, and each tick
+    /// catches up to now(). Speed then scales how often a reading is kept, not how fast time passes.
+    /// </summary>
+    public bool RealTime { get; init; }
+
     public int TickSeconds { get; init; } = 2;
 
     public int SimSecondsPerWallSecond { get; init; } = 60;
@@ -26,6 +32,7 @@ public sealed class SimulationOptions
         return new SimulationOptions
         {
             Enabled = section.GetValue("Enabled", true),
+            RealTime = section.GetValue("RealTime", false),
             TickSeconds = Positive(section.GetValue("TickSeconds", 2), 2),
             SimSecondsPerWallSecond = Positive(section.GetValue("SimSecondsPerWallSecond", 60), 60),
             PrimeSeconds = NonNegative(section.GetValue("PrimeSeconds", 600)),

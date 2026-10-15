@@ -13,13 +13,13 @@ public sealed class DemoRuntime
 {
     public const int DefaultSeed = 4242;
 
-    public DemoRuntime(FleetCatalog fleet, int seed, TimeProvider? timeProvider = null)
+    public DemoRuntime(FleetCatalog fleet, int seed, TimeProvider? timeProvider = null, DateTimeOffset? origin = null)
     {
         ArgumentNullException.ThrowIfNull(fleet);
         Fleet = fleet;
         Seed = seed;
         Clock = new DemoClock(timeProvider);
-        Simulator = new FleetSimulator(fleet, seed, DemoClock.BaselineOrigin);
+        Simulator = new FleetSimulator(fleet, seed, origin ?? DemoClock.BaselineOrigin);
     }
 
     public FleetCatalog Fleet { get; }
@@ -33,6 +33,13 @@ public sealed class DemoRuntime
     public void Reset()
     {
         Simulator.Reset();
+        Clock.Reset();
+    }
+
+    /// <summary>Resets and restarts the simulator clock on <paramref name="origin"/>.</summary>
+    public void Reset(DateTimeOffset origin)
+    {
+        Simulator.Reset(origin);
         Clock.Reset();
     }
 

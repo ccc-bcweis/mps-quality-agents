@@ -25,7 +25,7 @@ export const STAGE_LABEL: Record<IncidentStage, string> = {
   approved: "Approved",
   rejected: "Rejected",
   closed: "Closed",
-  closedByDemoReset: "Closed by demo reset",
+  closedByDemoReset: "Closed by reset",
 };
 
 export const INVESTIGATION_STAGE_LABEL: Record<InvestigationStage, string> = {
@@ -37,7 +37,7 @@ export const INVESTIGATION_STAGE_LABEL: Record<InvestigationStage, string> = {
   approved: "Approved",
   rejected: "Rejected",
   failed: "Failed",
-  closedByDemoReset: "Closed by demo reset",
+  closedByDemoReset: "Closed by reset",
 };
 
 export const CAPA_STAGE_LABEL: Record<CapaStage, string> = {
@@ -110,17 +110,19 @@ export function approvalSentence(name: string, at: string): string {
   return `Approved by ${who} at ${clock}`;
 }
 
-export function formatStamp(iso: string): string {
+export function formatStamp(iso: string, timeZone?: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
+  // Records are stored in UTC. Show them in the browser's own zone, with the zone name.
   return new Intl.DateTimeFormat("en-GB", {
-    timeZone: "UTC",
+    timeZone,
     year: "numeric",
     month: "short",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
+    timeZoneName: "short",
   }).format(date);
 }
 

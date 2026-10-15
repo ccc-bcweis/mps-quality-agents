@@ -7,7 +7,7 @@ describe("roi", () => {
   it("labels the PLAN figures as illustrative", async () => {
     renderConsole("/roi");
     expect(await screen.findByRole("heading", { name: /ROI/ })).toBeInTheDocument();
-    expect(screen.getByText(/Illustrative, synthetic/)).toBeInTheDocument();
+    expect(screen.getByText(/^Illustrative\./)).toBeInTheDocument();
     expect(screen.getByText("$96M")).toBeInTheDocument();
     expect(screen.getByText(/\$7,599,195/)).toBeInTheDocument();
   });

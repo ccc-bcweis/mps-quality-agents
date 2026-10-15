@@ -17,10 +17,10 @@ export function RoiPage() {
           <Explain text="ROI" spellOut={false} /> · quality investigation acceleration
         </h1>
         <p className="text-mps-secondary">
-          <Explain text="Illustrative, synthetic. ROI here is a sketch from the plan, section 6.5, not a customer measurement. MTTR-Q is the investigation clock. COPQ is the cost of work that was not right the first time." />
+          <Explain text="Illustrative. ROI here is a sketch from the plan, section 6.5, not a customer measurement. MTTR-Q is the investigation clock. COPQ is the cost of work that was not right the first time." />
         </p>
       </div>
-      <p className="mb-3 rounded border border-mps-warn bg-mps-panel px-3 py-2">All figures are simulated for a 3-plant Meridian Precision Systems. Label every chart the same way.</p>
+      <p className="mb-3 rounded border border-mps-warn bg-mps-panel px-3 py-2">All figures are illustrative estimates for a 3-plant Meridian Precision Systems. Label every chart the same way.</p>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Stat label="Revenue" value={formatMillions(assumptions.revenueUsd)} />
         <Stat label="COPQ 8%" value={formatMillions(roi.copqUsd)} term="COPQ" />
@@ -31,7 +31,7 @@ export function RoiPage() {
       </div>
       <div className="mt-3 grid gap-3 lg:grid-cols-2">
         <section className={panel}>
-          <h2 className="mb-2 text-mps-title font-semibold">Baseline (synthetic)</h2>
+          <h2 className="mb-2 text-mps-title font-semibold">Baseline (estimated)</h2>
           <table className="w-full text-left">
             <tbody>
               <Row label="CAPA cycle time" value={`${assumptions.capaCycleDays} days`} term="CAPA" />

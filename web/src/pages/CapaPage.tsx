@@ -245,13 +245,13 @@ export function CapaPage() {
     <div>
       <div className="mb-4">
         <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">
-          <Link className={btnSm} to="/approvals">Approval</Link> · mock <Explain text="QMS" spellOut={false} />
+          <Link className={btnSm} to="/approvals">Approval</Link> · <Explain text="QMS" spellOut={false} />
         </p>
         <h1 className="text-mps-display font-semibold">
           <Term id="CAPA" spellOut={false} />
         </h1>
         <p className="max-w-3xl text-mps-secondary">
-          <Explain text="A CAPA is the record of the fix. Stages after Open move one step at a time. A failed verification does not move backward. The frozen mock rejects advance with 409 until the API implements the transition." />
+          <Explain text="A CAPA is the record of the fix. Stages after Open move one step at a time. A failed verification does not move backward. An invalid advance is rejected with 409." />
         </p>
       </div>
       {problem ? (
@@ -291,7 +291,7 @@ export function CapaPage() {
               </button>
             </div>
             <p className="mt-3 text-mps-micro text-mps-muted">
-              <Explain text="QMS 500 retry is a connector fault on the mock enterprise API. The console does not call that API. Problem details from the CAPA route show up here." spellOut={false} />
+              <Explain text="QMS 500 retry is a connector fault on the enterprise QMS API. The console does not call that API. Problem details from the CAPA route show up here." spellOut={false} />
             </p>
           </section>
           <div className="grid gap-3 lg:grid-cols-2">
