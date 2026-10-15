@@ -270,7 +270,7 @@ public sealed class HumanDecisionService : IHumanDecisionService
 
         if (existing.Outcome == ApprovalOutcomes.ClosedByDemoReset)
         {
-            throw new LifecycleConflictException("This approval was closed by demo reset.");
+            throw new LifecycleConflictException("This approval was closed by reset.");
         }
 
         EnsureIntact(existing.Token);

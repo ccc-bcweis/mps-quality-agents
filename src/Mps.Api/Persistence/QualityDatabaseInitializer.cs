@@ -33,6 +33,19 @@ public sealed class QualityDatabaseInitializer : IHostedService
         }
 
         await EnsureInvestigationSequenceAsync(db, cancellationToken).ConfigureAwait(false);
+        await SeedToolsAsync(db, cancellationToken).ConfigureAwait(false);
+
+        // Real time: every app load refills a week of healthy history ending at now().
+        var simulation = scope.ServiceProvider.GetService<Mps.Api.Live.SimulationOptions>();
+        var seeder = scope.ServiceProvider.GetService<Mps.Application.Bus.INominalHistorySeeder>();
+        if (simulation is { RealTime: true, Enabled: true } && seeder is not null)
+        {
+            await seeder.SeedAsync(Mps.Application.Bus.NominalWindow.LastWeek, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private static async Task SeedToolsAsync(QualityDbContext db, CancellationToken cancellationToken)
+    {
         if (await db.Tools.AnyAsync(cancellationToken).ConfigureAwait(false))
         {
             return;

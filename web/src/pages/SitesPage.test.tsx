@@ -27,7 +27,7 @@ describe("sites overview", () => {
     expect(await within(structure).findByText("Deposition tool in bay one")).toBeInTheDocument();
     expect(within(structure).getByText("Film check bench")).toBeInTheDocument();
     expect(within(structure).getByText(/Attached directly to manufacturing/)).toBeInTheDocument();
-    expect(within(structure).getAllByText("Not simulated in this demo").length).toBeGreaterThan(1);
+    expect(within(structure).getAllByText("No live data").length).toBeGreaterThan(1);
     expect(within(structure).queryByText("nw-manufacturing")).not.toBeInTheDocument();
     expect(within(structure).queryByText("D-01")).not.toBeInTheDocument();
 

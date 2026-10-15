@@ -33,7 +33,7 @@ public sealed class AccessGate
         await http.Response.WriteAsJsonAsync(new
         {
             type = "https://tools.ietf.org/html/rfc9110#section-15.5.4",
-            title = "You are signed in but not part of this demo yet. Open a join link from the demo owner.",
+            title = "You are signed in but not part of this workspace yet. Ask the owner for a join link.",
             status = 403,
         }).ConfigureAwait(false);
     }

@@ -23,7 +23,7 @@ describe("fleet overview", () => {
     expect(screen.getByRole("link", { name: /E-02/ }).textContent).not.toMatch(/WATCH/);
     expect(screen.getByRole("img", { name: "Meridian Precision Systems mark" })).toBeInTheDocument();
     expect(screen.getByText("Powered by StatusNeo")).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Fleet performance" })).toHaveTextContent("Illustrative demo readings, not a live tool counter.");
+    expect(screen.getByRole("region", { name: "Fleet performance" })).toHaveTextContent("Illustrative readings, not a live tool counter.");
     expect(screen.getByText("26.4 wafers/h")).toBeInTheDocument();
     expect(screen.getByText("78.4%")).toBeInTheDocument();
     expect(screen.getByText("22.0 wafers/h")).toBeInTheDocument();

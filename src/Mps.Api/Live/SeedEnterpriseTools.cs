@@ -40,7 +40,7 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
         _board = board;
         if (!string.IsNullOrWhiteSpace(scenarioEvidencePath) && File.Exists(scenarioEvidencePath))
         {
-            var overlays = JsonSerializer.Deserialize<Dictionary<string, Seed>>(File.ReadAllText(scenarioEvidencePath), JsonOptions) ?? [];
+            var overlays = JsonSerializer.Deserialize<Dictionary<string, Seed>>(Mps.Simulator.Telemetry.RecordDates.Rebase(File.ReadAllText(scenarioEvidencePath)), JsonOptions) ?? [];
             foreach (var pair in overlays)
             {
                 _overlays[pair.Key] = pair.Value;
@@ -51,7 +51,7 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
     public SeedEnterpriseTools(string seedPath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(seedPath);
-        _seed = JsonSerializer.Deserialize<Seed>(File.ReadAllText(seedPath), JsonOptions)
+        _seed = JsonSerializer.Deserialize<Seed>(Mps.Simulator.Telemetry.RecordDates.Rebase(File.ReadAllText(seedPath)), JsonOptions)
             ?? throw new InvalidDataException("Empty enterprise seed " + seedPath + ".");
         foreach (var use in _seed.MaterialUses ?? [])
         {

@@ -53,7 +53,7 @@ public sealed class FleetSimulator : ITelemetrySource
 
     public int Seed { get; }
 
-    public DateTimeOffset Origin { get; }
+    public DateTimeOffset Origin { get; private set; }
 
     public ChannelReader<TelemetryFrame> Frames => _channel.Reader;
 
@@ -107,13 +107,17 @@ public sealed class FleetSimulator : ITelemetrySource
     /// <summary>
     /// Drops injected faults and series cursors and puts the simulator clock back on <see cref="Origin"/>.
     /// </summary>
-    public void Reset()
+    public void Reset() => Reset(Origin);
+
+    /// <summary>Drops faults and series cursors and restarts the clock on <paramref name="origin"/>.</summary>
+    public void Reset(DateTimeOffset origin)
     {
         lock (_gate)
         {
             _faults.Clear();
             _series.Clear();
-            _now = Origin;
+            Origin = origin;
+            _now = origin;
         }
     }
 

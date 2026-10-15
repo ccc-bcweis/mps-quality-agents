@@ -22,6 +22,7 @@ public sealed class PlantSimulation
     private readonly SimulationOptions _options;
     private readonly LiveSeriesLog _log;
     private readonly List<TelemetryFrame> _pending = [];
+    private readonly TimeProvider _time;
     private bool _primed;
 
     public PlantSimulation(SiteWorld world, TimeProvider time, IConfiguration configuration, SimulationOptions options)
@@ -39,7 +40,8 @@ public sealed class PlantSimulation
             .GroupBy(tool => tool.Id, StringComparer.Ordinal)
             .Select(group => group.First())
             .ToArray();
-        Runtime = new DemoRuntime(new FleetCatalog(tools), seed, time);
+        _time = time;
+        Runtime = new DemoRuntime(new FleetCatalog(tools), seed, time, options.RealTime ? RealTimeOrigin() : null);
         _log = new LiveSeriesLog(options.MaxPointsPerSeries);
     }
 
@@ -89,13 +91,36 @@ public sealed class PlantSimulation
 
     public void AdvanceTick()
     {
-        var seconds = checked(_options.TickSeconds * _options.SimSecondsPerWallSecond * Speed);
         lock (_gate)
         {
             EnsurePrimedUnlocked();
+            if (_options.RealTime)
+            {
+                // Catch up to the wall clock in whole seconds.
+                var behind = Math.Floor((_time.GetUtcNow() - Runtime.Simulator.SimulatedNow).TotalSeconds);
+                if (behind >= 1)
+                {
+                    AppendUnlocked(TimeSpan.FromSeconds(behind));
+                }
+
+                return;
+            }
+
+            var seconds = checked(_options.TickSeconds * _options.SimSecondsPerWallSecond * Speed);
             AppendUnlocked(TimeSpan.FromSeconds(seconds));
         }
     }
+
+    /// <summary>Real time starts the plant clock just far enough back that priming ends at now().</summary>
+    private DateTimeOffset RealTimeOrigin()
+    {
+        var now = _time.GetUtcNow();
+        var whole = new DateTimeOffset(now.Ticks - (now.Ticks % TimeSpan.TicksPerSecond), TimeSpan.Zero);
+        return whole.AddSeconds(-_options.PrimeSeconds);
+    }
+
+    /// <summary>In real time, speed shortens the gap between kept readings (stride / speed, at least one second).</summary>
+    private int EffectiveStride => _options.RealTime ? Math.Max(1, StrideSeconds / Math.Max(1, Speed)) : StrideSeconds;
 
     public void Advance(TimeSpan simulatedElapsed)
     {
@@ -144,7 +169,15 @@ public sealed class PlantSimulation
     {
         lock (_gate)
         {
-            Runtime.Reset();
+            if (_options.RealTime)
+            {
+                Runtime.Reset(RealTimeOrigin());
+            }
+            else
+            {
+                Runtime.Reset();
+            }
+
             _log.Clear();
             _pending.Clear();
             _primed = false;
@@ -279,7 +312,7 @@ public sealed class PlantSimulation
 
     private void AppendUnlocked(TimeSpan simulatedElapsed)
     {
-        var frames = Runtime.Simulator.Advance(simulatedElapsed, StrideSeconds);
+        var frames = Runtime.Simulator.Advance(simulatedElapsed, EffectiveStride);
         _log.Append(frames);
         _pending.AddRange(frames);
     }

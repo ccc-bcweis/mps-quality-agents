@@ -58,8 +58,8 @@ internal static class TraceSummaries
             "command.fault.inject" => "A fault was injected on " + where
                 + (parameter is null ? string.Empty : " for " + parameter) + " at " + when + ".",
             "command.scenario.start" => ScenarioSentence(row, when),
-            "command.reset.hard" => "The demo was reset to a clean plant at " + when + ".",
-            "command.reset.soft" => "Open tickets were closed by demo reset and the history was kept at " + when + ".",
+            "command.reset.hard" => "The plant was reset to a clean state at " + when + ".",
+            "command.reset.soft" => "Open tickets were closed by reset and the history was kept at " + when + ".",
             "command.operator.report" => "An operator reported " + where + " at " + when + ".",
             "command.document.upload" => "An operator uploaded a bench reading for " + where + " at " + when + ".",
             "command.approval.grant" => "An approver submitted the recommendation at " + when + ".",

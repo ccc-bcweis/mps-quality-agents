@@ -8,6 +8,8 @@ using Mps.Simulator.Fleet;
 using Mps.Simulator.GroundTruth;
 using Mps.Simulator.Sites;
 
+using Mps.Simulator.Telemetry;
+
 namespace Mps.Simulator.Seed;
 
 /// <summary>
@@ -158,9 +160,9 @@ public static class EnterpriseSeedGenerator
                 WindowStart.AddDays(12).AddHours(4)));
         }
 
-        draft.Ncrs.Add(new NcrRecord("NCR-C-01-104", "C-01", "Particle count above the bay limit during a bath change.", new DateTimeOffset(2026, 8, 4, 15, 0, 0, TimeSpan.Zero), "LOT-C-01-W02"));
-        draft.Ncrs.Add(new NcrRecord("NCR-D-02-077", "D-02", "Thickness uniformity check requested by the bay lead.", new DateTimeOffset(2026, 8, 18, 11, 0, 0, TimeSpan.Zero), null));
-        draft.Ncrs.Add(new NcrRecord("NCR-S-01-052", "S-01", "Ash endpoint delayed on one cassette.", new DateTimeOffset(2026, 9, 2, 9, 30, 0, TimeSpan.Zero), "LOT-S-01-W06"));
+        draft.Ncrs.Add(new NcrRecord("NCR-C-01-104", "C-01", "Particle count above the bay limit during a bath change.", RecordDates.Shift(new DateTimeOffset(2026, 8, 4, 15, 0, 0, TimeSpan.Zero)), "LOT-C-01-W02"));
+        draft.Ncrs.Add(new NcrRecord("NCR-D-02-077", "D-02", "Thickness uniformity check requested by the bay lead.", RecordDates.Shift(new DateTimeOffset(2026, 8, 18, 11, 0, 0, TimeSpan.Zero)), null));
+        draft.Ncrs.Add(new NcrRecord("NCR-S-01-052", "S-01", "Ash endpoint delayed on one cassette.", RecordDates.Shift(new DateTimeOffset(2026, 9, 2, 9, 30, 0, TimeSpan.Zero)), "LOT-S-01-W06"));
     }
 
     private static void AddHistory(EnterpriseDraft draft, IReadOnlyList<ToolSpec> tools, IReadOnlyList<ProcessRun> faultRuns, int seed)

@@ -39,6 +39,7 @@ export function formatLocalWhen(iso: string, timeZone?: string): string {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
+    timeZoneName: "short",
   }).formatToParts(date);
   const read = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
   const month = read("month");
@@ -48,7 +49,8 @@ export function formatLocalWhen(iso: string, timeZone?: string): string {
   const dayPeriod = read("dayPeriod").replace(/\./g, "").toUpperCase();
   // Clock marker only. Kept out of a quoted token so the glossary scan does not treat it as an acronym.
   if (!month || !day || !hour || !minute || !/^[AP]M$/.test(dayPeriod)) return "—";
-  return `${month} ${day}, ${hour}:${minute} ${dayPeriod}`;
+  const zone = read("timeZoneName");
+  return `${month} ${day}, ${hour}:${minute} ${dayPeriod}${zone ? ` ${zone}` : ""}`;
 }
 
 export function formatMeasure(value: number): string {

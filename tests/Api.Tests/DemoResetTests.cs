@@ -218,13 +218,13 @@ public sealed class DemoResetTests
         body.GetProperty("telemetryCount").GetInt64().Should().BeGreaterThan(telemetryBefore);
         body.GetProperty("eventCount").GetInt64().Should().BeGreaterThan(logBefore);
         incident.GetProperty("stage").GetString().Should().Be("closedByDemoReset");
-        incident.GetProperty("statusLabel").GetString().Should().Be("Closed by demo reset");
+        incident.GetProperty("statusLabel").GetString().Should().Be("Closed by reset");
         investigation.GetProperty("stage").GetString().Should().Be("closedByDemoReset");
-        investigation.GetProperty("statusLabel").GetString().Should().Be("Closed by demo reset");
+        investigation.GetProperty("statusLabel").GetString().Should().Be("Closed by reset");
         tickets.EnumerateArray().Select(row => row.GetProperty("number").GetString()).Should().Contain(ticketNumber);
         plant.Runtime.Simulator.ActiveFaults.Should().BeEmpty();
         audit.GetProperty("entries").EnumerateArray().Select(row => row.GetProperty("summary").GetString())
-            .Should().Contain(summary => summary != null && summary.Contains("Closed by demo reset", StringComparison.Ordinal));
+            .Should().Contain(summary => summary != null && summary.Contains("Closed by reset", StringComparison.Ordinal));
         Hash(MetadataFile("company.yaml")).Should().Be(companyHash);
 
         using var check = factory.Services.CreateScope();
@@ -232,9 +232,9 @@ public sealed class DemoResetTests
         approvals.Faults.Count().Should().BeGreaterThan(0);
         var row = approvals.Approvals.Single(item => item.InvestigationId == investigationId);
         row.Outcome.Should().Be("closedByDemoReset");
-        row.Decision.Should().Be("Closed by demo reset");
+        row.Decision.Should().Be("Closed by reset");
         row.Consumed.Should().BeTrue();
-        row.Comment.Should().Be("Closed by demo reset");
+        row.Comment.Should().Be("Closed by reset");
     }
 
     [Fact]

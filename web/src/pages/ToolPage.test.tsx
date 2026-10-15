@@ -17,7 +17,7 @@ describe("tool detail", () => {
     expect(screen.getAllByText("51.0 °C").length).toBeGreaterThan(0);
     expect(screen.queryByText("53.1 °C osc")).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Tool performance" })).toHaveTextContent("24.0 wafers/h");
-    expect(screen.getByText("Illustrative demo readings, not a live tool counter.")).toBeInTheDocument();
+    expect(screen.getByText("Illustrative readings, not a live tool counter.")).toBeInTheDocument();
     expect(screen.getByText(matchCopy(/mean time between failures \(MTBF\)/))).toBeInTheDocument();
     expect(screen.getByText(matchCopy(/mean time to repair \(MTTR\)/))).toBeInTheDocument();
   });
