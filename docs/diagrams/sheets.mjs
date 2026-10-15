@@ -1263,6 +1263,310 @@ function drawAsIsGlossary(sheet, x, y, w, h) {
   return box;
 }
 
+function agentBadge(n) {
+  return { label: `AGENT ${n}`, tone: 'ai' };
+}
+
+function humanBadge(n) {
+  return { label: `HUMAN ${n}`, tone: 'human' };
+}
+
+function removed(n) {
+  return { label: `ERROR REMOVED E${n}`, tone: 'removed' };
+}
+
+const FLOW = '#6D28D9';
+
+export function drawToBe(sheet) {
+  const a = sheet.area;
+  const labelW = 160;
+  const contentX = a.x + labelW;
+  const colW = 276;
+  const colGap = 16;
+  const stageH = 86;
+  const panelH = 252;
+  const panelY = a.y + a.h - panelH;
+  const lanesTop = a.y + stageH + 10;
+  const lanesBottom = panelY - 12;
+  const laneGap = 8;
+  const heights = [100, 87, 100, 128, 87, 128, 276];
+  const stack = heights.reduce((sum, h) => sum + h, 0) + laneGap * (heights.length - 1);
+  if (Math.abs(stack - (lanesBottom - lanesTop)) > 0.5) {
+    sheet.errors.push(`lane stack ${stack.toFixed(1)} != ${(lanesBottom - lanesTop).toFixed(1)}`);
+  }
+
+  const cols = [];
+  for (let i = 0; i < 8; i += 1) {
+    cols.push({ x: contentX + i * (colW + colGap), w: colW });
+  }
+  const end = cols[7].x + cols[7].w;
+  if (Math.abs(end - (a.x + a.w)) > 0.5) {
+    sheet.errors.push(`columns end at ${end.toFixed(1)}, area ends at ${(a.x + a.w).toFixed(1)}`);
+  }
+
+  const span = (from, to) => {
+    const x = cols[from].x;
+    return { x, w: cols[to].x + cols[to].w - x };
+  };
+
+  stageStrip(sheet, cols[0].x, a.y, colW, stageH, 'tb-det', 'DETECT', '0.1 day');
+  stageStrip(sheet, cols[1].x, a.y, colW, stageH, 'tb-tri', 'TRIAGE', '0.2 day');
+  const gather = span(2, 4);
+  stageStrip(sheet, gather.x, a.y, gather.w, stageH, 'tb-gth', 'GATHER EVIDENCE', '0.4 day');
+  stageStrip(sheet, cols[5].x, a.y, colW, stageH, 'tb-dia', 'DIAGNOSE', '0.5 day');
+  stageStrip(sheet, cols[6].x, a.y, colW, stageH, 'tb-dec', 'DECIDE / APPROVE', '2.0 days');
+  stageStrip(sheet, cols[7].x, a.y, colW, stageH, 'tb-capa', 'CAPA', '40.3 days');
+
+  const laneMeta = [
+    ['L-op', 'Operator', 'human', ''],
+    ['L-tech', 'Technician', 'review', 'No hand-off'],
+    ['L-pe', 'Process engineer', 'deploy', 'Reads the rank'],
+    ['L-qe', 'Quality engineer', 'gov', ''],
+    ['L-sc', 'Supply chain', 'gw', 'Lot is joined'],
+    ['L-mgmt', 'Management', 'ok', ''],
+    ['L-ag', 'MPS agent platform', 'ai', '(StatusNeo)'],
+  ];
+  let yCursor = lanesTop;
+  const lanes = laneMeta.map((meta, i) => {
+    const band = sheet.band(meta[0], a.x, yCursor, a.w, heights[i], meta[1], meta[2], meta[3]);
+    yCursor += heights[i] + laneGap;
+    return band;
+  });
+
+  const cardH = 118;
+  const plainH = 88;
+  const inset = 4;
+  const stackGap = 20;
+
+  const put = (id, col, lane, lines, tone, badges, slot, h = cardH) => {
+    const c = cols[col];
+    const row = lanes[lane];
+    let y;
+    if (slot === 'top' || slot === 'bottom') {
+      const block = cardH * 2 + stackGap;
+      const top0 = row.y + (row.h - block) / 2;
+      y = slot === 'top' ? top0 : top0 + cardH + stackGap;
+    } else {
+      y = row.y + (row.h - h) / 2;
+    }
+    const opts = badges && badges.length ? { badges } : {};
+    sheet.node(id, c.x + inset, y, c.w - inset * 2, h, lines, tone, opts);
+  };
+
+  put('op', 0, 0, ['Alert on the console', 'MX-400 etch breaks a limit', 'Chamber and recipe shown'], 'human', null, 'mid', plainH);
+  put(
+    'a1',
+    0,
+    6,
+    ['SPC opens the ticket', 'Tool, chamber, and recipe', 'Nothing is spoken'],
+    'ai',
+    [agentBadge(1), removed(1)],
+    'mid',
+  );
+  put(
+    'a2',
+    1,
+    6,
+    ['Ticket is the alert', 'Tool, time, and symptom', 'Nobody retypes it'],
+    'ai',
+    [agentBadge(2), removed(2)],
+    'mid',
+  );
+  put(
+    'h3',
+    1,
+    3,
+    ['Opens the ticket', 'Recipe step stays on it', 'Takes the investigation'],
+    'gov',
+    [humanBadge(3), removed(3)],
+    'mid',
+  );
+  put(
+    'a4',
+    2,
+    6,
+    ['Reads the MES', 'Runs, lots, and recipe', 'Not a spreadsheet paste'],
+    'ai',
+    [agentBadge(4), removed(4)],
+    'top',
+  );
+  put(
+    'a5',
+    2,
+    6,
+    ['Reads historian, SPC, ECN', 'Change log is in the pack', 'Not checked by eye'],
+    'ai',
+    [agentBadge(5), removed(5)],
+    'bottom',
+  );
+  put(
+    'a6',
+    3,
+    6,
+    ['Retrieves prior cases', 'Onto the same ticket', 'Not from a folder'],
+    'ai',
+    [agentBadge(6), removed(6)],
+    'top',
+  );
+  put(
+    'a7',
+    3,
+    6,
+    ['Joins the supplier lot', 'To the manufacturing run', 'Not an email lookup'],
+    'ai',
+    [agentBadge(7), removed(7)],
+    'bottom',
+  );
+  put(
+    'a8',
+    4,
+    6,
+    ['One evidence pack', 'Each file is cited once', 'No meeting to reconcile'],
+    'ai',
+    [agentBadge(8), removed(8)],
+    'mid',
+  );
+  put(
+    'a9',
+    5,
+    6,
+    ['Ranks four cause classes', 'Cites what rules one out', 'Not the last known cause'],
+    'ai',
+    [agentBadge(9), removed(9)],
+    'mid',
+  );
+  put(
+    'a10',
+    6,
+    6,
+    ['Pack is the ask', 'Citations are attached', 'No mail thread'],
+    'ai',
+    [agentBadge(10)],
+    'mid',
+  );
+  put(
+    'h11',
+    6,
+    5,
+    ['Approves on the pack', 'Signed token, single use', 'The cause is cited'],
+    'ok',
+    [humanBadge(11), removed(10)],
+    'mid',
+  );
+  put(
+    'a12',
+    7,
+    6,
+    ['Writes the CAPA', 'From the approved pack', 'Not re-keyed into the QMS'],
+    'ai',
+    [agentBadge(12), removed(11)],
+    'top',
+  );
+  put(
+    'a13',
+    7,
+    6,
+    ['Token is the signature', 'Already given at approval', 'No second signature'],
+    'ai',
+    [agentBadge(13)],
+    'bottom',
+  );
+
+  const down = (fromId, toId, id) => sheet.link(fromId, toId, 'bottom', 'top', { id, color: FLOW });
+  const up = (fromId, toId, id) => sheet.link(fromId, toId, 'top', 'bottom', { id, color: FLOW });
+  const right = (fromId, toId, id) => sheet.link(fromId, toId, 'right', 'left', { id, color: FLOW });
+
+  down('op', 'a1', 'op-a1');
+  right('a1', 'a2', 'a1-a2');
+  up('a2', 'h3', 'a2-h3');
+  handoff(sheet, 'h3', 'a4', 'h3-a4', { color: FLOW });
+  down('a4', 'a5', 'a4-a5');
+  handoff(sheet, 'a5', 'a6', 'a5-a6', { color: FLOW });
+  down('a6', 'a7', 'a6-a7');
+  handoff(sheet, 'a7', 'a8', 'a7-a8', { color: FLOW });
+  right('a8', 'a9', 'a8-a9');
+  right('a9', 'a10', 'a9-a10');
+  up('a10', 'h11', 'a10-h11');
+  handoff(sheet, 'h11', 'a12', 'h11-a12', { color: FLOW });
+  down('a12', 'a13', 'a12-a13');
+
+  const glossW = 700;
+  const glossX = a.x + a.w - glossW;
+  drawToBeCallouts(sheet, a.x, panelY, glossX - a.x - 16, panelH);
+  drawToBeGlossary(sheet, glossX, panelY, glossW, panelH);
+}
+
+function drawToBeCallouts(sheet, x, y, w, h) {
+  sheet.frame('removed-box', x, y, w, h, 'removed');
+  const clip = { x, y, w, h };
+  const left = x + 24;
+  const mid = x + 24 + (w - 48) / 2;
+  sheet.text('rm-title', 'ERROR REMOVED callouts', left, y + 26, {
+    size: 16,
+    weight: 'bold',
+    fill: NAVY,
+    clip,
+  });
+  sheet.text(
+    'rm-dek1',
+    '11 agent steps replace a hand-off. 2 human steps remain: open, then approve. Illustrative / simulated.',
+    left,
+    y + 50,
+    { size: 14, weight: 'regular', fill: INK, clip },
+  );
+  sheet.text(
+    'rm-dek2',
+    'Detect through Diagnose is 1.2 days to a hypothesis, simulated. CAPA at 40.3 days is the record cycle, simulated.',
+    left,
+    y + 74,
+    { size: 14, weight: 'regular', fill: INK, clip },
+  );
+  const leftLines = [
+    'E1   Spoken alarm. Statistical process control opens the ticket with tool, chamber, and recipe.',
+    'E2   Ticket retyped. The alert is the record. Nobody retypes it.',
+    'E3   Data gap. The recipe step stays on the ticket. A reply cannot drop it.',
+    'E4   Spreadsheet paste. The run sheet is read, not pasted.',
+    'E5   Missed engineering change. The change log is read into the pack.',
+    'E6   Data gap. Prior cases are retrieved onto the ticket.',
+  ];
+  const rightLines = [
+    'E7   Wrong lot. The supplier lot is joined to the run lot.',
+    'E8   Data gap. One evidence pack records which file was current.',
+    'E9   Last-cause bias. Four cause classes are checked every time.',
+    'E10  Uncited approval. The signed token cites the evidence pack.',
+    'E11  Re-keyed record. The approved pack is written. It is not typed again.',
+  ];
+  leftLines.forEach((text, i) => {
+    sheet.text(`rm-l${i}`, text, left, y + 108 + i * 24, { size: 14, weight: 'regular', fill: INK, clip });
+  });
+  rightLines.forEach((text, i) => {
+    sheet.text(`rm-r${i}`, text, mid, y + 108 + i * 24, { size: 14, weight: 'regular', fill: INK, clip });
+  });
+}
+
+function drawToBeGlossary(sheet, x, y, w, h) {
+  sheet.frame('glossary', x, y, w, h, 'neutral');
+  const clip = { x, y, w, h };
+  const left = x + 24;
+  sheet.text('tg-title', 'Glossary', left, y + 26, { size: 16, weight: 'bold', fill: NAVY, clip });
+  sheet.text('tg-dek', 'Short forms on this sheet, spelled out.', left, y + 50, {
+    size: 14,
+    weight: 'regular',
+    fill: INK,
+    clip,
+  });
+  const terms = [
+    'MES    manufacturing execution system',
+    'SPC    statistical process control',
+    'ECN    engineering change notice',
+    'QMS    quality management system',
+    'CAPA   corrective and preventive action',
+  ];
+  terms.forEach((text, i) => {
+    sheet.text(`tg-t${i}`, text, left, y + 86 + i * 28, { size: 14, weight: 'regular', fill: INK, clip });
+  });
+}
+
 function stageRail(sheet, x, y, w, h, id, lines) {
   const gap = 10;
   const heights = lines.map((line) => sheet.em(sheet.fontOf(line.weight), line.size));
@@ -1574,6 +1878,24 @@ export const SHEETS = [
       { tone: 'ok', label: 'Management. Approves and signs.' },
       { tone: 'manual', label: 'Red MANUAL badge and red arrow. A hand-off.' },
       { tone: 'risk', label: 'Amber ERROR RISK badge. A fact can change.' },
+    ],
+  },
+  {
+    sheetId: 'G6',
+    issue: '',
+    kicker: 'TO-BE INVESTIGATION',
+    title: 'To-be investigation flow',
+    slug: 'to-be-flow',
+    draw: drawToBe,
+    legend: [
+      { tone: 'human', label: 'Operator. Sees the alert on the console.' },
+      { tone: 'review', label: 'Technician. No hand-off on this path.' },
+      { tone: 'deploy', label: 'Process engineer. Reads the rank. Does not state it.' },
+      { tone: 'gov', label: 'Quality engineer. Opens the ticket. HUMAN 3.' },
+      { tone: 'gw', label: 'Supply chain. No email lookup on this path.' },
+      { tone: 'ok', label: 'Management. Approves. The human stays the approver.' },
+      { tone: 'ai', label: 'MPS agent platform (StatusNeo). Violet AGENT badge and arrow.' },
+      { tone: 'removed', label: 'Green ERROR REMOVED badge. E1 through E11, in the callout.' },
     ],
   },
   {

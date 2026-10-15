@@ -1,0 +1,34 @@
+flowchart LR
+  subgraph OP["Operator"]
+    ALERT["Alert on the console. MX-400 etch."]
+  end
+  subgraph TECH["Technician"]
+    TNOTE["No hand-off on this path."]
+  end
+  subgraph PE["Process engineer"]
+    PNOTE["Reads the rank. Does not state it."]
+  end
+  subgraph QE["Quality engineer"]
+    OPEN["Opens the ticket. HUMAN 3."]
+  end
+  subgraph SC["Supply chain"]
+    SNOTE["No email lookup on this path."]
+  end
+  subgraph MGMT["Management"]
+    APPR["Approves on the pack. HUMAN 11."]
+  end
+  subgraph AG["MPS agent platform (StatusNeo)"]
+    A1["SPC opens the ticket. AGENT 1."]
+    A2["Ticket is the alert. AGENT 2."]
+    A4["Reads the MES. AGENT 4."]
+    A5["Reads historian, SPC, and the ECN. AGENT 5."]
+    A6["Retrieves prior cases. AGENT 6."]
+    A7["Joins the supplier lot. AGENT 7."]
+    A8["One evidence pack. AGENT 8."]
+    A9["Ranks four cause classes. AGENT 9."]
+    A10["Pack is the ask. AGENT 10."]
+    A12["Writes the CAPA. AGENT 12."]
+    A13["Token is the signature. AGENT 13."]
+  end
+
+  ALERT --> A1 --> A2 --> OPEN --> A4 --> A5 --> A6 --> A7 --> A8 --> A9 --> A10 --> APPR --> A12 --> A13
