@@ -2,6 +2,7 @@
 
 using System.Collections.Concurrent;
 
+using Mps.Application.Bus;
 using Mps.Application.Errors;
 using Mps.Application.Lifecycle;
 using Mps.Application.Metrics;
@@ -56,6 +57,8 @@ public sealed class HumanDecisionService : IHumanDecisionService
     private readonly TimeProvider _time;
     private readonly ApprovalPolicy _policy;
     private readonly IMetricsLog _metrics;
+    private readonly ILifecycleEventSink? _events;
+    private readonly ICascadeDirectory? _cascade;
 
     public HumanDecisionService(
         IInvestigationLog investigations,
@@ -66,7 +69,9 @@ public sealed class HumanDecisionService : IHumanDecisionService
         IQualityNotifier notifier,
         TimeProvider time,
         ApprovalPolicy policy,
-        IMetricsLog metrics)
+        IMetricsLog metrics,
+        ILifecycleEventSink? events = null,
+        ICascadeDirectory? cascade = null)
     {
         ArgumentNullException.ThrowIfNull(investigations);
         ArgumentNullException.ThrowIfNull(incidents);
@@ -86,6 +91,8 @@ public sealed class HumanDecisionService : IHumanDecisionService
         _time = time;
         _policy = policy;
         _metrics = metrics;
+        _events = events;
+        _cascade = cascade;
     }
 
     public async Task<HumanDecisionOutcome> DecideAsync(
@@ -321,6 +328,7 @@ public sealed class HumanDecisionService : IHumanDecisionService
         var approved = Copy(snapshot, InvestigationStage.Approved, snapshot.EscalationReason);
         await _investigations.UpdateAsync(approved, cancellationToken).ConfigureAwait(false);
         await _notifier.InvestigationChangedAsync(approved, cancellationToken).ConfigureAwait(false);
+        await PublishApprovalAsync(snapshot, stored, capa, approval, cancellationToken).ConfigureAwait(false);
         await _notifier.IncidentChangedAsync(stored.Incident, cancellationToken).ConfigureAwait(false);
         await _notifier.CapaChangedAsync(capa, "capaChanged", cancellationToken).ConfigureAwait(false);
         await RecordAsync(
@@ -333,6 +341,50 @@ public sealed class HumanDecisionService : IHumanDecisionService
         var saved = await _capas.GetAsync(capa.Id, cancellationToken).ConfigureAwait(false)
             ?? new StoredCapa(capa, write.ExternalId);
         return new HumanDecisionOutcome(approved, saved);
+    }
+
+    private async Task PublishApprovalAsync(
+        InvestigationSnapshot snapshot,
+        StoredIncident stored,
+        CapaAction capa,
+        StoredApproval approval,
+        CancellationToken cancellationToken)
+    {
+        if (_events is null)
+        {
+            return;
+        }
+
+        var correlation = snapshot.CorrelationId;
+        var recommendation = _cascade?.FindStep(correlation, "recommendation") ?? _cascade?.FindStep(correlation, "investigation");
+        var toolId = stored.Incident.ToolId.ToString();
+        var commandId = await _events.PublishAsync(
+            new LifecycleEvent(
+                LifecycleTypes.ApprovalGrant,
+                correlation,
+                recommendation,
+                recommendation,
+                "approval",
+                null,
+                toolId,
+                stored.Incident.ChamberId,
+                _time.GetUtcNow(),
+                new { investigationId = snapshot.Id.Value, approverId = approval.Token.ApproverId, capaId = capa.Id.Value }),
+            cancellationToken).ConfigureAwait(false);
+        var grantedId = await _events.PublishAsync(
+            new LifecycleEvent(
+                LifecycleTypes.ApprovalGranted,
+                correlation,
+                commandId,
+                commandId,
+                "approval",
+                null,
+                toolId,
+                stored.Incident.ChamberId,
+                _time.GetUtcNow(),
+                new { investigationId = snapshot.Id.Value, approverId = approval.Token.ApproverId, capaId = capa.Id.Value }),
+            cancellationToken).ConfigureAwait(false);
+        _cascade?.RememberStep(correlation, "approval", grantedId);
     }
 
     private async Task<(StoredApproval Approval, string? ExternalId)> WriteWithRetryAsync(

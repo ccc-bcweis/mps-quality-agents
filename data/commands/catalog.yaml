@@ -1,0 +1,141 @@
+# Commands a person or the plant can issue. Each one is published on the bus before the work runs.
+# Local mode may issue every command. A hosted non-admin may not issue a system command.
+commands:
+  - name: command.fault.inject
+    kind: system
+    summary: Inject a shaped fault on one tool parameter.
+    whoMayIssue:
+      - presenter
+    emits:
+      - command.fault.inject
+      - telemetry.reading
+      - alert.raised
+      - ticket.created
+    payload:
+      - name: toolId
+        type: string
+      - name: chamberId
+        type: string
+        optional: true
+      - name: parameter
+        type: string
+      - name: shape
+        type: string
+      - name: magnitude
+        type: number
+      - name: rootCauseCategory
+        type: string
+      - name: confounders
+        type: boolean
+  - name: command.scenario.start
+    kind: system
+    summary: Start a named scripted scenario.
+    whoMayIssue:
+      - presenter
+    emits:
+      - command.scenario.start
+      - command.fault.inject
+      - telemetry.reading
+    payload:
+      - name: scenarioId
+        type: string
+  - name: command.reset.hard
+    kind: system
+    summary: Wipe tickets, investigations, and telemetry, then rebuild the nominal plant.
+    whoMayIssue:
+      - presenter
+    emits:
+      - command.reset.hard
+    payload:
+      - name: kind
+        type: string
+  - name: command.reset.soft
+    kind: system
+    summary: Clear live faults and keep tickets.
+    whoMayIssue:
+      - presenter
+    emits:
+      - command.reset.soft
+    payload:
+      - name: kind
+        type: string
+  - name: command.operator.report
+    kind: application
+    summary: Open a ticket from an operator report.
+    whoMayIssue:
+      - operator
+    emits:
+      - command.operator.report
+      - ticket.created
+      - incident.changed
+    payload:
+      - name: toolId
+        type: string
+      - name: chamberId
+        type: string
+        optional: true
+      - name: parameter
+        type: string
+      - name: summary
+        type: string
+  - name: command.document.upload
+    kind: application
+    summary: Store a bench reading and, when it is outside the printed spec, inject a fault.
+    whoMayIssue:
+      - operator
+    emits:
+      - command.document.upload
+      - document.uploaded
+      - command.fault.inject
+      - alert.raised
+    payload:
+      - name: toolId
+        type: string
+      - name: parameter
+        type: string
+      - name: value
+        type: number
+      - name: unit
+        type: string
+  - name: command.investigation.start
+    kind: application
+    summary: Start the investigation for an open incident.
+    whoMayIssue:
+      - quality
+    emits:
+      - command.investigation.start
+      - investigation.step
+      - investigation.changed
+    payload:
+      - name: incidentId
+        type: string
+  - name: command.approval.grant
+    kind: application
+    summary: Approve a recommendation and open the corrective action.
+    whoMayIssue:
+      - quality
+    emits:
+      - command.approval.grant
+      - approval.granted
+      - capa.created
+    payload:
+      - name: investigationId
+        type: string
+      - name: approverId
+        type: string
+      - name: comment
+        type: string
+        optional: true
+  - name: command.capa.advance
+    kind: application
+    summary: Move a corrective action one stage forward.
+    whoMayIssue:
+      - quality
+    emits:
+      - command.capa.advance
+      - capa.advanced
+    payload:
+      - name: capaId
+        type: string
+      - name: stage
+        type: string

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.meridian-precision.example/events/envelope.schema.json",
+  "title": "EventEnvelope",
+  "description": "One fact on the event bus. Telemetry, alerts, tickets, investigation steps, approvals, corrective actions, and commands share this envelope. The lifecycle documents in this folder stay a separate catalog.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "type",
+    "correlationId",
+    "sequence",
+    "source",
+    "occurredAt",
+    "recordedAt",
+    "schemaVersion",
+    "payload"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "Universally unique lexicographically sortable identifier assigned by the bus when the publisher leaves it empty."
+    },
+    "type": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)+$",
+      "description": "Dotted name such as telemetry.reading, alert.raised, ticket.created, investigation.step, approval.granted, capa.created, or command.fault.inject."
+    },
+    "correlationId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Shared by every event in one cascade, from the root command to the last corrective action."
+    },
+    "causationId": {
+      "type": ["string", "null"],
+      "description": "The event that caused this one. A reading caused by a fault points at the fault command. An alert points at the triggering reading."
+    },
+    "parentEventId": {
+      "type": ["string", "null"],
+      "description": "The event this one hangs from in the trace tree. Fan-out uses the same id as causation. A later step uses the previous step."
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonic per correlation id. The bus assigns it."
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Who published the fact, such as injector, simulator, spc, intake, investigation, or presenter."
+    },
+    "siteId": { "type": ["string", "null"] },
+    "toolId": { "type": ["string", "null"] },
+    "chamberId": { "type": ["string", "null"] },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "recordedAt": { "type": "string", "format": "date-time" },
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "payload": {
+      "type": "object",
+      "description": "Type-specific body. An empty object is allowed."
+    }
+  }
+}

@@ -6,6 +6,7 @@ import type {
   DecisionResult,
   AdminSession,
   AuditLog,
+  CausalTrace,
   DemoResetResult,
   FaultInjectionAccepted,
   FaultInjectionRequest,
@@ -131,4 +132,5 @@ export const api = {
   runScenario: (scenarioId: string) =>
     apiSend<ScenarioRun>(`/api/injector/scenarios/${encodeURIComponent(scenarioId)}`, { method: "POST" }),
   getMetrics: () => apiSend<MetricsSummary>("/api/metrics"),
+  getTrace: (eventId: string) => apiSend<CausalTrace>(`/api/trace/${encodeURIComponent(eventId)}`),
 };

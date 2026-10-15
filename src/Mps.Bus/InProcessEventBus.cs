@@ -225,6 +225,13 @@ public sealed class InProcessEventBus : IEventBus, IAsyncDisposable
         List<Exception>? errors = null;
         foreach (var registration in snapshot)
         {
+            // A catch-all subscriber listens for commands and domain facts. A multi-reading
+            // telemetry batch stays on the batch path so one slow listener cannot take each row.
+            if (telemetry && batch.Length > 1 && !registration.Batch && string.Equals(registration.Pattern, "*", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
             var matches = telemetry
                 ? batch.Any(item => EventPatterns.Matches(registration.Pattern, item.Type))
                 : EventPatterns.Matches(registration.Pattern, batch[0].Type);

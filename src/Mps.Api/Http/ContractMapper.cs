@@ -88,7 +88,8 @@ public static class ContractMapper
                     reading.SpecLow,
                     reading.SpecHigh,
                     reading.ToolName,
-                    reading.ChamberName);
+                    reading.ChamberName,
+                    item.SourceEventIds.Count == 0 ? null : item.SourceEventIds);
             }).ToArray(),
             snapshot.Hypotheses.Select(item => new HypothesisResponse(
                 item.Id.Value,

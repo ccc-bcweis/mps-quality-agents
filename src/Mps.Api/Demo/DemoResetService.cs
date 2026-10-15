@@ -2,9 +2,11 @@
 
 using Microsoft.EntityFrameworkCore;
 
+using Mps.Api.Bus;
 using Mps.Api.Fleet;
 using Mps.Api.Live;
 using Mps.Api.Persistence;
+using Mps.Application.Bus;
 using Mps.Simulator.Telemetry;
 
 namespace Mps.Api.Demo;
@@ -20,22 +22,53 @@ public sealed class DemoResetService
     private readonly QualityDbContext _db;
     private readonly PlantSimulation _plant;
     private readonly StreamSpcPublisher _traces;
+    private readonly SqliteEventStore _events;
+    private readonly ICascadeDirectory _cascade;
+    private readonly ILifecycleEventSink _sink;
+    private readonly TimeProvider _time;
 
-    public DemoResetService(QualityDbContext db, PlantSimulation plant, StreamSpcPublisher traces)
+    public DemoResetService(
+        QualityDbContext db,
+        PlantSimulation plant,
+        StreamSpcPublisher traces,
+        SqliteEventStore events,
+        ICascadeDirectory cascade,
+        ILifecycleEventSink sink,
+        TimeProvider time)
     {
         ArgumentNullException.ThrowIfNull(db);
         ArgumentNullException.ThrowIfNull(plant);
         ArgumentNullException.ThrowIfNull(traces);
+        ArgumentNullException.ThrowIfNull(events);
+        ArgumentNullException.ThrowIfNull(cascade);
+        ArgumentNullException.ThrowIfNull(sink);
+        ArgumentNullException.ThrowIfNull(time);
         _db = db;
         _plant = plant;
         _traces = traces;
+        _events = events;
+        _cascade = cascade;
+        _sink = sink;
+        _time = time;
     }
 
-    public async Task<DemoBaseline> ResetAsync(CancellationToken cancellationToken)
+    public Task<DemoBaseline> ResetAsync(CancellationToken cancellationToken) =>
+        ResetAsync(hard: true, cancellationToken);
+
+    public async Task<DemoBaseline> ResetAsync(bool hard, CancellationToken cancellationToken)
     {
         await Gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (!hard)
+            {
+                _plant.Reset();
+                _traces.Clear();
+                _cascade.Clear();
+                await PublishResetAsync(LifecycleTypes.ResetSoft, cancellationToken).ConfigureAwait(false);
+                return await BaselineAsync(cancellationToken).ConfigureAwait(false);
+            }
+
             await _db.Approvals.ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
             await _db.Capas.ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
             await _db.Investigations.ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
@@ -71,21 +104,44 @@ public sealed class DemoResetService
             await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             _plant.Reset();
             _traces.Clear();
-
-            return new DemoBaseline(
-                _plant.Runtime.Seed,
-                DemoClock.BaselineOrigin,
-                await _db.Tools.CountAsync(cancellationToken).ConfigureAwait(false),
-                await _db.Tickets.CountAsync(cancellationToken).ConfigureAwait(false),
-                await _db.Investigations.CountAsync(cancellationToken).ConfigureAwait(false),
-                await _db.Approvals.CountAsync(cancellationToken).ConfigureAwait(false),
-                await _db.Capas.CountAsync(cancellationToken).ConfigureAwait(false));
+            _events.Clear();
+            _cascade.Clear();
+            await PublishResetAsync(LifecycleTypes.ResetHard, cancellationToken).ConfigureAwait(false);
+            return await BaselineAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
         {
             Gate.Release();
         }
     }
+
+    private async Task PublishResetAsync(string type, CancellationToken cancellationToken)
+    {
+        var correlationId = "reset-" + Guid.NewGuid().ToString("N");
+        await _sink.PublishAsync(
+            new LifecycleEvent(
+                type,
+                correlationId,
+                null,
+                null,
+                "presenter",
+                null,
+                null,
+                null,
+                _time.GetUtcNow(),
+                new { kind = type == LifecycleTypes.ResetHard ? "hard" : "soft" }),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<DemoBaseline> BaselineAsync(CancellationToken cancellationToken) =>
+        new(
+            _plant.Runtime.Seed,
+            DemoClock.BaselineOrigin,
+            await _db.Tools.CountAsync(cancellationToken).ConfigureAwait(false),
+            await _db.Tickets.CountAsync(cancellationToken).ConfigureAwait(false),
+            await _db.Investigations.CountAsync(cancellationToken).ConfigureAwait(false),
+            await _db.Approvals.CountAsync(cancellationToken).ConfigureAwait(false),
+            await _db.Capas.CountAsync(cancellationToken).ConfigureAwait(false));
 }
 
 public sealed record DemoBaseline(

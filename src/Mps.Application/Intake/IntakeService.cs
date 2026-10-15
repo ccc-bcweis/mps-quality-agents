@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Application.Bus;
 using Mps.Application.Errors;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
@@ -25,13 +26,15 @@ public sealed class IntakeService : IIntakeService
     private readonly ITicketingPort _ticketing;
     private readonly IQualityNotifier _notifier;
     private readonly TimeProvider _time;
+    private readonly ILifecycleEventSink? _events;
 
     public IntakeService(
         IFleetCatalog fleet,
         IIncidentLog incidents,
         ITicketingPort ticketing,
         IQualityNotifier notifier,
-        TimeProvider time)
+        TimeProvider time,
+        ILifecycleEventSink? events = null)
     {
         ArgumentNullException.ThrowIfNull(fleet);
         ArgumentNullException.ThrowIfNull(incidents);
@@ -43,6 +46,7 @@ public sealed class IntakeService : IIntakeService
         _ticketing = ticketing;
         _notifier = notifier;
         _time = time;
+        _events = events;
     }
 
     public async Task<IntakeResult> AcceptAsync(IntakeSubmission submission, CancellationToken cancellationToken)
@@ -95,8 +99,18 @@ public sealed class IntakeService : IIntakeService
         }
 
         var occurredAt = submission.OccurredAt ?? _time.GetUtcNow();
-        var correlationId = submission.CorrelationId ?? "intake-" + Guid.NewGuid().ToString("N");
+        var correlationId = CommandAmbient.CorrelationId
+            ?? submission.CorrelationId
+            ?? "intake-" + Guid.NewGuid().ToString("N");
         var chamberId = string.IsNullOrWhiteSpace(submission.ChamberId) ? null : submission.ChamberId.Trim();
+        using var command = await OpenCommandAsync(
+            correlationId,
+            toolId.ToString(),
+            chamberId,
+            parameter,
+            summary,
+            occurredAt,
+            cancellationToken).ConfigureAwait(false);
         var incident = Incident.Open(
             IncidentId.New(),
             toolId,
@@ -113,6 +127,36 @@ public sealed class IntakeService : IIntakeService
         await _notifier.TicketOpenedAsync(ticket, cancellationToken).ConfigureAwait(false);
         await _notifier.IncidentChangedAsync(incident, cancellationToken).ConfigureAwait(false);
         return new IntakeResult(incident, ticket, linkedToExisting: false, stored.EscalationRequired);
+    }
+
+    private async ValueTask<IDisposable?> OpenCommandAsync(
+        string correlationId,
+        string toolId,
+        string? chamberId,
+        string parameter,
+        string summary,
+        DateTimeOffset occurredAt,
+        CancellationToken cancellationToken)
+    {
+        if (_events is null || CommandAmbient.EventId is not null)
+        {
+            return null;
+        }
+
+        var eventId = await _events.PublishAsync(
+            new LifecycleEvent(
+                LifecycleTypes.OperatorReport,
+                correlationId,
+                null,
+                null,
+                "operator",
+                null,
+                toolId,
+                chamberId,
+                occurredAt,
+                new { toolId, chamberId, parameter, summary }),
+            cancellationToken).ConfigureAwait(false);
+        return CommandAmbient.Push(correlationId, eventId);
     }
 
     private static bool ContainsDisallowedControl(string value)

@@ -474,4 +474,24 @@ export const handlers = [
       spendCapUsd: 2,
     }),
   ),
+  http.get("/api/trace/:eventId", () =>
+    HttpResponse.json({
+      focusEventId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      rootEventId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      ancestors: [],
+      tree: {
+        eventId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        type: "command.fault.inject",
+        summary: "A presenter injected a fault on Etch 02.",
+        occurredAt: "2026-09-01T00:00:00Z",
+        toolId: "E-02",
+        toolName: "Etch 02",
+        value: null,
+        limitLow: null,
+        limitHigh: null,
+        children: [],
+        truncated: false,
+      },
+    }),
+  ),
 ];

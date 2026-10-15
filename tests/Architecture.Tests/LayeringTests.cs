@@ -14,6 +14,8 @@ public sealed class LayeringTests
 {
     private static readonly Assembly Domain = typeof(Mps.Domain.LayerAnchor).Assembly;
 
+    private static readonly Assembly Bus = typeof(Mps.Bus.LayerAnchor).Assembly;
+
     private static readonly Assembly Application = typeof(Mps.Application.LayerAnchor).Assembly;
 
     private static readonly Assembly Simulator = typeof(Mps.Simulator.LayerAnchor).Assembly;
@@ -33,6 +35,7 @@ public sealed class LayeringTests
     private static readonly string[] Layers =
     [
         "Mps.Domain",
+        "Mps.Bus",
         "Mps.Application",
         "Mps.Simulator",
         "Mps.ModelGateway",
@@ -48,6 +51,13 @@ public sealed class LayeringTests
     {
         AssertDoesNotDependOn(Domain, AllExcept("Mps.Domain"));
         AssertDoesNotDependOn(Domain, "Microsoft.AspNetCore", "Microsoft.EntityFrameworkCore", "Microsoft.Extensions.AI");
+    }
+
+    [Fact]
+    public void BusDependsOnNothingElse()
+    {
+        AssertDoesNotDependOn(Bus, AllExcept("Mps.Bus"));
+        AssertDoesNotDependOn(Bus, "Mps.Domain", "Mps.Application", "Mps.Api");
     }
 
     [Fact]

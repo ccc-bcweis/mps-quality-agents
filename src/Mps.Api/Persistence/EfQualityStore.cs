@@ -645,7 +645,8 @@ public sealed class EfQualityStore :
             SpecLow: item.Reading?.SpecLow,
             SpecHigh: item.Reading?.SpecHigh,
             ToolName: item.Reading?.ToolName,
-            ChamberName: item.Reading?.ChamberName);
+            ChamberName: item.Reading?.ChamberName,
+            SourceEventIds: item.SourceEventIds.Count == 0 ? null : item.SourceEventIds.ToArray());
 
     private static EvidenceItem ToEvidence(EvidenceDocument document)
     {
@@ -665,7 +666,8 @@ public sealed class EfQualityStore :
             document.ObservedAt,
             document.ToolId,
             document.ExternalRef,
-            reading);
+            reading,
+            document.SourceEventIds);
     }
 
     private static HypothesisDocument ToHypothesisDocument(Hypothesis hypothesis) =>
@@ -715,7 +717,8 @@ public sealed class EfQualityStore :
         double? SpecLow = null,
         double? SpecHigh = null,
         string? ToolName = null,
-        string? ChamberName = null);
+        string? ChamberName = null,
+        IReadOnlyList<string>? SourceEventIds = null);
 
     private sealed record MatrixDocument(string Category, Guid EvidenceId, string Stance, string? WhyItMatters);
 

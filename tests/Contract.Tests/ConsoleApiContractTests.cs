@@ -42,6 +42,7 @@ public sealed class ConsoleApiContractTests
         "/api/injector/scenarios",
         "/api/injector/scenarios/{scenarioId}",
         "/api/metrics",
+        "/api/trace/{eventId}",
     ];
 
     [Fact]
@@ -95,6 +96,7 @@ public sealed class ConsoleApiContractTests
         Expect(OperationType.Get, "/api/injector/scenarios", "listScenarios", "200");
         Expect(OperationType.Post, "/api/injector/scenarios/{scenarioId}", "runScenario", "202");
         Expect(OperationType.Get, "/api/metrics", "getMetrics", "200");
+        Expect(OperationType.Get, "/api/trace/{eventId}", "getCausalTrace", "200");
 
         OpenApiDocs.Console.Paths["/api/capas"].Operations.Should().NotContainKey(OperationType.Post);
         OpenApiDocs.Console.Paths.Keys.Should().NotContain(path =>

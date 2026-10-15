@@ -1,5 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using System.Text.Json.Serialization;
+
 using Mps.Application.Evidence;
 using Mps.Domain.Capa;
 using Mps.Domain.Equipment;
@@ -64,7 +66,8 @@ public sealed record EvidenceResponse(
     double? SpecLow = null,
     double? SpecHigh = null,
     string? ToolName = null,
-    string? ChamberName = null);
+    string? ChamberName = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? SourceEventIds = null);
 
 public sealed record EvidenceMatrixResponse(
     RootCauseCategory Category,

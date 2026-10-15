@@ -21,6 +21,7 @@ public sealed class PlantSimulation
     private readonly object _gate = new();
     private readonly SimulationOptions _options;
     private readonly LiveSeriesLog _log;
+    private readonly List<TelemetryFrame> _pending = [];
     private bool _primed;
 
     public PlantSimulation(SiteWorld world, TimeProvider time, IConfiguration configuration, SimulationOptions options)
@@ -109,6 +110,7 @@ public sealed class PlantSimulation
         {
             Runtime.Reset();
             _log.Clear();
+            _pending.Clear();
             _primed = false;
             if (_options.Enabled)
             {
@@ -127,6 +129,21 @@ public sealed class PlantSimulation
     {
         var site = World.Find(siteId);
         return site is null ? [] : site.Tools.Select(ToDomain).ToArray();
+    }
+
+    public IReadOnlyList<TelemetryFrame> TakePendingFrames()
+    {
+        lock (_gate)
+        {
+            if (_pending.Count == 0)
+            {
+                return [];
+            }
+
+            var copy = _pending.ToArray();
+            _pending.Clear();
+            return copy;
+        }
     }
 
     public string DefaultChamber(string toolId)
@@ -221,6 +238,7 @@ public sealed class PlantSimulation
     {
         var frames = Runtime.Simulator.Advance(simulatedElapsed, _options.SampleStrideSeconds);
         _log.Append(frames);
+        _pending.AddRange(frames);
     }
 
     private static Tool ToDomain(PlacedTool placed)

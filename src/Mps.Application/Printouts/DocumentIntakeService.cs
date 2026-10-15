@@ -2,6 +2,7 @@
 
 using System.Globalization;
 
+using Mps.Application.Bus;
 using Mps.Application.Errors;
 using Mps.Application.Faults;
 using Mps.Application.Intake;
@@ -54,6 +55,8 @@ public sealed class DocumentIntakeService : IDocumentIntake
     private readonly IManualMeasurementLog _measurements;
     private readonly ISimulationFaultPort _simulation;
     private readonly TimeProvider _time;
+    private readonly ILifecycleEventSink? _events;
+    private readonly ICascadeDirectory? _cascade;
 
     public DocumentIntakeService(
         IPrintoutTextExtractor extractor,
@@ -65,7 +68,9 @@ public sealed class DocumentIntakeService : IDocumentIntake
         IQualityNotifier notifier,
         IManualMeasurementLog measurements,
         ISimulationFaultPort simulation,
-        TimeProvider time)
+        TimeProvider time,
+        ILifecycleEventSink? events = null,
+        ICascadeDirectory? cascade = null)
     {
         ArgumentNullException.ThrowIfNull(extractor);
         ArgumentNullException.ThrowIfNull(parser);
@@ -87,6 +92,8 @@ public sealed class DocumentIntakeService : IDocumentIntake
         _measurements = measurements;
         _simulation = simulation;
         _time = time;
+        _events = events;
+        _cascade = cascade;
     }
 
     public async Task<PrintoutInspection> InspectAsync(
@@ -116,6 +123,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
         var catalogParameter = PrintoutReading.CatalogParameter(reading.ToolId, reading.Parameter);
         var summary = Summary(reading, catalogParameter);
         var severity = reading.OutOfSpec ? Severity.High : Severity.Low;
+        using var command = await OpenCommandAsync(reading, catalogParameter, cancellationToken).ConfigureAwait(false);
         var intake = await _intake.AcceptAsync(
             new IntakeSubmission(
                 IncidentChannel.OperatorReport,
@@ -125,7 +133,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
                 summary,
                 severity,
                 signalSeverity: null,
-                correlationId: null,
+                CommandAmbient.CorrelationId,
                 reading.ObservedAt),
             cancellationToken).ConfigureAwait(false);
 
@@ -137,6 +145,8 @@ public sealed class DocumentIntakeService : IDocumentIntake
             reading.ObservedAt,
             reading.ToolId,
             "printout:" + reading.ToolId + ":" + catalogParameter);
+        evidence = await StampDocumentAsync(evidence, reading, catalogParameter, intake.Incident.CorrelationId, cancellationToken)
+            .ConfigureAwait(false);
         _measurements.Add(new ManualMeasurement(evidence, intake.Incident.Id.Value));
 
         if (!reading.OutOfSpec)
@@ -166,6 +176,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
                 false),
             cancellationToken).ConfigureAwait(false);
         var applied = _simulation.TryApply(reading.ToolId, reading.ChamberId, catalogParameter, shape, magnitude);
+        await PublishReadingAsync(reading, catalogParameter, intake.Incident.CorrelationId, cancellationToken).ConfigureAwait(false);
         var alert = new Alert(
             AlertId.New(),
             intake.Incident.ToolId,
@@ -187,6 +198,104 @@ public sealed class DocumentIntakeService : IDocumentIntake
             true,
             reading.Parameter,
             catalogParameter);
+    }
+
+    private async ValueTask<IDisposable?> OpenCommandAsync(
+        PrintoutReading reading,
+        string catalogParameter,
+        CancellationToken cancellationToken)
+    {
+        if (_events is null || CommandAmbient.EventId is not null)
+        {
+            return null;
+        }
+
+        var correlationId = "printout-" + Guid.NewGuid().ToString("N");
+        var eventId = await _events.PublishAsync(
+            new LifecycleEvent(
+                LifecycleTypes.DocumentUpload,
+                correlationId,
+                null,
+                null,
+                "printout",
+                null,
+                reading.ToolId,
+                reading.ChamberId,
+                reading.ObservedAt,
+                new { toolId = reading.ToolId, parameter = catalogParameter, value = reading.Value, unit = reading.Unit }),
+            cancellationToken).ConfigureAwait(false);
+        return CommandAmbient.Push(correlationId, eventId);
+    }
+
+    private async Task<EvidenceItem> StampDocumentAsync(
+        EvidenceItem evidence,
+        PrintoutReading reading,
+        string catalogParameter,
+        string correlationId,
+        CancellationToken cancellationToken)
+    {
+        if (_events is null)
+        {
+            return evidence;
+        }
+
+        var parent = CommandAmbient.EventId;
+        var eventId = await _events.PublishAsync(
+            new LifecycleEvent(
+                LifecycleTypes.DocumentUploaded,
+                correlationId,
+                parent,
+                parent,
+                "printout",
+                null,
+                reading.ToolId,
+                reading.ChamberId,
+                reading.ObservedAt,
+                new
+                {
+                    parameter = catalogParameter,
+                    value = reading.Value,
+                    unit = reading.Unit,
+                    low = reading.SpecMinimum,
+                    high = reading.SpecMaximum,
+                    evidenceId = evidence.Id.Value,
+                }),
+            cancellationToken).ConfigureAwait(false);
+        return evidence.WithSourceEventIds([eventId]);
+    }
+
+    private async Task PublishReadingAsync(
+        PrintoutReading reading,
+        string catalogParameter,
+        string correlationId,
+        CancellationToken cancellationToken)
+    {
+        if (_events is null)
+        {
+            return;
+        }
+
+        var parent = _cascade?.FaultEventId(reading.ToolId, catalogParameter) ?? CommandAmbient.EventId;
+        await _events.PublishAsync(
+            new LifecycleEvent(
+                LifecycleTypes.TelemetryReading,
+                correlationId,
+                parent,
+                parent,
+                "printout",
+                null,
+                reading.ToolId,
+                reading.ChamberId,
+                reading.ObservedAt,
+                new
+                {
+                    parameter = catalogParameter,
+                    value = reading.Value,
+                    unit = reading.Unit,
+                    low = reading.SpecMinimum,
+                    high = reading.SpecMaximum,
+                }),
+            cancellationToken).ConfigureAwait(false);
     }
 
     private static string Summary(PrintoutReading reading, string catalogParameter)

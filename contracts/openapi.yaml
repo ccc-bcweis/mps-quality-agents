@@ -28,6 +28,9 @@ info:
     Clients that ignore unknown fields stay compatible.
     Contract 1.3 adds printout inspect and confirm. Both are additive. A confirmed bench
     reading is stored as evidence with source manualMeasurement.
+    Contract 1.3 also adds GET /api/trace/{eventId}. The path returns the ancestors of one
+    event and the tree of events that followed it. EvidenceItem gains optional sourceEventIds,
+    the events that item was derived from. Both additions are optional for older clients.
     All names and data are synthetic.
   license:
     name: MIT
@@ -47,6 +50,7 @@ tags:
   - name: admin
   - name: audit
   - name: metrics
+  - name: trace
 paths:
   /health:
     get:
@@ -603,6 +607,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MetricsSummary"
+  /api/trace/{eventId}:
+    get:
+      tags: [trace]
+      operationId: getCausalTrace
+      summary: Ancestors and descendants of one event
+      description: |
+        Walks parent links, then causation, across the event log and the telemetry table.
+        Ancestors are root-first and do not include the focus. The tree is rooted at the focus.
+        Unknown ids return 404.
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      responses:
+        "200":
+          description: The causal trace.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CausalTrace"
+        "404":
+          $ref: "#/components/responses/NotFound"
 components:
   parameters:
     ToolId:
@@ -632,6 +656,13 @@ components:
       schema:
         type: string
         format: uuid
+    EventId:
+      name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
     CapaId:
       name: capaId
       in: path
@@ -1023,6 +1054,62 @@ components:
           type: string
           nullable: true
           description: Plain chamber name, such as Chamber B.
+        sourceEventIds:
+          type: array
+          nullable: true
+          description: Event ids this evidence was derived from. Absent when the item has none.
+          items:
+            type: string
+    CausalTrace:
+      type: object
+      additionalProperties: false
+      required: [focusEventId, rootEventId, ancestors, tree]
+      properties:
+        focusEventId:
+          type: string
+        rootEventId:
+          type: string
+        ancestors:
+          type: array
+          items:
+            $ref: "#/components/schemas/TraceNode"
+        tree:
+          $ref: "#/components/schemas/TraceNode"
+    TraceNode:
+      type: object
+      additionalProperties: false
+      required: [eventId, type, summary, occurredAt, children, truncated]
+      properties:
+        eventId:
+          type: string
+        type:
+          type: string
+        summary:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+        toolId:
+          type: string
+          nullable: true
+        toolName:
+          type: string
+          nullable: true
+        value:
+          type: number
+          nullable: true
+        limitLow:
+          type: number
+          nullable: true
+        limitHigh:
+          type: number
+          nullable: true
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/TraceNode"
+        truncated:
+          type: boolean
     EvidenceStance:
       type: string
       enum: [supports, rulesOut, neutral]

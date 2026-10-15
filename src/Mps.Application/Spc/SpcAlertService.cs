@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Application.Bus;
 using Mps.Application.Intake;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
@@ -19,12 +20,14 @@ public sealed class SpcAlertService
     private readonly IIntakeService _intake;
     private readonly IQualityNotifier _notifier;
     private readonly TimeSpan _debounce;
+    private readonly ICascadeDirectory? _hints;
 
     public SpcAlertService(
         IAlertLog alerts,
         IIntakeService intake,
         IQualityNotifier notifier,
-        TimeSpan debounce)
+        TimeSpan debounce,
+        ICascadeDirectory? hints = null)
     {
         ArgumentNullException.ThrowIfNull(alerts);
         ArgumentNullException.ThrowIfNull(intake);
@@ -38,6 +41,7 @@ public sealed class SpcAlertService
         _intake = intake;
         _notifier = notifier;
         _debounce = debounce;
+        _hints = hints;
     }
 
     public async Task<SpcAlertOutcome> RaiseAsync(SpcSample sample, CancellationToken cancellationToken)
@@ -64,7 +68,8 @@ public sealed class SpcAlertService
 
         var severity = WesternElectricEvaluator.Highest(violations);
         var rule = WesternElectricEvaluator.JoinRules(violations);
-        var correlationId = "spc-" + Guid.NewGuid().ToString("N");
+        var correlationId = _hints?.CorrelationFor(sample.ToolId.ToString(), sample.Parameter)
+            ?? "spc-" + Guid.NewGuid().ToString("N");
         var alert = new Alert(
             AlertId.New(),
             sample.ToolId,

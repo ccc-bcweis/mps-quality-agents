@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 
+using Mps.Api.Bus;
 using Mps.Api.Demo;
 using Mps.Api.Fakes;
 using Mps.Api.Http;
@@ -13,6 +14,7 @@ using Mps.Api.Hubs;
 using Mps.Api.Live;
 using Mps.Api.Persistence;
 using Mps.Api.Printouts;
+using Mps.Application.Bus;
 using Mps.Application.Decisions;
 using Mps.Application.Faults;
 using Mps.Application.Intake;
@@ -24,6 +26,7 @@ using Mps.Application.Printouts;
 using Mps.Application.Spc;
 using Mps.Application.Workflow;
 using Mps.Application.Writes;
+using Mps.Bus;
 using Mps.Connectors.Printouts;
 using Mps.Simulator.Scenarios;
 using Mps.Simulator.Sites;
@@ -102,7 +105,8 @@ public static class QualityHost
                 services.GetRequiredService<IAlertLog>(),
                 services.GetRequiredService<IIntakeService>(),
                 services.GetRequiredService<IQualityNotifier>(),
-                debounce);
+                debounce,
+                services.GetRequiredService<ICascadeDirectory>());
         });
         if (!builder.TryAddLiveInvestigation())
         {
@@ -119,7 +123,20 @@ public static class QualityHost
         builder.Services.AddSingleton<ISimulationFaultPort, DemoSimulationFaultPort>();
         builder.Services.AddScoped<IDocumentIntake, DocumentIntakeService>();
         builder.Services.AddScoped<IFaultInjectionService, FaultInjectionService>();
+        builder.Services.AddSingleton<IEventBus>(services =>
+            new InProcessEventBus(time: services.GetRequiredService<TimeProvider>()));
+        builder.Services.AddSingleton(_ => new SqliteEventStore(connectionString));
+        builder.Services.AddSingleton<CascadeRegistry>();
+        builder.Services.AddSingleton<ICascadeDirectory>(services => services.GetRequiredService<CascadeRegistry>());
+        builder.Services.AddSingleton<ILifecycleEventSink, BusEventSink>();
+        builder.Services.AddSingleton(CommandCatalog.Load(dataDirectory));
+        builder.Services.AddScoped<CommandGateway>();
+        builder.Services.AddSingleton<TelemetryPublisher>();
+        builder.Services.AddSingleton<INominalHistorySeeder, NominalHistorySeeder>();
+        builder.Services.AddSingleton<CausalTraceService>();
         builder.Services.AddHostedService<QualityDatabaseInitializer>();
+        builder.Services.AddHostedService<EventLogSubscriber>();
+        builder.Services.AddHostedService<BusSignalRBridge>();
         builder.Services.AddHostedService<SimulationTickService>();
     }
 

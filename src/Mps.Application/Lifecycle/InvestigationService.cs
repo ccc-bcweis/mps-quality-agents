@@ -1,10 +1,12 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Application.Bus;
 using Mps.Application.Errors;
 using Mps.Application.Metrics;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
 using Mps.Application.Workflow;
+using Mps.Domain.Evidence;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
 using Mps.Domain.Investigations;
@@ -32,6 +34,8 @@ public sealed class InvestigationService : IInvestigationService
     private readonly TimeProvider _time;
     private readonly IMetricsLog _metrics;
     private readonly MetricsPolicy _metricsPolicy;
+    private readonly ILifecycleEventSink? _events;
+    private readonly ICascadeDirectory? _hints;
 
     public InvestigationService(
         IIncidentLog incidents,
@@ -40,7 +44,9 @@ public sealed class InvestigationService : IInvestigationService
         IQualityNotifier notifier,
         TimeProvider time,
         IMetricsLog metrics,
-        MetricsPolicy metricsPolicy)
+        MetricsPolicy metricsPolicy,
+        ILifecycleEventSink? events = null,
+        ICascadeDirectory? hints = null)
     {
         ArgumentNullException.ThrowIfNull(incidents);
         ArgumentNullException.ThrowIfNull(investigations);
@@ -56,6 +62,8 @@ public sealed class InvestigationService : IInvestigationService
         _time = time;
         _metrics = metrics;
         _metricsPolicy = metricsPolicy;
+        _events = events;
+        _hints = hints;
     }
 
     public async Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken)
@@ -86,7 +94,8 @@ public sealed class InvestigationService : IInvestigationService
             throw new LifecycleConflictException("The workflow cannot skip to a human decision.");
         }
 
-        var aligned = AlignCorrelation(started, stored.Incident.CorrelationId);
+        var aligned = Stamp(AlignCorrelation(started, stored.Incident.CorrelationId), stored.Incident);
+        using var command = await OpenCommandAsync(aligned, stored.Incident, cancellationToken).ConfigureAwait(false);
         var target = Map(aligned.Stage);
         LifecycleMoves.WalkTo(stored, target);
         await _incidents.SaveAsync(stored, _time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
@@ -138,6 +147,60 @@ public sealed class InvestigationService : IInvestigationService
         InvestigationStage.Rejected => IncidentStage.Rejected,
         _ => throw new LifecycleConflictException($"Investigation stage {stage} is not mapped."),
     };
+
+    private InvestigationSnapshot Stamp(InvestigationSnapshot snapshot, Incident incident)
+    {
+        var reading = _hints?.ReadingEventId(incident.ToolId.ToString(), incident.Parameter);
+        if (reading is null)
+        {
+            return snapshot;
+        }
+
+        var changed = false;
+        var evidence = new EvidenceItem[snapshot.Evidence.Count];
+        for (var index = 0; index < snapshot.Evidence.Count; index++)
+        {
+            var item = snapshot.Evidence[index];
+            if (item.Source is EvidenceSource.Spc or EvidenceSource.Telemetry && item.SourceEventIds.Count == 0)
+            {
+                evidence[index] = item.WithSourceEventIds([reading]);
+                changed = true;
+            }
+            else
+            {
+                evidence[index] = item;
+            }
+        }
+
+        return changed ? snapshot.WithEvidence(evidence) : snapshot;
+    }
+
+    private async ValueTask<IDisposable?> OpenCommandAsync(
+        InvestigationSnapshot snapshot,
+        Incident incident,
+        CancellationToken cancellationToken)
+    {
+        if (_events is null || CommandAmbient.EventId is not null)
+        {
+            return null;
+        }
+
+        var parent = _hints?.FindStep(snapshot.CorrelationId, "ticket") ?? _hints?.FindStep(snapshot.CorrelationId, "alert");
+        var eventId = await _events.PublishAsync(
+            new LifecycleEvent(
+                LifecycleTypes.InvestigationStart,
+                snapshot.CorrelationId,
+                parent,
+                parent,
+                "investigation",
+                null,
+                incident.ToolId.ToString(),
+                incident.ChamberId,
+                _time.GetUtcNow(),
+                new { incidentId = incident.Id.Value, investigationId = snapshot.Id.Value }),
+            cancellationToken).ConfigureAwait(false);
+        return CommandAmbient.Push(snapshot.CorrelationId, eventId);
+    }
 
     private static InvestigationSnapshot AlignCorrelation(InvestigationSnapshot snapshot, string correlationId)
     {
