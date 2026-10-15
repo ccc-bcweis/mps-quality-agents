@@ -17,6 +17,13 @@ describe("demo harness and console split", () => {
     expect(harness.className).toContain("bg-sn-navy");
     expect(harness.className).not.toMatch(/truncate|overflow-hidden/);
     expect(consoleRegion.className).toContain("bg-mps-canvas");
+    expect(consoleRegion.className).toContain("overflow-hidden");
+    expect(consoleRegion.className).not.toMatch(/border-sn-gold|border-amber|border-yellow/);
+    const scrolling = within(consoleRegion).getByRole("main");
+    expect(scrolling).toHaveAttribute("data-scroll", "content");
+    expect(scrolling.className).toContain("overflow-y-auto");
+    expect(consoleRegion.querySelector("header")?.className).toContain("shrink-0");
+    expect(consoleRegion.querySelector("footer")?.className).toContain("shrink-0");
 
     expect(CONSOLE_TABS.map((tab) => tab.label)).toEqual(CONSOLE_TAB_LABELS);
     const tabs = within(consoleRegion).getByRole("navigation", { name: "Console" });

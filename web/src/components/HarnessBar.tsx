@@ -36,7 +36,7 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
     <header
       aria-label="StatusNeo demo harness"
       data-region="harness"
-      className="sticky top-0 z-banner border-b-4 border-sn-gold bg-sn-navy font-pitch text-sn-gold-wash"
+      className="z-banner shrink-0 border-b-4 border-sn-gold bg-sn-navy font-pitch text-sn-gold-wash"
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2">
         <div className="flex shrink-0 flex-col gap-0.5">
