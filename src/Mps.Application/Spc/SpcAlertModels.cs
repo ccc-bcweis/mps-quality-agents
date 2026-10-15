@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Application.Metadata;
 using Mps.Domain;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
@@ -53,7 +54,8 @@ public sealed class SpcAlertOutcome
         Alert? alert,
         Incident? incident,
         Ticket? ticket,
-        bool debounced)
+        bool debounced,
+        RuleDecision? decision = null)
     {
         ArgumentNullException.ThrowIfNull(violations);
         Violations = violations.ToArray();
@@ -61,6 +63,7 @@ public sealed class SpcAlertOutcome
         Incident = incident;
         Ticket = ticket;
         Debounced = debounced;
+        Decision = decision;
     }
 
     public IReadOnlyList<SpcViolation> Violations { get; }
@@ -72,4 +75,6 @@ public sealed class SpcAlertOutcome
     public Ticket? Ticket { get; }
 
     public bool Debounced { get; }
+
+    public RuleDecision? Decision { get; }
 }

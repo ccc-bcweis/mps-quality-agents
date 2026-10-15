@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.meridian-precision.example/metadata/business-rules.schema.json",
+  "title": "BusinessRulesFile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["rules"],
+  "properties": {
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "order", "whenPlain", "thenPlain", "why", "when", "actions"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "order": { "type": "integer" },
+          "whenPlain": { "type": "string", "minLength": 1 },
+          "thenPlain": { "type": "string", "minLength": 1 },
+          "why": { "type": "string", "minLength": 1 },
+          "when": { "$ref": "#/$defs/when" },
+          "actions": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/action" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "when": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "severityAtLeast": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "severityAtMost": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "alertRuleId": { "type": "string", "minLength": 1 },
+        "parameterClass": { "type": "string", "minLength": 1 },
+        "parameterId": { "type": "string", "minLength": 1 },
+        "toolId": { "type": "string", "minLength": 1 },
+        "siteId": { "type": "string", "minLength": 1 },
+        "repeatAtLeast": { "type": "integer", "minimum": 1 },
+        "confidenceBelow": { "type": "number" },
+        "evidenceSufficiency": { "type": "string", "enum": ["sufficient", "insufficient", "contradictory"] },
+        "channel": { "type": "string", "minLength": 1 },
+        "requiresAlert": { "type": "boolean" }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["open-ticket", "set-priority", "route-to-queue", "escalate-to-human", "auto-investigate"]
+        },
+        "priority": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "queue": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

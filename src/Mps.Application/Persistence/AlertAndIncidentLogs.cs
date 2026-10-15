@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Application.Metadata;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
 
@@ -42,12 +43,13 @@ public interface ITicketLog
 /// </summary>
 public sealed class StoredIncident
 {
-    public StoredIncident(Incident incident, bool escalationRequired, bool hasEscalated)
+    public StoredIncident(Incident incident, bool escalationRequired, bool hasEscalated, RuleDecision? decision = null)
     {
         ArgumentNullException.ThrowIfNull(incident);
         Incident = incident;
         EscalationRequired = escalationRequired;
         HasEscalated = hasEscalated;
+        Decision = decision;
     }
 
     public Incident Incident { get; }
@@ -55,6 +57,8 @@ public sealed class StoredIncident
     public bool EscalationRequired { get; }
 
     public bool HasEscalated { get; private set; }
+
+    public RuleDecision? Decision { get; }
 
     public void MarkEscalated() => HasEscalated = true;
 }

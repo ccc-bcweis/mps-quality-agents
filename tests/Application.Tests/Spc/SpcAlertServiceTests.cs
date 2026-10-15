@@ -4,6 +4,7 @@ using Mps.Application.Intake;
 using Mps.Application.Notifications;
 using Mps.Application.Spc;
 using Mps.Application.Tests.Fakes;
+using Mps.Application.Tests.Metadata;
 using Mps.Domain.Equipment;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
@@ -144,8 +145,8 @@ public sealed class SpcAlertServiceTests
             Ticketing = new InMemoryTicketingPort();
             var fleet = new InMemoryFleetCatalog();
             fleet.Add(new Tool(SpcSeries.Tool, "Etch 02", ToolFamily.Etch, "MPS-E7", "Bay-2", [new Chamber("A", "Chamber A")]));
-            var intake = new IntakeService(fleet, Incidents, Ticketing, NullQualityNotifier.Instance, TimeProvider.System);
-            Service = new SpcAlertService(Alerts, intake, NullQualityNotifier.Instance, SpcAlertService.DefaultDebounce);
+            var intake = new IntakeService(fleet, Incidents, Ticketing, NullQualityNotifier.Instance, TimeProvider.System, DemoRules.Engine);
+            Service = new SpcAlertService(Alerts, intake, NullQualityNotifier.Instance, SpcAlertService.DefaultDebounce, DemoRules.Engine);
         }
 
         public InMemoryAlertLog Alerts { get; }

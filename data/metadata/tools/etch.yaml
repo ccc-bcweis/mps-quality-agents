@@ -1,0 +1,111 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+tools:
+  - id: E-01
+    name: Etch tool in bay one
+    siteId: northwater
+    lineId: nw-etch
+    toolType: Conductor etch
+    simulated: true
+    inputs: &etchInputs
+      - name: Patterned wafer
+        description: A wafer that still carries photoresist over the film to be opened.
+    outputs: &etchOutputs
+      - name: Etched wafer
+        description: The film is opened where the resist let the plasma through.
+    parameters: &etchParameters
+      - { id: escTemperature, name: Chuck temperature, parameterClass: temperature, unit: C, telemetry: true, lcl: 40, ucl: 60, alertLow: 42, alertHigh: 58, nominal: 50 }
+      - { id: wallTemperature, name: Wall temperature, parameterClass: temperature, unit: C, telemetry: true, lcl: 55, ucl: 65, alertLow: 56, alertHigh: 64, nominal: 60 }
+      - { id: chamberPressure, name: Chamber pressure, parameterClass: pressure, unit: mTorr, telemetry: true, lcl: 20, ucl: 80, alertLow: 26, alertHigh: 74, nominal: 45 }
+      - { id: rfSourcePower, name: Source power, parameterClass: power, unit: W, telemetry: true, lcl: 1000, ucl: 2000, alertLow: 1100, alertHigh: 1900, nominal: 1600 }
+      - { id: rfBiasPower, name: Bias power, parameterClass: power, unit: W, telemetry: true, lcl: 200, ucl: 500, alertLow: 230, alertHigh: 470, nominal: 350 }
+      - { id: cf4Flow, name: Etch gas flow, parameterClass: flow, unit: sccm, telemetry: true, lcl: 10, ucl: 200, alertLow: 29, alertHigh: 181, nominal: 55 }
+      - { id: chf3Flow, name: Second etch gas flow, parameterClass: flow, unit: sccm, telemetry: true, lcl: 5, ucl: 120, alertLow: 16.5, alertHigh: 108.5, nominal: 25 }
+      - { id: o2Flow, name: Oxygen flow, parameterClass: flow, unit: sccm, telemetry: true, lcl: 0, ucl: 100, alertLow: 10, alertHigh: 90, nominal: 12 }
+      - { id: arFlow, name: Argon flow, parameterClass: flow, unit: sccm, telemetry: true, lcl: 20, ucl: 500, alertLow: 68, alertHigh: 452, nominal: 110 }
+      - { id: vibrationRms, name: Vibration, parameterClass: vibration, unit: mm/s, telemetry: true, lcl: 0, ucl: 2.5, alertLow: 0.25, alertHigh: 2.25, nominal: 0.6 }
+      - { id: waferCenterOffset, name: Wafer center offset, parameterClass: alignment, unit: mm, telemetry: true, lcl: 0, ucl: 0.15, alertLow: 0.015, alertHigh: 0.135, nominal: 0.03 }
+      - { id: edgeRingHeight, name: Edge ring height, parameterClass: alignment, unit: mm, telemetry: true, lcl: 1.5, ucl: 2.5, alertLow: 1.6, alertHigh: 2.4, nominal: 2 }
+      - { id: etchRate, name: Etch rate, parameterClass: output, unit: nm/min, telemetry: true, lcl: 50, ucl: 800, alertLow: 125, alertHigh: 725, nominal: 350 }
+      - { id: endpointTime, name: Endpoint time, parameterClass: process, unit: s, telemetry: true, lcl: 15, ucl: 180, alertLow: 31.5, alertHigh: 163.5, nominal: 60 }
+      - { id: particlesAdders, name: Particle adders, parameterClass: particles, unit: count, telemetry: true, lcl: 0, ucl: 15, alertLow: 1.5, alertHigh: 13.5, nominal: 4 }
+  - id: E-02
+    name: Etch tool in bay two
+    siteId: northwater
+    lineId: nw-etch
+    toolType: Conductor etch
+    simulated: true
+    inputs: *etchInputs
+    outputs: *etchOutputs
+    parameters: *etchParameters
+  - id: E-03
+    name: Extra etch tool, left
+    siteId: northwater
+    lineId: nw-etch
+    toolType: Conductor etch
+    simulated: true
+    inputs: *etchInputs
+    outputs: *etchOutputs
+    parameters: *etchParameters
+  - id: E-04
+    name: Extra etch tool, right
+    siteId: northwater
+    lineId: nw-etch
+    toolType: Conductor etch
+    simulated: true
+    inputs: *etchInputs
+    outputs: *etchOutputs
+    parameters: *etchParameters
+  - id: I-E-01
+    name: Ironwood etch tool, first
+    siteId: ironwood
+    lineId: iw-etch
+    toolType: Conductor etch
+    simulated: true
+    inputs: *etchInputs
+    outputs: *etchOutputs
+    parameters: *etchParameters
+  - id: I-E-02
+    name: Ironwood etch tool, second
+    siteId: ironwood
+    lineId: iw-etch
+    toolType: Conductor etch
+    simulated: true
+    inputs: *etchInputs
+    outputs: *etchOutputs
+    parameters: *etchParameters
+  - id: I-E-03
+    name: Ironwood etch tool, third
+    siteId: ironwood
+    lineId: iw-etch
+    toolType: Conductor etch
+    simulated: true
+    inputs: *etchInputs
+    outputs: *etchOutputs
+    parameters: *etchParameters
+  - id: I-E-04
+    name: Ironwood etch tool, fourth
+    siteId: ironwood
+    lineId: iw-etch
+    toolType: Conductor etch
+    simulated: true
+    inputs: *etchInputs
+    outputs: *etchOutputs
+    parameters: *etchParameters
+  - id: P-E-01
+    name: Lumen etch tool, first
+    siteId: lumen
+    lineId: lm-etch
+    toolType: Conductor etch
+    simulated: true
+    inputs: *etchInputs
+    outputs: *etchOutputs
+    parameters: *etchParameters
+  - id: P-E-02
+    name: Lumen etch tool, second
+    siteId: lumen
+    lineId: lm-etch
+    toolType: Conductor etch
+    simulated: true
+    inputs: *etchInputs
+    outputs: *etchOutputs
+    parameters: *etchParameters

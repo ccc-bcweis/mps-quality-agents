@@ -1,0 +1,17 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Attached to manufacturing with no production line. Not simulated.
+tools:
+  - id: nw-film-check
+    name: Film check bench
+    siteId: northwater
+    capabilityId: nw-manufacturing
+    toolType: Film thickness bench
+    simulated: false
+    inputs:
+      - name: Coated wafer
+        description: A sample wafer from deposition, checked off the line.
+    outputs:
+      - name: Thickness reading
+        description: A bench reading of film thickness. The bench is not simulated in this demo.
+    parameters:
+      - { id: filmThickness, name: Film thickness, parameterClass: output, unit: nm, telemetry: true, lcl: 50, ucl: 800, alertLow: 125, alertHigh: 725, nominal: 200 }

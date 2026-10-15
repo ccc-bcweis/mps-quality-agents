@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.meridian-precision.example/metadata/tools.schema.json",
+  "title": "ToolsMetadataFile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tools"],
+  "properties": {
+    "tools": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "siteId", "toolType", "simulated", "inputs", "outputs", "parameters"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "siteId": { "type": "string", "minLength": 1 },
+          "lineId": { "type": "string", "minLength": 1 },
+          "capabilityId": { "type": "string", "minLength": 1 },
+          "toolType": { "type": "string", "minLength": 1 },
+          "simulated": { "type": "boolean" },
+          "inputs": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/port" }
+          },
+          "outputs": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/port" }
+          },
+          "parameters": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/parameter" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "port": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "description"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 }
+      }
+    },
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "parameterClass", "unit", "telemetry", "lcl", "ucl", "alertLow", "alertHigh", "nominal"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "parameterClass": {
+          "type": "string",
+          "enum": ["temperature", "pressure", "flow", "power", "vibration", "alignment", "output", "particles", "process"]
+        },
+        "unit": { "type": "string", "minLength": 1 },
+        "telemetry": { "type": "boolean" },
+        "lcl": { "type": "number" },
+        "ucl": { "type": "number" },
+        "alertLow": { "type": "number" },
+        "alertHigh": { "type": "number" },
+        "nominal": { "type": "number" }
+      }
+    }
+  }
+}

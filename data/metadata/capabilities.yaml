@@ -1,0 +1,111 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Every capability is modeled. Only manufacturing is simulated.
+capabilities:
+  - id: nw-manufacturing
+    siteId: northwater
+    name: Manufacturing
+    type: Manufacturing
+    simulated: true
+    description: Wafer strip, clean, deposition, and etch at Northwater Fab.
+  - id: nw-warehousing
+    siteId: northwater
+    name: Warehousing
+    type: Warehousing
+    simulated: false
+    description: Stores wafers, gases, and spare parts for Northwater Fab.
+  - id: nw-research
+    siteId: northwater
+    name: Research and development
+    type: ResearchAndDevelopment
+    simulated: false
+    description: Process experiments that are not on the production floor.
+  - id: nw-sales
+    siteId: northwater
+    name: Sales
+    type: Sales
+    simulated: false
+    description: Customer orders for Northwater wafers.
+  - id: nw-back-office
+    siteId: northwater
+    name: Back office
+    type: BackOffice
+    simulated: false
+    description: Planning, finance, and records for Northwater Fab.
+  - id: nw-other
+    siteId: northwater
+    name: Other
+    type: Other
+    simulated: false
+    description: Facilities and site services at Northwater Fab.
+  - id: iw-manufacturing
+    siteId: ironwood
+    name: Manufacturing
+    type: Manufacturing
+    simulated: true
+    description: Wafer strip, clean, deposition, and etch at Ironwood Fab.
+  - id: iw-warehousing
+    siteId: ironwood
+    name: Warehousing
+    type: Warehousing
+    simulated: false
+    description: Stores wafers, gases, and spare parts for Ironwood Fab.
+  - id: iw-research
+    siteId: ironwood
+    name: Research and development
+    type: ResearchAndDevelopment
+    simulated: false
+    description: Process experiments that are not on the Ironwood production floor.
+  - id: iw-sales
+    siteId: ironwood
+    name: Sales
+    type: Sales
+    simulated: false
+    description: Customer orders for Ironwood wafers.
+  - id: iw-back-office
+    siteId: ironwood
+    name: Back office
+    type: BackOffice
+    simulated: false
+    description: Planning, finance, and records for Ironwood Fab.
+  - id: iw-other
+    siteId: ironwood
+    name: Other
+    type: Other
+    simulated: false
+    description: Facilities and site services at Ironwood Fab.
+  - id: lm-manufacturing
+    siteId: lumen
+    name: Manufacturing
+    type: Manufacturing
+    simulated: true
+    description: The pilot tools at Lumen Pilot Works.
+  - id: lm-warehousing
+    siteId: lumen
+    name: Warehousing
+    type: Warehousing
+    simulated: false
+    description: Stores pilot lots and spare parts at Lumen Pilot Works.
+  - id: lm-research
+    siteId: lumen
+    name: Research and development
+    type: ResearchAndDevelopment
+    simulated: false
+    description: Research planning for the pilot works. The pilot tools sit under manufacturing.
+  - id: lm-sales
+    siteId: lumen
+    name: Sales
+    type: Sales
+    simulated: false
+    description: Early customer samples from the pilot works.
+  - id: lm-back-office
+    siteId: lumen
+    name: Back office
+    type: BackOffice
+    simulated: false
+    description: Planning and records for Lumen Pilot Works.
+  - id: lm-other
+    siteId: lumen
+    name: Other
+    type: Other
+    simulated: false
+    description: Facilities and site services at Lumen Pilot Works.
