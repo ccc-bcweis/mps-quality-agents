@@ -12,6 +12,8 @@ Pitch drawings for Meridian Precision Systems. The mermaid sources are the revie
 | G4 (#56) | [`investigation-flow.md`](investigation-flow.md) | Swimlane from Alerts to CAPA. Agent steps, the tool schematic, why-lines, and the evidence matrix |
 | G5 (#74) | [`as-is-flow.md`](as-is-flow.md) | Current investigation. Manual hand-offs, error risks, simulated stage durations |
 | G5 (#74) | `print/as-is-vs-to-be-archD.pdf` | As-is and to-be side by side, matching stage bands, simulated benefits |
+| G7 | [`fab-floor.md`](fab-floor.md) | Physical fab floor. Cleanroom bays, overhead rail, utility chases. Not the Azure sheet. |
+| K7 | [`mps-sites.svg`](mps-sites.svg) | Opening-slide map. Three fictional plants on an invented coast. |
 
 ## What to print
 
@@ -23,6 +25,7 @@ Send these to the large-format printer. Page size is ARCH D landscape: 36 in wid
 - `print/investigation-flow-archD.pdf`
 - `print/as-is-flow-archD.pdf`
 - `print/as-is-vs-to-be-archD.pdf`
+- `print/fab-floor-archD.pdf`
 
 Each sheet also has an SVG twin (`print/<name>-archD.svg`) and a diagram-only SVG (`print/<name>.svg`). Preview PNGs at 150 dpi (5400 × 3600) are in `print/preview/`.
 

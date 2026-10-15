@@ -92,9 +92,29 @@ Projection levers (conservative / expected): investigation hours −30/−45%; t
 
 ## 7. Deck plan (PowerPoint, StatusNeo-branded, "Prepared for Meridian Precision Systems")
 Draft outline now; finish after the demo with real screenshots and measured metrics.
+The opening slide is the company overview (K7), before the numbered story. The numbers below are unchanged.
 1. Title + MPS context (fleet, plants, pain) · 2. The problem in numbers (ROI baseline) · 3. Thesis: engineers decide, AI assembles evidence, rules enforce · 4. Opportunity landscape (5, prioritized) · 5. Deep dive: current vs future state + Rules/AI/Human table · 6. Business case: KPIs, baselines, projected savings, payback · 7. Architecture (logical + physical; MAF ↔ LangGraph) · 8. 90-day roadmap + production gates · 9. How we built it: AI agents in parallel lanes, Project board, CI/test/eval evidence, open statement that it's AI-built · 10. Risks, controls and ask (closing slide carries the IP notice).
 **IP notice (footer on every slide + closing slide):** "© 2026 Bryan C. Weis and Common Consulting Company. All intellectual property owned by Bryan C. Weis / Common Consulting Company. Fictional demonstration, AI-assisted; all companies and data are synthetic."
-(Core exec story = slides 1-6 + 8, per the 6-8 recommendation; 7 and 9 support the architecture and code segments.)
+(Core exec story = slides 1-6 + 8, per the 6-8 recommendation; 7 and 9 support the architecture and code segments. K7 opens, ahead of slide 1.)
+
+- **Company overview slide (K7):** Opening slide. Meridian Precision Systems is a fictional company that builds chip-process tools and runs three plants of its own. The tools are thin-film deposition (MPS-D7), plasma etch (MPS-E7), photoresist strip (MPS-S7), and single-wafer clean (MPS-C7). The eight-tool demo fleet is the teaching floor, not a claim about a real site.
+
+  Three plants. Names are proposals until Lane S1 locks them. Do not swap in a real city.
+
+  | Plant | Name | What it runs |
+  |---|---|---|
+  | A | Cindervane | Front-end fab. Deposition and etch. |
+  | B | Lowspindle | Second fab. A similar tool mix. |
+  | C | Rookspur | Photoresist strip, wafer clean, and a pilot line. |
+
+  Map: `docs/diagrams/mps-sites.svg`. A stylized invented coast with three pins. Caption on the art: "Illustrative. Fictional coast. Not a real city. Not to scale." No country name, no real fab city, no real coastline.
+
+  Picture frames, both marked Illustrative. Do not drop in a photo of a real plant. Prompts below are for a later image pass. Each finished picture stays labeled Illustrative.
+
+  - Exterior frame: `docs/deck/exterior-illustrative.svg`. Prompt: "Wide daylight view of a low modern factory campus beside a generic rocky shore. Flat-roofed industrial buildings, a small office block, a parking row, and young trees. Cool overcast light. No logos, no readable signs, no flag, no city skyline, no famous landmark, no real company. Label the picture Illustrative."
+  - Cleanroom frame: `docs/deck/cleanroom-illustrative.svg`. Prompt: "View down a wide chip-factory cleanroom aisle. People in full white cleanroom suits. Stainless process tools with round chambers and square load ports. A thin overhead rail carrying a wafer carrier. Pale light, smooth floor. No logos, no readable screens, no real company marks. Label the picture Illustrative."
+
+  Leave-behind, not this slide: the physical floor plan `docs/diagrams/print/fab-floor-archD.pdf` (plan view of the Cindervane demo floor). It is a building drawing, not the console tool schematic and not the Azure architecture sheet.
 
 - **Design principle slide (K5 #66):** Plain-language operations (ADR-003): a supervisor or manager who isn't an engineer can understand and explain a problem, because nothing is in code. Show glossary hovers, the tool schematic, why-it-matters evidence and plain-word metrics.
 - **Current versus future slides (K6 #75):** Three slides. 1. As-is swimlane, with manual hand-offs and error risks (`docs/diagrams/print/as-is-flow-archD.pdf`). 2. To-be investigation flow, the assisted path (`docs/diagrams/print/investigation-flow-archD.pdf`). 3. Side-by-side with simulated benefits (`docs/diagrams/print/as-is-vs-to-be-archD.pdf`). Narrative and the stage table: `docs/analysis/current-vs-future-state.md`. Every figure on these slides is labeled simulated.

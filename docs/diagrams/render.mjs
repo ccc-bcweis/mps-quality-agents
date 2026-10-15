@@ -6,8 +6,10 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
-import { loadFonts, Sheet, logoInner } from './sheet.mjs';
+import { collectLabelIssues, loadFonts, Sheet, logoInner } from './sheet.mjs';
 import { SHEETS } from './sheets.mjs';
+import { drawSiteMap } from './sites-map.mjs';
+import { drawDeckPlaceholders } from './deck-art.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.resolve(here, '..', '..');
@@ -160,9 +162,53 @@ async function renderMermaid(edge) {
   }
 }
 
+function assertOverlapCheckWorks() {
+  const overlap = collectLabelIssues([
+    { id: 'a', text: 'a', box: { x: 0, y: 0, w: 20, h: 10 } },
+    { id: 'b', text: 'b', box: { x: 10, y: 0, w: 20, h: 10 } },
+  ]);
+  if (!overlap.some((line) => line.includes('text overlap'))) {
+    throw new Error('overlap check did not fire on overlapping labels');
+  }
+  const clear = collectLabelIssues([
+    { id: 'a', text: 'a', box: { x: 0, y: 0, w: 10, h: 10 }, clip: { x: -2, y: -2, w: 40, h: 20 } },
+    { id: 'b', text: 'b', box: { x: 20, y: 0, w: 10, h: 10 }, clip: { x: -2, y: -2, w: 40, h: 20 } },
+  ]);
+  if (clear.length) throw new Error(`clear labels failed: ${clear.join('; ')}`);
+  const clipped = collectLabelIssues([
+    { id: 'c', text: 'c', box: { x: 0, y: 0, w: 30, h: 10 }, clip: { x: 0, y: 0, w: 10, h: 10 } },
+  ]);
+  if (!clipped.some((line) => line.includes('escapes its clip'))) {
+    throw new Error('clip check did not fire');
+  }
+  const drawn = collectLabelIssues(
+    [{ id: 't', text: 't', box: { x: 0, y: 0, w: 10, h: 10 } }],
+    [{ id: 'ink', x: 5, y: 0, w: 10, h: 10 }],
+  );
+  if (!drawn.some((line) => line.includes('overlaps drawing'))) {
+    throw new Error('drawing overlap check did not fire');
+  }
+}
+
+function writeSlideArt(fonts) {
+  if (only) return;
+  const mapPath = path.join(here, 'mps-sites.svg');
+  fs.writeFileSync(mapPath, drawSiteMap(fonts));
+  console.log(`validated sites map: ${mapPath}`);
+  const deckDir = path.join(here, '..', 'deck');
+  fs.mkdirSync(deckDir, { recursive: true });
+  for (const [name, svg] of drawDeckPlaceholders(fonts)) {
+    const file = path.join(deckDir, name);
+    fs.writeFileSync(file, svg);
+    console.log(`validated placeholder: ${file}`);
+  }
+}
+
 async function main() {
+  assertOverlapCheckWorks();
   const parse = await loadParse();
   const fonts = loadFonts(path.join(here, 'fonts'), parse);
+  writeSlideArt(fonts);
   const logo = logoInner(fs.readFileSync(path.join(repo, 'design', 'brand', 'logo-concept-1.svg'), 'utf8'));
   const selected = SHEETS.filter((s) => !only || s.slug === only);
   if (!selected.length) throw new Error(`no sheet named ${only}`);
