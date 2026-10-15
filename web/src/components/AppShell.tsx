@@ -14,6 +14,7 @@ import { Term } from "./Term";
 import { btn } from "./ui";
 
 const NAV = [
+  { to: "/sites", label: "Sites", match: (path: string) => path.startsWith("/sites") },
   { to: "/", label: "Fleet", match: (path: string) => path === "/" },
   { to: "/tools/E-02", label: "Tool", match: (path: string) => path.startsWith("/tools") },
   { to: "/alerts", label: "Alerts", match: (path: string) => path.startsWith("/alerts") },
@@ -26,6 +27,12 @@ const NAV = [
   { to: "/metrics", label: "Metrics", match: (path: string) => path.startsWith("/metrics") },
   { to: "/glossary", label: "Glossary", match: (path: string) => path.startsWith("/glossary") },
 ];
+
+function mainWidth(path: string): string {
+  if (path.startsWith("/sites")) return "max-w-[1920px]";
+  if (path.startsWith("/tools/")) return "max-w-[1680px]";
+  return "max-w-[1200px]";
+}
 
 function NavLabel({ label }: { label: string }) {
   if (label === "CAPA" || label === "ROI") return <Term id={label} spellOut={false} />;
@@ -98,7 +105,7 @@ export function AppShell() {
           <img src="/logo-concept-1.svg" width={32} height={32} alt="Meridian Precision Systems mark" />
           <span>
             <strong className="block text-mps-body">Meridian Precision Systems</strong>
-            <span className="block font-mono text-mps-micro uppercase tracking-wider text-mps-muted">Fab Ops Console · Austin Demo Fab</span>
+            <span className="block font-mono text-mps-micro uppercase tracking-wider text-mps-muted">Fab ops console · three plants</span>
           </span>
         </Link>
         <div className="ml-auto flex flex-wrap gap-4 font-mono text-mps-micro text-mps-muted">
@@ -106,7 +113,7 @@ export function AppShell() {
             <Led tone={healthOn ? "nominal" : "off"} /> Sim clock · 1 s = 1 min
           </span>
           <span>
-            Plant <b className="font-medium text-mps-secondary">AUS-1</b>
+            Plants <b className="font-medium text-mps-secondary">3</b>
           </span>
           {session?.isAdmin ? (
             <div className="relative">
@@ -191,7 +198,7 @@ export function AppShell() {
       <LifecycleBar current={lifecycle.current} escalated={lifecycle.escalated} />
       <main
         id="main"
-        className={`mx-auto w-full flex-1 px-4 py-4 ${location.pathname.startsWith("/tools/") ? "max-w-[1680px]" : "max-w-[1200px]"}`}
+        className={`mx-auto w-full flex-1 px-4 py-4 ${mainWidth(location.pathname)}`}
       >
         <Outlet />
       </main>

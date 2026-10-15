@@ -43,7 +43,7 @@ export function FleetPage() {
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">Austin Demo Fab · Bays A / B</p>
+          <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">Northwater teaching floor · eight tools</p>
           <h1 className="text-mps-display font-semibold">Fleet overview</h1>
           <p className="text-mps-secondary">
             <Explain text="Eight tools, four families. SPC windows and Western Electric rules watch chamber pressure, ESC temperature, and RF power. Tiles open tool detail." />

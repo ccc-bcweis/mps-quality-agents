@@ -12,6 +12,7 @@ import { InvestigationPage } from "./pages/InvestigationPage";
 import { MetricsPage } from "./pages/MetricsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { RoiPage } from "./pages/RoiPage";
+import { SitesPage } from "./pages/SitesPage";
 import { TicketsPage } from "./pages/TicketsPage";
 import { ToolPage } from "./pages/ToolPage";
 
@@ -19,6 +20,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route element={<AppShell />}>
+        <Route path="/sites" element={<SitesPage />} />
         <Route path="/" element={<FleetPage />} />
         <Route path="/tools/:toolId" element={<ToolPage />} />
         <Route path="/alerts" element={<AlertsPage />} />
