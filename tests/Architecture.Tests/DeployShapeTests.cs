@@ -69,7 +69,7 @@ public sealed class DeployShapeTests
         apps.Should().Contain("secretRef: 'appinsights'");
 
         openai.Should().Contain("customSubDomainName: name");
-        openai.Should().Contain("name: 'gpt-4o-mini'");
+        openai.Should().Contain("name: 'gpt-5.4-mini'");
         openai.Should().Contain("name: 'GlobalStandard'");
         openai.Should().Contain("param capacity int = 20");
         openai.Should().Contain("disableLocalAuth: true");
