@@ -28,6 +28,20 @@ public sealed class SpcSummaryTests
     }
 
     [Fact]
+    public void ADropIsDescribedAsFallingEvenWhenTheSigmaDistanceIsUnsigned()
+    {
+        var sample = new SpcSample(new ToolId("E-01"), "E-01-A", "cf4Flow", new ControlBaseline(0d, 1d, null, null), [new TelemetryPoint(At, -3.9)])
+        {
+            Display = new SpcDisplay(50d, 4d, "sccm", "Etch"),
+        };
+        var violations = new[] { new SpcViolation("western-electric-1", new ToolId("E-01"), "E-01-A", "cf4Flow", At, -3.9, 3.9, Severity.High) };
+
+        var text = SpcSummary.Describe(sample, violations);
+
+        Assert.Equal("CF4 gas flow on Etch E-01, Chamber A fell to 34.4 sccm, below the 3-sigma lower limit of 38.0 sccm (Western Electric rule 1 tripped).", text);
+    }
+
+    [Fact]
     public void ShiftWithoutAThreeSigmaPointIsDescribedAsASustainedShift()
     {
         var sample = new SpcSample(new ToolId("E-03"), "E-03-A", "rfBiasPower", new ControlBaseline(0d, 1d, null, null), [new TelemetryPoint(At, 1.5)])

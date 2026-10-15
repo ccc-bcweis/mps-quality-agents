@@ -24,7 +24,8 @@ public static class SpcSummary
         var signal = ParameterName(sample.Parameter);
         var where = Where(sample);
         var rules = RuleList(violations);
-        var worst = violations.OrderByDescending(violation => Math.Abs(violation.Sigma)).FirstOrDefault();
+        double Z(SpcViolation violation) => (violation.Value - sample.Baseline.Center) / sample.Baseline.Sigma;
+        var worst = violations.OrderByDescending(violation => Math.Abs(Z(violation))).FirstOrDefault();
         if (worst is null)
         {
             return Capitalize(signal) + " on " + where + " broke a control-chart rule.";
@@ -39,10 +40,11 @@ public static class SpcSummary
             : display.Nominal + (((worst.Value - sample.Baseline.Center) / sample.Baseline.Sigma) * display.Sigma);
 
         var unit = display is null || string.IsNullOrWhiteSpace(display.Unit) ? string.Empty : " " + display.Unit;
-        var high = worst.Sigma >= 0;
+        // Violations may carry an unsigned sigma distance, so the side comes from the reading itself.
+        var high = worst.Value >= sample.Baseline.Center;
         var builder = new StringBuilder();
         builder.Append(Capitalize(signal)).Append(" on ").Append(where).Append(high ? " rose to " : " fell to ").Append(Num(value)).Append(unit);
-        var beyondThree = violations.Any(violation => Math.Abs(violation.Sigma) > 3d || violation.Rule.Split('+').Contains(SpcRuleNames.WesternElectric1, StringComparer.Ordinal));
+        var beyondThree = Math.Abs(Z(worst)) > 3d;
         if (beyondThree)
         {
             var limit = center + ((high ? 3d : -3d) * sigma);
