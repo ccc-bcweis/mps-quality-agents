@@ -16,6 +16,28 @@ public sealed class DemoResetTests
     private static readonly DateTimeOffset Origin = new(2026, 9, 1, 0, 0, 0, TimeSpan.Zero);
 
     [Fact]
+    public async Task AFreshProcessStartsNominalWithNoFaults()
+    {
+        await using var factory = new ApiFactory();
+        var client = factory.CreateClient();
+
+        var alerts = await client.GetFromJsonAsync<JsonElement>("/api/alerts");
+        var tickets = await client.GetFromJsonAsync<JsonElement>("/api/tickets");
+        var incidents = await client.GetFromJsonAsync<JsonElement>("/api/incidents");
+        var capas = await client.GetFromJsonAsync<JsonElement>("/api/capas");
+        var north = await client.GetFromJsonAsync<JsonElement>("/api/sites/northwater");
+        var ironwood = await client.GetFromJsonAsync<JsonElement>("/api/sites/ironwood");
+
+        alerts!.GetArrayLength().Should().Be(0);
+        tickets!.GetArrayLength().Should().Be(0);
+        incidents!.GetArrayLength().Should().Be(0);
+        capas!.GetArrayLength().Should().Be(0);
+        ToolStatus(north, "D-01").Should().Be("nominal");
+        ToolStatus(north, "D-03").Should().Be("nominal");
+        ToolStatus(ironwood, "I-D-01").Should().Be("nominal");
+    }
+
+    [Fact]
     public async Task ResetIsIdempotentAndRestoresTheSeededBaseline()
     {
         await using var factory = new ApiFactory();
@@ -123,6 +145,15 @@ public sealed class DemoResetTests
         admin.IsAdmin.Should().BeTrue();
         reader.IsAdmin.Should().BeFalse();
         broken.IsAdmin.Should().BeFalse();
+    }
+
+    private static string ToolStatus(JsonElement site, string toolId)
+    {
+        return site.GetProperty("bays").EnumerateArray()
+            .SelectMany(bay => bay.GetProperty("tools").EnumerateArray())
+            .Single(tool => tool.GetProperty("id").GetString() == toolId)
+            .GetProperty("status")
+            .GetString()!;
     }
 
     private static IEnumerable<double> Values(JsonElement body)

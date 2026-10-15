@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
+import { visibleProblem } from "../history/copy";
 import { formatUsd } from "../api/labels";
 import { Explain } from "../components/Explain";
 import { Term } from "../components/Term";
@@ -22,7 +23,7 @@ export function MetricsPage() {
           <Explain text="Numbers below are the gateway payload from the metrics API. Empty fields stay empty until the eval runner reports them. The gates are the SPEC targets, not a score." />
         </p>
       </div>
-      {metricsError ? <p className="mb-3 text-mps-alarm-text">{metricsError}</p> : null}
+      {visibleProblem(metricsError) ? <p className="mb-3 text-mps-alarm-text">{visibleProblem(metricsError)}</p> : null}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Stat label="Mode" value={bannerMode === "mockReasoner" ? "MOCK" : (metrics?.mode ?? "—").toUpperCase()} note="gateway" />
         <Stat label="Completion" value={metricText(metrics?.completionRate === null || metrics?.completionRate === undefined ? null : metrics.completionRate * 100, 0, "%")} note="task completion" />

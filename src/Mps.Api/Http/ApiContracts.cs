@@ -55,7 +55,13 @@ public sealed record EvidenceResponse(
     string? ToolId,
     string? ExternalRef,
     string? WhyItMatters,
-    string? SignalId);
+    string? SignalId,
+    double? Value = null,
+    string? Unit = null,
+    double? SpecLow = null,
+    double? SpecHigh = null,
+    string? ToolName = null,
+    string? ChamberName = null);
 
 public sealed record EvidenceMatrixResponse(
     RootCauseCategory Category,
@@ -89,7 +95,22 @@ public sealed record CapaResponse(
     Guid ApprovalTokenId,
     string ActionHash,
     CapaStage Stage,
-    DateTimeOffset OpenedAt);
+    DateTimeOffset OpenedAt,
+    string? ApprovedBy = null,
+    DateTimeOffset? ApprovedAt = null);
+
+public sealed record AuditEventResponse(
+    DateTimeOffset At,
+    string Kind,
+    string Summary,
+    string? Actor,
+    string? ToolId,
+    string? CorrelationId,
+    string? RecordId);
+
+public sealed record CorrelationTraceResponse(string CorrelationId, IReadOnlyList<AuditEventResponse> Events);
+
+public sealed record AuditLogResponse(IReadOnlyList<AuditEventResponse> Entries, IReadOnlyList<CorrelationTraceResponse> Traces);
 
 public sealed record DecisionResponse(InvestigationResponse Investigation, CapaResponse? Capa);
 

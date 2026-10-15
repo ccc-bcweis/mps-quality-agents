@@ -46,11 +46,11 @@ export function drawLogical(sheet) {
   const sH = 56;
   const sY = [262, 340, 406, 472, 538];
   const sources = [
-    ['Fault Injector', 'UI throws a shaped fault'],
-    ['Fleet simulator', '1 Hz telemetry, seeded'],
-    ['Operator report', 'POST /api/incidents'],
-    ['QMS NCR', 'Nonconformance event'],
-    ['Supplier notice', 'Material lot signal'],
+    ['Harness bar', 'Injector, reset, scenarios'],
+    ['Three plants', 'Northwater, Ironwood, Lumen'],
+    ['Sites API', 'List, one site, compare'],
+    ['Scenario evidence', 'Script records, full text'],
+    ['Notices and reports', 'Operator, NCR, supplier'],
   ];
   sources.forEach((lines, i) => sheet.node(`src${i}`, sX, sY[i], sW, sH, lines, 'human'));
   sheet.link('src0', 'src1', 'bottom', 'top');
@@ -75,8 +75,9 @@ export function drawLogical(sheet) {
   const impactY = busY + 30;
   const impactW = fW * 2 + fGap;
   sheet.node('impact', detX + fPad, impactY, impactW, y1 + row1h - impactY - 14, [
-    'Impact features',
-    'Scope and timing, passed to the agent as features',
+    'Impact and sites',
+    'Scope, timing, and a plant compare',
+    'SC-5 lot reaches two plants',
   ], 'det');
 
   const sim = sheet.box('src1');
@@ -152,9 +153,9 @@ export function drawLogical(sheet) {
 
   const docY = 792;
   const docs = [
-    ['Corpus', 'SOP, FMEA, bulletins, CoA, decoy, injection'],
+    ['Corpus and scenarios', 'Procedures, bulletins, and script records'],
     ['Chunk and embed', 'Heading-aware chunks, versioned index'],
-    ['Hybrid retrieval', 'BM25 plus vector, family and revision filters'],
+    ['Hybrid retrieval', 'Keyword plus vector, family and revision filters'],
   ];
   rowOf(
     sheet,
@@ -179,12 +180,12 @@ export function drawLogical(sheet) {
   const pPad = 14;
   const pW = (z2w - pPad * 2 - pGap * 5) / 6;
   const pathLines = [
-    ['Orchestrator', 'MAF behind IInvestigationWorkflow'],
+    ['Orchestrator', 'Workflow behind one interface'],
     ['Investigation Agent', 'Read-only tools, at most 10 calls'],
-    ['Evidence gate', 'Gaps escalate. No root cause asserted.'],
-    ['Resolution Agent', 'No tools. Category, citations, confounders'],
-    ['Grounding validator', 'Cited IDs must be in the pack'],
-    ['React console', 'The engineer decides'],
+    ['Evidence gate', 'Gaps escalate. No cause asserted.'],
+    ['Resolution Agent', 'Full record text. No tools.'],
+    ['Grounding validator', 'Cited ids must be in the pack'],
+    ['Meridian console', 'Sites through CAPA', 'Harness bar stays outside'],
   ];
   const pathTones = ['ai', 'ai', 'det', 'ai', 'det', 'human'];
   pathLines.forEach((lines, i) => {
@@ -237,7 +238,7 @@ export function drawLogical(sheet) {
   );
 
   const models = [
-    ['Azure OpenAI', 'gpt-4o-mini and gpt-4o'],
+    ['Azure OpenAI', 'gpt-5.4-mini, one deployment'],
     ['OpenAI', 'Same gateway route'],
     ['Replay', 'Over cap, or local default'],
     ['Mock reasoner', 'No recording for this fault'],
@@ -255,9 +256,9 @@ export function drawLogical(sheet) {
   const writeX = sheet.box('path4').x;
   const writeW = pW * 2 + pGap;
   const steps = [
-    ['Approval token', 'HMAC, single-use, bound'],
+    ['Escalation gate', 'No bare approve'],
+    ['Approval token', 'Override needs a reason'],
     ['Action service', 'CAPA write. Not an agent tool.'],
-    ['Mock QMS', 'Creates the CAPA, or a forced 500'],
   ];
   const stepGap = 28;
   const stepW = (writeW - stepGap * 2) / 3;
@@ -314,7 +315,7 @@ export function drawPhysical(sheet) {
 
   const swaX = rgX + 16;
   const swaW = 210;
-  sheet.node('swa', swaX, 395, swaW, 110, ['Static Web App', 'React console'], 'deploy');
+  sheet.node('swa', swaX, 395, swaW, 110, ['Static Web App', 'Harness over console'], 'deploy');
   sheet.link('entra', 'swa', 'right', 'left');
 
   const acaX = swaX + swaW + 16;
@@ -339,10 +340,10 @@ export function drawPhysical(sheet) {
   const g3 = 24;
   const cW = (innerW - g3 * 2) / 3;
   const c0 = acaX + 14;
-  sheet.node('sim', c0, acaY + 40, cW, 86, ['Simulator', '1 replica, 1 Hz'], 'deploy');
-  sheet.node('api', c0, rowY, cW, rowH, ['API', '.NET 8, SignalR, scale 0-3'], 'deploy');
+  sheet.node('sim', c0, acaY + 40, cW, 86, ['Simulator', 'Three plants, one seed'], 'deploy');
+  sheet.node('api', c0, rowY, cW, rowH, ['API', 'Sites routes. Scale 0 to 3.', 'Escalated approve is refused'], 'deploy');
   sheet.node('worker', c0 + (cW + g3), rowY, cW, rowH, ['Worker', 'Scales on queue depth'], 'deploy');
-  sheet.node('mock', c0 + 2 * (cW + g3), rowY, cW, rowH, ['Mock enterprise', 'QMS, ERP, MES, PLM, CMMS'], 'deploy');
+  sheet.node('mock', c0 + 2 * (cW + g3), rowY, cW, rowH, ['Mock enterprise', 'Quality, planning, maintenance', 'Scenario evidence on read'], 'deploy');
   sheet.link('sim', 'api', 'bottom', 'top');
   sheet.link('swa', 'api', 'right', 'left');
   sheet.link('api', 'worker', 'right', 'left');
@@ -354,7 +355,7 @@ export function drawPhysical(sheet) {
     ['queue', 'Storage queue', 'API hands off the investigation'],
     ['sql', 'Azure SQL serverless', 'Incidents, audit, spend ledger'],
     ['search', 'AI Search or in-proc', 'Hybrid index, or the local file'],
-    ['aoai', 'Azure OpenAI', 'gpt-4o-mini and gpt-4o, TPM quota'],
+    ['aoai', 'Azure OpenAI', 'gpt-5.4-mini, TPM quota'],
   ];
   const dGap = 14;
   const dW = (rgW - 32 - dGap * 3) / 4;
@@ -410,6 +411,19 @@ export function drawPhysical(sheet) {
     110,
     'Rollback is a Container Apps revision. Prompt and model versions roll back without a full app rollback. DR for the demo is IaC redeploy plus SQL geo-backup, configured at stand-up.',
   );
+
+  const plantY = 1036;
+  const plantH = 148;
+  const plantGap = 16;
+  const plantW = (rgW - 32 - plantGap * 2) / 3;
+  const plants = [
+    ['Northwater Fab', 'Simulated front-end fab', 'SC-5 lot starts here'],
+    ['Ironwood Fab', 'Simulated front-end fab', 'Same SC-5 lot'],
+    ['Lumen Pilot Works', 'Simulated strip and pilot', 'Not on that lot'],
+  ];
+  plants.forEach((lines, i) => {
+    sheet.node(`plant${i}`, rgX + 16 + i * (plantW + plantGap), plantY, plantW, plantH, lines, 'gov');
+  });
 
   const tX = tgtX + 14;
   const tW = tgtW - 28;
@@ -747,7 +761,7 @@ export function drawInvestigation(sheet) {
 
   const laneMeta = [
     ['L-human', 'Engineer / Human', 'human', ''],
-    ['L-console', 'Console screen', 'neutral', 'Glossary plain language'],
+    ['L-console', 'Console screen', 'neutral', 'Not the harness bar'],
     ['L-det', 'Deterministic services', 'det', ''],
     ['L-inv', 'Investigation Agent', 'ai', ''],
     ['L-res', 'Resolution Agent', 'ai', ''],
@@ -790,7 +804,7 @@ export function drawInvestigation(sheet) {
   const tall = 126;
 
   put('spc', 0, 2, 112, ['SPC alert', 'Statistical process control', 'Western Electric rules', 'Opens a ticket'], 'det');
-  put('alerts', 0, 1, plain, ['Alerts, then Tickets', 'Both screens update', 'Lifecycle bar moves'], 'neutral');
+  put('alerts', 0, 1, plain, ['Alerts, then Tickets', 'Plant is on the ticket', 'Lifecycle bar moves'], 'neutral');
   put('open', 0, 0, plain, ['Opens the ticket', 'Starts from the schematic', 'No write yet'], 'human');
 
   put('schematic', 1, 1, tall, [
@@ -806,22 +820,22 @@ export function drawInvestigation(sheet) {
   put('hypo', 2, 3, agent, ['Hypotheses', 'Names four classes', 'Does not pick one'], 'ai', { badge: 'AGENT' });
 
   put('calls', 3, 3, agent, ['Tool calls', 'Read-only, ten calls', 'Impact scope included'], 'ai', { badge: 'AGENT' });
-  put('reads', 3, 5, plain, ['Enterprise reads', 'MES, QMS, PLM, ERP', 'CMMS and documents'], 'gov');
+  put('reads', 3, 5, plain, ['Enterprise reads', 'MES, QMS, PLM, ERP', 'Scenario text included'], 'gov');
 
   put('why', 4, 3, agent, ['Why it matters', 'One plain line per item', 'Written on the evidence'], 'ai', { badge: 'AGENT' });
   put('gate', 4, 2, plain, ['Evidence gate', 'Sufficient, continue', 'Else stop and list gaps'], 'det');
   put('esc-ui', 4, 1, plain, ['Request info', 'Missing or contradictory', 'Named gaps on screen'], 'neutral');
   put('esc-human', 4, 0, plain, ['No root cause', 'The engineer owns the gap', 'Nothing is asserted'], 'human');
 
-  put('rank', 5, 4, agent, ['Rank causes', 'Writes the matrix below', 'Cites the confounder'], 'ai', { badge: 'AGENT' });
+  put('rank', 5, 4, agent, ['Rank causes', 'Sees the full record', 'Writes the matrix below'], 'ai', { badge: 'AGENT' });
 
   put('gw-rank', 5, 6, plain, ['Model call', 'Ranking route', 'At most two calls'], 'gw');
 
   put('draft', 6, 4, agent, ['CAPA draft', 'Actions, not a write', 'Same agent output'], 'ai', { badge: 'AGENT' });
   put('ground', 6, 2, plain, ['Grounding check', 'Why-line cites a real item', 'Rejects a missing item'], 'det');
 
-  put('appr-ui', 7, 1, plain, ['Approval screen', 'Recommendation shown', 'Explicit confirm'], 'neutral');
-  put('appr', 7, 0, agent, ['Approval gate', 'Signed token', 'Single use, then it expires'], 'human', { badge: 'HUMAN' });
+  put('appr-ui', 7, 1, plain, ['Escalation gate', 'Approve stays disabled', 'Request info, or justify'], 'neutral');
+  put('appr', 7, 0, agent, ['Human still decides', 'Override needs a reason', 'Then a signed token'], 'human', { badge: 'HUMAN' });
 
   put('act', 8, 2, plain, ['Action service', 'Token required', 'Not an agent tool'], 'det');
   put('qms', 8, 5, plain, ['Quality system', 'Creates the record', '500, timeout, or 409'], 'gov');
@@ -944,7 +958,7 @@ function drawFlowGlossary(sheet, x, y, w, h) {
     ['SPC    statistical process control', 'PLM    product lifecycle management'],
     ['CAPA   corrective and preventive action', 'ERP    enterprise resource planning'],
     ['MES    manufacturing execution system', 'CMMS   maintenance system for work orders'],
-    ['QMS    quality management system', ''],
+    ['QMS    quality management system', 'Gate refuses a bare approve'],
   ];
   const col2 = x + 28 + 320;
   terms.forEach((pair, i) => {
@@ -1354,7 +1368,7 @@ export function drawToBe(sheet) {
     sheet.node(id, c.x + inset, y, c.w - inset * 2, h, lines, tone, opts);
   };
 
-  put('op', 0, 0, ['Alert on the console', 'MX-400 etch breaks a limit', 'Chamber and recipe shown'], 'human', null, 'mid', plainH);
+  put('op', 0, 0, ['Alert on the console', 'Northwater, MX-400 etch', 'Harness bar stays outside'], 'human', null, 'mid', plainH);
   put(
     'a1',
     0,
@@ -1562,9 +1576,10 @@ function drawToBeGlossary(sheet, x, y, w, h) {
     'ECN    engineering change notice',
     'QMS    quality management system',
     'CAPA   corrective and preventive action',
+    'SC-5 spans Northwater and Ironwood. Escalation does not approve.',
   ];
   terms.forEach((text, i) => {
-    sheet.text(`tg-t${i}`, text, left, y + 86 + i * 28, { size: 14, weight: 'regular', fill: INK, clip });
+    sheet.text(`tg-t${i}`, text, left, y + 86 + i * 22, { size: 14, weight: 'regular', fill: INK, clip });
   });
 }
 
@@ -1804,12 +1819,13 @@ export const SHEETS = [
     kicker: 'LOGICAL ARCHITECTURE',
     title: 'Logical architecture',
     slug: 'logical',
+    version: 'v1.1',
     draw: drawLogical,
     legend: [
       { tone: 'det', label: 'Deterministic rules. Code, unit tested.' },
       { tone: 'ai', label: 'Probabilistic agents. No write tools.' },
-      { tone: 'human', label: 'Human authority. The only write path.' },
-      { tone: 'gov', label: 'Read-only evidence, audit, eval.' },
+      { tone: 'human', label: 'Human authority. Escalation blocks a bare approve.' },
+      { tone: 'gov', label: 'Read-only evidence, sites, and scenario records.' },
       { tone: 'gw', label: 'Model gateway and the spend cap.' },
       { tone: 'neutral', label: 'Arrow: a handoff or a read.' },
     ],
@@ -1820,12 +1836,13 @@ export const SHEETS = [
     kicker: 'PHYSICAL ARCHITECTURE',
     title: 'Physical architecture',
     slug: 'physical',
+    version: 'v1.1',
     draw: drawPhysical,
     legend: [
       { tone: 'human', label: 'Identity. Entra, invite only.' },
-      { tone: 'deploy', label: 'Resource group and Container Apps.' },
+      { tone: 'deploy', label: 'Resource group, harness, and console.' },
       { tone: 'gw', label: 'Targets, scale, and the spend cap.' },
-      { tone: 'gov', label: 'Traces, Key Vault, ci.yml.' },
+      { tone: 'gov', label: 'Traces, Key Vault, and the simulated plants.' },
       { tone: 'review', label: 'Manual deploy gate.' },
       { tone: 'ok', label: 'OIDC. No stored cloud secrets.' },
     ],
@@ -1852,14 +1869,14 @@ export const SHEETS = [
     kicker: 'INVESTIGATION FLOW',
     title: 'Investigation flow',
     slug: 'investigation-flow',
-    version: 'v1.1',
+    version: 'v1.2',
     draw: drawInvestigation,
     legend: [
       { tone: 'ai', label: 'Agent step. Violet badge. No write.' },
       { tone: 'det', label: 'Deterministic. Dashed arrow escalates.' },
-      { tone: 'human', label: 'Engineer. Only a human approves.' },
-      { tone: 'neutral', label: 'Console. Glossary plain language.' },
-      { tone: 'gov', label: 'Read-only tools, then the quality write.' },
+      { tone: 'human', label: 'Engineer. A bare approve stays off.' },
+      { tone: 'neutral', label: 'Console. The harness bar is outside.' },
+      { tone: 'gov', label: 'Read-only tools, including scenario text.' },
       { tone: 'gw', label: 'Model gateway. Completions only.' },
     ],
   },
@@ -1887,6 +1904,7 @@ export const SHEETS = [
     kicker: 'TO-BE INVESTIGATION',
     title: 'To-be investigation flow',
     slug: 'to-be-flow',
+    version: 'v1.1',
     draw: drawToBe,
     legend: [
       { tone: 'human', label: 'Operator. Sees the alert on the console.' },

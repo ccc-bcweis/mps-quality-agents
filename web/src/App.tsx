@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppShell, ConsoleFrame, HarnessFrame } from "./components/AppShell";
 import { ConsoleProvider } from "./context/ConsoleContext";
 import { AlertsPage } from "./pages/AlertsPage";
+import { AuditPage } from "./pages/AuditPage";
 import { ApprovalPage } from "./pages/ApprovalPage";
 import { CapaPage } from "./pages/CapaPage";
 import { FleetPage } from "./pages/FleetPage";
@@ -24,6 +25,7 @@ export function AppRoutes() {
           <Route path="/harness/injector" element={<InjectorPage />} />
           <Route path="/harness/roi" element={<RoiPage />} />
           <Route path="/harness/metrics" element={<MetricsPage />} />
+          <Route path="/harness/audit" element={<AuditPage />} />
         </Route>
         <Route path="/injector" element={<Navigate to="/harness/injector" replace />} />
         <Route path="/roi" element={<Navigate to="/harness/roi" replace />} />
@@ -33,9 +35,13 @@ export function AppRoutes() {
           <Route path="/" element={<FleetPage />} />
           <Route path="/tools/:toolId" element={<ToolPage />} />
           <Route path="/alerts" element={<AlertsPage />} />
+          <Route path="/alerts/:alertId" element={<AlertsPage />} />
           <Route path="/tickets" element={<TicketsPage />} />
+          <Route path="/tickets/:ticketId" element={<TicketsPage />} />
+          <Route path="/investigations" element={<InvestigationPage />} />
           <Route path="/investigations/incident/:incidentId" element={<InvestigationPage />} />
           <Route path="/investigations/:investigationId" element={<InvestigationPage />} />
+          <Route path="/approvals" element={<ApprovalPage />} />
           <Route path="/approvals/:investigationId" element={<ApprovalPage />} />
           <Route path="/capas" element={<CapaPage />} />
           <Route path="/capas/:capaId" element={<CapaPage />} />

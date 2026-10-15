@@ -1,24 +1,31 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
-  timeout: 45_000,
-  expect: { timeout: 15_000 },
+  testMatch: "**/*.pw.ts",
   fullyParallel: false,
   workers: 1,
+  retries: 0,
+  timeout: 90_000,
+  expect: { timeout: 15_000 },
   reporter: "list",
-  outputDir: "./test-results",
+  outputDir: "../TestResults/playwright",
   use: {
-    baseURL: "http://127.0.0.1:5173",
-    ...devices["Desktop Chrome"],
+    baseURL: "http://127.0.0.1:5174",
     channel: "msedge",
-    serviceWorkers: "allow",
+    trace: "off",
+    screenshot: "only-on-failure",
   },
   webServer: {
-    command: "npm run dev -- --host 127.0.0.1 --port 5173 --strictPort",
-    url: "http://127.0.0.1:5173",
+    command: "npx vite --host 127.0.0.1 --port 5174 --strictPort",
+    url: "http://127.0.0.1:5174",
     reuseExistingServer: false,
-    timeout: 60_000,
+    timeout: 120_000,
   },
+  projects: [
+    { name: "1280", use: { viewport: { width: 1280, height: 900 } } },
+    { name: "1600", use: { viewport: { width: 1600, height: 900 } } },
+    { name: "1920", use: { viewport: { width: 1920, height: 900 } } },
+  ],
 });

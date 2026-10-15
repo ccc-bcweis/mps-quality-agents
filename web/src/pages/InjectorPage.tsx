@@ -7,6 +7,7 @@ import type { FaultInjectionRequest, FaultShape, RootCauseCategory, Tool } from 
 import { Explain } from "../components/Explain";
 import { btn, btnPrimary, field, panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
+import { visibleProblem } from "../history/copy";
 import { pollUntil } from "../poll";
 
 const SHAPES: FaultShape[] = ["step", "ramp", "oscillation", "intermittent"];
@@ -130,9 +131,9 @@ export function InjectorPage() {
           Throw a new problem. The simulator writes matching records into the mock systems. Agents do not receive the fault object. The category below is held out of the alert. Named scenarios run from the demo harness bar.
         </p>
       </div>
-      {error ? (
+      {visibleProblem(error) ? (
         <p className="mb-3 text-mps-alarm-text" role="alert">
-          {error}
+          {visibleProblem(error)}
         </p>
       ) : null}
       <div className="grid gap-3 lg:grid-cols-2">

@@ -120,7 +120,7 @@
           "name": "Deposition D-03",
           "family": "deposition",
           "model": "MPS-D7",
-          "status": "alarm",
+          "status": "nominal",
           "x": 13.8,
           "y": 20.6,
           "siteId": "northwater"

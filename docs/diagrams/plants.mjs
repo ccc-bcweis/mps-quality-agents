@@ -1,24 +1,24 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-// Fictional Meridian plants. docs/PLAN.md deck outline repeats these names.
+// Fictional Meridian plants. Locked by lane S1. docs/PLAN.md repeats these names.
 // Coined words. Not real cities, and not real companies.
 
 export const PLANTS = [
   {
     id: 'A',
-    name: 'Cindervane',
+    name: 'Northwater Fab',
     role: 'Front-end fab',
     work: 'Deposition and etch',
   },
   {
     id: 'B',
-    name: 'Lowspindle',
-    role: 'Second fab',
-    work: 'A similar tool mix',
+    name: 'Ironwood Fab',
+    role: 'Second front-end',
+    work: 'Etch runs hotter',
   },
   {
     id: 'C',
-    name: 'Rookspur',
-    role: 'Strip and clean',
-    work: 'Plus a pilot line',
+    name: 'Lumen Pilot Works',
+    role: 'Strip, clean, pilot',
+    work: 'Research wafers',
   },
 ];

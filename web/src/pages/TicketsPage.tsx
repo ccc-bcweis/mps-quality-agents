@@ -1,28 +1,37 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { useEffect, useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import { CHANNEL_LABEL, STAGE_LABEL, severityTone, severityWord } from "../api/labels";
+import { formatStamp, STAGE_LABEL, severityTone, severityWord } from "../api/labels";
 import type { Incident, PrintoutConfirmation, PrintoutConfirmRequest, Severity, Ticket, Tool } from "../api/types";
+import { CaseBriefs } from "../components/CaseBriefs";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
-import { Term } from "../components/Term";
+import { HistoryNote, RecordList } from "../components/RecordList";
 import { btnPrimary, field, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import type { FleetSensor } from "../fleet/sensors";
 import { fleetSensors } from "virtual:fleet-sensors";
 import { sensorLabel, slotWord } from "../fleet/schematic";
+import { MISSING_TICKET, visibleProblem } from "../history/copy";
+import { byNewestTime, toolPlainName } from "../history/order";
+import { plainTool } from "../investigation/format";
+import { useSite } from "../context/SiteContext";
 import { pathForIncident, pathForTicket } from "../investigation/ticketRoute";
+import { toolInPlant } from "../sites/selection";
 import { lifecycleForIncident } from "../lifecycle";
 import { parameterLabel } from "../sites/parameters";
 
 export function TicketsPage() {
   useSetLifecycle("ticket");
   const navigate = useNavigate();
+  const { ticketId } = useParams();
+  const { siteId } = useSite();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [tools, setTools] = useState<Tool[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
   const [toolId, setToolId] = useState("E-02");
   const [sensorId, setSensorId] = useState(() => sensorsFor("E-02")[0]?.id ?? "");
   const [summary, setSummary] = useState("");
@@ -35,23 +44,31 @@ export function TicketsPage() {
   const toolSensors = sensorsFor(toolId);
   const selected = toolSensors.find((sensor) => sensor.id === sensorId) ?? toolSensors[0];
 
-  function reload() {
-    return Promise.all([api.listTickets(), api.listIncidents(), api.listTools()]).then(([nextTickets, nextIncidents, nextTools]) => {
-      setTickets(nextTickets);
-      setIncidents(nextIncidents);
-      setTools(nextTools);
-    });
-  }
+  const reload = useCallback(() => {
+    return Promise.all([api.listTickets(siteId), api.listIncidents(siteId), api.listTools(siteId)]).then(
+      ([nextTickets, nextIncidents, nextTools]) => {
+        const visibleTools = nextTools.filter((tool) => toolInPlant(siteId, tool.id, tool.siteId));
+        setTickets(nextTickets.filter((ticket) => toolInPlant(siteId, ticket.toolId)));
+        setIncidents(nextIncidents.filter((incident) => toolInPlant(siteId, incident.toolId)));
+        setTools(visibleTools);
+        setToolId((current) => (visibleTools.some((tool) => tool.id === current) ? current : (visibleTools[0]?.id ?? current)));
+      },
+    );
+  }, [siteId]);
 
   useEffect(() => {
     let cancelled = false;
-    reload().catch((reason: unknown) => {
-      if (!cancelled) setError(reason instanceof ApiProblem ? reason.title : "Tickets did not load.");
-    });
+    reload()
+      .catch((reason: unknown) => {
+        if (!cancelled) setError(reason instanceof ApiProblem ? reason.title : "Tickets did not load.");
+      })
+      .finally(() => {
+        if (!cancelled) setReady(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reload]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -80,6 +97,37 @@ export function TicketsPage() {
     }
   }
 
+  const ordered = [...tickets].sort(byNewestTime((ticket) => ticket.openedAt));
+  const selectedTicket = ticketId ? ordered.find((ticket) => ticket.id === ticketId) : undefined;
+  const missing = Boolean(ticketId) && ready && !selectedTicket;
+  const problem = visibleProblem(error);
+  const rows = ordered.map((ticket) => {
+    const incident = incidents.find((item) => item.id === ticket.incidentId);
+    const stage = incident?.stage;
+    const path = pathForTicket(ticket);
+    return {
+      id: ticket.id,
+      status: incident ? (
+        <Chip tone={incident.stage === "closed" ? "ok" : severityTone(incident.severity)}>{STAGE_LABEL[incident.stage]}</Chip>
+      ) : (
+        "—"
+      ),
+      toolName: toolPlainName(tools, ticket.toolId),
+      toolId: ticket.toolId,
+      time: formatStamp(ticket.openedAt),
+      detail: (
+        <>
+          <Link to={path}>{ticket.title}</Link>
+          <div className="mt-1 font-mono text-mps-micro">
+            <Link to={path}>{ticket.number}</Link>
+            {stage && stage !== "closed" ? <span> · {stage === "ticketOpened" ? "Start" : "Open"}</span> : null}
+            {incident ? <span className="text-mps-muted"> · {severityWord(incident.severity)}</span> : null}
+          </div>
+        </>
+      ),
+    };
+  });
+
   return (
     <div>
       <div className="mb-4">
@@ -88,55 +136,27 @@ export function TicketsPage() {
           <Explain text="Normalized intake: IoT SPC, operator, QMS NCR, supplier notice, and the fault injector. An open incident on the same tool and parameter is linked." />
         </p>
       </div>
-      {error ? <p className="mb-3 text-mps-alarm-text">{error}</p> : null}
-      <div className={`${panel} overflow-x-auto`}>
-        <table className="w-full text-left">
-          <thead>
-            <tr className="font-mono text-mps-micro uppercase text-mps-muted">
-              <th className="py-1 font-medium">
-                <Term id="TKT" spellOut={false} />
-              </th>
-              <th className="py-1 font-medium">Channel</th>
-              <th className="py-1 font-medium">Tool</th>
-              <th className="py-1 font-medium">Summary</th>
-              <th className="py-1 font-medium">Sev</th>
-              <th className="py-1 font-medium">State</th>
-              <th className="py-1 font-medium">
-                <Term id="INV" spellOut={false} />
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {tickets.map((ticket) => {
-              const incident = incidents.find((item) => item.id === ticket.incidentId);
-              const stage = incident?.stage;
-              return (
-                <tr key={ticket.id} className="cursor-pointer border-t border-mps-line" onClick={() => navigate(pathForTicket(ticket))}>
-                  <td className="py-1.5 font-mono">
-                    <Link to={pathForTicket(ticket)} onClick={(event) => event.stopPropagation()}>
-                      {ticket.number}
-                    </Link>
-                  </td>
-                  <td className="py-1.5">{incident ? <Explain text={CHANNEL_LABEL[incident.channel]} spellOut={false} /> : "—"}</td>
-                  <td className="py-1.5 font-mono">{ticket.toolId}</td>
-                  <td className="py-1.5">{ticket.title}</td>
-                  <td className="py-1.5">{incident ? <Chip tone={incident.stage === "closed" ? "ok" : severityTone(incident.severity)}>{incident.stage === "closed" ? "CLOSED" : severityWord(incident.severity)}</Chip> : "—"}</td>
-                  <td className="py-1.5">{stage ? STAGE_LABEL[stage] : "—"}</td>
-                  <td className="py-1.5">
-                    {stage && stage !== "closed" ? (
-                      <Link to={pathForTicket(ticket)} onClick={(event) => event.stopPropagation()}>
-                        {stage === "ticketOpened" ? "Start" : "Open"}
-                      </Link>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      {problem ? <p className="mb-3 text-mps-alarm-text">{problem}</p> : null}
+      {missing ? <HistoryNote text={MISSING_TICKET} /> : null}
+      {selectedTicket ? (
+        <section className={`${panel} mb-3`}>
+          <h2 className="mb-2 text-mps-title font-semibold">{selectedTicket.number}</h2>
+          <p>
+            {toolPlainName(tools, selectedTicket.toolId)} · {formatStamp(selectedTicket.openedAt)}
+          </p>
+          <p className="mt-2">{selectedTicket.title}</p>
+          <p className="mt-2">
+            <Link to={pathForTicket(selectedTicket)}>Open the investigation</Link>
+            {" · "}
+            <Link to="/tickets">All tickets</Link>
+          </p>
+        </section>
+      ) : null}
+      {!ticketId || missing ? <RecordList label="Tickets" rows={rows} empty="No tickets yet." /> : null}
+      <CaseBriefs
+        incidentIds={incidents.filter((incident) => incident.stage !== "closed").map((incident) => incident.id)}
+        intro="Evidence linked to these tickets"
+      />
       <div className="mt-3 grid gap-3 xl:grid-cols-2">
         <form className={`${panel} grid min-w-0 gap-3`} onSubmit={onSubmit}>
           <h2 className="text-mps-title font-semibold">Operator report</h2>
@@ -145,7 +165,7 @@ export function TicketsPage() {
             <select className={field} value={toolId} onChange={(event) => chooseTool(event.target.value)}>
               {tools.map((tool) => (
                 <option key={tool.id} value={tool.id}>
-                  {tool.id} · {tool.model}
+                  {plainTool(tool.id) ?? tool.name} · {tool.model}
                 </option>
               ))}
             </select>

@@ -5,6 +5,7 @@ import type {
   Capa,
   DecisionResult,
   AdminSession,
+  AuditLog,
   DemoResetResult,
   FaultInjectionAccepted,
   FaultInjectionRequest,
@@ -68,21 +69,33 @@ export async function apiSend<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+function listPath(path: string, siteId?: string, extra?: Record<string, string | undefined>): string {
+  const params = new URLSearchParams();
+  if (extra) {
+    for (const [key, value] of Object.entries(extra)) {
+      if (value) params.set(key, value);
+    }
+  }
+  if (siteId && siteId !== "all") params.set("siteId", siteId);
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
+}
+
 export const api = {
   health: () => apiSend<Health>("/health"),
   listSites: () => apiSend<SiteSummary[]>("/api/sites"),
   getSite: (siteId: string) => apiSend<SiteDetail>(`/api/sites/${encodeURIComponent(siteId)}`),
   compareSites: (family: string) =>
     apiSend<FamilyComparison>(`/api/sites/compare?family=${encodeURIComponent(family)}`),
-  listTools: () => apiSend<Tool[]>("/api/tools"),
+  listTools: (siteId?: string) => apiSend<Tool[]>(listPath("/api/tools", siteId)),
   getTool: (toolId: string) => apiSend<Tool>(`/api/tools/${encodeURIComponent(toolId)}`),
-  listAlerts: (toolId?: string) =>
-    apiSend<Alert[]>(toolId ? `/api/alerts?toolId=${encodeURIComponent(toolId)}` : "/api/alerts"),
-  listTickets: () => apiSend<Ticket[]>("/api/tickets"),
-  listIncidents: () => apiSend<Incident[]>("/api/incidents"),
+  listAlerts: (toolId?: string, siteId?: string) => apiSend<Alert[]>(listPath("/api/alerts", siteId, { toolId })),
+  listTickets: (siteId?: string) => apiSend<Ticket[]>(listPath("/api/tickets", siteId)),
+  listIncidents: (siteId?: string) => apiSend<Incident[]>(listPath("/api/incidents", siteId)),
   getIncident: (incidentId: string) => apiSend<Incident>(`/api/incidents/${incidentId}`),
   openIncident: (body: OpenIncidentRequest) =>
     apiSend<Incident>("/api/incidents", { method: "POST", body: JSON.stringify(body) }),
+  listInvestigations: (siteId?: string) => apiSend<Investigation[]>(listPath("/api/investigations", siteId)),
   getInvestigation: (investigationId: string) =>
     apiSend<Investigation>(`/api/investigations/${investigationId}`),
   getLatestInvestigation: (incidentId: string) =>
@@ -94,7 +107,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  listCapas: () => apiSend<Capa[]>("/api/capas"),
+  listCapas: (siteId?: string) => apiSend<Capa[]>(listPath("/api/capas", siteId)),
   getCapa: (capaId: string) => apiSend<Capa>(`/api/capas/${capaId}`),
   advanceCapa: (capaId: string, body: AdvanceCapaRequest) =>
     apiSend<Capa>(`/api/capas/${capaId}/advance`, { method: "POST", body: JSON.stringify(body) }),
@@ -108,6 +121,7 @@ export const api = {
   confirmPrintout: (body: PrintoutConfirmRequest) =>
     apiSend<PrintoutConfirmation>("/api/printouts/confirm", { method: "POST", body: JSON.stringify(body) }),
   getAdminSession: () => apiSend<AdminSession>("/api/admin/session"),
+  getAuditLog: () => apiSend<AuditLog>("/api/audit"),
   resetDemo: () => apiSend<DemoResetResult>("/api/admin/reset", { method: "POST" }),
   listScenarios: () => apiSend<ScriptedScenario[]>("/api/injector/scenarios"),
   runScenario: (scenarioId: string) =>

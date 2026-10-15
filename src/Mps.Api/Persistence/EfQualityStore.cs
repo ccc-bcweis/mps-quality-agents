@@ -303,6 +303,29 @@ public sealed class EfQualityStore :
         return TicketInvestigationMap.Latest(incidentId, rows.Select(ToSnapshot).ToArray());
     }
 
+    async Task<IReadOnlyList<InvestigationSnapshot>> IInvestigationLog.ListAsync(CancellationToken cancellationToken)
+    {
+        var investigations = await _db.Investigations.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
+        if (investigations.Count == 0)
+        {
+            return [];
+        }
+
+        var incidentIds = investigations.Select(row => row.IncidentId).Distinct().ToArray();
+        var opened = await _db.Incidents.AsNoTracking()
+            .Where(row => incidentIds.Contains(row.Id))
+            .Select(row => new { row.Id, row.OpenedAt })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var openedById = opened.ToDictionary(row => row.Id, row => row.OpenedAt);
+        return investigations
+            .OrderByDescending(row => openedById.TryGetValue(row.IncidentId, out var at) ? at : DateTime.MinValue)
+            .ThenByDescending(row => row.Sequence)
+            .ThenByDescending(row => row.Id)
+            .Select(ToSnapshot)
+            .ToArray();
+    }
+
     private async Task<int> NextInvestigationSequenceAsync(IncidentId incidentId, CancellationToken cancellationToken)
     {
         var current = await _db.Investigations
@@ -609,17 +632,41 @@ public sealed class EfQualityStore :
         string.IsNullOrWhiteSpace(row.EvidenceMatrixJson) ? "[]" : row.EvidenceMatrixJson;
 
     private static EvidenceDocument ToEvidenceDocument(EvidenceItem item) =>
-        new(item.Id.Value, item.Source.ToString(), item.Title, item.Excerpt, item.ObservedAt, item.ToolId, item.ExternalRef);
-
-    private static EvidenceItem ToEvidence(EvidenceDocument document) =>
         new(
+            item.Id.Value,
+            item.Source.ToString(),
+            item.Title,
+            item.Excerpt,
+            item.ObservedAt,
+            item.ToolId,
+            item.ExternalRef,
+            Value: item.Reading?.Value,
+            Unit: item.Reading?.Unit,
+            SpecLow: item.Reading?.SpecLow,
+            SpecHigh: item.Reading?.SpecHigh,
+            ToolName: item.Reading?.ToolName,
+            ChamberName: item.Reading?.ChamberName);
+
+    private static EvidenceItem ToEvidence(EvidenceDocument document)
+    {
+        EvidenceReading? reading = document.Value is null
+            && document.Unit is null
+            && document.SpecLow is null
+            && document.SpecHigh is null
+            && document.ToolName is null
+            && document.ChamberName is null
+            ? null
+            : new EvidenceReading(document.Value, document.Unit, document.SpecLow, document.SpecHigh, document.ToolName, document.ChamberName);
+        return new EvidenceItem(
             new EvidenceId(document.Id),
             Enum.Parse<EvidenceSource>(document.Source),
             document.Title,
             document.Excerpt,
             document.ObservedAt,
             document.ToolId,
-            document.ExternalRef);
+            document.ExternalRef,
+            reading);
+    }
 
     private static HypothesisDocument ToHypothesisDocument(Hypothesis hypothesis) =>
         new(
@@ -662,7 +709,13 @@ public sealed class EfQualityStore :
         string? ToolId,
         string? ExternalRef,
         string? WhyItMatters = null,
-        string? SignalId = null);
+        string? SignalId = null,
+        double? Value = null,
+        string? Unit = null,
+        double? SpecLow = null,
+        double? SpecHigh = null,
+        string? ToolName = null,
+        string? ChamberName = null);
 
     private sealed record MatrixDocument(string Category, Guid EvidenceId, string Stance, string? WhyItMatters);
 

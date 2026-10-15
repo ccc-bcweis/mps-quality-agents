@@ -13,6 +13,14 @@ info:
     contracts-v1.2 adds GET /api/incidents/{incidentId}/investigation (ADR-001 addendum).
     It returns the latest investigation for that incident, or 404 when none exists.
     The path is additive. Earlier clients stay compatible.
+    contracts-v1.3 adds GET /api/investigations. The list is every investigation, newest first.
+    The same version adds an optional siteId query on the alert, ticket, investigation, and CAPA lists.
+    When siteId is set, the list keeps records for tools at that plant. An unknown plant returns an empty list.
+    The paths and the query are additive. Earlier clients stay compatible.
+    GET /api/audit is additive and read-only. It returns the audit trail and correlation traces.
+    List routes accept an optional siteId query. Omit it to return every plant.
+    EvidenceItem gains optional value, unit, specLow, specHigh, toolName, and chamberName.
+    Clients that ignore unknown fields stay compatible.
     Contract 1.3 adds printout inspect and confirm. Both are additive. A confirmed bench
     reading is stored as evidence with source manualMeasurement.
     All names and data are synthetic.
@@ -32,6 +40,7 @@ tags:
   - name: faults
   - name: printouts
   - name: admin
+  - name: audit
   - name: metrics
 paths:
   /health:
@@ -107,6 +116,8 @@ paths:
       tags: [fleet]
       operationId: listTools
       summary: List the simulated tool fleet
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: Tools.
@@ -136,9 +147,13 @@ paths:
     get:
       tags: [fleet]
       operationId: listAlerts
-      summary: SPC alerts
+      summary: SPC alerts, newest first
+      description: |
+        Optional toolId keeps one tool. Optional siteId keeps tools at that plant.
+        An unknown plant returns an empty list. Omit both to list every alert.
       parameters:
         - $ref: "#/components/parameters/ToolIdQuery"
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: Alerts.
@@ -152,7 +167,11 @@ paths:
     get:
       tags: [incidents]
       operationId: listTickets
-      summary: Intake tickets
+      summary: Intake tickets, newest first
+      description: |
+        Optional siteId keeps tickets for tools at that plant. An unknown plant returns an empty list.
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: Tickets.
@@ -167,6 +186,8 @@ paths:
       tags: [incidents]
       operationId: listIncidents
       summary: Normalized incidents
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: Incidents.
@@ -231,6 +252,27 @@ paths:
                 $ref: "#/components/schemas/Investigation"
         "404":
           $ref: "#/components/responses/NotFound"
+  /api/investigations:
+    get:
+      tags: [investigations]
+      operationId: listInvestigations
+      summary: All investigations, newest first
+      description: |
+        Additive in contracts-v1.3. Returns every investigation. A later start sorts
+        before an earlier start on the same incident, and a newer incident sorts before an older one.
+        Optional siteId keeps investigations whose incident tool is at that plant.
+        An unknown plant returns an empty list.
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
+      responses:
+        "200":
+          description: Investigations, newest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Investigation"
   /api/investigations/{investigationId}:
     get:
       tags: [investigations]
@@ -303,6 +345,8 @@ paths:
       tags: [capas]
       operationId: listCapas
       summary: CAPA records
+      parameters:
+        - $ref: "#/components/parameters/SiteIdQuery"
       responses:
         "200":
           description: CAPAs.
@@ -494,6 +538,22 @@ paths:
                 $ref: "#/components/schemas/ScenarioRun"
         "404":
           $ref: "#/components/responses/NotFound"
+  /api/audit:
+    get:
+      tags: [audit]
+      operationId: getAuditLog
+      summary: Audit trail and correlation traces
+      description: |
+        Read-only. Each entry is one recorded step (fault, alert, ticket, incident, investigation,
+        approval, or corrective action). Traces group the steps that share a correlation id.
+        Operator screens do not show these ids.
+      responses:
+        "200":
+          description: The audit log.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLog"
   /api/metrics:
     get:
       tags: [metrics]
@@ -549,6 +609,13 @@ components:
       schema:
         type: string
         minLength: 1
+    SiteIdQuery:
+      name: siteId
+      in: query
+      required: false
+      description: Plant id. When set, the list keeps records for tools at that plant. An unknown plant returns an empty list.
+      schema:
+        type: string
     ScenarioId:
       name: scenarioId
       in: path
@@ -791,6 +858,30 @@ components:
           type: string
           nullable: true
           description: Sensor id from the fleet sensor catalog (data/fleet), when the evidence is a signal.
+        value:
+          type: number
+          nullable: true
+          description: Measured value when this evidence is a sensor or chart point. Absent for records that are not a reading.
+        unit:
+          type: string
+          nullable: true
+          description: Unit for value, such as C or Torr.
+        specLow:
+          type: number
+          nullable: true
+          description: Low end of the spec window for value.
+        specHigh:
+          type: number
+          nullable: true
+          description: High end of the spec window for value.
+        toolName:
+          type: string
+          nullable: true
+          description: Plain tool name, such as Etch tool E-02. The tool id stays on toolId.
+        chamberName:
+          type: string
+          nullable: true
+          description: Plain chamber name, such as Chamber B.
     EvidenceStance:
       type: string
       enum: [supports, rulesOut, neutral]
@@ -939,6 +1030,64 @@ components:
         openedAt:
           type: string
           format: date-time
+        approvedBy:
+          type: string
+          nullable: true
+          description: Display name of the person who approved. Absent until an approval is recorded.
+        approvedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the approval was recorded. The console shows this in local time.
+    AuditEvent:
+      type: object
+      additionalProperties: false
+      required: [at, kind, summary]
+      properties:
+        at:
+          type: string
+          format: date-time
+        kind:
+          type: string
+          description: fault, alert, ticket, incident, investigation, approval, or capa.
+        summary:
+          type: string
+        actor:
+          type: string
+          nullable: true
+        toolId:
+          type: string
+          nullable: true
+        correlationId:
+          type: string
+          nullable: true
+        recordId:
+          type: string
+          nullable: true
+    CorrelationTrace:
+      type: object
+      additionalProperties: false
+      required: [correlationId, events]
+      properties:
+        correlationId:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditEvent"
+    AuditLog:
+      type: object
+      additionalProperties: false
+      required: [entries, traces]
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditEvent"
+        traces:
+          type: array
+          items:
+            $ref: "#/components/schemas/CorrelationTrace"
     AdvanceCapaRequest:
       type: object
       additionalProperties: false
