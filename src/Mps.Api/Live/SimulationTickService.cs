@@ -63,7 +63,7 @@ public sealed partial class SimulationTickService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (Mps.Api.Demo.DemoResetService.InProgress)
+            if (!Mps.Api.Demo.DemoResetService.TryEnterTick())
             {
                 try
                 {
@@ -90,6 +90,10 @@ public sealed partial class SimulationTickService : BackgroundService
             catch (Exception ex)
             {
                 TickFailed(_logger, ex);
+            }
+            finally
+            {
+                Mps.Api.Demo.DemoResetService.ExitTick();
             }
 
             try
