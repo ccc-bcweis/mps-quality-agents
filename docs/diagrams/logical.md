@@ -11,65 +11,96 @@ Thesis from SPEC: engineers decide; AI assembles and reasons over evidence; **ru
 
 ```mermaid
 flowchart LR
-  subgraph Intake["Equipment and intake"]
-    SIM["Fleet simulator - 1 Hz telemetry"]
-    INJ["Fault Injector UI"]
+  subgraph Plants["Three plants"]
+    direction TB
+    NW["Northwater Fab"]
+    IW["Ironwood Fab"]
+    LM["Lumen Pilot Works"]
+  end
+
+  subgraph Harness["Harness bar"]
+    direction TB
+    INJ["Fault injector"]
+    SCN["Scenario picker"]
+    RST["Reset demo"]
+    MODE["Live, replay, mock"]
+  end
+
+  subgraph Intake["Intake"]
+    direction TB
+    SIM["Fleet simulator"]
+    SITES["Sites API"]
+    EVD["Scenario evidence"]
     OPR["Operator report"]
-    NCR["QMS NCR event"]
+    NCR["Quality notice"]
     SUP["Supplier notice"]
   end
 
-  subgraph Mock["Mock enterprise systems"]
-    MES[("MES - runs, lots, recipes")]
-    QMS[("QMS - NCRs, CAPAs")]
-    PLM[("PLM - configs, BOM, ECOs")]
-    ERP[("ERP - lots, suppliers")]
-    CMMS[("CMMS - PM, calibrations")]
-    TKT[("Ticketing - TKT records")]
+  subgraph Mock["Mock enterprise"]
+    direction TB
+    MES[("Runs and lots")]
+    QMS[("Quality records")]
+    PLM[("Change orders")]
+    ERP[("Material lots")]
+    CMMS[("Maintenance")]
+    TKT[("Tickets")]
   end
 
-  subgraph Docs["Document retrieval"]
-    CORP["Corpus ~12 docs: SOP, FMEA, bulletins, CoA, decoy, injection"]
-    CHUNK["Chunk / embed / index"]
-    RET["Hybrid BM25 + vector with metadata filters"]
+  subgraph Docs["Documents"]
+    direction TB
+    CORP["Procedures and bulletins"]
+    CHUNK["Chunk and index"]
+    RET["Keyword plus vector"]
   end
 
-  subgraph Det["DETERMINISTIC - code, unit tested"]
-    SPC["SPC windows + Western Electric 1-4"]
-    INTAKE["Intake normalize, dedupe, severity"]
-    LIFE["Lifecycle state machine"]
-    IMPACT["Scope-of-impact and timing features"]
-    GATE["Evidence gate: sufficiency + contradiction"]
-    APPR["ApprovalToken HMAC, single-use, bound"]
-    ACT["Action service: CAPA write, not an agent tool"]
+  subgraph Det["Rules, unit tested"]
+    direction TB
+    SPC["Control-chart windows"]
+    INTAKE["Normalize and dedupe"]
+    LIFE["Lifecycle"]
+    IMPACT["Scope and timing"]
+    GATE["Evidence gate"]
+    EGATE["Escalation gate"]
+    APPR["Signed token"]
+    ACT["Action service"]
   end
 
-  subgraph AI["PROBABILISTIC - model, evaluated"]
-    ORCH["Orchestrator MAF behind IInvestigationWorkflow"]
-    IA["Investigation Agent - read-only tools, no write"]
-    RA["Resolution Agent - evidence pack only, no tools"]
+  subgraph AI["Model, evaluated"]
+    direction TB
+    ORCH["Orchestrator"]
+    IA["Investigation agent"]
+    RA["Resolution agent"]
   end
 
-  subgraph GW["Model gateway"]
-    LEDGER["Cost ledger + daily spend cap"]
-    ROUTE["Route / retry / circuit breaker"]
+  subgraph Gw["Model gateway"]
+    direction TB
+    LEDGER["Spend cap"]
+    ROUTE["Route and retry"]
     M1["Azure OpenAI"]
     M2["OpenAI"]
-    M3["Replay recordings"]
+    M3["Replay"]
     M4["Mock reasoner"]
   end
 
-  subgraph Gov["Eval and governance"]
-    GV["Grounding validator - cited IDs subset of pack"]
-    EVAL["Eval runner - 24 cases, hard gates"]
-    RED["Red-team - injection and jailbreak"]
-    AUDIT["Append-only audit log + OTel traces"]
-    REG["Prompt / model / index registry"]
+  subgraph Gov["Eval"]
+    direction TB
+    GV["Grounding check"]
+    EVAL["Eval runner"]
+    RED["Red-team"]
+    AUDIT["Audit log"]
+    REG["Version registry"]
   end
 
-  UI["React fab console"]
+  CON["Meridian console"]
 
+  NW --> SIM
+  IW --> SIM
+  LM --> SIM
+  NW --> SITES
+  IW --> SITES
+  LM --> SITES
   INJ --> SIM
+  SCN --> EVD
   SIM --> SPC
   SPC --> TKT
   OPR --> INTAKE
@@ -78,6 +109,7 @@ flowchart LR
   TKT --> INTAKE
   INTAKE --> LIFE
   LIFE --> ORCH
+  SITES --> IMPACT
 
   MES --> IMPACT
   QMS --> IMPACT
@@ -85,6 +117,7 @@ flowchart LR
   ERP --> IMPACT
   CMMS --> IMPACT
   CORP --> CHUNK --> RET
+  EVD --> IA
 
   ORCH --> IA
   IA --> RET
@@ -98,10 +131,13 @@ flowchart LR
 
   IA --> GATE
   GATE -->|"sufficient"| RA
-  GATE -->|"missing or contradictory"| UI
+  GATE -->|"gaps"| CON
   RA --> GV
-  GV --> UI
-  UI -->|"human approve"| APPR
+  GV --> CON
+  CON -->|"not escalated"| APPR
+  CON -->|"escalated"| EGATE
+  EGATE -->|"request info"| CON
+  EGATE -->|"override with reason"| APPR
   APPR --> ACT
   ACT --> QMS
 
@@ -110,9 +146,10 @@ flowchart LR
   ROUTE --> LEDGER
   LEDGER -->|"under cap"| M1
   LEDGER -->|"under cap"| M2
-  LEDGER -->|"over cap or local default"| M3
+  LEDGER -->|"over cap"| M3
   LEDGER -->|"no recording"| M4
   REG --> ROUTE
+  MODE --> LEDGER
 
   SPC --> AUDIT
   ORCH --> AUDIT
@@ -125,7 +162,7 @@ flowchart LR
   classDef proba fill:#1A1F27,stroke:#A78BFA,color:#F8FAFC
   classDef gw fill:#0B1B33,stroke:#FAC400,color:#F8FAFC
   classDef gov fill:#1A1F27,stroke:#94A3B8,color:#F8FAFC
-  class SPC,INTAKE,LIFE,IMPACT,GATE,APPR,ACT det
+  class SPC,INTAKE,LIFE,IMPACT,GATE,EGATE,APPR,ACT det
   class ORCH,IA,RA proba
   class LEDGER,ROUTE,M1,M2,M3,M4 gw
   class GV,EVAL,RED,AUDIT,REG gov
@@ -140,7 +177,9 @@ flowchart LR
 | **Model gateway** | Gold / navy (pitch) | Azure OpenAI, OpenAI, Replay, Mock reasoner, cost ledger, daily cap | None (completions only) |
 | **Eval / governance** | Steel | Grounding validator, eval runner, red-team, audit log, version registry | None |
 | **Mock enterprise** | Panel | MES, QMS, PLM, ERP, CMMS, ticketing | QMS CAPA write is the action service, not an agent tool |
-| **Documents** | Panel | Seeded corpus, chunk/embed, hybrid retrieval with stable evidence IDs | Read-only |
+| **Documents** | Panel | Seeded corpus, scripted scenario records, chunk/embed, hybrid retrieval | Read-only |
+| **Harness** | Navy and gold | Fault injector, scenario picker, reset, live / replay / mock, spend | None. Not a console tab |
+| **Console** | Charcoal | Sites, Fleet, Tool, Alerts, Tickets, Investigation, Approval, CAPA | Shows state. The engineer decides |
 
 ## Narrative
 
@@ -148,15 +187,23 @@ Telemetry from the seeded fleet simulator (and live Fault Injector shapes) hits 
 
 The orchestrator then runs the **Investigation Agent** with a hard tool allowlist (read-only MES/QMS/PLM/ERP/CMMS/ticketing, telemetry window, SPC violations, hybrid document search, deterministic `Impact.Scope`). It cannot diagnose or write. Its output is a typed **Evidence Pack**. The **evidence gate** (code) either passes the pack to the **Resolution Agent** or returns Request-info / Escalate with named gaps. The Resolution Agent has **no tools**; it ranks a root-cause category (engineering change, calibration/alignment, supply-chain material, process drift) with citations and explicit `counterEvidence`. The **grounding validator** rejects unknown IDs and uncited claims.
 
-A human in the console **approves**. Only then does the action service mint a single-use HMAC **ApprovalToken** and call the mock QMS CAPA API. Agents are never registered with write tools (enforced by architecture tests).
+A human in the console **approves** only when the investigation is not escalated. An escalated case stops at the **escalation gate**: request more evidence, or override with a written reason. A plain approval is refused. Only a passing decision mints a single-use HMAC **ApprovalToken** and lets the action service call the mock QMS CAPA API. Agents are never registered with write tools (enforced by architecture tests).
 
 All model calls go through the **gateway**: routing, retries, a SQL **cost ledger**, and a **hard daily spend cap**. Over cap (or local default) the UI banner switches to REPLAY; injections without a recording use the labeled mock reasoner. Traces, the audit log, and the eval runner (including red-team injection cases) sit beside the product, not after it.
 
 LangGraph is not in-process. Orchestration is behind `IInvestigationWorkflow`; a stub adapter and MCP-exported tools (stretch) are the swap points. See SPEC §3.1.
 
+## Plants, harness, and the gate
+
+Three fictional plants feed the simulator. Northwater Fab and Ironwood Fab are front-end fabs. Lumen Pilot Works runs strip, clean, and a pilot line. The Sites API lists the plants, returns one plant, and compares one tool family. Scenario SC-5 is one supplier lot that reaches Northwater and Ironwood. It does not reach Lumen.
+
+The screen is two layers. The StatusNeo harness bar holds the fault injector, the scenario picker, reset, the live / replay / mock line, and spend. The Meridian console holds Sites, Fleet, Tool, Alerts, Tickets, Investigation, Approval, and corrective and preventive action. Presenter controls are not console tabs.
+
+Scripted scenarios carry their own evidence. Those records join the read-only tools. The resolution agent sees the full record text. It still has no tools and no write.
+
 ## Large-format print
 
-ARCH D sheet (36 × 24 in, landscape), v1.0, 2026-10-14. The mermaid block above is the source. The plotter files are hand-composed so labels do not cross.
+ARCH D sheet (36 × 24 in, landscape), v1.1, 2026-10-14. The mermaid block above is the source. The plotter files are hand-composed so labels do not cross. v1.1 adds the three plants, the Sites API, scenario evidence, the harness bar, and the escalation gate.
 
 - [`print/logical-archD.pdf`](print/logical-archD.pdf)
 - [`print/logical-archD.svg`](print/logical-archD.svg)

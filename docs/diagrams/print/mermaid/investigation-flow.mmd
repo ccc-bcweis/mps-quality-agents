@@ -1,62 +1,88 @@
 flowchart LR
-  subgraph HUM["Engineer / Human"]
+  subgraph Plants["Three plants"]
     direction TB
-    HOPEN["Opens the ticket. No write yet."]
-    HESC["No root cause. Named gaps only."]
-    HAPR["HUMAN APPROVAL gate. Signed token."]
+    NW["Northwater Fab"]
+    IW["Ironwood Fab"]
+    LM["Lumen Pilot Works"]
   end
 
-  subgraph CON["Console screen. Glossary plain language."]
+  subgraph HRN["Harness bar"]
+    direction TB
+    SCN["Scenario picker"]
+    MODE["Live, replay, mock"]
+  end
+
+  subgraph HUM["Engineer"]
+    direction TB
+    HOPEN["Opens the ticket"]
+    HESC["Owns the gap"]
+    HAPR["Signs the token"]
+  end
+
+  subgraph CON["Console"]
     direction TB
     CALERT["Alerts, then Tickets"]
-    CSCH["Tool schematic. Evidence entry point."]
-    CESC["Request info. Missing or contradictory."]
-    CAPR["Approval screen. Explicit confirm."]
-    CCAPA["CAPA screen. Corrective and preventive action."]
+    CSCH["Tool schematic"]
+    CESC["Request more evidence"]
+    CAPR["Escalation gate"]
+    CCAPA["CAPA screen"]
   end
 
-  subgraph DET["Deterministic services"]
+  subgraph DET["Rules"]
     direction TB
-    SPC["SPC alert. Statistical process control. Opens a ticket."]
-    GATE["Evidence gate. Sufficiency and contradiction."]
-    GROUND["Grounding check. Each why-line cites a real item."]
-    ACT["Action service. Token required. Not an agent tool."]
+    SPC["Control chart opens a ticket"]
+    GATE["Evidence gate"]
+    GROUND["Grounding check"]
+    ACT["Action service"]
   end
 
-  subgraph INV["Investigation Agent"]
+  subgraph INV["Investigation agent"]
     direction TB
-    TRI["Triage. AGENT. Plans the pack. Does not diagnose."]
-    HYP["Hypotheses. AGENT. Names four classes. Does not pick one."]
-    CALLS["Tool calls. AGENT. Read-only. At most 10."]
-    WHY["Why it matters. AGENT. One plain line per evidence item."]
+    TRI["Triage"]
+    HYP["Four classes"]
+    CALLS["Read-only tools"]
+    WHY["Why it matters"]
   end
 
-  subgraph RES["Resolution Agent"]
+  subgraph RES["Resolution agent"]
     direction TB
-    RANK["Rank causes. AGENT. Writes the evidence matrix."]
-    DRAFT["CAPA draft. AGENT. Actions only. Not a write."]
+    RANK["Rank causes"]
+    DRAFT["CAPA draft"]
   end
 
-  subgraph TOOL["Tools / enterprise systems"]
+  subgraph TOOL["Evidence"]
     direction TB
-    READ["MES, QMS, PLM, ERP, CMMS, documents. Read-only."]
-    QMS["Quality system create. 500, timeout, or 409."]
+    SITES["Sites API"]
+    EVD["Scenario evidence"]
+    READ["Enterprise reads"]
+    QMS["Quality write"]
   end
 
   subgraph MOD["Model gateway"]
     direction TB
-    GTRI["Model call for triage. Ledger and daily cap."]
-    GRANK["Model call for ranking. At most two calls."]
+    GTRI["Triage call"]
+    GRANK["Rank call"]
   end
 
+  NW --> SITES
+  IW --> SITES
+  LM --> SITES
+  SCN --> CALERT
+  SITES --> CALERT
   SPC --> CALERT --> HOPEN --> CSCH --> TRI
   TRI --> GTRI
-  TRI --> HYP --> CALLS --> READ --> WHY --> GATE
-  GATE -->|missing or contradictory| CESC --> HESC
-  GATE -->|sufficient| RANK --> DRAFT --> GROUND --> CAPR --> HAPR --> ACT
+  TRI --> HYP --> CALLS
+  EVD --> CALLS
+  CALLS --> READ --> WHY --> GATE
+  GATE -->|gaps| CESC --> HESC
+  GATE -->|sufficient| RANK --> DRAFT --> GROUND --> CAPR
   RANK --> GRANK
+  CAPR -->|"not escalated"| HAPR --> ACT
+  CAPR -->|"escalated"| CESC
+  CAPR -->|"override with reason"| HAPR
   ACT --> QMS
   ACT --> CCAPA
+  MODE --> GTRI
 
   classDef agent fill:#F3EEFF,stroke:#6D28D9,color:#111827
   classDef rules fill:#E7F8FB,stroke:#0E7490,color:#111827
@@ -68,5 +94,5 @@ flowchart LR
   class SPC,GATE,GROUND,ACT rules
   class HOPEN,HESC,HAPR human
   class CALERT,CSCH,CESC,CAPR,CCAPA screen
-  class READ,QMS tools
+  class SITES,EVD,READ,QMS tools
   class GTRI,GRANK gateway

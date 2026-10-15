@@ -88,51 +88,143 @@ CodeQL (C#, JS) · gitleaks · Dependabot + dependency-review action · **OWASP 
 24 at launch → 60 (combinations × confounders) before pilot → 200+ from shadow-mode traces labeled through approve/reject → continuous regression from every human rejection. Judge-calibration check against human labels (≥85% agreement).
 ### 6.5 ROI / financial model (simulated, assumptions stated)
 Inputs (synthetic, per year, for a 3-plant MPS): revenue $1.2B; COPQ 8% of revenue split into scrap/rework, warranty/field, downtime and investigation labor; 1,400 quality incidents/yr; MTTR-Q baseline 9.5 days; time to root-cause hypothesis 4 days; repeat-defect rate 18%; CAPA cycle time 62 days; engineer loaded cost $95/h, ~22 h per investigation; tool downtime $12k/h for key tools.
-Projection levers (conservative / expected): investigation hours −30/−45%; time to hypothesis −50/−70%; repeat defects −15/−25%; CAPA cycle −20/−35%; downtime hours avoided via earlier SPC detection. Output: annual savings range, payback period, cost to run (AI cost per investigation × volume + platform), and sensitivity table. Lives in `data/roi/` as CSV + a generator, rendered on the demo harness return-on-investment panel and in deck slide 5. All values labeled "illustrative, synthetic".
+Projection levers (conservative / expected): investigation hours −30/−45%; time to hypothesis −50/−70%; repeat defects −15/−25%; CAPA cycle −20/−35%; downtime hours avoided via earlier SPC detection. Output: annual savings range, payback period, cost to run (AI cost per investigation × volume + platform), and sensitivity table. Lives in `data/roi/` as CSV + a generator, rendered on the demo harness return-on-investment panel and on the ROI slides in section 7. All values labeled "illustrative, synthetic".
 
 ## 7. Deck plan (PowerPoint, StatusNeo-branded, "Prepared for Meridian Precision Systems")
-Draft outline now; finish after the demo with real screenshots and measured metrics.
-The opening slide is the company overview (K7), before the numbered story. The numbers below are unchanged.
-1. Title + MPS context (fleet, plants, pain) · 2. The problem in numbers (ROI baseline) · 3. Thesis: engineers decide, AI assembles evidence, rules enforce · 4. Opportunity landscape (5, prioritized) · 5. Deep dive: current vs future state + Rules/AI/Human table · 6. Business case: KPIs, baselines, projected savings, payback · 7. Architecture (logical + physical; MAF ↔ LangGraph) · 8. 90-day roadmap + production gates · 9. How we built it: AI agents in parallel lanes, Project board, CI/test/eval evidence, open statement that it's AI-built · 10. Risks, controls and ask (closing slide carries the IP notice).
-**IP notice (footer on every slide + closing slide):** "© 2026 Bryan C. Weis and Common Consulting Company. All intellectual property owned by Bryan C. Weis / Common Consulting Company. Fictional demonstration, AI-assisted; all companies and data are synthetic."
-(Core exec story = slides 1-6 + 8, per the 6-8 recommendation; 7 and 9 support the architecture and code segments. K7 opens, ahead of slide 1.)
 
-- **Company overview slide (K7):** Opening slide. Meridian Precision Systems is a fictional company that builds chip-process tools and runs three plants of its own. The tools are thin-film deposition (MPS-D7), plasma etch (MPS-E7), photoresist strip (MPS-S7), and single-wafer clean (MPS-C7). The eight-tool demo fleet is the teaching floor, not a claim about a real site.
+Slide-by-slide outline. Finish the pictures after a rehearsal, from the running demo. Every money figure is labeled illustrative and synthetic.
 
-  Three plants. Names are proposals until Lane S1 locks them. Do not swap in a real city.
+**IP notice (footer on every slide, and the whole closing slide):** "© 2026 Bryan C. Weis and Common Consulting Company. All intellectual property owned by Bryan C. Weis / Common Consulting Company. Fictional demonstration, AI-assisted; all companies and data are synthetic."
 
-  | Plant | Name | What it runs |
-  |---|---|---|
-  | A | Cindervane | Front-end fab. Deposition and etch. |
-  | B | Lowspindle | Second fab. A similar tool mix. |
-  | C | Rookspur | Photoresist strip, wafer clean, and a pilot line. |
+Shoot the StatusNeo demo harness and the Meridian console as two surfaces (ADR-006). A shot may keep the harness bar in frame so the buyer sees the outer band. Do not crop that bar off and then treat Reset demo, the scenario picker, or the spend line as product features. Do not show the fault injector, return on investment, or metrics as console tabs. The rehearsal list is `docs/demo/SCREENS.md`.
 
-  Map: `docs/diagrams/mps-sites.svg`. A stylized invented coast with three pins. Caption on the art: "Illustrative. Fictional coast. Not a real city. Not to scale." No country name, no real fab city, no real coastline.
+Meridian Precision Systems is a fictional company that builds chip-process tools and runs three plants of its own. The tools are thin-film deposition (MPS-D7), plasma etch (MPS-E7), photoresist strip (MPS-S7), and single-wafer clean (MPS-C7). The eight-tool demo fleet on Northwater is the teaching floor, not a claim about a real site.
 
-  Picture frames, both marked Illustrative. Do not drop in a photo of a real plant. Prompts below are for a later image pass. Each finished picture stays labeled Illustrative.
+| Plant | Name | What it runs | Place name, invented |
+|---|---|---|---|
+| A | Northwater Fab | Front-end fab. Deposition and etch, plus the original strip and clean tools. | Cedar Reach, Valecrest |
+| B | Ironwood Fab | Second front-end fab. The etch line runs hotter. | Ironwood Bench, Eastmere |
+| C | Lumen Pilot Works | Photoresist strip, wafer clean, and a pilot line. | Lumen Yard, Westfold |
 
-  - Exterior frame: `docs/deck/exterior-illustrative.svg`. Prompt: "Wide daylight view of a low modern factory campus beside a generic rocky shore. Flat-roofed industrial buildings, a small office block, a parking row, and young trees. Cool overcast light. No logos, no readable signs, no flag, no city skyline, no famous landmark, no real company. Label the picture Illustrative."
-  - Cleanroom frame: `docs/deck/cleanroom-illustrative.svg`. Prompt: "View down a wide chip-factory cleanroom aisle. People in full white cleanroom suits. Stainless process tools with round chambers and square load ports. A thin overhead rail carrying a wafer carrier. Pale light, smooth floor. No logos, no readable screens, no real company marks. Label the picture Illustrative."
+Scenario SC-5 is one supplier lot that reaches Northwater and Ironwood. It does not reach Lumen.
 
-  Leave-behind, not this slide: the physical floor plan `docs/diagrams/print/fab-floor-archD.pdf` (plan view of the Cindervane demo floor). It is a building drawing, not the console tool schematic and not the Azure architecture sheet.
+### Slide 1 — Opener: company overview and site map (K7)
 
-- **Design principle slide (K5 #66):** Plain-language operations (ADR-003): a supervisor or manager who isn't an engineer can understand and explain a problem, because nothing is in code. Show glossary hovers, the tool schematic, why-it-matters evidence and plain-word metrics.
-- **Current versus future slides (K6 #75):** Three slides. 1. As-is swimlane, with manual hand-offs and error risks (`docs/diagrams/print/as-is-flow-archD.pdf`). 2. To-be swimlane (G6), the same stages and lanes plus the MPS agent platform (`docs/diagrams/print/to-be-flow-archD.pdf`). 3. Side-by-side with simulated benefits (`docs/diagrams/print/as-is-vs-to-be-archD.pdf`). Narrative and the stage table: `docs/analysis/current-vs-future-state.md`. Every figure on these slides is labeled simulated. The G4 screen-order sheet (`docs/diagrams/print/investigation-flow-archD.pdf`) stays the architecture flow. It is not the K6 to-be slide.
+Who Meridian is, in one sentence, then the map. Pins A, B, and C are Northwater Fab, Ironwood Fab, and Lumen Pilot Works.
 
-### Deck screenshots (harness vs application)
+- Map: `docs/diagrams/mps-sites.svg`. Invented coast. Caption already on the art: fictional coast, not a real city, not to scale. No country name and no real coastline.
+- Picture frames, both marked Illustrative. Do not drop in a photo of a real plant.
+  - Exterior: `docs/deck/exterior-illustrative.svg`.
+  - Cleanroom: `docs/deck/cleanroom-illustrative.svg`.
+- Screenshot: none. This slide is the map and the two frames.
+- Surface: neither harness nor console.
 
-Shoot the StatusNeo demo harness and the Meridian Precision Systems console as two surfaces (ADR-006). A shot may keep the harness bar in frame so the buyer sees the outer band. Do not crop that bar off and then treat Reset demo, the scenario picker, or the spend line as product features. Do not show the fault injector, return on investment, or metrics as console tabs.
+Leave-behind, not this slide: `docs/diagrams/print/fab-floor-archD.pdf`, the Northwater floor plan. It is a building drawing, not the console tool schematic and not the Azure sheet.
 
-| Slide | What to shoot | Surface |
-|---|---|---|
-| Title and MPS context | Fleet overview. Harness bar visible above the console. | Application, harness in frame |
-| The problem in numbers, and the business case | Return-on-investment panel. Every figure already says illustrative, synthetic. | Harness |
-| Deep dive | Investigation with evidence, then Approval. | Application |
-| Plain-language operations | Glossary hover, tool schematic, why-it-matters line. | Application |
-| How the pitch is run | Harness bar: scenario picker, Reset demo, live / replay / mock, today's spend against the cap. One fault-injector panel, then the alerts screen it opens. | Harness, then application |
-| What the demo costs to run | Metrics panel, including spend against the cap. | Harness |
+### Slide 2 — The three plants
 
-The screen list for the rehearsal is `docs/demo/SCREENS.md`.
+One plant per column. Role, tool families, and the invented place name. Call out Ironwood etch running hotter than Northwater, and SC-5 as the lot that shows up in both front-end fabs.
+
+- Screenshot: Sites list, then the etch compare. Console. The harness bar may stay in frame.
+- Until the Sites tab is on the build, do not fake a console crop. Use the site map from slide 1 and say the screen is the Sites API (`GET /api/sites`, one plant, and compare).
+- Surface: console.
+
+### Slide 3 — The problem
+
+What a manual investigation costs, in the buyer's words: spoken alarms, retyped tickets, mail threads, a cause taken from the last similar alarm. Show the as-is swimlane. Stage times are simulated.
+
+- Diagram: `docs/diagrams/print/as-is-flow-archD.pdf`.
+- Screenshot: return-on-investment panel, baseline side only. Every figure already says illustrative, synthetic.
+- Surface: harness.
+- Narrative: `docs/analysis/current-vs-future-state.md`.
+
+### Slide 4 — The agent flow
+
+Thesis on the slide title: engineers decide, the model assembles evidence, rules enforce. Same stages as the problem slide, with the agent platform in place of the manual hand-offs. The human still opens the ticket and still approves.
+
+Plain-language operations (ADR-003) are a crop on this slide, not a separate story: a glossary hover, the tool schematic, and one why-it-matters line. A supervisor can read the pack.
+
+- Diagrams: `docs/diagrams/print/to-be-flow-archD.pdf` and, as the screen-order leave-behind, `docs/diagrams/print/investigation-flow-archD.pdf`. Side-by-side benefits: `docs/diagrams/print/as-is-vs-to-be-archD.pdf`. Every duration on those sheets is simulated.
+- Screenshot: Investigation, with evidence, the why-it-matters line, and the tool schematic. Console.
+- Surface: console.
+
+### Slide 5 — Live demo: scenario run
+
+The presenter picks a named scenario on the harness bar. Reset demo and the live / replay / mock line are visible. The console then opens on Alerts. The plant is on the ticket.
+
+- Screenshot: harness bar with the scenario picker, then the Alerts screen it opens.
+- Surface: harness, then console.
+
+### Slide 6 — Live demo: ranked cause
+
+Four cause classes, one rank, and the signal that would rule the winner out. The resolution agent is reading the scenario's own records, full text included. It does not write.
+
+- Screenshot: Investigation rank and the evidence matrix.
+- Surface: console.
+
+### Slide 7 — Live demo: escalation gate
+
+An escalated investigation cannot be approved straight into a corrective and preventive action (ADR-005). Approve stays disabled. The two actions are request more evidence, or override with a written reason.
+
+- Screenshot: Approval, escalation gate panel, note field, both buttons.
+- Surface: console.
+
+### Slide 8 — Live demo: corrective and preventive action
+
+After a real approval, or after an override with a reason, the action service writes the record. The agent draft was not the write.
+
+- Screenshot: the corrective and preventive action screen, lifecycle advanced.
+- Surface: console.
+
+### Slide 9 — Return on investment (illustrative)
+
+Projected savings, payback, and the sensitivity table. Same panel as slide 3, on the projection side. Do not read a figure as a contract price. Say illustrative, synthetic, out loud.
+
+- Screenshot: return-on-investment panel.
+- Surface: harness.
+- Source: `docs/roi-assumptions.md` and `data/roi/`.
+
+### Slide 10 — Architecture
+
+Logical sheet and physical sheet. Say the three plants are simulated, the Sites API is how the console reads them, and the harness bar is not part of the product. The model gateway and the daily spend cap sit on the physical sheet.
+
+- Diagrams: `docs/diagrams/print/logical-archD.pdf` and `docs/diagrams/print/physical-archD.pdf`.
+- Screenshot, optional and small: the shell, harness bar visible above the console, so the split is obvious. Do not crop the bar off.
+- Surface: diagrams. The optional shell crop is harness and console together.
+
+### Slide 11 — Security
+
+Invite-only sign-in. Agents have no write tools. The escalation gate is the control from slide 7. The spend cap trips the demo to replay. No secrets in the repo.
+
+- Screenshot: metrics panel, today's spend against the cap.
+- Surface: harness.
+- The approval token itself was already shown on the console, slides 7 and 8. Do not reshoot it as a harness control.
+
+### Slide 12 — Rollout
+
+Ninety days. Shadow mode, then a gated pilot, then production gates: measured baselines, a security review, and a person still approving every corrective and preventive action. Manual deploy stays a human gate.
+
+- Screenshot: none.
+- Diagram, if a picture is needed: `docs/diagrams/print/cicd-archD.pdf`.
+- Surface: neither.
+
+### Slide 13 — Closing
+
+The ask, the risks, and the statement that the demo was built with coding agents in parallel lanes. Repeat the IP notice in full. Fictional companies, fictional plants, synthetic data.
+
+- Screenshot: none.
+- Surface: neither.
+
+### How the earlier beats map
+
+| Earlier note | Where it sits now |
+|---|---|
+| K7 company overview | Slide 1 |
+| Three plants, once Lane S1 locked the names | Slides 1 and 2 |
+| K6 as-is, to-be, and side-by-side | Slides 3 and 4, plus the side-by-side as a leave-behind on slide 4 |
+| K5 plain language | Crops on slide 4. Console |
+| Live story: scenario, rank, gate, record | Slides 5 through 8 |
+| ROI baseline and ROI projection | Slides 3 and 9. Both harness |
 
 ## 8. Issue breakdown
 Labels: `lane:*`, `phase:*`, `type:test`, `design-question`, `stretch` (plus `type:design|infra|docs|ci`, `needs-bryan`).
