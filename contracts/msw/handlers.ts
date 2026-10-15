@@ -196,6 +196,7 @@ export const handlers = [
   http.post("/api/incidents/:incidentId/investigations", () =>
     HttpResponse.json({ ...investigation, stage: "started", hypotheses: [] }, { status: 201 }),
   ),
+  http.get("/api/investigations", () => HttpResponse.json([investigation])),
   http.get("/api/investigations/:investigationId", () => HttpResponse.json(investigation)),
   http.post("/api/investigations/:investigationId/decisions", async ({ request }) => {
     const body = (await request.json()) as { kind?: string; approverId?: string; comment?: string | null };

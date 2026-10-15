@@ -6,9 +6,11 @@ using System.Text.Json;
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 using Mps.Api.Fakes;
+using Mps.Api.Persistence;
 using Mps.Application.Persistence;
 using Mps.Domain.Approval;
 using Mps.Domain.Capa;
@@ -152,6 +154,51 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         body.GetProperty("correlationId").GetString().Should().Be(opened.GetProperty("correlationId").GetString());
         again.StatusCode.Should().Be(HttpStatusCode.Conflict);
         incident.GetProperty("stage").GetString().Should().Be("recommendationReady");
+    }
+
+    [Fact]
+    public async Task InvestigationListIsNewestFirst()
+    {
+        await using var factory = new ApiFactory();
+        var client = factory.CreateClient();
+        var empty = await client.GetFromJsonAsync<JsonElement>("/api/investigations");
+
+        var olderIncident = await OpenIncidentAsync(client, "E-02", "vibration");
+        var olderIncidentId = olderIncident.GetProperty("id").GetGuid();
+        var firstResponse = await client.PostAsync("/api/incidents/" + olderIncidentId.ToString("D") + "/investigations", null);
+        var firstId = (await firstResponse.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("id").GetGuid();
+        var rejected = await client.PostAsJsonAsync("/api/investigations/" + firstId.ToString("D") + "/decisions", new
+        {
+            kind = "reject",
+            comment = "The signal returned to the window.",
+        });
+        var secondResponse = await client.PostAsync("/api/incidents/" + olderIncidentId.ToString("D") + "/investigations", null);
+        var secondId = (await secondResponse.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("id").GetGuid();
+
+        var newerIncident = await OpenIncidentAsync(client, "D-01", "chamberPressure");
+        var newerIncidentId = newerIncident.GetProperty("id").GetGuid();
+        var thirdResponse = await client.PostAsync("/api/incidents/" + newerIncidentId.ToString("D") + "/investigations", null);
+        var thirdId = (await thirdResponse.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("id").GetGuid();
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<QualityDbContext>();
+            var olderRow = await db.Incidents.SingleAsync(row => row.Id == olderIncidentId);
+            var newerRow = await db.Incidents.SingleAsync(row => row.Id == newerIncidentId);
+            olderRow.OpenedAt = new DateTime(2026, 10, 14, 12, 0, 0, DateTimeKind.Utc);
+            newerRow.OpenedAt = new DateTime(2026, 10, 14, 13, 0, 0, DateTimeKind.Utc);
+            await db.SaveChangesAsync();
+        }
+
+        var listed = await client.GetFromJsonAsync<JsonElement>("/api/investigations");
+        var ids = listed.EnumerateArray().Select(row => row.GetProperty("id").GetGuid()).ToArray();
+
+        empty.GetArrayLength().Should().Be(0);
+        firstResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        rejected.StatusCode.Should().Be(HttpStatusCode.OK);
+        secondResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        thirdResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        ids.Should().Equal(thirdId, secondId, firstId);
     }
 
     [Fact]

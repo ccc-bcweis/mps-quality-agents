@@ -51,3 +51,9 @@ scenarios: SC-1 SC-2 SC-3 SC-4
 - `contracts/msw/handlers.ts` covers the new operations. No request or response field on an existing operation changed.
 - (lane T1) `GET /api/incidents/{incidentId}/investigation` returns the latest investigation for that incident. 404 when the incident does not exist or no investigation was started. A ticket opens by its incident id; a ticket id or number is not an investigation id.
 - `HumanDecisionKind` gains `override` (ADR-005).
+
+## Addendum: contracts-v1.3 (2026-10-15, GB-HIST)
+
+Additive console path. Existing operations are unchanged. OpenAPI `info.version` is 1.3.0.
+
+- `GET /api/investigations` returns every investigation, newest first. A later start on the same incident sorts before the earlier start. A newer incident sorts before an older one. The item shape is the existing `Investigation` schema.

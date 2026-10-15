@@ -118,6 +118,13 @@ public static class QualityEndpoints
             var response = ContractMapper.ToResponse(snapshot, narrative);
             return Results.Created("/api/investigations/" + response.Id.ToString("D"), response);
         });
+        app.MapGet("/api/investigations", async (
+            IInvestigationService investigations,
+            CancellationToken cancellationToken) =>
+        {
+            var rows = await investigations.ListAsync(cancellationToken).ConfigureAwait(false);
+            return Results.Ok(rows.Select(row => ContractMapper.ToResponse(row)).ToArray());
+        });
         app.MapGet("/api/investigations/{investigationId:guid}", async (
             Guid investigationId,
             IInvestigationService investigations,
