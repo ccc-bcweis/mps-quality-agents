@@ -90,8 +90,10 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
 
     public Task<ConfigRevision> GetConfigAsync(ToolId toolId, CancellationToken cancellationToken)
     {
+        // Tools added with the second and third plants have no seeded PLM row. Report a baseline revision
+        // so the investigation keeps going instead of failing on a missing record.
         var config = (_seed.Configs ?? []).FirstOrDefault(item => item.ToolId == toolId)
-            ?? throw new KeyNotFoundException("No configuration revision for " + toolId.Value + ".");
+            ?? new ConfigRevision("CFG-" + toolId.Value, toolId, "A", "Baseline chamber kit, no change on record");
         return Task.FromResult(config);
     }
 
