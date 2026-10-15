@@ -9,6 +9,10 @@ info:
     The fleet stream is SignalR at `/hubs/fleet` and is not a REST operation.
     Contract 1.2 adds three fictional plants: a site list, one plant with bay positions and
     wafer flow, and a comparison of the same tool family across plants. Tool records include siteId.
+    Contracts v1.2 adds admin reset and named injector scenarios. Both are additive.
+    contracts-v1.2 adds GET /api/incidents/{incidentId}/investigation (ADR-001 addendum).
+    It returns the latest investigation for that incident, or 404 when none exists.
+    The path is additive. Earlier clients stay compatible.
     All names and data are synthetic.
   license:
     name: MIT
@@ -24,6 +28,7 @@ tags:
   - name: investigations
   - name: capas
   - name: faults
+  - name: admin
   - name: metrics
 paths:
   /health:
@@ -203,6 +208,26 @@ paths:
                 $ref: "#/components/schemas/Incident"
         "404":
           $ref: "#/components/responses/NotFound"
+  /api/incidents/{incidentId}/investigation:
+    get:
+      tags: [investigations]
+      operationId: getLatestInvestigation
+      summary: Latest investigation for an incident
+      description: |
+        Additive in contracts-v1.2 (ADR-001 addendum). Returns the latest investigation
+        started for the incident. 404 when the incident is missing or no investigation
+        has been started. A ticket id or a ticket number is not this path.
+      parameters:
+        - $ref: "#/components/parameters/IncidentId"
+      responses:
+        "200":
+          description: The latest investigation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Investigation"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /api/investigations/{investigationId}:
     get:
       tags: [investigations]
@@ -342,6 +367,80 @@ paths:
                 $ref: "#/components/schemas/FaultInjectionAccepted"
         "400":
           $ref: "#/components/responses/BadRequest"
+  /api/admin/session:
+    get:
+      tags: [admin]
+      operationId: getAdminSession
+      summary: Caller role for the demo console
+      description: |
+        Local mode with no X-MS-CLIENT-PRINCIPAL header is the local dev user and is an admin.
+        In Azure the header is the Easy Auth principal. Role admin is required to reset the demo.
+      parameters:
+        - $ref: "#/components/parameters/ClientPrincipal"
+      responses:
+        "200":
+          description: Whether this caller may reset the demo.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSession"
+  /api/admin/reset:
+    post:
+      tags: [admin]
+      operationId: resetDemo
+      summary: Restore the seeded demo baseline
+      description: |
+        Admin only. Restores fleet state, tickets, investigations, approvals, CAPAs, and the
+        simulated clock from Mps:Demo:Seed (default 4242). The same seed is used locally and in Azure.
+        A second call returns the same baseline.
+      parameters:
+        - $ref: "#/components/parameters/ClientPrincipal"
+      responses:
+        "200":
+          description: Baseline restored.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DemoResetResult"
+        "403":
+          description: The caller is not an admin.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /api/injector/scenarios:
+    get:
+      tags: [faults]
+      operationId: listScenarios
+      summary: Named scripted scenarios
+      responses:
+        "200":
+          description: One scenario for each root-cause class.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScriptedScenario"
+  /api/injector/scenarios/{scenarioId}:
+    post:
+      tags: [faults]
+      operationId: runScenario
+      summary: Run a named scripted scenario
+      description: |
+        Applies deterministic telemetry from Mps:Demo:Seed and records the fault.
+        The free-form injector at POST /api/faults stays available.
+      parameters:
+        - $ref: "#/components/parameters/ScenarioId"
+      responses:
+        "202":
+          description: Scenario accepted. Telemetry is the seeded series.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScenarioRun"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /api/metrics:
     get:
       tags: [metrics]
@@ -397,6 +496,13 @@ components:
       schema:
         type: string
         minLength: 1
+    ScenarioId:
+      name: scenarioId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
     FamilyQuery:
       name: family
       in: query
@@ -404,6 +510,13 @@ components:
       description: Tool family to compare. One of deposition, etch, strip, or clean.
       schema:
         $ref: "#/components/schemas/ToolFamily"
+    ClientPrincipal:
+      name: X-MS-CLIENT-PRINCIPAL
+      in: header
+      required: false
+      description: Easy Auth client principal, base64 JSON. Absent in local mode.
+      schema:
+        type: string
   responses:
     BadRequest:
       description: The request failed validation.
@@ -721,7 +834,7 @@ components:
           type: string
     HumanDecisionKind:
       type: string
-      enum: [approve, reject, requestInfo]
+      enum: [approve, reject, requestInfo, override]
     HumanDecisionRequest:
       type: object
       additionalProperties: false
@@ -815,6 +928,95 @@ components:
           format: uuid
         correlationId:
           type: string
+    AdminSession:
+      type: object
+      additionalProperties: false
+      required: [mode, isAdmin, displayName]
+      properties:
+        mode:
+          type: string
+          enum: [local, azure]
+        isAdmin:
+          type: boolean
+        displayName:
+          type: string
+    DemoResetResult:
+      type: object
+      additionalProperties: false
+      required: [seed, simulatedOrigin, fleetToolCount, ticketCount, investigationCount, approvalCount, capaCount]
+      properties:
+        seed:
+          type: integer
+        simulatedOrigin:
+          type: string
+          format: date-time
+        fleetToolCount:
+          type: integer
+        ticketCount:
+          type: integer
+        investigationCount:
+          type: integer
+        approvalCount:
+          type: integer
+        capaCount:
+          type: integer
+    ScriptedScenario:
+      type: object
+      additionalProperties: false
+      required: [id, title, rootCauseCategory, toolIds, chamberId, parameter, shape, summary]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        rootCauseCategory:
+          $ref: "#/components/schemas/RootCauseCategory"
+        toolIds:
+          type: array
+          items:
+            type: string
+        chamberId:
+          type: string
+        parameter:
+          type: string
+        shape:
+          $ref: "#/components/schemas/FaultShape"
+        summary:
+          type: string
+    ScenarioTelemetryPoint:
+      type: object
+      additionalProperties: false
+      required: [toolId, chamberId, parameter, at, value]
+      properties:
+        toolId:
+          type: string
+        chamberId:
+          type: string
+        parameter:
+          type: string
+        at:
+          type: string
+          format: date-time
+        value:
+          type: number
+    ScenarioRun:
+      type: object
+      additionalProperties: false
+      required: [scenarioId, seed, faultId, correlationId, telemetry]
+      properties:
+        scenarioId:
+          type: string
+        seed:
+          type: integer
+        faultId:
+          type: string
+          format: uuid
+        correlationId:
+          type: string
+        telemetry:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScenarioTelemetryPoint"
     MetricsSummary:
       type: object
       additionalProperties: false

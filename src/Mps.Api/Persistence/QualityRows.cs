@@ -106,6 +106,9 @@ public sealed class InvestigationRow
 
     public Guid IncidentId { get; set; }
 
+    /// <summary>Start order for one incident. A later investigation has a higher sequence.</summary>
+    public int Sequence { get; set; }
+
     public string Stage { get; set; } = string.Empty;
 
     public string? EscalationReason { get; set; }

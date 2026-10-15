@@ -32,6 +32,7 @@ export const TONES = {
   ok: { zone: '#E7F8EF', stroke: '#047857', bar: '#059669', title: '#065F46' },
   manual: { zone: '#FEE2E2', stroke: '#B91C1C', bar: '#DC2626', title: '#991B1B' },
   risk: { zone: '#FEF3C7', stroke: '#B45309', bar: '#D97706', title: '#92400E' },
+  removed: { zone: '#D1FAE5', stroke: '#047857', bar: '#10B981', title: '#065F46' },
   later: { zone: '#F8FAFC', stroke: '#64748B', bar: '#94A3B8', title: '#334155', dash: true },
   lane: { zone: '#F8FAFC', stroke: '#334155', bar: '#0B1B33', title: '#0B1B33' },
   neutral: { zone: '#FFFFFF', stroke: '#334155', bar: '#0B1B33', title: '#0B1B33' },
@@ -651,7 +652,10 @@ export class Sheet {
       fill: NAVY,
     });
     const version = m.version || 'v1.0';
-    this.text('tb-meta', `${m.sheetId}  ·  Issue ${m.issue}      Version ${version}      Date 2026-10-14`, TITLE.x + 16, TITLE.y + 132, {
+    const metaLine = m.issue
+      ? `${m.sheetId}  ·  Issue ${m.issue}      Version ${version}      Date 2026-10-14`
+      : `${m.sheetId}      Version ${version}      Date 2026-10-14`;
+    this.text('tb-meta', metaLine, TITLE.x + 16, TITLE.y + 132, {
       size: 14,
       weight: 'regular',
       fill: INK,

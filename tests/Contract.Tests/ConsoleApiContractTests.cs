@@ -23,6 +23,7 @@ public sealed class ConsoleApiContractTests
         "/api/tickets",
         "/api/incidents",
         "/api/incidents/{incidentId}",
+        "/api/incidents/{incidentId}/investigation",
         "/api/incidents/{incidentId}/investigations",
         "/api/investigations/{investigationId}",
         "/api/investigations/{investigationId}/decisions",
@@ -30,6 +31,10 @@ public sealed class ConsoleApiContractTests
         "/api/capas/{capaId}",
         "/api/capas/{capaId}/advance",
         "/api/faults",
+        "/api/admin/session",
+        "/api/admin/reset",
+        "/api/injector/scenarios",
+        "/api/injector/scenarios/{scenarioId}",
         "/api/metrics",
     ];
 
@@ -65,6 +70,7 @@ public sealed class ConsoleApiContractTests
         Expect(OperationType.Get, "/api/incidents", "listIncidents", "200");
         Expect(OperationType.Post, "/api/incidents", "openIncident", "201");
         Expect(OperationType.Get, "/api/incidents/{incidentId}", "getIncident", "200");
+        Expect(OperationType.Get, "/api/incidents/{incidentId}/investigation", "getLatestInvestigation", "200");
         Expect(OperationType.Post, "/api/incidents/{incidentId}/investigations", "startInvestigation", "201");
         Expect(OperationType.Get, "/api/investigations/{investigationId}", "getInvestigation", "200");
         Expect(OperationType.Post, "/api/investigations/{investigationId}/decisions", "submitDecision", "200");
@@ -72,6 +78,10 @@ public sealed class ConsoleApiContractTests
         Expect(OperationType.Get, "/api/capas/{capaId}", "getCapa", "200");
         Expect(OperationType.Post, "/api/capas/{capaId}/advance", "advanceCapa", "200");
         Expect(OperationType.Post, "/api/faults", "injectFault", "202");
+        Expect(OperationType.Get, "/api/admin/session", "getAdminSession", "200");
+        Expect(OperationType.Post, "/api/admin/reset", "resetDemo", "200");
+        Expect(OperationType.Get, "/api/injector/scenarios", "listScenarios", "200");
+        Expect(OperationType.Post, "/api/injector/scenarios/{scenarioId}", "runScenario", "202");
         Expect(OperationType.Get, "/api/metrics", "getMetrics", "200");
 
         OpenApiDocs.Console.Paths["/api/capas"].Operations.Should().NotContainKey(OperationType.Post);
@@ -86,6 +96,7 @@ public sealed class ConsoleApiContractTests
         var document = OpenApiDocs.Console;
         Problem(document, document.Operation("/api/incidents", OperationType.Post), "400");
         Problem(document, document.Operation("/api/incidents/{incidentId}", OperationType.Get), "404");
+        Problem(document, document.Operation("/api/incidents/{incidentId}/investigation", OperationType.Get), "404");
         Problem(document, document.Operation("/api/incidents/{incidentId}/investigations", OperationType.Post), "409");
         Problem(document, document.Operation("/api/capas/{capaId}/advance", OperationType.Post), "409");
 
@@ -152,7 +163,7 @@ public sealed class ConsoleApiContractTests
         request.Properties.Keys.Should().NotContain("signature");
         request.Properties.Keys.Should().NotContain("approvalToken");
         request.Properties["comment"].MaxLength.Should().Be(4000);
-        document.Schema("HumanDecisionKind").EnumNames().Should().Equal("approve", "reject", "requestInfo");
+        document.Schema("HumanDecisionKind").EnumNames().Should().Equal("approve", "reject", "requestInfo", "override");
 
         var result = document.Schema("DecisionResult");
         result.AdditionalPropertiesAllowed.Should().BeFalse();

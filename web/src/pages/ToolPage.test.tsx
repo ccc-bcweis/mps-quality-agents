@@ -22,7 +22,7 @@ describe("tool detail", () => {
   it("binds etch sensors to the schematic and opens the chart for the point that was chosen", async () => {
     const user = userEvent.setup();
     renderConsole("/tools/E-02");
-    expect(await screen.findByRole("img", { name: /plasma etch schematic/i })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: /plasma etch schematic/i })).toBeInTheDocument();
     const esc = screen.getByRole("button", { name: /E-02-A-TC-ESC/ });
     expect(esc).toHaveTextContent("53.1");
     expect(esc).toHaveTextContent("C");
@@ -40,12 +40,12 @@ describe("tool detail", () => {
     expect(pressure).toHaveTextContent("6.52");
     expect(pressure).toHaveTextContent("Torr");
     expect(pressure).toHaveAttribute("data-status", "outOfSpec");
-    expect(screen.getByRole("img", { name: /thin-film deposition schematic/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /thin-film deposition schematic/i })).toBeInTheDocument();
   });
 
   it("draws the strip schematic with remote plasma power in watts", async () => {
     renderConsole("/tools/S-01");
-    expect(await screen.findByRole("img", { name: /photoresist strip schematic/i })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: /photoresist strip schematic/i })).toBeInTheDocument();
     const remote = screen.getByRole("button", { name: /S-01-A-RF-REMOTE-FWD/ });
     expect(remote).toHaveTextContent("W");
     expect(remote.textContent).not.toMatch(/kW/);
@@ -53,7 +53,7 @@ describe("tool detail", () => {
 
   it("draws the clean schematic without an RF generator", async () => {
     renderConsole("/tools/C-01");
-    expect(await screen.findByRole("img", { name: /single-wafer clean schematic/i })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: /single-wafer clean schematic/i })).toBeInTheDocument();
     const megasonic = screen.getByRole("button", { name: /C-01-A-MEG-PWR/ });
     expect(megasonic).toHaveTextContent("W");
     expect(screen.queryByRole("button", { name: /RF FWD/ })).not.toBeInTheDocument();
