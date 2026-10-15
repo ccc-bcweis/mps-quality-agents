@@ -29,6 +29,7 @@ const ERP_ID = "11111111-1111-4111-8111-111111111116";
 const DOC_ID = "11111111-1111-4111-8111-111111111117";
 const H2_ID = "22222222-2222-4222-8222-222222222223";
 const H3_ID = "22222222-2222-4222-8222-222222222224";
+const H4_ID = "22222222-2222-4222-8222-222222222225";
 
 function chambers(names: string[]): Tool["chambers"] {
   return names.map((name, index) => ({ id: `C${index + 1}`, name }));
@@ -160,6 +161,7 @@ const s1Evidence: EvidenceItem[] = [
     source: "telemetry",
     title: "ESC temperature series",
     excerpt: "Western Electric rule 2 on chamber B only. E-01 on the same recipe stays in control.",
+    whyItMatters: "The wobble is on one chamber, so a plant-wide signal is unlikely.",
     observedAt: "2026-10-14T14:08:00Z",
     toolId: "E-02",
     externalRef: "TEL-E02-ESC",
@@ -169,6 +171,7 @@ const s1Evidence: EvidenceItem[] = [
     source: "plm",
     title: "ECO-4471 edge ring rev C",
     excerpt: "Edge ring revision C became effective before the oscillation.",
+    whyItMatters: "The part change was in place before the wobble started.",
     observedAt: "2026-10-12T08:00:00Z",
     toolId: "E-02",
     externalRef: "ECO-4471",
@@ -178,6 +181,7 @@ const s1Evidence: EvidenceItem[] = [
     source: "mes",
     title: "Run header L-4419",
     excerpt: "Recipe ETCH-OX-14, edge ring revision C, chamber B.",
+    whyItMatters: "The run record names the new ring on this chamber.",
     observedAt: "2026-10-14T13:40:00Z",
     toolId: "E-02",
     externalRef: "L-4419",
@@ -187,6 +191,7 @@ const s1Evidence: EvidenceItem[] = [
     source: "cmms",
     title: "Preventive maintenance the same week",
     excerpt: "A preventive maintenance was performed the same week on E-02.",
+    whyItMatters: "Same-week maintenance has to be checked, then set aside if it does not fit the wobble.",
     observedAt: "2026-10-11T16:00:00Z",
     toolId: "E-02",
     externalRef: "PM-3381",
@@ -196,6 +201,7 @@ const s1Evidence: EvidenceItem[] = [
     source: "cmms",
     title: "ESC thermocouple calibration",
     excerpt: "Calibration is current and not overdue.",
+    whyItMatters: "A current calibration makes a fixed offset unlikely.",
     observedAt: "2026-09-02T10:00:00Z",
     toolId: "E-02",
     externalRef: "CAL-ESC-02",
@@ -205,6 +211,7 @@ const s1Evidence: EvidenceItem[] = [
     source: "erp",
     title: "Shared gas lot",
     excerpt: "The same gas lot is on E-01 and E-02. E-01 is nominal.",
+    whyItMatters: "The sister tool shares the gas lot and stays steady.",
     observedAt: "2026-10-09T08:00:00Z",
     toolId: "E-02",
     externalRef: "NF3-220",
@@ -214,6 +221,7 @@ const s1Evidence: EvidenceItem[] = [
     source: "document",
     title: "Service bulletin on ring gap",
     excerpt: "Revision C can couple ESC heat when the gap is under spec.",
+    whyItMatters: "The service note says this ring gap can move the heat path.",
     observedAt: "2026-08-01T00:00:00Z",
     toolId: "E-02",
     externalRef: "SB-441",
@@ -256,6 +264,15 @@ export const investigations: Investigation[] = [
         counterEvidence: ["E-01 uses the same lot and is in control."],
         actions: [],
       },
+      {
+        id: H4_ID,
+        category: "processDrift",
+        cause: "A slow ramp would walk the mean. The series oscillates inside the window.",
+        confidence: 0.05,
+        evidenceIds: [TEL_ID],
+        counterEvidence: ["The pattern is an oscillation, not a ramp."],
+        actions: [],
+      },
     ],
   },
   {
@@ -271,6 +288,7 @@ export const investigations: Investigation[] = [
         source: "plm",
         title: "Showerhead revision C",
         excerpt: "PLM config lists showerhead revision C on D-01.",
+        whyItMatters: "PLM says one revision. That would matter if the tool is running that part.",
         observedAt: "2026-10-08T12:00:00Z",
         toolId: "D-01",
         externalRef: "PLM-SH-C",
@@ -280,6 +298,7 @@ export const investigations: Investigation[] = [
         source: "mes",
         title: "MES run header revision B",
         excerpt: "The run header for the pressure step records showerhead revision B.",
+        whyItMatters: "MES says a different revision, so the cause cannot be named.",
         observedAt: "2026-10-14T14:20:00Z",
         toolId: "D-01",
         externalRef: "MES-D01-B",
@@ -289,6 +308,7 @@ export const investigations: Investigation[] = [
         source: "spc",
         title: "Chamber pressure step",
         excerpt: "One point beyond 3 sigma. The latest reading is 6.52 Torr, outside the 2–6 Torr window.",
+        whyItMatters: "The pressure jumped past the normal line and the window.",
         observedAt: "2026-10-14T14:40:00Z",
         toolId: "D-01",
         externalRef: "SPC-D01-P",

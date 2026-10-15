@@ -6,6 +6,7 @@ import { AlertsPage } from "./pages/AlertsPage";
 import { ApprovalPage } from "./pages/ApprovalPage";
 import { CapaPage } from "./pages/CapaPage";
 import { FleetPage } from "./pages/FleetPage";
+import { GlossaryPage } from "./pages/GlossaryPage";
 import { InjectorPage } from "./pages/InjectorPage";
 import { InvestigationPage } from "./pages/InvestigationPage";
 import { MetricsPage } from "./pages/MetricsPage";
@@ -29,6 +30,7 @@ export function AppRoutes() {
         <Route path="/injector" element={<InjectorPage />} />
         <Route path="/roi" element={<RoiPage />} />
         <Route path="/metrics" element={<MetricsPage />} />
+        <Route path="/glossary" element={<GlossaryPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

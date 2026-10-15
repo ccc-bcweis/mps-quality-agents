@@ -5,6 +5,8 @@ import { api, ApiProblem } from "../api/client";
 import { CATEGORY_LABEL } from "../api/labels";
 import type { Investigation } from "../api/types";
 import { ApprovalDialog, type DecisionMode } from "../components/ApprovalDialog";
+import { Explain } from "../components/Explain";
+import { Term } from "../components/Term";
 import { btnDanger, btnOk, panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
 import { lifecycleForInvestigation } from "../lifecycle";
@@ -66,7 +68,9 @@ export function ApprovalPage() {
           <Link to={`/investigations/${investigationId}`}>Investigation</Link> · human-gated write
         </p>
         <h1 className="text-mps-display font-semibold">Approval</h1>
-        <p className="max-w-3xl text-mps-secondary">The model never holds write authority. Approve sends an approver id. The server issues the token and creates the CAPA.</p>
+        <p className="max-w-3xl text-mps-secondary">
+          <Explain text="The model never holds write authority. Approve sends an approver id. The server issues the token and creates the CAPA." />
+        </p>
       </div>
       {error ? (
         <p className="mb-3 text-mps-alarm-text" role="alert">
@@ -89,11 +93,13 @@ export function ApprovalPage() {
               {top.counterEvidence.length > 0 ? <p className="mt-2">counterEvidence: {top.counterEvidence.join(" ")}</p> : null}
             </>
           ) : (
-            <p>No recommendation is ready. An escalation does not create a CAPA.</p>
+            <p>
+              <Explain text="No recommendation is ready. An escalation does not create a CAPA." spellOut={false} />
+            </p>
           )}
           <div className="mt-4 flex flex-wrap gap-2">
             <button type="button" className={btnOk} disabled={pending || !top} onClick={() => setMode("approve")}>
-              Approve CAPA + containment
+              Approve <Term id="CAPA" spellOut={false} /> + containment
             </button>
             <button type="button" className={btnDanger} disabled={pending || !investigation} onClick={() => setMode("reject")}>
               Reject

@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { formatUsd } from "../api/labels";
 import { useConsole } from "../context/ConsoleContext";
+import { Explain } from "./Explain";
 
 const COPY = {
   replay: {
@@ -47,7 +48,7 @@ export function ModeBanner() {
               : "bg-sn-navy-soft text-sn-gold"
         }`}
       >
-        {copy.label}
+        <Explain text={copy.label} spellOut={false} />
       </span>
       <p className={`min-w-[12rem] flex-1 ${bannerMode === "live" ? "text-[#a7f3d0]" : "text-sn-gold-wash"}`}>{note}</p>
       <button
@@ -56,7 +57,7 @@ export function ModeBanner() {
         disabled={capReached}
         onClick={() => setPreview(bannerMode === "replay" ? "live" : "replay")}
       >
-        {capReached ? "Live locked" : copy.action}
+        {capReached ? "Live locked" : <Explain text={copy.action} spellOut={false} />}
       </button>
       <div className="ml-auto flex items-center gap-2" title="Hard daily spend cap enforced by the model gateway">
         <span className="text-mps-label text-mps-muted">Today's spend</span>

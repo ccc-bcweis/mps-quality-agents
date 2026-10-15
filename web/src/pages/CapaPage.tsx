@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import type { Capa, CapaStage } from "../api/types";
+import { Explain } from "../components/Explain";
+import { Term } from "../components/Term";
 import { btn, panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
 import { CAPA_STAGES, nextCapaStage } from "../lifecycle";
@@ -76,26 +78,34 @@ export function CapaPage() {
     <div>
       <div className="mb-4">
         <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">
-          <Link to={`/approvals/${S1_INVESTIGATION_ID}`}>Approval</Link> · mock QMS
+          <Link to={`/approvals/${S1_INVESTIGATION_ID}`}>Approval</Link> · mock <Explain text="QMS" spellOut={false} />
         </p>
-        <h1 className="text-mps-display font-semibold">CAPA</h1>
-        <p className="max-w-3xl text-mps-secondary">Stages after Open move one step at a time. A failed verification does not move backward. The frozen mock rejects advance with 409 until the API implements the transition.</p>
+        <h1 className="text-mps-display font-semibold">
+          <Term id="CAPA" spellOut={false} />
+        </h1>
+        <p className="max-w-3xl text-mps-secondary">
+          <Explain text="A CAPA is the record of the fix. Stages after Open move one step at a time. A failed verification does not move backward. The frozen mock rejects advance with 409 until the API implements the transition." />
+        </p>
       </div>
       {error ? (
         <p className="mb-3 text-mps-alarm-text" role="alert">
-          {error}
+          <Explain text={error} spellOut={false} />
         </p>
       ) : null}
       {notice ? <p className="mb-3 text-mps-ok">{notice}</p> : null}
       {!capa ? (
-        <p className="text-mps-muted">No CAPA yet. Approve a recommendation to create one. The server list is empty until that token is issued.</p>
+        <p className="text-mps-muted">
+          <Explain text="No CAPA yet. Approve a recommendation to create one. The server list is empty until that token is issued." spellOut={false} />
+        </p>
       ) : (
         <>
           <p className="mb-3 rounded border border-mps-ok bg-mps-panel px-3 py-2">
             Approval token consumed (single-use). Token <span className="font-mono">{capa.approvalTokenId}</span>. Action hash <span className="font-mono">{capa.actionHash}</span>.
           </p>
           <section className={`${panel} mb-3`}>
-            <h2 className="mb-2 text-mps-title font-semibold">CAPA stages</h2>
+            <h2 className="mb-2 text-mps-title font-semibold">
+              <Explain text="CAPA stages" spellOut={false} />
+            </h2>
             <ol aria-label="CAPA stages" className="m-0 flex list-none flex-wrap gap-0 p-0">
               {CAPA_STAGES.map((item, index) => {
                 const state = index < currentIndex ? "done" : index === currentIndex ? "current" : "todo";
@@ -111,7 +121,9 @@ export function CapaPage() {
                 Advance stage
               </button>
             </div>
-            <p className="mt-3 text-mps-micro text-mps-muted">QMS 500 retry is a connector fault on the mock enterprise API. The console does not call that API. Problem details from the CAPA route show up here.</p>
+            <p className="mt-3 text-mps-micro text-mps-muted">
+              <Explain text="QMS 500 retry is a connector fault on the mock enterprise API. The console does not call that API. Problem details from the CAPA route show up here." spellOut={false} />
+            </p>
           </section>
           <div className="grid gap-3 lg:grid-cols-2">
             <section className={panel}>

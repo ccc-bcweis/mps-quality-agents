@@ -5,6 +5,7 @@ import { api, ApiProblem } from "../api/client";
 import { formatStamp, ruleLabel, severityTone, severityWord } from "../api/labels";
 import type { Alert, Incident, Ticket } from "../api/types";
 import { Chip } from "../components/Chip";
+import { Explain } from "../components/Explain";
 import { btn, panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
 
@@ -84,7 +85,9 @@ export function AlertsPage() {
                       <Link to={`/tools/${alert.toolId}`}>{alert.toolId}</Link>
                     </td>
                     <td className="py-1.5 font-mono">{alert.parameter}</td>
-                    <td className="py-1.5">{ruleLabel(alert.rule)}</td>
+                    <td className="py-1.5">
+                      <Explain text={ruleLabel(alert.rule)} />
+                    </td>
                     <td className="py-1.5">
                       <Chip tone={severityTone(alert.severity)}>{severityWord(alert.severity)}</Chip>
                     </td>

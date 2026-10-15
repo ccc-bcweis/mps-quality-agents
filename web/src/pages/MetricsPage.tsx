@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
 import { formatUsd } from "../api/labels";
+import { Explain } from "../components/Explain";
+import { Term } from "../components/Term";
 import { panel } from "../components/ui";
 
 function metricText(value: number | null | undefined, digits = 0, suffix = ""): string {
@@ -16,7 +18,9 @@ export function MetricsPage() {
     <div>
       <div className="mb-4">
         <h1 className="text-mps-display font-semibold">Metrics / eval</h1>
-        <p className="max-w-3xl text-mps-secondary">Numbers below are the gateway payload from /api/metrics. Empty fields stay empty until the eval runner reports them. The gates are the SPEC targets, not a score.</p>
+        <p className="max-w-3xl text-mps-secondary">
+          <Explain text="Numbers below are the gateway payload from the metrics API. Empty fields stay empty until the eval runner reports them. The gates are the SPEC targets, not a score." />
+        </p>
       </div>
       {metricsError ? <p className="mb-3 text-mps-alarm-text">{metricsError}</p> : null}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
@@ -29,7 +33,9 @@ export function MetricsPage() {
       </div>
       <div className="mt-3 grid gap-3 lg:grid-cols-2">
         <section className={panel}>
-          <h2 className="mb-2 text-mps-title font-semibold">Gates (SPEC §4.3)</h2>
+          <h2 className="mb-2 text-mps-title font-semibold">
+            Gates (<Explain text="SPEC" spellOut={false} /> §4.3)
+          </h2>
           <table className="w-full text-left">
             <tbody>
               <tr className="border-t border-mps-line"><td className="py-1.5">Safe escalation</td><td className="py-1.5 font-mono">100% hard gate</td></tr>
@@ -48,14 +54,24 @@ export function MetricsPage() {
             <thead>
               <tr className="text-mps-muted">
                 <th className="py-1 font-medium"> </th>
-                <th className="py-1 font-medium">ECO</th>
+                <th className="py-1 font-medium">
+                  <Term id="ECO" spellOut={false} />
+                </th>
                 <th className="py-1 font-medium">Cal</th>
                 <th className="py-1 font-medium">Lot</th>
                 <th className="py-1 font-medium">Drift</th>
               </tr>
             </thead>
             <tbody>
-              <tr className="border-t border-mps-line"><td className="py-1">ECO</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+              <tr className="border-t border-mps-line">
+                <td className="py-1">
+                  <Term id="ECO" spellOut={false} />
+                </td>
+                <td>—</td>
+                <td>—</td>
+                <td>—</td>
+                <td>—</td>
+              </tr>
               <tr className="border-t border-mps-line"><td className="py-1">Cal</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
               <tr className="border-t border-mps-line"><td className="py-1">Lot</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
               <tr className="border-t border-mps-line"><td className="py-1">Drift</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>

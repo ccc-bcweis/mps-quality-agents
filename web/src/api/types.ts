@@ -123,6 +123,8 @@ export type EvidenceItem = {
   observedAt: string;
   toolId?: string | null;
   externalRef?: string | null;
+  /** Local demo field. The frozen evidence schema does not carry this yet. */
+  whyItMatters?: string;
 };
 
 export type Hypothesis = {
