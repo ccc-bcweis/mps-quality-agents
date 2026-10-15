@@ -185,6 +185,49 @@ export type FaultInjectionAccepted = {
   correlationId: string;
 };
 
+export type AdminSession = {
+  mode: "local" | "azure";
+  isAdmin: boolean;
+  displayName: string;
+};
+
+export type DemoResetResult = {
+  seed: number;
+  simulatedOrigin: string;
+  fleetToolCount: number;
+  ticketCount: number;
+  investigationCount: number;
+  approvalCount: number;
+  capaCount: number;
+};
+
+export type ScriptedScenario = {
+  id: string;
+  title: string;
+  rootCauseCategory: RootCauseCategory;
+  toolIds: string[];
+  chamberId: string;
+  parameter: string;
+  shape: FaultShape;
+  summary: string;
+};
+
+export type ScenarioTelemetryPoint = {
+  toolId: string;
+  chamberId: string;
+  parameter: string;
+  at: string;
+  value: number;
+};
+
+export type ScenarioRun = {
+  scenarioId: string;
+  seed: number;
+  faultId: string;
+  correlationId: string;
+  telemetry: ScenarioTelemetryPoint[];
+};
+
 export type MetricsSummary = {
   mode: RunMode;
   completionRate?: number | null;
