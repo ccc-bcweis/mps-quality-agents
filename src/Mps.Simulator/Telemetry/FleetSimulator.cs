@@ -87,6 +87,19 @@ public sealed class FleetSimulator : ITelemetrySource
         }
     }
 
+    /// <summary>
+    /// Drops injected faults and series cursors and puts the simulator clock back on <see cref="Origin"/>.
+    /// </summary>
+    public void Reset()
+    {
+        lock (_gate)
+        {
+            _faults.Clear();
+            _series.Clear();
+            _now = Origin;
+        }
+    }
+
     public IReadOnlyList<TelemetryFrame> Advance(TimeSpan simulatedElapsed)
     {
         var seconds = (int)simulatedElapsed.TotalSeconds;
