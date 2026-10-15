@@ -314,7 +314,7 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task FaultInjectionOpensTheInjectorChannelWhenDirectTicketIsEnabled()
+    public async Task FaultInjectionDoesNotOpenATicketWhenDirectTicketIsEnabled()
     {
         await using var factory = new ApiFactory().WithWebHostBuilder(builder =>
             builder.UseSetting("Mps:Injector:DirectTicket", "true"));
@@ -329,10 +329,8 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
         accepted.GetProperty("faultId").GetGuid().Should().NotBeEmpty();
         accepted.GetProperty("correlationId").GetString().Should().NotBeNullOrWhiteSpace();
-        incidents.EnumerateArray().Should().Contain(incident =>
-            incident.GetProperty("parameter").GetString() == parameter
-            && incident.GetProperty("channel").GetString() == "faultInjector");
-        alerts.EnumerateArray().Should().Contain(alert => alert.GetProperty("parameter").GetString() == parameter);
+        incidents.EnumerateArray().Should().NotContain(incident => incident.GetProperty("parameter").GetString() == parameter);
+        alerts.EnumerateArray().Should().NotContain(alert => alert.GetProperty("parameter").GetString() == parameter);
     }
 
     [Fact]

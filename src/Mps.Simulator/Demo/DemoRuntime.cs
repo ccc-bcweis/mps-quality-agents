@@ -39,10 +39,7 @@ public sealed class DemoRuntime
     public void Apply(ScriptedScenario scenario)
     {
         ArgumentNullException.ThrowIfNull(scenario);
-        foreach (var signal in scenario.Signals(DemoClock.BaselineOrigin))
-        {
-            Simulator.Inject(signal);
-        }
+        Simulator.InjectAtSimulatedNow(scenario.Signals);
     }
 
     public bool TryApplyFreeForm(string toolId, string? chamberId, string parameter, string shape, double magnitude)
@@ -68,15 +65,61 @@ public sealed class DemoRuntime
             return false;
         }
 
-        var name = parameter.Trim();
-        var known = tool.Recipes.Any(recipe => RecipeSchedule.Parameters(recipe).Contains(name, StringComparer.Ordinal));
-        if (!known)
+        var name = ResolveParameter(tool, parameter.Trim());
+        if (name is null)
         {
             return false;
         }
 
         var chamber = string.IsNullOrWhiteSpace(chamberId) ? tool.Chambers[0].Id : chamberId.Trim();
-        Simulator.Inject(new FaultSignal(tool.Id, chamber, name, parsed, MagnitudeKind.Sigma, magnitude, Clock.SimulatedNow));
+        Simulator.InjectAtSimulatedNow(onset =>
+        [
+            new FaultSignal(tool.Id, chamber, name, parsed, MagnitudeKind.Sigma, magnitude, onset, periodSeconds: 1200d, rampSeconds: 7200d),
+        ]);
         return true;
     }
+
+    /// <summary>
+    /// The injector form uses a few friendly names. Map those onto the recipe parameter the simulator actually emits.
+    /// </summary>
+    private static string? ResolveParameter(ToolSpec tool, string requested)
+    {
+        if (RecipeHas(tool, requested))
+        {
+            return requested;
+        }
+
+        if (requested.Equals("gasFlow", StringComparison.OrdinalIgnoreCase))
+        {
+            return FirstRecipeParameter(tool, "cf4Flow", "o2Flow", "sih4Flow", "n2h2Flow");
+        }
+
+        if (requested.Equals("calibrationOffset", StringComparison.OrdinalIgnoreCase))
+        {
+            return FirstRecipeParameter(tool, "chamberPressure", "temperature", "escTemperature");
+        }
+
+        if (requested.Equals("particleAdders", StringComparison.OrdinalIgnoreCase))
+        {
+            return FirstRecipeParameter(tool, "particlesAdders");
+        }
+
+        return null;
+    }
+
+    private static string? FirstRecipeParameter(ToolSpec tool, params string[] names)
+    {
+        foreach (var name in names)
+        {
+            if (RecipeHas(tool, name))
+            {
+                return name;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool RecipeHas(ToolSpec tool, string parameter) =>
+        tool.Recipes.Any(recipe => RecipeSchedule.Parameters(recipe).Contains(parameter, StringComparer.Ordinal));
 }

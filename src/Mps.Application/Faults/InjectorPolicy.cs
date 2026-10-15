@@ -3,7 +3,8 @@
 namespace Mps.Application.Faults;
 
 /// <summary>
-/// The simulator owns alert intake. Direct ticket creation from the injector stays available for a self-contained demo.
+/// Historical configuration key <c>Mps:Injector:DirectTicket</c>. The flag no longer opens a ticket.
+/// Alerts come from the live telemetry stream crossing an SPC rule.
 /// </summary>
 public sealed class InjectorPolicy
 {

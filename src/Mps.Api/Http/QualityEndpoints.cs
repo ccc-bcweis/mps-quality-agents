@@ -2,6 +2,7 @@
 
 using Mps.Api.Auth;
 using Mps.Api.Demo;
+using Mps.Api.Live;
 using Mps.Application.Decisions;
 using Mps.Application.Errors;
 using Mps.Application.Faults;
@@ -14,7 +15,6 @@ using Mps.Domain.Hypotheses;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
 using Mps.Domain.Investigations;
-using Mps.Simulator.Demo;
 using Mps.Simulator.Fleet;
 using Mps.Simulator.Scenarios;
 using Mps.Simulator.Sites;
@@ -225,7 +225,7 @@ public static class QualityEndpoints
 
             return Results.Json(run, statusCode: StatusCodes.Status202Accepted);
         });
-        app.MapPost("/api/faults", async (FaultBody? body, IFaultInjectionService faults, DemoRuntime runtime, CancellationToken cancellationToken) =>
+        app.MapPost("/api/faults", async (FaultBody? body, IFaultInjectionService faults, PlantSimulation plant, CancellationToken cancellationToken) =>
         {
             if (body is null)
             {
@@ -252,7 +252,7 @@ public static class QualityEndpoints
                     body.RootCauseCategory.Value,
                     body.Confounders),
                 cancellationToken).ConfigureAwait(false);
-            runtime.TryApplyFreeForm(body.ToolId ?? string.Empty, body.ChamberId, body.Parameter ?? string.Empty, body.Shape ?? string.Empty, body.Magnitude.Value);
+            plant.TryApplyFreeForm(body.ToolId ?? string.Empty, body.ChamberId, body.Parameter ?? string.Empty, body.Shape ?? string.Empty, body.Magnitude.Value);
             return Results.Json(new FaultAcceptedResponse(accepted.FaultId, accepted.CorrelationId), statusCode: StatusCodes.Status202Accepted);
         });
         app.MapGet("/api/metrics", async (

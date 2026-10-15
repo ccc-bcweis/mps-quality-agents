@@ -3,8 +3,8 @@
 using Microsoft.EntityFrameworkCore;
 
 using Mps.Api.Fleet;
+using Mps.Api.Live;
 using Mps.Api.Persistence;
-using Mps.Simulator.Demo;
 using Mps.Simulator.Telemetry;
 
 namespace Mps.Api.Demo;
@@ -17,14 +17,17 @@ public sealed class DemoResetService
     private static readonly SemaphoreSlim Gate = new(1, 1);
 
     private readonly QualityDbContext _db;
-    private readonly DemoRuntime _runtime;
+    private readonly PlantSimulation _plant;
+    private readonly StreamSpcPublisher _traces;
 
-    public DemoResetService(QualityDbContext db, DemoRuntime runtime)
+    public DemoResetService(QualityDbContext db, PlantSimulation plant, StreamSpcPublisher traces)
     {
         ArgumentNullException.ThrowIfNull(db);
-        ArgumentNullException.ThrowIfNull(runtime);
+        ArgumentNullException.ThrowIfNull(plant);
+        ArgumentNullException.ThrowIfNull(traces);
         _db = db;
-        _runtime = runtime;
+        _plant = plant;
+        _traces = traces;
     }
 
     public async Task<DemoBaseline> ResetAsync(CancellationToken cancellationToken)
@@ -65,10 +68,11 @@ public sealed class DemoResetService
 
             _db.TicketSequences.Add(new TicketSequenceRow { Id = 1, NextNumber = 1000 });
             await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            _runtime.Reset();
+            _plant.Reset();
+            _traces.Clear();
 
             return new DemoBaseline(
-                _runtime.Seed,
+                _plant.Runtime.Seed,
                 DemoClock.BaselineOrigin,
                 await _db.Tools.CountAsync(cancellationToken).ConfigureAwait(false),
                 await _db.Tickets.CountAsync(cancellationToken).ConfigureAwait(false),

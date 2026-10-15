@@ -56,7 +56,7 @@ public static class QualityHost
         });
         builder.Services.AddDbContext<QualityDbContext>(options => options.UseSqlite(connectionString));
         builder.Services.AddScoped<EfQualityStore>();
-        builder.Services.AddScoped<IFleetCatalog>(services => services.GetRequiredService<EfQualityStore>());
+        builder.Services.AddScoped<IFleetCatalog, PlantFleetCatalog>();
         builder.Services.AddScoped<IAlertLog>(services => services.GetRequiredService<EfQualityStore>());
         builder.Services.AddScoped<IIncidentLog>(services => services.GetRequiredService<EfQualityStore>());
         builder.Services.AddScoped<ITicketLog>(services => services.GetRequiredService<EfQualityStore>());
@@ -74,10 +74,11 @@ public static class QualityHost
         builder.Services.AddScoped<IMetricsLog, EfMetricsLog>();
         builder.Services.AddSingleton<IQmsCapaWriter, FakeQmsCapaWriter>();
         builder.Services.AddSingleton(TimeProvider.System);
+        builder.Services.AddSingleton(SimulationOptions.From(builder.Configuration));
+        builder.Services.AddSingleton<PlantSimulation>();
+        builder.Services.AddSingleton(services => services.GetRequiredService<PlantSimulation>().Runtime);
+        builder.Services.AddSingleton<StreamSpcPublisher>();
         builder.Services.AddSingleton<ScriptedScenarioContext>();
-        builder.Services.AddSingleton(services => DemoRuntimeLoader.Load(
-            services.GetRequiredService<IConfiguration>(),
-            services.GetRequiredService<TimeProvider>()));
         builder.Services.AddSingleton(services => ModelGatewayRegistration.Create(
             services.GetRequiredService<IConfiguration>(),
             services.GetRequiredService<TimeProvider>(),
@@ -108,6 +109,7 @@ public static class QualityHost
         builder.Services.AddScoped<IHumanDecisionService, HumanDecisionService>();
         builder.Services.AddScoped<IFaultInjectionService, FaultInjectionService>();
         builder.Services.AddHostedService<QualityDatabaseInitializer>();
+        builder.Services.AddHostedService<SimulationTickService>();
     }
 
     public static void UseQualityApi(this WebApplication app)

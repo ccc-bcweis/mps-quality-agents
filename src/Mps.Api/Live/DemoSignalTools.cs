@@ -7,15 +7,14 @@ using Mps.Application.Persistence;
 using Mps.Application.Tools;
 using Mps.Domain.Identity;
 using Mps.Domain.Impact;
-using Mps.Domain.Incidents;
 using Mps.Domain.Telemetry;
 using Mps.Simulator.Fleet;
 
 namespace Mps.Api.Live;
 
 /// <summary>
-/// Telemetry, SPC and impact tools for the hosted demo. Telemetry is a deterministic baseline inside the
-/// parameter window with the injected fault shape overlaid, so the agent reads the same signal the operator injected.
+/// Telemetry, SPC and impact tools for the hosted demo. When the plant simulator has samples, the agent
+/// reads that stream. Otherwise the tool falls back to a deterministic baseline with the injected fault overlaid.
 /// </summary>
 public sealed class DemoSignalTools : ITelemetryTool, ISpcTool, IImpactScopeTool
 {
@@ -25,23 +24,44 @@ public sealed class DemoSignalTools : ITelemetryTool, ISpcTool, IImpactScopeTool
 
     private readonly CrossSiteMaterialCatalog _sharedLots;
 
-    public DemoSignalTools(IServiceScopeFactory scopes, CrossSiteMaterialCatalog sharedLots)
+    private readonly PlantSimulation? _plant;
+
+    public DemoSignalTools(IServiceScopeFactory scopes, CrossSiteMaterialCatalog sharedLots, PlantSimulation? plant = null)
     {
         ArgumentNullException.ThrowIfNull(scopes);
         ArgumentNullException.ThrowIfNull(sharedLots);
         _scopes = scopes;
         _sharedLots = sharedLots;
+        _plant = plant;
     }
 
     public async Task<TelemetryWindow> GetWindowAsync(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
     {
+        var live = LivePoints(toolId, parameter, from, until);
+        if (live.Count > 0)
+        {
+            var start = live.Min(point => point.At);
+            var end = live.Max(point => point.At);
+            if (from < start)
+            {
+                start = from;
+            }
+
+            if (until > end)
+            {
+                end = until;
+            }
+
+            return new TelemetryWindow(toolId, parameter, start, end, live);
+        }
+
         using var scope = _scopes.CreateScope();
         var (mean, sigma) = await LimitsAsync(scope, toolId, parameter, cancellationToken).ConfigureAwait(false);
         var faults = await FaultsAsync(scope, toolId, parameter, cancellationToken).ConfigureAwait(false);
         var points = new List<TelemetryPoint>();
-        var start = until - from > TimeSpan.FromDays(2) ? until.AddDays(-2) : from;
+        var cursor = until - from > TimeSpan.FromDays(2) ? until.AddDays(-2) : from;
         var index = 0;
-        for (var at = start; at <= until; at += Step, index++)
+        for (var at = cursor; at <= until; at += Step, index++)
         {
             var wobble = Math.Sin(index * 0.7) * 0.35 * sigma;
             var value = mean + wobble;
@@ -58,6 +78,15 @@ public sealed class DemoSignalTools : ITelemetryTool, ISpcTool, IImpactScopeTool
 
     public async Task<IReadOnlyList<SpcViolation>> GetViolationsAsync(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
     {
+        if (_plant is not null)
+        {
+            var live = _plant.Evaluate(toolId.Value, parameter, from, until);
+            if (live.Count > 0)
+            {
+                return live;
+            }
+        }
+
         using var scope = _scopes.CreateScope();
         var alerts = await scope.ServiceProvider.GetRequiredService<IAlertLog>().ListAsync(toolId, cancellationToken).ConfigureAwait(false);
         var (mean, sigma) = await LimitsAsync(scope, toolId, parameter, cancellationToken).ConfigureAwait(false);
@@ -71,6 +100,20 @@ public sealed class DemoSignalTools : ITelemetryTool, ISpcTool, IImpactScopeTool
                 return new SpcViolation(alert.Rule, toolId, alert.ChamberId, alert.Parameter, alert.RaisedAt, mean + (magnitude * sigma), sigma, alert.Severity);
             })
             .ToArray();
+    }
+
+    private IReadOnlyList<TelemetryPoint> LivePoints(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until)
+    {
+        if (_plant is null)
+        {
+            return [];
+        }
+
+        var chamber = _plant.Runtime.Simulator.ActiveFaults
+            .LastOrDefault(fault => string.Equals(fault.ToolId, toolId.Value, StringComparison.Ordinal)
+                && string.Equals(fault.Parameter, parameter, StringComparison.Ordinal))
+            ?.ChamberId;
+        return _plant.ReadParameter(toolId.Value, parameter, chamber, from, until);
     }
 
     public async Task<ImpactScope> GetScopeAsync(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)

@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Api.Live;
 using Mps.Application.Faults;
 using Mps.Domain.Hypotheses;
-using Mps.Simulator.Demo;
 using Mps.Simulator.Scenarios;
 using Mps.Simulator.Telemetry;
 
@@ -13,17 +13,17 @@ namespace Mps.Api.Demo;
 /// </summary>
 public sealed class ScenarioTrigger
 {
-    private readonly DemoRuntime _runtime;
+    private readonly PlantSimulation _plant;
     private readonly IFaultInjectionService _faults;
     private readonly ScriptedScenarioContext _context;
     private readonly ScenarioEvidenceBoard? _board;
 
-    public ScenarioTrigger(DemoRuntime runtime, IFaultInjectionService faults, ScriptedScenarioContext context, ScenarioEvidenceBoard? board = null)
+    public ScenarioTrigger(PlantSimulation plant, IFaultInjectionService faults, ScriptedScenarioContext context, ScenarioEvidenceBoard? board = null)
     {
-        ArgumentNullException.ThrowIfNull(runtime);
+        ArgumentNullException.ThrowIfNull(plant);
         ArgumentNullException.ThrowIfNull(faults);
         ArgumentNullException.ThrowIfNull(context);
-        _runtime = runtime;
+        _plant = plant;
         _faults = faults;
         _context = context;
         _board = board;
@@ -40,8 +40,8 @@ public sealed class ScenarioTrigger
         _board?.Activate(scenario.Id);
         try
         {
-            var telemetry = ScriptedScenarioCatalog.Sample(scenario, _runtime.Fleet, _runtime.Seed);
-            _runtime.Apply(scenario);
+            var telemetry = ScriptedScenarioCatalog.Sample(scenario, _plant.Runtime.Fleet, _plant.Runtime.Seed);
+            _plant.Apply(scenario);
             FaultAccepted? first = null;
             foreach (var toolId in scenario.ToolIds)
             {
@@ -60,7 +60,7 @@ public sealed class ScenarioTrigger
 
             return new ScenarioRun(
                 scenario.Id,
-                _runtime.Seed,
+                _plant.Runtime.Seed,
                 first!.FaultId,
                 first.CorrelationId,
                 telemetry.Select(point => new ScenarioPointResponse(point.ToolId, point.ChamberId, point.Parameter, point.At, point.Value)).ToArray());
