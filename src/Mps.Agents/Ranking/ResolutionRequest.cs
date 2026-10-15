@@ -76,6 +76,7 @@ public sealed class ResolutionRequest
                 Id = item.Id.ToString(),
                 Source = SourceName(item.Source),
                 Title = item.Title,
+                Detail = item.Excerpt,
                 Parameter = WhyItMattersCatalog.ParameterOf(item),
                 SignalId = catalog.SignalIdFor(item),
                 ExternalRef = item.ExternalRef,
@@ -153,6 +154,9 @@ public sealed class EvidenceNote
     public string Source { get; set; } = string.Empty;
 
     public string Title { get; set; } = string.Empty;
+
+    /// <summary>Full record text: values, dates and change details. The model reasons from this, not the title.</summary>
+    public string? Detail { get; set; }
 
     public string? Parameter { get; set; }
 

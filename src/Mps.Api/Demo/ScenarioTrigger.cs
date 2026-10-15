@@ -15,8 +15,9 @@ public sealed class ScenarioTrigger
     private readonly DemoRuntime _runtime;
     private readonly IFaultInjectionService _faults;
     private readonly ScriptedScenarioContext _context;
+    private readonly ScenarioEvidenceBoard? _board;
 
-    public ScenarioTrigger(DemoRuntime runtime, IFaultInjectionService faults, ScriptedScenarioContext context)
+    public ScenarioTrigger(DemoRuntime runtime, IFaultInjectionService faults, ScriptedScenarioContext context, ScenarioEvidenceBoard? board = null)
     {
         ArgumentNullException.ThrowIfNull(runtime);
         ArgumentNullException.ThrowIfNull(faults);
@@ -24,6 +25,7 @@ public sealed class ScenarioTrigger
         _runtime = runtime;
         _faults = faults;
         _context = context;
+        _board = board;
     }
 
     public async Task<ScenarioRun?> RunAsync(string scenarioId, CancellationToken cancellationToken)
@@ -34,6 +36,7 @@ public sealed class ScenarioTrigger
         }
 
         _context.Set(scenario.Id);
+        _board?.Activate(scenario.Id);
         try
         {
             var telemetry = ScriptedScenarioCatalog.Sample(scenario, _runtime.Fleet, _runtime.Seed);

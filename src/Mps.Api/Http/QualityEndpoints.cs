@@ -191,13 +191,14 @@ public static class QualityEndpoints
             var caller = Caller(http, configuration);
             return Results.Ok(new AdminSessionResponse(caller.Mode, caller.IsAdmin, caller.DisplayName));
         });
-        app.MapPost("/api/admin/reset", async (HttpContext http, IConfiguration configuration, DemoResetService reset, CancellationToken cancellationToken) =>
+        app.MapPost("/api/admin/reset", async (HttpContext http, IConfiguration configuration, DemoResetService reset, ScenarioEvidenceBoard board, CancellationToken cancellationToken) =>
         {
             if (!Caller(http, configuration).IsAdmin)
             {
                 return Results.Problem(title: "Admin role is required.", statusCode: StatusCodes.Status403Forbidden);
             }
 
+            board.Clear();
             var baseline = await reset.ResetAsync(cancellationToken).ConfigureAwait(false);
             return Results.Ok(baseline);
         });

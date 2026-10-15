@@ -3,6 +3,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+using Mps.Api.Demo;
 using Mps.Application.Tools;
 using Mps.Domain.Enterprise;
 using Mps.Domain.Identity;
@@ -30,6 +31,22 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
 
     private readonly Seed _seed;
     private readonly Dictionary<string, HashSet<string>> _materialTools = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Seed> _overlays = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ScenarioEvidenceBoard? _board;
+
+    public SeedEnterpriseTools(string seedPath, string? scenarioEvidencePath = null, ScenarioEvidenceBoard? board = null)
+        : this(seedPath)
+    {
+        _board = board;
+        if (!string.IsNullOrWhiteSpace(scenarioEvidencePath) && File.Exists(scenarioEvidencePath))
+        {
+            var overlays = JsonSerializer.Deserialize<Dictionary<string, Seed>>(File.ReadAllText(scenarioEvidencePath), JsonOptions) ?? [];
+            foreach (var pair in overlays)
+            {
+                _overlays[pair.Key] = pair.Value;
+            }
+        }
+    }
 
     public SeedEnterpriseTools(string seedPath)
     {
@@ -63,7 +80,10 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
         Done<NcrRecord>((_seed.Ncrs ?? []).Where(ncr => ncr.ToolId == toolId.Value && In(ncr.OpenedAt, from.Add(-ChangeLookback), until)));
 
     public Task<IReadOnlyList<EcoRecord>> GetEcosAsync(ToolId toolId, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken) =>
-        Done<EcoRecord>((_seed.Ecos ?? []).Where(eco => eco.ToolId == toolId.Value && In(eco.EffectiveAt, from.Add(-ChangeLookback), until)));
+        Done(Merge(
+            (_seed.Ecos ?? []).Where(eco => eco.ToolId == toolId.Value && In(eco.EffectiveAt, from.Add(-ChangeLookback), until)),
+            (Overlay?.Ecos ?? []).Where(eco => eco.ToolId == toolId.Value),
+            eco => eco.EcoId));
 
     public Task<ConfigRevision> GetConfigAsync(ToolId toolId, CancellationToken cancellationToken)
     {
@@ -73,18 +93,41 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
     }
 
     public Task<IReadOnlyList<MaterialLot>> GetMaterialLotsAsync(ToolId toolId, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken) =>
-        Done<MaterialLot>((_seed.MaterialLots ?? []).Where(lot =>
-            _materialTools.TryGetValue(lot.LotId, out var tools) && tools.Contains(toolId.Value) && In(lot.ReceivedAt, from.AddDays(-60), until)));
+        Done(Merge(
+            (_seed.MaterialLots ?? []).Where(lot =>
+                _materialTools.TryGetValue(lot.LotId, out var tools) && tools.Contains(toolId.Value) && In(lot.ReceivedAt, from.AddDays(-60), until)),
+            (Overlay?.MaterialLots ?? []).Where(lot => (Overlay?.MaterialUses ?? []).Any(use => use.LotId == lot.LotId && use.ToolId == toolId.Value)),
+            lot => lot.LotId));
 
     public Task<IReadOnlyList<SupplierNotice>> GetSupplierNoticesAsync(string? materialCode, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken) =>
-        Done<SupplierNotice>((_seed.Notices ?? []).Where(notice =>
-            (string.IsNullOrWhiteSpace(materialCode) || notice.MaterialCode == materialCode) && In(notice.IssuedAt, from.AddDays(-60), until)));
+        Done(Merge(
+            (_seed.Notices ?? []).Where(notice =>
+                (string.IsNullOrWhiteSpace(materialCode) || notice.MaterialCode == materialCode) && In(notice.IssuedAt, from.AddDays(-60), until)),
+            (Overlay?.Notices ?? []).Where(notice => string.IsNullOrWhiteSpace(materialCode) || notice.MaterialCode == materialCode),
+            notice => notice.NoticeId));
 
     public Task<IReadOnlyList<WorkOrder>> GetWorkOrdersAsync(ToolId toolId, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken) =>
-        Done<WorkOrder>((_seed.WorkOrders ?? []).Where(order => order.ToolId == toolId && In(order.PerformedAt, from.Add(-ChangeLookback), until)));
+        Done(Merge(
+            (_seed.WorkOrders ?? []).Where(order => order.ToolId == toolId && In(order.PerformedAt, from.Add(-ChangeLookback), until)),
+            (Overlay?.WorkOrders ?? []).Where(order => order.ToolId == toolId),
+            order => order.WorkOrderId));
 
     public Task<IReadOnlyList<CalibrationRecord>> GetCalibrationsAsync(ToolId toolId, CancellationToken cancellationToken) =>
-        Done<CalibrationRecord>((_seed.Calibrations ?? []).Where(record => record.ToolId == toolId));
+        Done(Merge(
+            (_seed.Calibrations ?? []).Where(record => record.ToolId == toolId),
+            (Overlay?.Calibrations ?? []).Where(record => record.ToolId == toolId),
+            record => record.CalibrationId));
+
+    /// <summary>The staged scenario's own records, or null when no scripted scenario is active.</summary>
+    private Seed? Overlay => _board?.ActiveScenarioId is { } id && _overlays.TryGetValue(id, out var overlay) ? overlay : null;
+
+    /// <summary>Scenario rows win over seed rows with the same id, and are not date-filtered: the scenario scopes them.</summary>
+    private static IEnumerable<T> Merge<T>(IEnumerable<T> seed, IEnumerable<T> overlay, Func<T, string> key)
+    {
+        var extra = overlay.ToArray();
+        var ids = new HashSet<string>(extra.Select(key), StringComparer.Ordinal);
+        return seed.Where(row => !ids.Contains(key(row))).Concat(extra);
+    }
 
     private static bool In(DateTimeOffset at, DateTimeOffset from, DateTimeOffset until) => at >= from && at <= until;
 
