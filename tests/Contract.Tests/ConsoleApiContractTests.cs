@@ -14,6 +14,9 @@ public sealed class ConsoleApiContractTests
     private static readonly string[] LifecyclePaths =
     [
         "/health",
+        "/api/sites",
+        "/api/sites/compare",
+        "/api/sites/{siteId}",
         "/api/tools",
         "/api/tools/{toolId}",
         "/api/alerts",
@@ -52,6 +55,9 @@ public sealed class ConsoleApiContractTests
         OpenApiDocs.Console.Paths.Keys.Should().BeEquivalentTo(LifecyclePaths);
 
         Expect(OperationType.Get, "/health", "getHealth", "200");
+        Expect(OperationType.Get, "/api/sites", "listSites", "200");
+        Expect(OperationType.Get, "/api/sites/compare", "compareSites", "200");
+        Expect(OperationType.Get, "/api/sites/{siteId}", "getSite", "200");
         Expect(OperationType.Get, "/api/tools", "listTools", "200");
         Expect(OperationType.Get, "/api/tools/{toolId}", "getTool", "200");
         Expect(OperationType.Get, "/api/alerts", "listAlerts", "200");
@@ -253,7 +259,7 @@ public sealed class ConsoleApiContractTests
         var document = OpenApiDocs.Console;
         var tool = document.Schema("Tool");
         tool.AdditionalPropertiesAllowed.Should().BeFalse();
-        tool.Required.Should().BeEquivalentTo("id", "name", "family", "model", "bay", "chambers");
+        tool.Required.Should().BeEquivalentTo("id", "name", "family", "model", "bay", "siteId", "chambers");
         tool.Properties["model"].Description.Should().Contain("MPS-E7");
 
         var health = document.Schema("Health");

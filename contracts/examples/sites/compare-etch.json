@@ -1,0 +1,591 @@
+{
+  "family": "etch",
+  "referenceSiteId": "northwater",
+  "parameters": [
+    {
+      "parameter": "arFlow",
+      "unit": "sccm",
+      "sites": [
+        {
+          "siteId": "northwater",
+          "siteName": "Northwater Fab",
+          "mean": 127.7926,
+          "sigma": 77.4016,
+          "alarmRate": 0,
+          "uptimePct": 95.5,
+          "yieldPct": 97.7,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "ironwood",
+          "siteName": "Ironwood Fab",
+          "mean": 123.4492,
+          "sigma": 77.0335,
+          "alarmRate": 0,
+          "uptimePct": 92.7,
+          "yieldPct": 95.1,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "lumen",
+          "siteName": "Lumen Pilot Works",
+          "mean": 123.1401,
+          "sigma": 76.54,
+          "alarmRate": 0.0039,
+          "uptimePct": 97,
+          "yieldPct": 98.3,
+          "discrepancy": false,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "parameter": "cf4Flow",
+      "unit": "sccm",
+      "sites": [
+        {
+          "siteId": "northwater",
+          "siteName": "Northwater Fab",
+          "mean": 49.8211,
+          "sigma": 31.6077,
+          "alarmRate": 0.002,
+          "uptimePct": 95.5,
+          "yieldPct": 97.7,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "ironwood",
+          "siteName": "Ironwood Fab",
+          "mean": 48.5403,
+          "sigma": 30.917,
+          "alarmRate": 0.002,
+          "uptimePct": 92.7,
+          "yieldPct": 95.1,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "lumen",
+          "siteName": "Lumen Pilot Works",
+          "mean": 50.6429,
+          "sigma": 32.543,
+          "alarmRate": 0,
+          "uptimePct": 97,
+          "yieldPct": 98.3,
+          "discrepancy": false,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "parameter": "chamberPressure",
+      "unit": "mTorr",
+      "sites": [
+        {
+          "siteId": "northwater",
+          "siteName": "Northwater Fab",
+          "mean": 39.7184,
+          "sigma": 9.7892,
+          "alarmRate": 0.002,
+          "uptimePct": 95.5,
+          "yieldPct": 97.7,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "ironwood",
+          "siteName": "Ironwood Fab",
+          "mean": 40.0778,
+          "sigma": 9.6893,
+          "alarmRate": 0,
+          "uptimePct": 92.7,
+          "yieldPct": 95.1,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "lumen",
+          "siteName": "Lumen Pilot Works",
+          "mean": 40.2604,
+          "sigma": 10.5096,
+          "alarmRate": 0,
+          "uptimePct": 97,
+          "yieldPct": 98.3,
+          "discrepancy": false,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "parameter": "chf3Flow",
+      "unit": "sccm",
+      "sites": [
+        {
+          "siteId": "northwater",
+          "siteName": "Northwater Fab",
+          "mean": 25.0923,
+          "sigma": 18.9112,
+          "alarmRate": 0.0059,
+          "uptimePct": 95.5,
+          "yieldPct": 97.7,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "ironwood",
+          "siteName": "Ironwood Fab",
+          "mean": 24.6032,
+          "sigma": 18.1365,
+          "alarmRate": 0.0039,
+          "uptimePct": 92.7,
+          "yieldPct": 95.1,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "lumen",
+          "siteName": "Lumen Pilot Works",
+          "mean": 25.2449,
+          "sigma": 19.7554,
+          "alarmRate": 0.0078,
+          "uptimePct": 97,
+          "yieldPct": 98.3,
+          "discrepancy": false,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "parameter": "edgeRingHeight",
+      "unit": "mm",
+      "sites": [
+        {
+          "siteId": "northwater",
+          "siteName": "Northwater Fab",
+          "mean": 2.0059,
+          "sigma": 0.1657,
+          "alarmRate": 0.0059,
+          "uptimePct": 95.5,
+          "yieldPct": 97.7,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "ironwood",
+          "siteName": "Ironwood Fab",
+          "mean": 2.0037,
+          "sigma": 0.1721,
+          "alarmRate": 0.0039,
+          "uptimePct": 92.7,
+          "yieldPct": 95.1,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "lumen",
+          "siteName": "Lumen Pilot Works",
+          "mean": 1.9913,
+          "sigma": 0.1557,
+          "alarmRate": 0,
+          "uptimePct": 97,
+          "yieldPct": 98.3,
+          "discrepancy": false,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "parameter": "endpointTime",
+      "unit": "s",
+      "sites": [
+        {
+          "siteId": "northwater",
+          "siteName": "Northwater Fab",
+          "mean": 54.344,
+          "sigma": 29.1215,
+          "alarmRate": 0.002,
+          "uptimePct": 95.5,
+          "yieldPct": 97.7,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "ironwood",
+          "siteName": "Ironwood Fab",
+          "mean": 55.1661,
+          "sigma": 27.4869,
+          "alarmRate": 0.0039,
+          "uptimePct": 92.7,
+          "yieldPct": 95.1,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "lumen",
+          "siteName": "Lumen Pilot Works",
+          "mean": 56.9383,
+          "sigma": 27.3488,
+          "alarmRate": 0.0039,
+          "uptimePct": 97,
+          "yieldPct": 98.3,
+          "discrepancy": false,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "parameter": "escTemperature",
+      "unit": "C",
+      "sites": [
+        {
+          "siteId": "northwater",
+          "siteName": "Northwater Fab",
+          "mean": 50.3284,
+          "sigma": 3.2511,
+          "alarmRate": 0.0059,
+          "uptimePct": 95.5,
+          "yieldPct": 97.7,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "ironwood",
+          "siteName": "Ironwood Fab",
+          "mean": 62.0295,
+          "sigma": 7.2572,
+          "alarmRate": 0.5938,
+          "uptimePct": 92.7,
+          "yieldPct": 95.1,
+          "discrepancy": true,
+          "reason": "Ironwood Fab\u0027s electrostatic chuck temperature averages about 12 degrees hotter than the same etch tools at Northwater Fab, and the spread is wider. That is why the alarm rate is higher on this line. Uptime and yield on this etch line are lower."
+        },
+        {
+          "siteId": "lumen",
+          "siteName": "Lumen Pilot Works",
+          "mean": 50.2585,
+          "sigma": 3.0737,
+          "alarmRate": 0,
+          "uptimePct": 97,
+          "yieldPct": 98.3,
+          "discrepancy": false,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "parameter": "etchRate",
+      "unit": "nm/min",
+      "sites": [
+        {
+          "siteId": "northwater",
+          "siteName": "Northwater Fab",
+          "mean": 298.9379,
+          "sigma": 125.7617,
+          "alarmRate": 0.0039,
+          "uptimePct": 95.5,
+          "yieldPct": 97.7,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "ironwood",
+          "siteName": "Ironwood Fab",
+          "mean": 299.4621,
+          "sigma": 123.7812,
+          "alarmRate": 0,
+          "uptimePct": 92.7,
+          "yieldPct": 95.1,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "lumen",
+          "siteName": "Lumen Pilot Works",
+          "mean": 302.1474,
+          "sigma": 117.5486,
+          "alarmRate": 0,
+          "uptimePct": 97,
+          "yieldPct": 98.3,
+          "discrepancy": false,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "parameter": "o2Flow",
+      "unit": "sccm",
+      "sites": [
+        {
+          "siteId": "northwater",
+          "siteName": "Northwater Fab",
+          "mean": 8.9702,
+          "sigma": 16.2182,
+          "alarmRate": 0.002,
+          "uptimePct": 95.5,
+          "yieldPct": 97.7,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "ironwood",
+          "siteName": "Ironwood Fab",
+          "mean": 11.1778,
+          "sigma": 17.3294,
+          "alarmRate": 0.0039,
+          "uptimePct": 92.7,
+          "yieldPct": 95.1,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "lumen",
+          "siteName": "Lumen Pilot Works",
+          "mean": 9.7627,
+          "sigma": 16.2254,
+          "alarmRate": 0.0039,
+          "uptimePct": 97,
+          "yieldPct": 98.3,
+          "discrepancy": false,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "parameter": "particlesAdders",
+      "unit": "count",
+      "sites": [
+        {
+          "siteId": "northwater",
+          "siteName": "Northwater Fab",
+          "mean": 3.9879,
+          "sigma": 2.51,
+          "alarmRate": 0.0039,
+          "uptimePct": 95.5,
+          "yieldPct": 97.7,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "ironwood",
+          "siteName": "Ironwood Fab",
+          "mean": 3.8917,
+          "sigma": 2.4854,
+          "alarmRate": 0.002,
+          "uptimePct": 92.7,
+          "yieldPct": 95.1,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "lumen",
+          "siteName": "Lumen Pilot Works",
+          "mean": 3.8957,
+          "sigma": 2.5299,
+          "alarmRate": 0,
+          "uptimePct": 97,
+          "yieldPct": 98.3,
+          "discrepancy": false,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "parameter": "rfBiasPower",
+      "unit": "W",
+      "sites": [
+        {
+          "siteId": "northwater",
+          "siteName": "Northwater Fab",
+          "mean": 316.5712,
+          "sigma": 47.3299,
+          "alarmRate": 0,
+          "uptimePct": 95.5,
+          "yieldPct": 97.7,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "ironwood",
+          "siteName": "Ironwood Fab",
+          "mean": 316.6783,
+          "sigma": 48.6529,
+          "alarmRate": 0.002,
+          "uptimePct": 92.7,
+          "yieldPct": 95.1,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "lumen",
+          "siteName": "Lumen Pilot Works",
+          "mean": 313.8308,
+          "sigma": 44.8253,
+          "alarmRate": 0,
+          "uptimePct": 97,
+          "yieldPct": 98.3,
+          "discrepancy": false,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "parameter": "rfSourcePower",
+      "unit": "W",
+      "sites": [
+        {
+          "siteId": "northwater",
+          "siteName": "Northwater Fab",
+          "mean": 1498.9362,
+          "sigma": 163.7917,
+          "alarmRate": 0.002,
+          "uptimePct": 95.5,
+          "yieldPct": 97.7,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "ironwood",
+          "siteName": "Ironwood Fab",
+          "mean": 1503.2496,
+          "sigma": 161.3201,
+          "alarmRate": 0.002,
+          "uptimePct": 92.7,
+          "yieldPct": 95.1,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "lumen",
+          "siteName": "Lumen Pilot Works",
+          "mean": 1497.3462,
+          "sigma": 178.6917,
+          "alarmRate": 0.0039,
+          "uptimePct": 97,
+          "yieldPct": 98.3,
+          "discrepancy": false,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "parameter": "vibrationRms",
+      "unit": "mm/s",
+      "sites": [
+        {
+          "siteId": "northwater",
+          "siteName": "Northwater Fab",
+          "mean": 0.5853,
+          "sigma": 0.4115,
+          "alarmRate": 0,
+          "uptimePct": 95.5,
+          "yieldPct": 97.7,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "ironwood",
+          "siteName": "Ironwood Fab",
+          "mean": 0.6059,
+          "sigma": 0.4082,
+          "alarmRate": 0,
+          "uptimePct": 92.7,
+          "yieldPct": 95.1,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "lumen",
+          "siteName": "Lumen Pilot Works",
+          "mean": 0.6353,
+          "sigma": 0.4024,
+          "alarmRate": 0.0039,
+          "uptimePct": 97,
+          "yieldPct": 98.3,
+          "discrepancy": false,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "parameter": "waferCenterOffset",
+      "unit": "mm",
+      "sites": [
+        {
+          "siteId": "northwater",
+          "siteName": "Northwater Fab",
+          "mean": 0.0283,
+          "sigma": 0.0239,
+          "alarmRate": 0,
+          "uptimePct": 95.5,
+          "yieldPct": 97.7,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "ironwood",
+          "siteName": "Ironwood Fab",
+          "mean": 0.0306,
+          "sigma": 0.0251,
+          "alarmRate": 0.0078,
+          "uptimePct": 92.7,
+          "yieldPct": 95.1,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "lumen",
+          "siteName": "Lumen Pilot Works",
+          "mean": 0.0319,
+          "sigma": 0.0257,
+          "alarmRate": 0.0039,
+          "uptimePct": 97,
+          "yieldPct": 98.3,
+          "discrepancy": false,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "parameter": "wallTemperature",
+      "unit": "C",
+      "sites": [
+        {
+          "siteId": "northwater",
+          "siteName": "Northwater Fab",
+          "mean": 59.9957,
+          "sigma": 1.6044,
+          "alarmRate": 0.0059,
+          "uptimePct": 95.5,
+          "yieldPct": 97.7,
+          "discrepancy": false,
+          "reason": null
+        },
+        {
+          "siteId": "ironwood",
+          "siteName": "Ironwood Fab",
+          "mean": 64.9359,
+          "sigma": 3.1185,
+          "alarmRate": 0.4902,
+          "uptimePct": 92.7,
+          "yieldPct": 95.1,
+          "discrepancy": true,
+          "reason": "Ironwood Fab\u0027s chamber wall temperature averages about 4.9 degrees hotter than the same etch tools at Northwater Fab, and the spread is wider. That is why the alarm rate is higher on this line. Uptime and yield on this etch line are lower."
+        },
+        {
+          "siteId": "lumen",
+          "siteName": "Lumen Pilot Works",
+          "mean": 60.0348,
+          "sigma": 1.7593,
+          "alarmRate": 0,
+          "uptimePct": 97,
+          "yieldPct": 98.3,
+          "discrepancy": false,
+          "reason": null
+        }
+      ]
+    }
+  ]
+}

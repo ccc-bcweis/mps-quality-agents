@@ -1,12 +1,14 @@
 openapi: 3.0.3
 info:
   title: Meridian Precision Systems Quality API
-  version: 0.2.0
+  version: 1.2.0
   description: |
     Console API for the fictional Meridian Precision Systems quality-investigation demo.
     Every intake channel becomes one incident. A CAPA is created only after a human approval,
     and the server issues the approval token. Clients do not send token signatures.
     The fleet stream is SignalR at `/hubs/fleet` and is not a REST operation.
+    Contract 1.2 adds three fictional plants: a site list, one plant with bay positions and
+    wafer flow, and a comparison of the same tool family across plants. Tool records include siteId.
     All names and data are synthetic.
   license:
     name: MIT
@@ -16,6 +18,7 @@ servers:
     description: Local API
 tags:
   - name: health
+  - name: sites
   - name: fleet
   - name: incidents
   - name: investigations
@@ -35,6 +38,62 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Health"
+  /api/sites:
+    get:
+      tags: [sites]
+      operationId: listSites
+      summary: List the three fictional plants
+      description: |
+        Each plant includes its role, where it sits, its time zone, its bays, and the plant-level
+        throughput numbers. Positions and wafer flow are on the plant detail.
+      responses:
+        "200":
+          description: Plants.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SiteSummary"
+  /api/sites/compare:
+    get:
+      tags: [sites]
+      operationId: compareSites
+      summary: Compare one tool family across plants
+      description: |
+        The same tool family at every plant. Each parameter has an average, a spread, an alarm rate,
+        uptime, and yield. A discrepancy flag is set when a plant sits apart from the reference plant,
+        with one plain-language sentence saying why.
+      parameters:
+        - $ref: "#/components/parameters/FamilyQuery"
+      responses:
+        "200":
+          description: The comparison.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FamilyComparison"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /api/sites/{siteId}:
+    get:
+      tags: [sites]
+      operationId: getSite
+      summary: One plant, with bays, tool positions, and wafer flow
+      description: |
+        Bays include each tool's position and status. Flows are the wafer path between bays.
+        Throughput numbers are repeated for the plant and for each bay.
+      parameters:
+        - $ref: "#/components/parameters/SiteId"
+      responses:
+        "200":
+          description: The plant.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /api/tools:
     get:
       tags: [fleet]
@@ -331,6 +390,20 @@ components:
       schema:
         type: string
         format: uuid
+    SiteId:
+      name: siteId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    FamilyQuery:
+      name: family
+      in: query
+      required: true
+      description: Tool family to compare. One of deposition, etch, strip, or clean.
+      schema:
+        $ref: "#/components/schemas/ToolFamily"
   responses:
     BadRequest:
       description: The request failed validation.
@@ -381,7 +454,7 @@ components:
     Tool:
       type: object
       additionalProperties: false
-      required: [id, name, family, model, bay, chambers]
+      required: [id, name, family, model, bay, siteId, chambers]
       properties:
         id:
           type: string
@@ -394,6 +467,9 @@ components:
           description: Fictional model, for example MPS-E7.
         bay:
           type: string
+        siteId:
+          type: string
+          description: Plant that owns this tool. Original tools stay on the first plant.
         chambers:
           type: array
           items:
@@ -768,3 +844,199 @@ components:
           type: number
         spendCapUsd:
           type: number
+    SiteRole:
+      type: string
+      description: Plain-language role of the plant.
+      enum:
+        - Front-end wafer fab
+        - Strip, clean, and pilot line
+    ToolStatus:
+      type: string
+      description: Nominal is inside the normal band. Warning is drifting. Alarm is a scripted fault.
+      enum: [nominal, warning, alarm]
+    Throughput:
+      type: object
+      additionalProperties: false
+      description: Wafers moving through a plant or a bay.
+      required: [waferStartsPerHour, waferOutsPerHour, wip, yieldPct, uptimePct]
+      properties:
+        waferStartsPerHour:
+          type: number
+          description: Wafers that enter this plant or bay in one hour.
+        waferOutsPerHour:
+          type: number
+          description: Wafers that finish this plant or bay in one hour.
+        wip:
+          type: integer
+          description: Work in process. Wafers that have started and have not finished.
+        yieldPct:
+          type: number
+          description: Percent of wafers that met the requirement.
+        uptimePct:
+          type: number
+          description: Percent of scheduled time the tools were ready to run.
+    SiteBaySummary:
+      type: object
+      additionalProperties: false
+      required: [id, name, toolCount]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        toolCount:
+          type: integer
+    SiteSummary:
+      type: object
+      additionalProperties: false
+      required: [id, name, role, location, timezone, bays, kpis]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        role:
+          $ref: "#/components/schemas/SiteRole"
+        location:
+          type: string
+          description: Fictional place name. Not a city tied to a real chip company.
+        timezone:
+          type: string
+          description: Time-zone name, such as America/Denver, so clocks can be compared.
+        bays:
+          type: array
+          items:
+            $ref: "#/components/schemas/SiteBaySummary"
+        kpis:
+          $ref: "#/components/schemas/Throughput"
+    PlacedTool:
+      type: object
+      additionalProperties: false
+      required: [id, name, family, model, status, x, y, siteId]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        family:
+          $ref: "#/components/schemas/ToolFamily"
+        model:
+          type: string
+        status:
+          $ref: "#/components/schemas/ToolStatus"
+        x:
+          type: number
+          description: Horizontal position in the bay, from 0 to 100.
+        y:
+          type: number
+          description: Vertical position in the bay, from 0 to 100.
+        siteId:
+          type: string
+    SiteBayDetail:
+      type: object
+      additionalProperties: false
+      required: [id, name, tools, kpis]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        tools:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlacedTool"
+        kpis:
+          $ref: "#/components/schemas/Throughput"
+    WaferFlow:
+      type: object
+      additionalProperties: false
+      required: [fromBayId, toBayId, label]
+      properties:
+        fromBayId:
+          type: string
+        toBayId:
+          type: string
+        label:
+          type: string
+          description: Plain sentence for why wafers move from one bay to the next.
+    SiteDetail:
+      type: object
+      additionalProperties: false
+      required: [id, name, role, location, timezone, bays, flows, kpis]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        role:
+          $ref: "#/components/schemas/SiteRole"
+        location:
+          type: string
+        timezone:
+          type: string
+        bays:
+          type: array
+          items:
+            $ref: "#/components/schemas/SiteBayDetail"
+        flows:
+          type: array
+          items:
+            $ref: "#/components/schemas/WaferFlow"
+        kpis:
+          $ref: "#/components/schemas/Throughput"
+    SiteParameterStats:
+      type: object
+      additionalProperties: false
+      required: [siteId, siteName, mean, sigma, alarmRate, uptimePct, yieldPct, discrepancy, reason]
+      properties:
+        siteId:
+          type: string
+        siteName:
+          type: string
+        mean:
+          type: number
+          description: Average reading for this parameter on this tool family at this plant.
+        sigma:
+          type: number
+          description: Spread of those readings around the average.
+        alarmRate:
+          type: number
+          description: Share of readings outside the normal band, from 0 to 1.
+        uptimePct:
+          type: number
+        yieldPct:
+          type: number
+        discrepancy:
+          type: boolean
+          description: True when this plant sits apart from the reference plant.
+        reason:
+          type: string
+          nullable: true
+          description: One plain sentence when discrepancy is true. Null when it is not.
+    ParameterComparison:
+      type: object
+      additionalProperties: false
+      required: [parameter, unit, sites]
+      properties:
+        parameter:
+          type: string
+        unit:
+          type: string
+        sites:
+          type: array
+          items:
+            $ref: "#/components/schemas/SiteParameterStats"
+    FamilyComparison:
+      type: object
+      additionalProperties: false
+      required: [family, referenceSiteId, parameters]
+      properties:
+        family:
+          $ref: "#/components/schemas/ToolFamily"
+        referenceSiteId:
+          type: string
+          description: The plant the others are compared with. A discrepancy is measured from this plant.
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParameterComparison"
