@@ -29,6 +29,9 @@ public sealed class DemoResetService
 
     private static readonly SemaphoreSlim Gate = new(1, 1);
 
+    /// <summary>True while a hard or soft reset holds the gate. The plant tick waits so no reading, alert or ticket lands mid-reset.</summary>
+    public static bool InProgress => Gate.CurrentCount == 0;
+
     private readonly QualityDbContext _db;
     private readonly PlantSimulation _plant;
     private readonly StreamSpcPublisher _traces;
@@ -101,6 +104,9 @@ public sealed class DemoResetService
         try
         {
             _progress.Begin(kind);
+
+            // Let investigations from the previous run finish so none writes into the fresh plant.
+            await _traces.DrainAsync().ConfigureAwait(false);
             var baseline = hard
                 ? await HardAsync(cancellationToken).ConfigureAwait(false)
                 : await SoftAsync(cancellationToken).ConfigureAwait(false);

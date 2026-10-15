@@ -63,6 +63,20 @@ public sealed partial class SimulationTickService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            if (Mps.Api.Demo.DemoResetService.InProgress)
+            {
+                try
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(200), _time, stoppingToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+
+                continue;
+            }
+
             try
             {
                 _plant.AdvanceTick();
