@@ -4,6 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { formatStamp, ruleLabel, severityTone, severityWord } from "../api/labels";
 import type { Alert, Incident, Ticket } from "../api/types";
+import { CaseBriefs } from "../components/CaseBriefs";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
 import { panel } from "../components/ui";
@@ -98,6 +99,10 @@ export function AlertsPage() {
           </table>
         </div>
       </div>
+      <CaseBriefs
+        incidentIds={incidents.filter((incident) => merged.some((alert) => alert.correlationId === incident.correlationId)).map((incident) => incident.id)}
+        intro="Evidence linked to these alerts"
+      />
     </div>
   );
 }

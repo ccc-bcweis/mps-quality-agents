@@ -2,12 +2,15 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import { CATEGORY_LABEL } from "../api/labels";
+import { CATEGORY_LABEL, INVESTIGATION_STAGE_LABEL } from "../api/labels";
 import type { HumanDecisionKind, Investigation } from "../api/types";
+import { AgentTimeline } from "../components/AgentTimeline";
 import { ApprovalDialog, type DecisionMode } from "../components/ApprovalDialog";
+import { EvidencePack } from "../components/EvidencePack";
 import { Explain } from "../components/Explain";
 import { Term } from "../components/Term";
 import { btnDanger, btnOk, panel } from "../components/ui";
+import { plainNarrative } from "../investigation/format";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
 import { lifecycleForInvestigation } from "../lifecycle";
 
@@ -93,14 +96,16 @@ export function ApprovalPage() {
           {top ? (
             <>
               <p>
-                <span className="font-mono text-mps-micro text-mps-ai">{CATEGORY_LABEL[top.category]}</span> · {top.cause}
+                <span className="text-mps-ai">{CATEGORY_LABEL[top.category]}</span> · {plainNarrative(top.cause)}
               </p>
               <ul className="mt-2 list-disc pl-5">
                 {top.actions.map((action) => (
-                  <li key={action}>{action}</li>
+                  <li key={action}>{plainNarrative(action)}</li>
                 ))}
               </ul>
-              {top.counterEvidence.length > 0 ? <p className="mt-2">counterEvidence: {top.counterEvidence.join(" ")}</p> : null}
+              {top.counterEvidence.length > 0 ? (
+                <p className="mt-2">Evidence against this: {top.counterEvidence.map((line) => plainNarrative(line)).join(" ")}</p>
+              ) : null}
             </>
           ) : (
             <p>
@@ -113,7 +118,11 @@ export function ApprovalPage() {
               <p className="mt-1 text-mps-secondary">
                 <Explain text="An escalated case cannot go straight to a CAPA. Ask the agents to look again with more evidence, or override with a written reason. The reason is kept in the audit trail." />
               </p>
-              {investigation?.escalationReason ? <p className="mt-2 italic">{investigation.escalationReason}</p> : null}
+              {investigation?.escalationReason ? (
+                <p className="mt-2 italic">
+                  <Explain text={plainNarrative(investigation.escalationReason)} spellOut={false} />
+                </p>
+              ) : null}
               <label className="mt-3 block">
                 <span className="text-mps-secondary">Note or justification</span>
                 <textarea
@@ -152,7 +161,7 @@ export function ApprovalPage() {
               </button>
             ) : null}
           </div>
-          {investigation ? <p className="mt-3 font-mono text-mps-micro text-mps-muted">Stage {investigation.stage}</p> : null}
+          {investigation ? <p className="mt-3 text-mps-secondary">Stage: {INVESTIGATION_STAGE_LABEL[investigation.stage]}</p> : null}
         </section>
         <section className={panel}>
           <h2 className="mb-2 text-mps-title font-semibold">
@@ -169,6 +178,16 @@ export function ApprovalPage() {
           </table>
         </section>
       </div>
+      {investigation ? (
+        <>
+          <section className={`${panel} mt-3`}>
+            <EvidencePack items={investigation.evidence} />
+          </section>
+          <section className={`${panel} mt-3`}>
+            <AgentTimeline investigation={investigation} />
+          </section>
+        </>
+      ) : null}
       {mode ? (
         <ApprovalDialog
           mode={mode}

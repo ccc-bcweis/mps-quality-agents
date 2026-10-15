@@ -36,7 +36,7 @@ describe("approval dialog", () => {
     expect(reject).toBeDisabled();
     await user.type(screen.getByLabelText("Reject reason"), "The confounder is not addressed.");
     await user.click(reject);
-    expect(await screen.findByText(/Stage rejected/)).toBeInTheDocument();
+    expect(await screen.findByText(/Stage: Rejected/)).toBeInTheDocument();
     expect(screen.queryByText("77777777-7777-4777-8777-777777777777")).not.toBeInTheDocument();
   });
 

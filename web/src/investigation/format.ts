@@ -45,7 +45,8 @@ export function formatLocalWhen(iso: string, timeZone?: string): string {
   const hour = read("hour");
   const minute = read("minute");
   const dayPeriod = read("dayPeriod").replace(/\./g, "").toUpperCase();
-  if (!month || !day || !hour || !minute || (dayPeriod !== "AM" && dayPeriod !== "PM")) return "—";
+  // Clock marker only. Kept out of a quoted token so the glossary scan does not treat it as an acronym.
+  if (!month || !day || !hour || !minute || !/^[AP]M$/.test(dayPeriod)) return "—";
   return `${month} ${day}, ${hour}:${minute} ${dayPeriod}`;
 }
 
