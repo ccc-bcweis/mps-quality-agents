@@ -53,8 +53,8 @@ public sealed class DeployShapeTests
         acr.Should().Contain("adminUserEnabled: false");
         acr.Should().Contain("7f951dda-4ed3-4680-a7ca-43fe172d538d");
 
-        apps.Should().Contain("minReplicas: 0");
-        apps.Should().Contain("maxReplicas: 3");
+        apps.Should().Contain("minReplicas: 1");
+        apps.Should().Contain("maxReplicas: 1");
         apps.Should().Contain("targetPort: 8080");
         apps.Should().Contain("external: true");
         apps.Should().Contain("Microsoft.App/containerApps/authConfigs@2024-03-01");
