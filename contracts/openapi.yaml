@@ -7,13 +7,10 @@ info:
     Every intake channel becomes one incident. A CAPA is created only after a human approval,
     and the server issues the approval token. Clients do not send token signatures.
     The fleet stream is SignalR at `/hubs/fleet` and is not a REST operation.
-<<<<<<< HEAD
+    Contracts v1.2 adds admin reset and named injector scenarios. Both are additive.
     contracts-v1.2 adds GET /api/incidents/{incidentId}/investigation (ADR-001 addendum).
     It returns the latest investigation for that incident, or 404 when none exists.
     The path is additive. Earlier clients stay compatible.
-=======
-    Contracts v1.2 adds admin reset and named injector scenarios. Both are additive.
->>>>>>> origin/main
     All names and data are synthetic.
   license:
     name: MIT
