@@ -1,24 +1,28 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import { CHANNEL_LABEL, STAGE_LABEL, severityTone, severityWord } from "../api/labels";
+import { formatStamp, STAGE_LABEL, severityTone, severityWord } from "../api/labels";
 import type { Incident, Severity, Ticket, Tool } from "../api/types";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
-import { Term } from "../components/Term";
+import { HistoryNote, RecordList } from "../components/RecordList";
 import { btnPrimary, field, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
+import { MISSING_TICKET } from "../history/copy";
+import { byNewestTime, toolPlainName } from "../history/order";
 import { pathForIncident, pathForTicket } from "../investigation/ticketRoute";
 import { lifecycleForIncident } from "../lifecycle";
 
 export function TicketsPage() {
   useSetLifecycle("ticket");
   const navigate = useNavigate();
+  const { ticketId } = useParams();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [tools, setTools] = useState<Tool[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
   const [toolId, setToolId] = useState("E-02");
   const [parameter, setParameter] = useState("vibration");
   const [summary, setSummary] = useState("");
@@ -35,9 +39,13 @@ export function TicketsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    reload().catch((reason: unknown) => {
-      if (!cancelled) setError(reason instanceof ApiProblem ? reason.title : "Tickets did not load.");
-    });
+    reload()
+      .catch((reason: unknown) => {
+        if (!cancelled) setError(reason instanceof ApiProblem ? reason.title : "Tickets did not load.");
+      })
+      .finally(() => {
+        if (!cancelled) setReady(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -64,6 +72,36 @@ export function TicketsPage() {
     }
   }
 
+  const ordered = [...tickets].sort(byNewestTime((ticket) => ticket.openedAt));
+  const selected = ticketId ? ordered.find((ticket) => ticket.id === ticketId) : undefined;
+  const missing = Boolean(ticketId) && ready && !selected;
+  const rows = ordered.map((ticket) => {
+    const incident = incidents.find((item) => item.id === ticket.incidentId);
+    const stage = incident?.stage;
+    const path = pathForTicket(ticket);
+    return {
+      id: ticket.id,
+      status: incident ? (
+        <Chip tone={incident.stage === "closed" ? "ok" : severityTone(incident.severity)}>{incident.stage === "closed" ? "CLOSED" : STAGE_LABEL[incident.stage]}</Chip>
+      ) : (
+        "—"
+      ),
+      toolName: toolPlainName(tools, ticket.toolId),
+      toolId: ticket.toolId,
+      time: formatStamp(ticket.openedAt),
+      detail: (
+        <>
+          <Link to={path}>{ticket.title}</Link>
+          <div className="mt-1 font-mono text-mps-micro">
+            <Link to={path}>{ticket.number}</Link>
+            {stage && stage !== "closed" ? <span> · {stage === "ticketOpened" ? "Start" : "Open"}</span> : null}
+            {incident ? <span className="text-mps-muted"> · {severityWord(incident.severity)}</span> : null}
+          </div>
+        </>
+      ),
+    };
+  });
+
   return (
     <div>
       <div className="mb-4">
@@ -73,54 +111,22 @@ export function TicketsPage() {
         </p>
       </div>
       {error ? <p className="mb-3 text-mps-alarm-text">{error}</p> : null}
-      <div className={`${panel} overflow-x-auto`}>
-        <table className="w-full text-left">
-          <thead>
-            <tr className="font-mono text-mps-micro uppercase text-mps-muted">
-              <th className="py-1 font-medium">
-                <Term id="TKT" spellOut={false} />
-              </th>
-              <th className="py-1 font-medium">Channel</th>
-              <th className="py-1 font-medium">Tool</th>
-              <th className="py-1 font-medium">Summary</th>
-              <th className="py-1 font-medium">Sev</th>
-              <th className="py-1 font-medium">State</th>
-              <th className="py-1 font-medium">
-                <Term id="INV" spellOut={false} />
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {tickets.map((ticket) => {
-              const incident = incidents.find((item) => item.id === ticket.incidentId);
-              const stage = incident?.stage;
-              return (
-                <tr key={ticket.id} className="cursor-pointer border-t border-mps-line" onClick={() => navigate(pathForTicket(ticket))}>
-                  <td className="py-1.5 font-mono">
-                    <Link to={pathForTicket(ticket)} onClick={(event) => event.stopPropagation()}>
-                      {ticket.number}
-                    </Link>
-                  </td>
-                  <td className="py-1.5">{incident ? <Explain text={CHANNEL_LABEL[incident.channel]} spellOut={false} /> : "—"}</td>
-                  <td className="py-1.5 font-mono">{ticket.toolId}</td>
-                  <td className="py-1.5">{ticket.title}</td>
-                  <td className="py-1.5">{incident ? <Chip tone={incident.stage === "closed" ? "ok" : severityTone(incident.severity)}>{incident.stage === "closed" ? "CLOSED" : severityWord(incident.severity)}</Chip> : "—"}</td>
-                  <td className="py-1.5">{stage ? STAGE_LABEL[stage] : "—"}</td>
-                  <td className="py-1.5">
-                    {stage && stage !== "closed" ? (
-                      <Link to={pathForTicket(ticket)} onClick={(event) => event.stopPropagation()}>
-                        {stage === "ticketOpened" ? "Start" : "Open"}
-                      </Link>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      {missing ? <HistoryNote text={MISSING_TICKET} /> : null}
+      {selected ? (
+        <section className={`${panel} mb-3`}>
+          <h2 className="mb-2 text-mps-title font-semibold">{selected.number}</h2>
+          <p>
+            {toolPlainName(tools, selected.toolId)} · {formatStamp(selected.openedAt)}
+          </p>
+          <p className="mt-2">{selected.title}</p>
+          <p className="mt-2">
+            <Link to={pathForTicket(selected)}>Open the investigation</Link>
+            {" · "}
+            <Link to="/tickets">All tickets</Link>
+          </p>
+        </section>
+      ) : null}
+      {!ticketId || missing ? <RecordList label="Tickets" rows={rows} empty="No tickets yet." /> : null}
       <form className={`${panel} mt-3 grid gap-3 md:grid-cols-2`} onSubmit={onSubmit}>
         <h2 className="text-mps-title font-semibold md:col-span-2">Operator report</h2>
         <label className="text-mps-label text-mps-muted">

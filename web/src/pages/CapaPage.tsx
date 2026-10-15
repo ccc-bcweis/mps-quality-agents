@@ -2,13 +2,16 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import type { Capa, CapaStage } from "../api/types";
+import { CAPA_STAGE_LABEL, formatStamp } from "../api/labels";
+import type { Capa, CapaStage, Incident, Tool } from "../api/types";
 import { Explain } from "../components/Explain";
+import { HistoryNote, RecordList } from "../components/RecordList";
 import { Term } from "../components/Term";
 import { btn, panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
+import { hiddenMissingTitle, MISSING_CAPA } from "../history/copy";
+import { byNewestTime, toolPlainName } from "../history/order";
 import { CAPA_STAGES, nextCapaStage } from "../lifecycle";
-import { S1_INVESTIGATION_ID } from "../mocks/demoData";
 
 export function CapaPage() {
   useSetLifecycle("capa");
@@ -17,16 +20,42 @@ export function CapaPage() {
   const capasRef = useRef(capas);
   capasRef.current = capas;
   const [capa, setCapa] = useState<Capa | null>(null);
+  const [listed, setListed] = useState<Capa[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [tools, setTools] = useState<Tool[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [missing, setMissing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    const remembered = capaId ? capasRef.current.find((item) => item.id === capaId) ?? null : capasRef.current[0] ?? null;
+    Promise.all([api.listCapas(), api.listIncidents(), api.listTools()])
+      .then(([nextCapas, nextIncidents, nextTools]) => {
+        if (cancelled) return;
+        setListed(nextCapas);
+        setIncidents(nextIncidents);
+        setTools(nextTools);
+      })
+      .catch((reason: unknown) => {
+        if (!cancelled) setError(reason instanceof ApiProblem ? reason.title : "Corrective actions did not load.");
+      })
+      .finally(() => {
+        if (!cancelled) setReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const remembered = capaId ? capasRef.current.find((item) => item.id === capaId) ?? null : null;
+    setMissing(false);
     if (!capaId) {
-      setCapa(remembered);
-      if (!remembered) setError(null);
+      setCapa(null);
+      setError(null);
       return () => {
         cancelled = true;
       };
@@ -37,6 +66,7 @@ export function CapaPage() {
         if (!cancelled) {
           setCapa(next);
           rememberCapa(next);
+          setMissing(false);
         }
       })
       .catch((reason: unknown) => {
@@ -44,9 +74,14 @@ export function CapaPage() {
         if (remembered) {
           setCapa(remembered);
           setError(null);
+          setMissing(false);
           return;
         }
-        setError(reason instanceof ApiProblem ? reason.title : "CAPA was not found.");
+        setCapa(null);
+        setMissing(true);
+        if (!(reason instanceof ApiProblem) || (!hiddenMissingTitle(reason.title) && reason.status !== 404)) {
+          setError(null);
+        }
       });
     return () => {
       cancelled = true;
@@ -74,11 +109,53 @@ export function CapaPage() {
   const currentIndex = CAPA_STAGES.findIndex((item) => item.id === current);
   const upcoming = capa ? nextCapaStage(capa.stage) : null;
 
+  const merged = [...listed, ...capas.filter((item) => !listed.some((row) => row.id === item.id))].sort(
+    byNewestTime((item) => item.openedAt),
+  );
+  const showList = !capa;
+  const rows = merged.map((item) => {
+    const incident = incidents.find((row) => row.id === item.incidentId);
+    return {
+      id: item.id,
+      status: CAPA_STAGE_LABEL[item.stage],
+      toolName: toolPlainName(tools, incident?.toolId),
+      toolId: incident?.toolId,
+      time: formatStamp(item.openedAt),
+      detail: <Link to={`/capas/${item.id}`}>Open</Link>,
+    };
+  });
+
+  if (showList) {
+    return (
+      <div>
+        <div className="mb-4">
+          <h1 className="text-mps-display font-semibold">
+            <Term id="CAPA" spellOut={false} />
+          </h1>
+          <p className="max-w-3xl text-mps-secondary">Past corrective and preventive actions, newest first.</p>
+        </div>
+        {missing && ready ? <HistoryNote text={MISSING_CAPA} /> : null}
+        {error && !hiddenMissingTitle(error) ? (
+          <p className="mb-3 text-mps-alarm-text" role="alert">
+            <Explain text={error} spellOut={false} />
+          </p>
+        ) : null}
+        {rows.length === 0 ? (
+          <p className="text-mps-muted">
+            <Explain text="No CAPA yet. Approve a recommendation to create one. The server list is empty until that token is issued." spellOut={false} />
+          </p>
+        ) : (
+          <RecordList label="Corrective actions" rows={rows} empty="No corrective actions yet." />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="mb-4">
         <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">
-          <Link to={`/approvals/${S1_INVESTIGATION_ID}`}>Approval</Link> · mock <Explain text="QMS" spellOut={false} />
+          <Link to="/approvals">Approval</Link> · mock <Explain text="QMS" spellOut={false} />
         </p>
         <h1 className="text-mps-display font-semibold">
           <Term id="CAPA" spellOut={false} />

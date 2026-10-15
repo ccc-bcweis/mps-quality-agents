@@ -80,6 +80,7 @@ export const api = {
   getIncident: (incidentId: string) => apiSend<Incident>(`/api/incidents/${incidentId}`),
   openIncident: (body: OpenIncidentRequest) =>
     apiSend<Incident>("/api/incidents", { method: "POST", body: JSON.stringify(body) }),
+  listInvestigations: () => apiSend<Investigation[]>("/api/investigations"),
   getInvestigation: (investigationId: string) =>
     apiSend<Investigation>(`/api/investigations/${investigationId}`),
   getLatestInvestigation: (incidentId: string) =>

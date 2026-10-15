@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import type { IncidentChannel, IncidentStage, RootCauseCategory, Severity, ToolFamily } from "./types";
+import type { CapaStage, IncidentChannel, IncidentStage, InvestigationStage, RootCauseCategory, Severity, ToolFamily } from "./types";
 
 export const FAMILY_PROCESS: Record<ToolFamily, string> = {
   deposition: "thin-film deposition",
@@ -24,6 +24,26 @@ export const STAGE_LABEL: Record<IncidentStage, string> = {
   awaitingApproval: "Approval",
   approved: "Approved",
   rejected: "Rejected",
+  closed: "Closed",
+};
+
+export const INVESTIGATION_STAGE_LABEL: Record<InvestigationStage, string> = {
+  started: "Started",
+  evidenceGathered: "Evidence gathered",
+  recommendationReady: "Recommendation ready",
+  escalated: "Escalated",
+  awaitingApproval: "Waiting for approval",
+  approved: "Approved",
+  rejected: "Rejected",
+  failed: "Failed",
+};
+
+export const CAPA_STAGE_LABEL: Record<CapaStage, string> = {
+  open: "Open",
+  containment: "Containment",
+  rootCauseConfirmed: "Root cause confirmed",
+  correctiveAction: "Corrective action",
+  verification: "Verification",
   closed: "Closed",
 };
 
