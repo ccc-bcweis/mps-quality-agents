@@ -3,7 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { CATEGORY_LABEL } from "../api/labels";
-import type { FaultInjectionRequest, FaultShape, RootCauseCategory, ScriptedScenario, Tool } from "../api/types";
+import type { FaultInjectionRequest, FaultShape, RootCauseCategory, Tool } from "../api/types";
 import { Explain } from "../components/Explain";
 import { btn, btnPrimary, field, panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
@@ -31,8 +31,6 @@ export function InjectorPage() {
   const [magnitude, setMagnitude] = useState("2.4");
   const [category, setCategory] = useState<RootCauseCategory>("equipmentCalibrationOrAlignment");
   const [confounders, setConfounders] = useState(true);
-  const [scenarios, setScenarios] = useState<ScriptedScenario[]>([]);
-  const [scenarioId, setScenarioId] = useState("SC-1");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -45,16 +43,6 @@ export function InjectorPage() {
       })
       .catch(() => {
         if (!cancelled) setError("The tool list did not load.");
-      });
-    api
-      .listScenarios()
-      .then((next) => {
-        if (cancelled || next.length === 0) return;
-        setScenarios(next);
-        setScenarioId(next[0].id);
-      })
-      .catch(() => {
-        if (!cancelled) setError("The scenario list did not load.");
       });
     return () => {
       cancelled = true;
@@ -113,24 +101,6 @@ export function InjectorPage() {
     }
   }
 
-  async function runScenario() {
-    const selected = scenarios.find((item) => item.id === scenarioId);
-    if (!selected) {
-      setError("Pick a named scenario.");
-      return;
-    }
-    setPending(true);
-    setError(null);
-    try {
-      const run = await api.runScenario(selected.id);
-      await waitForAlert(run.correlationId, selected.toolIds[0] ?? selected.id, selected.parameter, selected.chamberId, run.faultId);
-      navigate("/alerts?injected=1");
-    } catch (reason: unknown) {
-      setError(reason instanceof ApiProblem ? reason.title : "The scenario was not accepted.");
-      setPending(false);
-    }
-  }
-
   async function presetS4() {
     setPending(true);
     setError(null);
@@ -156,35 +126,15 @@ export function InjectorPage() {
     <div>
       <div className="mb-4">
         <h1 className="text-mps-display font-semibold">Fault injector</h1>
-        <p className="max-w-3xl text-mps-secondary">Throw a new problem. The simulator writes matching records into the mock systems. Agents do not receive the fault object. The category below is held out of the alert.</p>
+        <p className="max-w-3xl text-mps-secondary">
+          Throw a new problem. The simulator writes matching records into the mock systems. Agents do not receive the fault object. The category below is held out of the alert. Named scenarios run from the demo harness bar.
+        </p>
       </div>
       {error ? (
         <p className="mb-3 text-mps-alarm-text" role="alert">
           {error}
         </p>
       ) : null}
-      <section className={`${panel} mb-3`}>
-        <h2 className="mb-2 text-mps-title font-semibold">Scripted scenarios</h2>
-        <p className="mb-3 max-w-3xl text-mps-secondary">
-          Each named scenario uses the demo seed. The same seed produces the same telemetry on this computer and in the hosted demo. Free-form faults stay on the form below.
-        </p>
-        <label className="mb-3 block text-mps-label text-mps-muted">
-          Scenario
-          <select className={field} aria-label="Scenario" value={scenarioId} onChange={(event) => setScenarioId(event.target.value)}>
-            {scenarios.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.id} · {item.title}
-              </option>
-            ))}
-          </select>
-        </label>
-        {scenarios.find((item) => item.id === scenarioId) ? (
-          <p className="mb-3 text-mps-secondary">{scenarios.find((item) => item.id === scenarioId)?.summary}</p>
-        ) : null}
-        <button className={btnPrimary} type="button" disabled={pending || scenarios.length === 0} onClick={() => void runScenario()}>
-          {pending ? "Running…" : "Run scenario"}
-        </button>
-      </section>
       <div className="grid gap-3 lg:grid-cols-2">
         <form className={panel} onSubmit={onSubmit}>
           <h2 className="mb-2 text-mps-title font-semibold">Inject</h2>

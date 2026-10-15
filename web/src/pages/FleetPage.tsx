@@ -9,7 +9,7 @@ import { Chip } from "../components/Chip";
 import { Sparkline } from "../components/Sparkline";
 import { Explain } from "../components/Explain";
 import { PlainMetrics, TileMetrics } from "../components/PlainMetrics";
-import { btn, btnPrimary, panel } from "../components/ui";
+import { btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { bayCaption, statusTone, storyFor } from "../fleet/catalog";
 
@@ -50,9 +50,6 @@ export function FleetPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link className={btn} to="/injector">
-            Fault injector
-          </Link>
           <Link className={btnPrimary} to="/alerts">
             Open alerts ({stories.filter((item) => item.story.status !== "nominal").length})
           </Link>

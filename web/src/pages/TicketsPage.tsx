@@ -7,7 +7,7 @@ import type { Incident, Severity, Ticket, Tool } from "../api/types";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
 import { Term } from "../components/Term";
-import { btn, btnPrimary, field, panel } from "../components/ui";
+import { btnPrimary, field, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { pathForIncident, pathForTicket } from "../investigation/ticketRoute";
 import { lifecycleForIncident } from "../lifecycle";
@@ -156,11 +156,6 @@ export function TicketsPage() {
           </button>
         </div>
       </form>
-      <p className="mt-3">
-        <Link className={btn} to="/injector">
-          Fault injector
-        </Link>
-      </p>
     </div>
   );
 }

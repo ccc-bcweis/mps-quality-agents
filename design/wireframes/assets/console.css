@@ -10,7 +10,7 @@ body {
   font-family: var(--font-ui);
   font-size: 13px;
   line-height: 1.4;
-  background: var(--mps-canvas);
+  background: var(--sn-navy);
   color: var(--mps-text);
   min-height: 100vh;
 }
@@ -111,11 +111,9 @@ html[data-mode="live"] .spend-fill { background: var(--mps-ok); }
 .led.off { background: var(--mps-line); box-shadow: none; }
 
 .nav {
-  display: flex; gap: 2px; padding: 0 12px;
+  display: flex; flex-wrap: wrap; gap: 2px; padding: 0 12px;
   background: var(--mps-panel);
   border-bottom: 1px solid var(--mps-line);
-  overflow-x: auto;
-  position: sticky; top: 33px; z-index: var(--z-nav);
 }
 .nav a {
   color: var(--mps-muted);
@@ -370,3 +368,84 @@ textarea { min-height: 72px; resize: vertical; }
 .agent-steps p { margin: 6px 0 0; color: var(--mps-secondary); font-size: 12px; }
 @media (max-width: 1100px) { .agent-steps { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 640px) { .agent-steps { grid-template-columns: 1fr; } }
+
+/* StatusNeo demo harness. Navy and gold, outside the charcoal console.
+   From 1280px to 1920px, rows wrap. Labels stay nowrap so they do not clip. */
+.harness {
+  position: sticky; top: 0; z-index: var(--z-banner);
+  background: var(--sn-navy);
+  color: var(--sn-gold-wash);
+  border-bottom: 4px solid var(--sn-gold);
+  font-family: var(--font-pitch);
+}
+.harness-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+  padding: 8px 16px;
+}
+.harness-brand { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
+.harness-brand .sn {
+  font-weight: 700; letter-spacing: 0.04em; color: var(--sn-gold);
+  border: 1px dashed var(--sn-gold); padding: 2px 8px; white-space: nowrap;
+}
+.harness-kicker {
+  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sn-gold); white-space: nowrap;
+}
+.harness-nav { display: flex; flex-wrap: wrap; gap: 4px; }
+.harness-nav a {
+  color: var(--sn-gold-wash); white-space: nowrap; padding: 6px 10px;
+  border: 1px solid transparent; border-radius: var(--radius); font-weight: 600;
+}
+.harness-nav a:hover { color: var(--sn-gold); text-decoration: none; }
+.harness-nav a[aria-current="page"] {
+  color: var(--sn-gold); border-color: var(--sn-gold); background: var(--sn-navy-soft);
+}
+.harness-scenario { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; flex: 0 1 auto; max-width: 100%; }
+.harness-scenario label {
+  display: flex; align-items: center; gap: 8px; white-space: nowrap; color: var(--sn-gold-wash); font-size: 13px;
+}
+.harness-scenario select {
+  width: 22rem; max-width: 100%;
+  background: var(--sn-navy-soft); color: var(--sn-gold-wash);
+  border: 1px solid var(--sn-gold); border-radius: var(--radius); padding: 4px 8px;
+}
+.harness button, .harness-reset {
+  background: transparent; color: var(--sn-gold); border: 1px solid var(--sn-gold);
+  border-radius: var(--radius); padding: 4px 10px; cursor: pointer; white-space: nowrap;
+  font-family: var(--font-pitch);
+}
+.harness .mode-banner, html[data-mode="live"] .harness .mode-banner {
+  position: static; z-index: auto; background: transparent; border: 0; padding: 0 16px 8px;
+}
+.console-frame {
+  margin: 8px;
+  border: 2px solid var(--sn-gold);
+  border-radius: 8px;
+  background: var(--mps-canvas);
+  color: var(--mps-text);
+  font-family: var(--font-ui);
+  min-height: calc(100vh - 8rem);
+}
+.harness-panel {
+  margin: 8px;
+  border: 2px dashed var(--sn-gold);
+  border-radius: 8px;
+  background: #07111f;
+  color: var(--mps-text);
+  font-family: var(--font-ui);
+  min-height: calc(100vh - 8rem);
+}
+.harness-panel-note {
+  margin: 0; padding: 8px 16px;
+  border-bottom: 1px solid rgba(250, 196, 0, 0.45);
+  color: var(--sn-gold);
+  font-family: var(--font-pitch);
+  font-size: 13px;
+}
+.harness-panel-note a { color: var(--sn-gold-wash); }
+#reset-dialog .modal {
+  background: var(--sn-navy);
+  border: 1px solid var(--sn-gold);
+  color: var(--sn-gold-wash);
+}
+#reset-dialog .modal h2 { color: var(--sn-gold); text-transform: none; letter-spacing: 0; }
+#reset-dialog .modal ul { margin: 12px 0; padding-left: 1.25rem; }
