@@ -42,7 +42,7 @@ SC-4 is a falling etch rate after a clean on Etch 01. The ranker keeps that as p
 
 ## Notes for Bob
 
-1. Sync is still `sync_to_github.ps1`. Nothing here was pushed. This lane left the harness bar and the reset path alone for GB-CTRL.
+1. Sync is still `sync_to_github.ps1`. Nothing here was pushed. This lane left the harness bar and the reset path alone for the controls lane.
 2. The envelope, the command catalog shape, the event log, the telemetry table, the trace response, and the scenario and fault HTTP bodies are unchanged. OpenAPI stays 1.4.0. No incident-table column was added.
 3. An escalated investigation still cannot be plain-approved.
 4. A percent scenario's HTTP sample is still the physical percent. The running plant steps that fault at 4.5 sigma so the process chart can open a ticket.
