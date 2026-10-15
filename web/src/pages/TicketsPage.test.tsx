@@ -57,6 +57,8 @@ describe("tickets", () => {
 
     const parameter = within(form as HTMLElement).getByLabelText("Parameter");
     expect(within(parameter).getAllByRole("option", { name: /ESC temperature \(C\), spec 40-60/ }).length).toBeGreaterThan(0);
+    expect(within(parameter).getAllByRole("option", { name: /Run rate \(wafers\/hour\), spec 8-14/ }).length).toBeGreaterThan(0);
+    expect(within(parameter).queryByRole("option", { name: /RUN-RATE/ })).not.toBeInTheDocument();
     expect(within(parameter).queryByRole("option", { name: /Film thickness/ })).not.toBeInTheDocument();
 
     await user.selectOptions(tool, "D-01");

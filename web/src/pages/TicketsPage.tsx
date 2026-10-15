@@ -165,7 +165,11 @@ export function TicketsPage() {
                 </option>
               ))}
             </select>
-            {selected ? <span className="mt-1 block break-words font-mono text-mps-secondary">{sensorOptionLabel(selected)}</span> : null}
+            {selected ? (
+              <span data-selected-sensor="" className="mt-1 block break-words font-mono text-mps-secondary">
+                {sensorOptionLabel(selected)}
+              </span>
+            ) : null}
           </label>
           <label className="text-mps-label text-mps-muted">
             Summary
@@ -343,9 +347,8 @@ function sensorsFor(toolId: string): FleetSensor[] {
 }
 
 function sensorOptionLabel(sensor: FleetSensor): string {
-  const parameter = sensor.parameter ?? sensor.id;
-  const name = parameterLabel(parameter);
-  const plain = name === parameter ? sensorLabel(sensor.schematicAnchor) : name;
+  const named = sensor.parameter ? parameterLabel(sensor.parameter) : sensorLabel(sensor.schematicAnchor);
+  const plain = !sensor.parameter || named === sensor.parameter ? sensorLabel(sensor.schematicAnchor) : named;
   return `${slotWord(sensor.schematicAnchor)} · ${plain} (${sensor.unit}), spec ${specNumber(sensor.limits.minimum)}-${specNumber(sensor.limits.maximum)}`;
 }
 
