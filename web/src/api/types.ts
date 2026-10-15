@@ -290,7 +290,27 @@ export type AdminSession = {
   mode: "local" | "azure";
   isAdmin: boolean;
   displayName: string;
+  /** False when signed in but not invited to the hosted demo. */
+  member?: boolean;
 };
+
+export type JoinLink = {
+  id: string;
+  url: string;
+  createdAt: string;
+  expiresAt: string;
+  maxUses: number;
+  uses: number;
+  revoked: boolean;
+  status: "active" | "expired" | "usedUp" | "revoked";
+};
+
+export type JoinLinks = {
+  links: JoinLink[];
+  members: { email?: string | null; displayName?: string | null; joinedAt: string }[];
+};
+
+export type RedeemResult = { result: "joined" | "alreadyMember"; message: string };
 
 export type DemoResetResult = {
   seed: number;

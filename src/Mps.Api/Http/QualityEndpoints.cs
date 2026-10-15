@@ -322,10 +322,12 @@ public static class QualityEndpoints
             var site = await SiteForIncidentAsync(incidents, stored.Capa.IncidentId, cancellationToken).ConfigureAwait(false);
             return Results.Ok(await WithApprovalAsync(db, ContractMapper.ToResponse(stored.Capa, site, await ToolForIncidentAsync(incidents, stored.Capa.IncidentId, cancellationToken).ConfigureAwait(false)), cancellationToken).ConfigureAwait(false));
         });
-        app.MapGet("/api/admin/session", (HttpContext http, IConfiguration configuration) =>
+        app.MapGet("/api/admin/session", async (HttpContext http, IConfiguration configuration, Mps.Api.Access.JoinLinkStore store, CancellationToken cancellationToken) =>
         {
             var caller = Caller(http, configuration);
-            return Results.Ok(new AdminSessionResponse(caller.Mode, caller.IsAdmin, caller.DisplayName));
+            var member = !Mps.Api.Access.AccessGate.Hosted(configuration)
+                || await Mps.Api.Access.AccessGate.IsAllowedAsync(http, configuration, store, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(new AdminSessionResponse(caller.Mode, caller.IsAdmin, caller.DisplayName, member));
         });
         app.MapGet("/api/demo/speed", (Mps.Api.Live.PlantSimulation plant) =>
             Results.Ok(new { speed = plant.Speed, strideSeconds = plant.StrideSeconds, speeds = Mps.Api.Live.PlantSimulation.Speeds, strides = Mps.Api.Live.PlantSimulation.Strides }));
@@ -662,7 +664,10 @@ public static class QualityEndpoints
     private static DemoCaller Caller(HttpContext http, IConfiguration configuration)
     {
         var header = http.Request.Headers[EasyAuthPrincipal.HeaderName].ToString();
-        return EasyAuthPrincipal.Read(string.IsNullOrWhiteSpace(header) ? null : header, configuration["Mps:Auth:Mode"]);
+        var caller = EasyAuthPrincipal.Read(string.IsNullOrWhiteSpace(header) ? null : header, configuration["Mps:Auth:Mode"]);
+        return !caller.IsAdmin && Mps.Api.Access.AccessOptions.From(configuration).IsAdminEmail(Mps.Api.Access.CallerIdentity.Read(header).Email)
+            ? caller with { IsAdmin = true }
+            : caller;
     }
 
     private static async Task<double> LiveSpendAsync(IServiceProvider services, TimeProvider time, double fallback, CancellationToken cancellationToken)
@@ -678,7 +683,7 @@ public static class QualityEndpoints
     }
 }
 
-public sealed record AdminSessionResponse(string Mode, bool IsAdmin, string DisplayName);
+public sealed record AdminSessionResponse(string Mode, bool IsAdmin, string DisplayName, bool Member = true);
 
 public sealed record ResetBody(string? Kind);
 

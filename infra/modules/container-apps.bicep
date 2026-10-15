@@ -20,6 +20,9 @@ param entraClientId string = ''
 @description('OpenID issuer, for example https://login.microsoftonline.com/<tenant>/v2.0. Empty skips the auth config.')
 param openIdIssuer string = ''
 
+@description('Comma-separated emails that get the demo admin harness (join links, resets).')
+param adminEmails string = 'bcweis@commonconsulting.us'
+
 @secure()
 param appInsightsConnectionString string
 
@@ -126,6 +129,19 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
               // The API host runs no background simulator, so this is the hosted demo's SPC path.
               name: 'Mps__Injector__DirectTicket'
               value: 'true'
+            }
+            {
+              // Easy Auth signs people in; the API then lets in home-tenant users and join-link members (ADR-011).
+              name: 'Mps__Auth__Mode'
+              value: empty(entraClientId) ? 'local' : 'azure'
+            }
+            {
+              name: 'Mps__Auth__HomeTenantId'
+              value: tenant().tenantId
+            }
+            {
+              name: 'Mps__Auth__AdminEmails'
+              value: adminEmails
             }
             {
               name: 'Mps__Model__Endpoint'

@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+import { JoinLinksDialog } from "./JoinLinks";
 import { useEffect, useState } from "react";
 import { SpeedControl } from "./SpeedControl";
 import { readRunning, readScenario, RUNNING_EVENT, storeRunning, storeScenario } from "./harnessSession";
@@ -177,6 +178,7 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
         : scenarioId || "No scenario";
   const statusLine = `${dataMode === "replay" ? "Replay" : "Live"} · ${activeScenario} · ${engineLabel(bannerMode)}`;
   const admin = session?.isAdmin === true;
+  const [joinOpen, setJoinOpen] = useState(false);
   const dialogCopy = resetKind === "soft" ? SOFT_COPY : HARD_COPY;
 
   return (
@@ -273,6 +275,9 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
                 >
                   Soft reset
                 </button>
+                <button type="button" className={softBtn} title="Invite people with a link that expires and has a use limit." onClick={() => setJoinOpen(true)}>
+                  Join links
+                </button>
               </div>
             ) : null}
             <div
@@ -307,6 +312,7 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
             </div>
             <SpeedControl admin={admin} />
             <ModeBanner />
+            {joinOpen && admin ? <JoinLinksDialog onClose={() => setJoinOpen(false)} /> : null}
             {resetMessage ? (
               <p
                 className="basis-full text-mps-body text-sn-gold-wash"

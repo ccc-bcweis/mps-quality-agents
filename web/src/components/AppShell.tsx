@@ -230,6 +230,16 @@ export function AppShell() {
   const session = useAdminSession();
   const { revision } = useConsole();
   const outlet: ShellOutletContext = { session };
+  if (session && session.member === false) {
+    return (
+      <div className="flex h-full items-center justify-center bg-mps-canvas p-6">
+        <section className="max-w-lg rounded border border-mps-line bg-mps-panel p-6">
+          <h1 className="text-mps-display font-semibold">Not part of this demo yet</h1>
+          <p className="mt-3">You are signed in as {session.displayName}, but this account has not been invited. Open a join link from the demo owner.</p>
+        </section>
+      </div>
+    );
+  }
   return (
     <SiteProvider>
       <GlossaryScope key={location.pathname}>
