@@ -9,7 +9,7 @@ import { Explain } from "../components/Explain";
 import { HistoryNote, RecordList } from "../components/RecordList";
 import { btnPrimary, field, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
-import { MISSING_TICKET } from "../history/copy";
+import { MISSING_TICKET, visibleProblem } from "../history/copy";
 import { byNewestTime, toolPlainName } from "../history/order";
 import { pathForIncident, pathForTicket } from "../investigation/ticketRoute";
 import { lifecycleForIncident } from "../lifecycle";
@@ -75,6 +75,7 @@ export function TicketsPage() {
   const ordered = [...tickets].sort(byNewestTime((ticket) => ticket.openedAt));
   const selected = ticketId ? ordered.find((ticket) => ticket.id === ticketId) : undefined;
   const missing = Boolean(ticketId) && ready && !selected;
+  const problem = visibleProblem(error);
   const rows = ordered.map((ticket) => {
     const incident = incidents.find((item) => item.id === ticket.incidentId);
     const stage = incident?.stage;
@@ -82,7 +83,7 @@ export function TicketsPage() {
     return {
       id: ticket.id,
       status: incident ? (
-        <Chip tone={incident.stage === "closed" ? "ok" : severityTone(incident.severity)}>{incident.stage === "closed" ? "CLOSED" : STAGE_LABEL[incident.stage]}</Chip>
+        <Chip tone={incident.stage === "closed" ? "ok" : severityTone(incident.severity)}>{STAGE_LABEL[incident.stage]}</Chip>
       ) : (
         "—"
       ),
@@ -110,7 +111,7 @@ export function TicketsPage() {
           <Explain text="Normalized intake: IoT SPC, operator, QMS NCR, supplier notice, and the fault injector. An open incident on the same tool and parameter is linked." />
         </p>
       </div>
-      {error ? <p className="mb-3 text-mps-alarm-text">{error}</p> : null}
+      {problem ? <p className="mb-3 text-mps-alarm-text">{problem}</p> : null}
       {missing ? <HistoryNote text={MISSING_TICKET} /> : null}
       {selected ? (
         <section className={`${panel} mb-3`}>

@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { formatUsd } from "../api/labels";
 import { useConsole } from "../context/ConsoleContext";
+import { visibleProblem } from "../history/copy";
 import { Explain } from "./Explain";
 
 const COPY = {
@@ -29,10 +30,11 @@ export function ModeBanner() {
   const ratio = metrics && metrics.spendCapUsd > 0 && bannerMode !== "replay" ? metrics.spendTodayUsd / metrics.spendCapUsd : 0;
   const hot = ratio >= 0.8;
 
+  const metricsNote = visibleProblem(metricsError);
   const note = capReached
     ? "Daily spend cap reached. Live calls stay off and the console stays in replay."
-    : metricsError
-      ? metricsError
+    : metricsNote
+      ? metricsNote
       : localPreview && serverMode
         ? `${copy.note} Local preview. Gateway reports ${serverMode}.`
         : copy.note;

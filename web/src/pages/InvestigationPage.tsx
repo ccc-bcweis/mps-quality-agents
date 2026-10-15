@@ -11,7 +11,7 @@ import { HistoryNote } from "../components/RecordList";
 import { Term } from "../components/Term";
 import { btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
-import { hiddenMissingTitle, MISSING_INVESTIGATION } from "../history/copy";
+import { hiddenMissingTitle, MISSING_INVESTIGATION, visibleProblem } from "../history/copy";
 import { InvestigationHistory } from "../history/InvestigationHistory";
 import { lifecycleForIncident, lifecycleForInvestigation } from "../lifecycle";
 import { INVESTIGATION_POLL_MS } from "../investigation/timeline";
@@ -183,12 +183,12 @@ export function InvestigationPage() {
             {starting ? "Starting…" : "Start investigation"}
           </button>
         )}
-        {startError ? <p className="mt-3 text-mps-alarm-text">{startError}</p> : null}
+        {visibleProblem(startError) ? <p className="mt-3 text-mps-alarm-text">{visibleProblem(startError)}</p> : null}
       </div>
     );
   }
 
-  return <p className="text-mps-alarm-text">{error ?? "Investigation did not load."}</p>;
+  return <p className="text-mps-alarm-text">{visibleProblem(error) ?? "Investigation did not load."}</p>;
 }
 
 function InvestigationDetail({ investigation }: { investigation: Investigation }) {

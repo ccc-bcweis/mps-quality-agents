@@ -4,10 +4,11 @@
 
 import { http, HttpResponse } from "msw";
 import { handlers as contractHandlers } from "../../../contracts/msw/handlers";
-import type { Alert, FaultInjectionRequest, Incident, OpenIncidentRequest, ScenarioRun, Ticket } from "../api/types";
+import type { Alert, FaultInjectionRequest, Incident, Investigation, OpenIncidentRequest, ScenarioRun, Ticket } from "../api/types";
 import { telemetryForTool } from "../fleet/telemetry";
 import { latestInvestigationForIncident } from "../investigation/ticketRoute";
 import { alerts, incidents, investigationFor, investigations, tickets, tools } from "./demoData";
+import { matchesPlant } from "./plants";
 import { familyComparison, siteDetail, siteSummaries, toolRecord } from "./sites/fixtures";
 import { mockExtras } from "./state";
 
@@ -32,6 +33,18 @@ function allTickets(): Ticket[] {
 
 function allIncidents(): Incident[] {
   return [...clone(incidents), ...mockExtras().incidents];
+}
+
+function allInvestigations(): Investigation[] {
+  return [...clone(investigations), ...mockExtras().investigations];
+}
+
+function siteParam(request: Request): string | null {
+  return new URL(request.url).searchParams.get("siteId");
+}
+
+function newestFirst<T>(rows: T[], time: (row: T) => string): T[] {
+  return [...rows].sort((left, right) => time(right).localeCompare(time(left)));
 }
 
 const FAMILIES = new Set(["deposition", "etch", "strip", "clean"]);
@@ -72,12 +85,24 @@ export const handlers = [
   }),
 
   http.get("/api/alerts", ({ request }) => {
-    const toolId = new URL(request.url).searchParams.get("toolId");
-    const rows = allAlerts().filter((alert) => (toolId ? alert.toolId === toolId : true));
+    const url = new URL(request.url);
+    const toolId = url.searchParams.get("toolId");
+    const siteId = siteParam(request);
+    const rows = newestFirst(
+      allAlerts().filter((alert) => (toolId ? alert.toolId === toolId : true) && matchesPlant(siteId, alert.toolId)),
+      (alert) => alert.raisedAt,
+    );
     return HttpResponse.json(rows);
   }),
 
-  http.get("/api/tickets", () => HttpResponse.json(allTickets())),
+  http.get("/api/tickets", ({ request }) => {
+    const siteId = siteParam(request);
+    const rows = newestFirst(
+      allTickets().filter((ticket) => matchesPlant(siteId, ticket.toolId)),
+      (ticket) => ticket.openedAt,
+    );
+    return HttpResponse.json(rows);
+  }),
 
   http.get("/api/incidents", () => HttpResponse.json(allIncidents())),
 
@@ -133,6 +158,16 @@ export const handlers = [
     mockExtras().incidents.push(incident);
     mockExtras().tickets.push(ticket);
     return HttpResponse.json(incident, { status: 201 });
+  }),
+
+  http.get("/api/investigations", ({ request }) => {
+    const siteId = siteParam(request);
+    const incidentById = new Map(allIncidents().map((incident) => [incident.id, incident]));
+    const rows = newestFirst(
+      allInvestigations().filter((investigation) => matchesPlant(siteId, incidentById.get(investigation.incidentId)?.toolId)),
+      (investigation) => incidentById.get(investigation.incidentId)?.openedAt ?? "",
+    );
+    return HttpResponse.json(rows);
   }),
 
   http.get("/api/investigations/:investigationId", ({ params }) => {
@@ -213,19 +248,54 @@ export const handlers = [
 
   http.post("/api/injector/scenarios/:scenarioId", ({ params }) => {
     const scenarioId = String(params.scenarioId);
+    const toolId = scenarioId === "SC-1" ? "E-02" : "E-01";
     const correlationId = `corr-scenario-${scenarioId}`;
     const raisedAt = new Date().toISOString();
+    const incidentId = crypto.randomUUID();
+    const title = `Scenario ${scenarioId} on ${toolId}.`;
     const alert: Alert = {
       id: crypto.randomUUID(),
-      toolId: scenarioId === "SC-1" ? "E-02" : "E-01",
-      chamberId: scenarioId === "SC-1" ? "E-02-A" : "E-01-A",
+      toolId,
+      chamberId: `${toolId}-A`,
       parameter: "escTemperature",
       severity: "high",
       rule: "westernElectric1",
       raisedAt,
       correlationId,
     };
+    const incident: Incident = {
+      id: incidentId,
+      toolId,
+      chamberId: `${toolId}-A`,
+      parameter: "escTemperature",
+      channel: "faultInjector",
+      severity: "high",
+      summary: title,
+      correlationId,
+      openedAt: raisedAt,
+      stage: "investigating",
+    };
+    const ticket: Ticket = {
+      id: crypto.randomUUID(),
+      number: `TKT-${1300 + mockExtras().tickets.length}`,
+      incidentId,
+      toolId,
+      title,
+      openedAt: raisedAt,
+    };
+    const created: Investigation = {
+      id: crypto.randomUUID(),
+      incidentId,
+      stage: "started",
+      evidence: [],
+      hypotheses: [],
+      escalationReason: null,
+      correlationId,
+    };
     mockExtras().alerts.push(alert);
+    mockExtras().incidents.push(incident);
+    mockExtras().tickets.push(ticket);
+    mockExtras().investigations.push(created);
     const run: ScenarioRun = {
       scenarioId,
       seed: 4242,

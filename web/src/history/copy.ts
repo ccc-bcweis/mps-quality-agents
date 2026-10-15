@@ -7,6 +7,12 @@ export const MISSING_CAPA =
   "That corrective and preventive action is no longer available. Here are all corrective and preventive actions.";
 
 /** The console never shows the API's generic missing-record title. */
-export function hiddenMissingTitle(error: string | null): boolean {
-  return error !== null && /no such record/i.test(error);
+export function hiddenMissingTitle(error: string | null | undefined): boolean {
+  return error != null && error.length > 0 && /no such record/i.test(error);
+}
+
+/** Text safe to put on screen. The generic missing-record title is omitted. */
+export function visibleProblem(error: string | null | undefined): string | null {
+  if (!error || hiddenMissingTitle(error)) return null;
+  return error;
 }

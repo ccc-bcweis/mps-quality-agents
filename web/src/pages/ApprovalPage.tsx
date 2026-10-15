@@ -10,7 +10,7 @@ import { HistoryNote } from "../components/RecordList";
 import { Term } from "../components/Term";
 import { btnDanger, btnOk, panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
-import { hiddenMissingTitle, MISSING_INVESTIGATION } from "../history/copy";
+import { hiddenMissingTitle, MISSING_INVESTIGATION, visibleProblem } from "../history/copy";
 import { InvestigationHistory } from "../history/InvestigationHistory";
 import { lifecycleForInvestigation } from "../lifecycle";
 
@@ -82,6 +82,7 @@ export function ApprovalPage() {
     }
   }
 
+  const problem = visibleProblem(error);
   const escalated = investigation?.stage === "escalated";
   const justified = note.trim().length >= OVERRIDE_MIN;
   const top = investigation?.hypotheses.slice().sort((a, b) => b.confidence - a.confidence)[0];
@@ -97,9 +98,9 @@ export function ApprovalPage() {
           </p>
         </div>
         {missing ? <HistoryNote text={MISSING_INVESTIGATION} /> : null}
-        {error && !hiddenMissingTitle(error) ? (
+        {problem ? (
           <p className="mb-3 text-mps-alarm-text" role="alert">
-            {error}
+            {problem}
           </p>
         ) : null}
         <InvestigationHistory detail="approval" />
@@ -118,9 +119,9 @@ export function ApprovalPage() {
           <Explain text="The model never holds write authority. Approve sends an approver id. The server issues the token and creates the CAPA." />
         </p>
       </div>
-      {error ? (
+      {problem ? (
         <p className="mb-3 text-mps-alarm-text" role="alert">
-          {error}
+          {problem}
         </p>
       ) : null}
       <div className="grid gap-3 lg:grid-cols-2">

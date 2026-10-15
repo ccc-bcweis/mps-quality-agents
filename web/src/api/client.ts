@@ -65,6 +65,15 @@ export async function apiSend<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+function withQuery(path: string, query: Record<string, string | undefined>): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined && value.length > 0) params.set(key, value);
+  }
+  const text = params.toString();
+  return text.length === 0 ? path : `${path}?${text}`;
+}
+
 export const api = {
   health: () => apiSend<Health>("/health"),
   listSites: () => apiSend<SiteSummary[]>("/api/sites"),
@@ -73,14 +82,13 @@ export const api = {
     apiSend<FamilyComparison>(`/api/sites/compare?family=${encodeURIComponent(family)}`),
   listTools: () => apiSend<Tool[]>("/api/tools"),
   getTool: (toolId: string) => apiSend<Tool>(`/api/tools/${encodeURIComponent(toolId)}`),
-  listAlerts: (toolId?: string) =>
-    apiSend<Alert[]>(toolId ? `/api/alerts?toolId=${encodeURIComponent(toolId)}` : "/api/alerts"),
-  listTickets: () => apiSend<Ticket[]>("/api/tickets"),
+  listAlerts: (toolId?: string, siteId?: string) => apiSend<Alert[]>(withQuery("/api/alerts", { toolId, siteId })),
+  listTickets: (siteId?: string) => apiSend<Ticket[]>(withQuery("/api/tickets", { siteId })),
   listIncidents: () => apiSend<Incident[]>("/api/incidents"),
   getIncident: (incidentId: string) => apiSend<Incident>(`/api/incidents/${incidentId}`),
   openIncident: (body: OpenIncidentRequest) =>
     apiSend<Incident>("/api/incidents", { method: "POST", body: JSON.stringify(body) }),
-  listInvestigations: () => apiSend<Investigation[]>("/api/investigations"),
+  listInvestigations: (siteId?: string) => apiSend<Investigation[]>(withQuery("/api/investigations", { siteId })),
   getInvestigation: (investigationId: string) =>
     apiSend<Investigation>(`/api/investigations/${investigationId}`),
   getLatestInvestigation: (incidentId: string) =>
@@ -92,7 +100,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  listCapas: () => apiSend<Capa[]>("/api/capas"),
+  listCapas: (siteId?: string) => apiSend<Capa[]>(withQuery("/api/capas", { siteId })),
   getCapa: (capaId: string) => apiSend<Capa>(`/api/capas/${capaId}`),
   advanceCapa: (capaId: string, body: AdvanceCapaRequest) =>
     apiSend<Capa>(`/api/capas/${capaId}/advance`, { method: "POST", body: JSON.stringify(body) }),

@@ -9,7 +9,7 @@ import { Explain } from "../components/Explain";
 import { HistoryNote, RecordList } from "../components/RecordList";
 import { panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
-import { MISSING_ALERT } from "../history/copy";
+import { MISSING_ALERT, visibleProblem } from "../history/copy";
 import { byNewestTime, toolPlainName } from "../history/order";
 
 export function AlertsPage() {
@@ -53,6 +53,7 @@ export function AlertsPage() {
   const fresh = merged.filter((alert) => alert.correlationId.startsWith("corr-inject") || alert.correlationId.startsWith("corr-scenario"));
   const selected = alertId ? merged.find((alert) => alert.id === alertId) : undefined;
   const missing = Boolean(alertId) && ready && !selected;
+  const problem = visibleProblem(error);
 
   const rows = merged.map((alert) => {
     const incident = incidents.find((item) => item.correlationId === alert.correlationId);
@@ -68,7 +69,7 @@ export function AlertsPage() {
           <div className="font-mono text-mps-micro text-mps-muted">{alert.correlationId}</div>
           <Explain text={ruleLabel(alert.rule)} />
           <div className="mt-1">
-            {matched ? <Link to="/tickets">{matched.number}</Link> : "—"}
+            {matched ? <Link to={`/tickets/${matched.id}`}>{matched.number}</Link> : "—"}
             {" · "}
             <Link to={`/alerts/${alert.id}`}>Open</Link>
           </div>
@@ -90,7 +91,7 @@ export function AlertsPage() {
           Injected fault accepted. {fresh.length === 0 ? "Waiting for the alert." : `${fresh.length} new alert${fresh.length === 1 ? "" : "s"} on this list.`}
         </p>
       ) : null}
-      {error ? <p className="mb-3 text-mps-alarm-text">{error}</p> : null}
+      {problem ? <p className="mb-3 text-mps-alarm-text">{problem}</p> : null}
       {missing ? <HistoryNote text={MISSING_ALERT} /> : null}
       {selected ? (
         <section className={`${panel} mb-3`}>

@@ -21,14 +21,14 @@ Charcoal application inside the gold frame.
 
 | Screen | Where | Notes |
 |---|---|---|
-| Sites | Before Fleet | Not on this branch. The console nav leaves that position open. |
+| Sites | `/sites` | Three plants. The tab sits before Fleet. |
 | Fleet | `/` | Eight tools, two bays. |
 | Tool | `/tools/:toolId` | Schematic and the process window. |
-| Alerts | `/alerts` | Rules-engine alerts. A scenario run lands here. |
-| Tickets | `/tickets` | Normalized intake. |
-| Investigation | `/investigations/:id` | Evidence, hypotheses, trace. |
-| Approval | `/approvals/:id` | Human gate, including the escalation gate. |
-| Corrective and preventive action | `/capas` | The action record after approval. |
+| Alerts | `/alerts` | Rules-engine alerts, newest first. A missing alert falls back to the list. A scenario run lands here. |
+| Tickets | `/tickets` | Normalized intake, newest first. A missing ticket falls back to the list. |
+| Investigation | `/investigations` | The tab opens the list, newest first. A missing deep link falls back to the list. Detail stays at `/investigations/:id`. |
+| Approval | `/approvals` | The tab opens the list. A missing deep link falls back to the list. The gate stays at `/approvals/:id`. |
+| Corrective and preventive action | `/capas` | The tab opens the list, newest first. Detail stays at `/capas/:id`. |
 | Glossary | `/glossary` | Application page, linked from the console header. Not a tab, and not a harness tool. |
 
 ## What not to mix

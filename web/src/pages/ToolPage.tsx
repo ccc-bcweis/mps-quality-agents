@@ -11,6 +11,7 @@ import { PlainMetrics } from "../components/PlainMetrics";
 import { ToolSchematic } from "../components/ToolSchematic";
 import { btn, btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
+import { visibleProblem } from "../history/copy";
 import { chartSpec } from "../fleet/chartSpec";
 import { statusTone, storyFor, windowRows } from "../fleet/catalog";
 import { fleetSensors } from "virtual:fleet-sensors";
@@ -40,7 +41,10 @@ export function ToolPage() {
         if (!cancelled) setTool(next);
       })
       .catch((reason: unknown) => {
-        if (!cancelled) setError(reason instanceof ApiProblem ? reason.title : "Tool was not found.");
+        if (!cancelled) {
+          const title = reason instanceof ApiProblem ? reason.title : "Tool was not found.";
+          setError(visibleProblem(title) ?? "Tool was not found.");
+        }
       });
     return () => {
       cancelled = true;

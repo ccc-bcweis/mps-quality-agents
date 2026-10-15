@@ -11,6 +11,7 @@ import { Explain } from "../components/Explain";
 import { PlainMetrics, TileMetrics } from "../components/PlainMetrics";
 import { btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
+import { visibleProblem } from "../history/copy";
 import { bayCaption, statusTone, storyFor } from "../fleet/catalog";
 
 export function FleetPage() {
@@ -55,7 +56,7 @@ export function FleetPage() {
           </Link>
         </div>
       </div>
-      {error ? <p className="mb-3 text-mps-alarm-text">{error}</p> : null}
+      {visibleProblem(error) ? <p className="mb-3 text-mps-alarm-text">{visibleProblem(error)}</p> : null}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Kpi label="Tools" value={tools ? String(tools.length) : "—"} note="fleet" />
         <Kpi label="Nominal" value={String(stories.filter((item) => item.story.status === "nominal").length)} note="in window" />

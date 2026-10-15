@@ -9,7 +9,7 @@ import { HistoryNote, RecordList } from "../components/RecordList";
 import { Term } from "../components/Term";
 import { btn, panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
-import { hiddenMissingTitle, MISSING_CAPA } from "../history/copy";
+import { hiddenMissingTitle, MISSING_CAPA, visibleProblem } from "../history/copy";
 import { byNewestTime, toolPlainName } from "../history/order";
 import { CAPA_STAGES, nextCapaStage } from "../lifecycle";
 
@@ -78,10 +78,13 @@ export function CapaPage() {
           return;
         }
         setCapa(null);
-        setMissing(true);
-        if (!(reason instanceof ApiProblem) || (!hiddenMissingTitle(reason.title) && reason.status !== 404)) {
+        if (reason instanceof ApiProblem && (reason.status === 404 || hiddenMissingTitle(reason.title))) {
+          setMissing(true);
           setError(null);
+          return;
         }
+        setMissing(false);
+        setError(reason instanceof ApiProblem ? reason.title : "The corrective action did not load.");
       });
     return () => {
       cancelled = true;
@@ -113,6 +116,7 @@ export function CapaPage() {
     byNewestTime((item) => item.openedAt),
   );
   const showList = !capa;
+  const problem = visibleProblem(error);
   const rows = merged.map((item) => {
     const incident = incidents.find((row) => row.id === item.incidentId);
     return {
@@ -135,9 +139,9 @@ export function CapaPage() {
           <p className="max-w-3xl text-mps-secondary">Past corrective and preventive actions, newest first.</p>
         </div>
         {missing && ready ? <HistoryNote text={MISSING_CAPA} /> : null}
-        {error && !hiddenMissingTitle(error) ? (
+        {problem ? (
           <p className="mb-3 text-mps-alarm-text" role="alert">
-            <Explain text={error} spellOut={false} />
+            <Explain text={problem} spellOut={false} />
           </p>
         ) : null}
         {rows.length === 0 ? (
@@ -164,9 +168,9 @@ export function CapaPage() {
           <Explain text="A CAPA is the record of the fix. Stages after Open move one step at a time. A failed verification does not move backward. The frozen mock rejects advance with 409 until the API implements the transition." />
         </p>
       </div>
-      {error ? (
+      {problem ? (
         <p className="mb-3 text-mps-alarm-text" role="alert">
-          <Explain text={error} spellOut={false} />
+          <Explain text={problem} spellOut={false} />
         </p>
       ) : null}
       {notice ? <p className="mb-3 text-mps-ok">{notice}</p> : null}

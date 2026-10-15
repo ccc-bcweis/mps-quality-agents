@@ -5,6 +5,7 @@ import { api, ApiProblem } from "../api/client";
 import { formatStamp, INVESTIGATION_STAGE_LABEL } from "../api/labels";
 import type { Incident, Investigation, Tool } from "../api/types";
 import { RecordList } from "../components/RecordList";
+import { visibleProblem } from "./copy";
 import { byNewestTime, toolPlainName } from "./order";
 
 export function InvestigationHistory({ detail }: { detail: "investigation" | "approval" }) {
@@ -34,8 +35,9 @@ export function InvestigationHistory({ detail }: { detail: "investigation" | "ap
     };
   }, []);
 
+  const problem = visibleProblem(error);
   if (!ready) return <p className="text-mps-muted">Loading investigations…</p>;
-  if (error) return <p className="text-mps-alarm-text">{error}</p>;
+  if (problem) return <p className="text-mps-alarm-text">{problem}</p>;
 
   const incidentById = new Map(incidents.map((incident) => [incident.id, incident]));
   const rows = investigations
@@ -50,11 +52,22 @@ export function InvestigationHistory({ detail }: { detail: "investigation" | "ap
         time: incident ? formatStamp(incident.openedAt) : "—",
         openedAt: incident?.openedAt ?? "",
         detail: (
-          <Link to={detail === "approval" ? `/approvals/${investigation.id}` : `/investigations/${investigation.id}`}>Open</Link>
+          <>
+            <div>{incident?.summary ?? "Investigation"}</div>
+            <div className="mt-1">
+              <Link to={detail === "approval" ? `/approvals/${investigation.id}` : `/investigations/${investigation.id}`}>Open</Link>
+            </div>
+          </>
         ),
       };
     })
     .sort(byNewestTime((row) => row.openedAt));
 
-  return <RecordList label="Investigations" rows={rows} empty="No investigations yet." />;
+  return (
+    <RecordList
+      label={detail === "approval" ? "Approvals" : "Investigations"}
+      rows={rows}
+      empty={detail === "approval" ? "No approvals yet." : "No investigations yet."}
+    />
+  );
 }
