@@ -117,7 +117,7 @@ Scripted scenarios carry their own evidence on the mock read path. The resolutio
 | Investigation p95 | **&lt; 45 s** wall time (tool calls + two model completions + gates). |
 | API replicas | Scale **0–3** on HTTP. Worker scales on queue depth. Simulator **1 replica**. |
 | SQL | Serverless, auto-pause. Fine for demo concurrency; not a production HA pattern. |
-| Azure OpenAI | gpt-4o-mini for investigation tool use, gpt-4o (or equivalent) for resolution. TPM quota is a backstop, not the primary brake. |
+| Azure OpenAI | gpt-5.4-mini (managed identity) for both investigation and resolution. TPM quota is a backstop; the gateway $2/day cap is the primary brake. |
 | **Unit cost** | **≈ $0.02–0.10 per successful investigation** (tokens + tiny compute). Measure on the metrics screen; do not quote as a contract price. |
 | Spend cap | Gateway **hard stop at $2/day** (SQL ledger). Over cap → UI banner **REPLAY MODE**, no live calls. Azure budget alert (~$10/week) and AOAI quota sit behind that. |
 | Rollback | Container Apps revisions (blue/green). Prompt/model versions are first-class so an AI regression rolls back without a full app rollback. DR for the demo = IaC redeploy + SQL geo-backup (not configured until Z2). |
@@ -129,7 +129,7 @@ Scripted scenarios carry their own evidence on the mock read path. The resolutio
 3. `deploy.yml` is **manual / environment-gated**. OIDC mints an Azure token, Bicep applies `rg-mps-demo`, ACR gets the image, Container Apps revision and SWA production token update.
 4. Smoke: Entra sign-in as an invited guest, LIVE badge, spend meter, S1 in replay then live.
 
-Open: Azure OpenAI quota in the subscription was not checked from this box (no Azure CLI). Bryan or Bob confirm region and gpt-4o-mini / gpt-4o quota before Z2.
+Azure OpenAI runs gpt-5.4-mini in eastus2 behind the gateway cap (gpt-4o-mini was blocked for new deployments).
 
 ## Large-format print
 
