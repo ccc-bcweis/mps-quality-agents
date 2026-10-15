@@ -59,8 +59,8 @@ def logical():
                   ('b0','d0',''),('b1','d1',''),('d4','a3','') ,('d1','a0','')]: ed.append((a,b,l))
     ed=[e for e in ed if e[0]!='d4']
     notes=['* The running demo is intentionally thin. One Azure Container App, one replica, hosts the API, simulator and agents.',
-           '* Demo bus: an in-process bus with the same envelope and command catalog. It swaps to Event Hubs and Service Bus without changing messages.',
-           '* Demo stores: metadata in YAML files (same entity model), telemetry and transactions in SQLite, causal chain rebuilt from the event log.',
+           '* Demo bus: in-process, same envelope and command catalog (ADR-008). Measured: 7-day nominal seed, 466,662 readings in 7 s (~66k events/s).',
+           '* Demo stores: metadata in YAML loaded at startup (ADR-009); telemetry, event log and transactions in SQLite; 7-day chart read under 1 ms.',
            '* Demo tools: three simulated plants; only the Manufacturing capability is simulated. Document search runs in process.',
            'Every telemetry reading, alert, ticket, investigation step, approval, CAPA and command travels through the event backbone.']
     return dict(name='logical',kicker='LOGICAL ARCHITECTURE',title='Logical architecture, target design',el=el,ed=ed,notes=notes)
