@@ -51,10 +51,10 @@ export function ApprovalDialog({
         {approving ? (
           <>
             <p className="mt-2 text-mps-secondary">
-              <Explain text="This asks the server to issue a single-use approval token and create the CAPA. The console does not send a signature." spellOut={false} />
+              <Explain text="This records the approval and creates the CAPA. The console does not sign it." spellOut={false} />
             </p>
             <label className="mt-3 block text-mps-label text-mps-muted">
-              Approver id
+              Approver name
               <input ref={firstField as RefObject<HTMLInputElement>} className={field} value={approverId} onChange={(event) => onApproverId(event.target.value)} />
             </label>
             <label className="mt-3 block text-mps-label text-mps-muted">
@@ -89,7 +89,7 @@ export function ApprovalDialog({
           >
             {approving ? (
               <>
-                Issue token and create <Term id="CAPA" spellOut={false} />
+                Approve and create <Term id="CAPA" spellOut={false} />
               </>
             ) : (
               "Reject recommendation"

@@ -32,4 +32,5 @@ export const HARNESS_LINKS: HarnessLink[] = [
   { to: "/harness/injector", label: "Fault injector", match: (path) => path.startsWith("/harness/injector") },
   { to: "/harness/roi", label: "Return on investment", match: (path) => path.startsWith("/harness/roi") },
   { to: "/harness/metrics", label: "Metrics", match: (path) => path.startsWith("/harness/metrics") },
+  { to: "/harness/audit", label: "Audit log", match: (path) => path.startsWith("/harness/audit") },
 ];

@@ -68,7 +68,6 @@ export function AlertsPage() {
                 <th className="py-1 font-medium">Rule</th>
                 <th className="py-1 font-medium">Severity</th>
                 <th className="py-1 font-medium">Raised</th>
-                <th className="py-1 font-medium">Correlation</th>
                 <th className="py-1 font-medium">Ticket</th>
               </tr>
             </thead>
@@ -89,7 +88,6 @@ export function AlertsPage() {
                       <Chip tone={severityTone(alert.severity)}>{severityWord(alert.severity)}</Chip>
                     </td>
                     <td className="py-1.5 font-mono text-mps-micro">{formatStamp(alert.raisedAt)}</td>
-                    <td className="py-1.5 font-mono text-mps-micro">{alert.correlationId}</td>
                     <td className="py-1.5 font-mono">{matched ? <Link to="/tickets">{matched.number}</Link> : "—"}</td>
                   </tr>
                 );

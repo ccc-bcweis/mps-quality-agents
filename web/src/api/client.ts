@@ -5,6 +5,7 @@ import type {
   Capa,
   DecisionResult,
   AdminSession,
+  AuditLog,
   DemoResetResult,
   FaultInjectionAccepted,
   FaultInjectionRequest,
@@ -98,6 +99,7 @@ export const api = {
   injectFault: (body: FaultInjectionRequest) =>
     apiSend<FaultInjectionAccepted>("/api/faults", { method: "POST", body: JSON.stringify(body) }),
   getAdminSession: () => apiSend<AdminSession>("/api/admin/session"),
+  getAuditLog: () => apiSend<AuditLog>("/api/audit"),
   resetDemo: () => apiSend<DemoResetResult>("/api/admin/reset", { method: "POST" }),
   listScenarios: () => apiSend<ScriptedScenario[]>("/api/injector/scenarios"),
   runScenario: (scenarioId: string) =>

@@ -78,6 +78,7 @@ describe("demo harness and console split", () => {
     expect(await screen.findByRole("heading", { name: "Alerts" })).toBeInTheDocument();
     const consoleRegion = screen.getByRole("region", { name: "Meridian Precision Systems console" });
     expect(consoleRegion).toContainElement(screen.getByRole("heading", { name: "Alerts" }));
-    expect(await within(consoleRegion).findByText("corr-scenario-SC-4")).toBeInTheDocument();
+    expect(await within(consoleRegion).findByRole("link", { name: "E-01" })).toBeInTheDocument();
+    expect(within(consoleRegion).queryByText("corr-scenario-SC-4")).not.toBeInTheDocument();
   });
 });

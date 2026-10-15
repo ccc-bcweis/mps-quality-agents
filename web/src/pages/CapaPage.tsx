@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
+import { approvalSentence } from "../api/labels";
 import type { Capa, CapaStage } from "../api/types";
 import { Explain } from "../components/Explain";
 import { Term } from "../components/Term";
@@ -94,12 +95,12 @@ export function CapaPage() {
       {notice ? <p className="mb-3 text-mps-ok">{notice}</p> : null}
       {!capa ? (
         <p className="text-mps-muted">
-          <Explain text="No CAPA yet. Approve a recommendation to create one. The server list is empty until that token is issued." spellOut={false} />
+          <Explain text="No CAPA yet. Approve a recommendation to create one." spellOut={false} />
         </p>
       ) : (
         <>
-          <p className="mb-3 rounded border border-mps-ok bg-mps-panel px-3 py-2">
-            Approval token consumed (single-use). Token <span className="font-mono">{capa.approvalTokenId}</span>. Action hash <span className="font-mono">{capa.actionHash}</span>.
+          <p className="mb-3 rounded border border-mps-ok bg-mps-panel px-3 py-2" role="status">
+            {capa.approvedBy && capa.approvedAt ? approvalSentence(capa.approvedBy, capa.approvedAt) : "Approved."}
           </p>
           <section className={`${panel} mb-3`}>
             <h2 className="mb-2 text-mps-title font-semibold">
@@ -132,14 +133,11 @@ export function CapaPage() {
               <p className="font-mono text-mps-micro text-mps-muted">Incident {capa.incidentId}</p>
             </section>
             <section className={panel}>
-              <h2 className="mb-2 text-mps-title font-semibold">Audit</h2>
-              <p className="font-mono text-mps-micro text-mps-muted">
-                Token {capa.approvalTokenId}
-                <br />
-                actionHash {capa.actionHash}
-                <br />
-                stage {capa.stage}
+              <h2 className="mb-2 text-mps-title font-semibold">Approval</h2>
+              <p>
+                {capa.approvedBy && capa.approvedAt ? approvalSentence(capa.approvedBy, capa.approvedAt) : "Approved."}
               </p>
+              <p className="mt-2 text-mps-secondary">Stage {CAPA_STAGES.find((item) => item.id === capa.stage)?.label ?? capa.stage}</p>
             </section>
           </div>
         </>

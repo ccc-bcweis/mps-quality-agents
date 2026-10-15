@@ -154,7 +154,6 @@ export function InvestigationPage() {
     return (
       <div>
         <div className="mb-4">
-          <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">{incident.correlationId}</p>
           <h1 className="text-mps-display font-semibold">Investigation</h1>
           <p className="max-w-3xl text-mps-secondary">No investigation has started for this ticket. Starting one gathers the evidence and shows the agent steps.</p>
         </div>
@@ -190,7 +189,6 @@ function InvestigationDetail({ investigation }: { investigation: Investigation }
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">{investigation.correlationId}</p>
           <h1 className="text-mps-display font-semibold">Investigation</h1>
           <p className="max-w-3xl text-mps-secondary">
             <Explain text="Read-only evidence, then ranked hypotheses. AI proposes a ranking. Violet marks the model. Cyan marks deterministic rules. The model cannot write." />

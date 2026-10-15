@@ -242,6 +242,8 @@ export const handlers = [
     return HttpResponse.json(run, { status: 202 });
   }),
 
+  http.get("/api/audit", () => HttpResponse.json({ entries: [], traces: [] })),
+
   http.post("/api/admin/reset", () => {
     resetMockState();
     return HttpResponse.json({
