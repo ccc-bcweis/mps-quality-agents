@@ -1,5 +1,8 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import type {
+  JoinLink,
+  JoinLinks,
+  RedeemResult,
   AdvanceCapaRequest,
   Alert,
   Capa,
@@ -134,6 +137,11 @@ export const api = {
   confirmPrintout: (body: PrintoutConfirmRequest) =>
     apiSend<PrintoutConfirmation>("/api/printouts/confirm", { method: "POST", body: JSON.stringify(body) }),
   getAdminSession: () => apiSend<AdminSession>("/api/admin/session"),
+  listJoinLinks: () => apiSend<JoinLinks>("/api/admin/join-links"),
+  createJoinLink: (hours: number, maxUses: number) =>
+    apiSend<JoinLink>("/api/admin/join-links", { method: "POST", body: JSON.stringify({ hours, maxUses }) }),
+  revokeJoinLink: (id: string) => apiSend<void>(`/api/admin/join-links/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  redeemJoin: (token: string) => apiSend<RedeemResult>(`/api/join/${encodeURIComponent(token)}`, { method: "POST" }),
   getAuditLog: () => apiSend<AuditLog>("/api/audit"),
   resetDemo: (kind: ResetKind) =>
     apiSend<DemoResetResult>("/api/admin/reset", { method: "POST", body: JSON.stringify({ kind }) }),

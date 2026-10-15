@@ -72,6 +72,7 @@ public static class QualityHost
             });
         });
         builder.Services.AddDbContext<QualityDbContext>(options => options.UseSqlite(connectionString));
+        builder.Services.AddSingleton(new Mps.Api.Access.JoinLinkStore(connectionString));
         builder.Services.AddScoped<EfQualityStore>();
         builder.Services.AddScoped<IFleetCatalog, PlantFleetCatalog>();
         builder.Services.AddScoped<IAlertLog>(services => services.GetRequiredService<EfQualityStore>());
@@ -174,7 +175,9 @@ public static class QualityHost
             app.UseStaticFiles();
         }
 
+        app.UseMiddleware<Mps.Api.Access.AccessGate>();
         QualityEndpoints.Map(app);
+        Mps.Api.Access.AccessEndpoints.MapAccess(app);
         app.MapModelUsage();
         app.MapHub<FleetHub>("/hubs/fleet");
         if (HasWebRoot(app.Environment))

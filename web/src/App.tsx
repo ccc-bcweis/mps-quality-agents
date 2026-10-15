@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+import { JoinPage } from "./pages/JoinPage";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppShell, ConsoleFrame, HarnessFrame } from "./components/AppShell";
 import { ConsoleProvider } from "./context/ConsoleContext";
@@ -21,6 +22,7 @@ import { ToolPage } from "./pages/ToolPage";
 export function AppRoutes() {
   return (
     <Routes>
+      <Route path="/join/:token" element={<JoinPage />} />
       <Route element={<AppShell />}>
         <Route element={<HarnessFrame />}>
           <Route path="/harness/injector" element={<InjectorPage />} />
