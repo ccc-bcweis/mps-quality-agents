@@ -4,9 +4,13 @@ import type {
   Alert,
   Capa,
   DecisionResult,
+  AdminSession,
+  DemoResetResult,
   FaultInjectionAccepted,
   FaultInjectionRequest,
   Health,
+  ScenarioRun,
+  ScriptedScenario,
   HumanDecisionRequest,
   Incident,
   Investigation,
@@ -84,5 +88,10 @@ export const api = {
     apiSend<Capa>(`/api/capas/${capaId}/advance`, { method: "POST", body: JSON.stringify(body) }),
   injectFault: (body: FaultInjectionRequest) =>
     apiSend<FaultInjectionAccepted>("/api/faults", { method: "POST", body: JSON.stringify(body) }),
+  getAdminSession: () => apiSend<AdminSession>("/api/admin/session"),
+  resetDemo: () => apiSend<DemoResetResult>("/api/admin/reset", { method: "POST" }),
+  listScenarios: () => apiSend<ScriptedScenario[]>("/api/injector/scenarios"),
+  runScenario: (scenarioId: string) =>
+    apiSend<ScenarioRun>(`/api/injector/scenarios/${encodeURIComponent(scenarioId)}`, { method: "POST" }),
   getMetrics: () => apiSend<MetricsSummary>("/api/metrics"),
 };

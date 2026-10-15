@@ -27,6 +27,10 @@ public sealed class ConsoleApiContractTests
         "/api/capas/{capaId}",
         "/api/capas/{capaId}/advance",
         "/api/faults",
+        "/api/admin/session",
+        "/api/admin/reset",
+        "/api/injector/scenarios",
+        "/api/injector/scenarios/{scenarioId}",
         "/api/metrics",
     ];
 
@@ -66,6 +70,10 @@ public sealed class ConsoleApiContractTests
         Expect(OperationType.Get, "/api/capas/{capaId}", "getCapa", "200");
         Expect(OperationType.Post, "/api/capas/{capaId}/advance", "advanceCapa", "200");
         Expect(OperationType.Post, "/api/faults", "injectFault", "202");
+        Expect(OperationType.Get, "/api/admin/session", "getAdminSession", "200");
+        Expect(OperationType.Post, "/api/admin/reset", "resetDemo", "200");
+        Expect(OperationType.Get, "/api/injector/scenarios", "listScenarios", "200");
+        Expect(OperationType.Post, "/api/injector/scenarios/{scenarioId}", "runScenario", "202");
         Expect(OperationType.Get, "/api/metrics", "getMetrics", "200");
 
         OpenApiDocs.Console.Paths["/api/capas"].Operations.Should().NotContainKey(OperationType.Post);
