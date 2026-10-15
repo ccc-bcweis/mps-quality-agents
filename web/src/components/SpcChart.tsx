@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, Tooltip, XAxis, YAxis } from "recharts";
+import { CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { mpsColor } from "../brand/colors";
 import { Term } from "./Term";
 import { bandFromEarly, buildSeries, limits, seedFrom, violatesWesternElectric1, violatesWesternElectric2, type SeriesShape, type SpcPoint } from "../spc/series";
@@ -38,18 +38,23 @@ export function SpcChart({
   const caption = `SPC chart of ${label}. Mean ${center.mean.toFixed(2)} ${unit}, sigma ${center.sigma.toFixed(2)}. ${finding} Client check on the drawn series.`;
 
   return (
-    <figure aria-label={caption} className="overflow-x-auto">
-      <div aria-hidden="true">
-        <ComposedChart width={720} height={220} data={points} margin={{ top: 16, right: 56, bottom: 8, left: 8 }}>
+    <figure aria-label={caption} className="w-full">
+      <div aria-hidden="true" className="h-[240px] w-full">
+        <ResponsiveContainer width="100%" height={240} initialDimension={{ width: 720, height: 240 }}>
+        <ComposedChart data={points} margin={{ top: 16, right: 56, bottom: 8, left: 8 }}>
           <CartesianGrid stroke={mpsColor.line} strokeDasharray="3 3" />
           <XAxis dataKey="index" tick={{ fill: mpsColor.muted, fontSize: 10 }} stroke={mpsColor.line} />
           <YAxis
             domain={[Math.min(band.lcl3 - center.sigma, ...values), Math.max(band.ucl3 + center.sigma, ...values)]}
             tick={{ fill: mpsColor.muted, fontSize: 10 }}
+            tickFormatter={(value: number) => axisNumber(value, center.sigma)}
+            tickCount={6}
             stroke={mpsColor.line}
-            width={48}
+            width={64}
+            label={{ value: unit, angle: -90, position: "insideLeft", fill: mpsColor.muted, fontSize: 10 }}
           />
           <Tooltip
+            formatter={(value: number) => `${axisNumber(value, center.sigma)} ${unit}`}
             contentStyle={{ background: mpsColor.panel, border: `1px solid ${mpsColor.line}`, fontSize: 12 }}
             labelStyle={{ color: mpsColor.muted }}
           />
@@ -61,6 +66,7 @@ export function SpcChart({
           <ReferenceLine y={band.mean} stroke={mpsColor.muted} label={{ value: "mean", fill: mpsColor.muted, fontSize: 10, position: "right" }} />
           <Line type="monotone" dataKey="value" stroke={mpsColor.secondary} strokeWidth={1.4} dot={false} isAnimationActive={false} />
         </ComposedChart>
+        </ResponsiveContainer>
       </div>
       <figcaption className="mt-2 flex flex-wrap gap-3 text-mps-micro text-mps-muted">
         <span>σ1 <i className="inline-block h-2 w-3 bg-mps-nominal" /></span>
@@ -73,4 +79,12 @@ export function SpcChart({
       </figcaption>
     </figure>
   );
+}
+
+/** Axis numbers with only as many decimals as the spread needs, so labels never run together. */
+export function axisNumber(value: number, sigma: number): string {
+  if (!Number.isFinite(value)) return "";
+  const step = Math.abs(sigma) > 0 ? Math.abs(sigma) : Math.abs(value) || 1;
+  const decimals = step >= 10 ? 0 : step >= 1 ? 1 : step >= 0.1 ? 2 : 3;
+  return value.toFixed(decimals);
 }
