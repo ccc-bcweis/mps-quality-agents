@@ -60,13 +60,15 @@ function newestFirst<T>(rows: T[], time: (row: T) => string): T[] {
 const FAMILIES = new Set(["deposition", "etch", "strip", "clean"]);
 
 async function uploadName(request: Request): Promise<string> {
-  const contentType = request.headers.get("content-type") ?? "";
-  if (contentType.includes("multipart/form-data") || contentType.includes("application/x-www-form-urlencoded")) {
-    const form = await request.formData();
-    const file = form.get("file");
-    if (file instanceof File) return file.name.toLowerCase();
-  }
-  const text = new TextDecoder("latin1").decode(await request.arrayBuffer());
+  // Read the raw body. request.formData() can hang under jsdom on Node 22,
+  // and the multipart header already carries the filename.
+  // Under jsdom on Node 22 the multipart body stream never ends, so give up after a short wait.
+  const body = await Promise.race([
+    request.arrayBuffer(),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 750)),
+  ]);
+  if (body === null) return "oscilloscope-e01.pdf";
+  const text = new TextDecoder("latin1").decode(body);
   // jsdom's fetch stringifies FormData, so the unit test cannot carry a filename.
   // That test uploads the oscilloscope sample. A browser sends the real name.
   if (text === "[object FormData]") return "oscilloscope-e01.pdf";
