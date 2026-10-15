@@ -30,11 +30,11 @@ export function EvidencePack({ items }: { items: EvidenceItem[] }) {
         <table aria-label="Evidence pack" className="w-full table-fixed text-left">
           <thead>
             <tr className="text-mps-label text-mps-muted">
-              <th className="w-[16%] py-1 pr-2 font-medium">Source</th>
-              <th className="w-[24%] py-1 pr-2 font-medium">What it shows</th>
-              <th className="w-[20%] py-1 pr-2 font-medium">Value vs spec</th>
+              <th className="w-[14%] py-1 pr-2 font-medium">Source</th>
+              <th className="w-[30%] py-1 pr-2 font-medium">What it shows</th>
+              <th className="w-[18%] py-1 pr-2 font-medium">Value vs spec</th>
               <th className="w-[16%] py-1 pr-2 font-medium">When</th>
-              <th className="w-[24%] py-1 pr-2 font-medium">Why it matters</th>
+              <th className="w-[22%] py-1 pr-2 font-medium">Why it matters</th>
             </tr>
           </thead>
           <tbody>

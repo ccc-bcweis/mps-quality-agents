@@ -18,6 +18,7 @@ describe("investigation", () => {
     expect(pack).toHaveTextContent("Product records");
     expect(pack).toHaveTextContent("The part change was in place before the wobble started.");
     expect(pack).toHaveTextContent("Etch tool E-02, Chamber B");
+    expect(pack).toHaveTextContent("53.1 °C, spec 40-60 °C");
     expect(screen.getAllByText("Edge ring revision C changed the thermal path.").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/A preventive maintenance was performed the same week/).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Rules").length).toBeGreaterThan(0);

@@ -169,6 +169,10 @@ const s1Evidence: EvidenceItem[] = [
     toolId: "E-02",
     externalRef: "TEL-E02-ESC",
     signalId: "escTemperature",
+    value: 53.1,
+    unit: "C",
+    specLow: 40,
+    specHigh: 60,
     ...etchB,
   },
   {
