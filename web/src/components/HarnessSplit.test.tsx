@@ -35,7 +35,8 @@ describe("demo harness and console split", () => {
     expect(within(harness).getByRole("link", { name: "Metrics" })).toHaveAttribute("href", "/harness/metrics");
     expect(within(harness).getByRole("button", { name: "Reset demo" })).toBeInTheDocument();
     expect(within(harness).getByRole("combobox", { name: "Scenario" })).toBeInTheDocument();
-    expect(within(harness).getByText("REPLAY MODE")).toBeInTheDocument();
+    expect(within(harness).getByRole("button", { name: "Replay (saved answers, free, repeatable)" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(harness).getByText("Answers only. Plant data stays the same.")).toBeInTheDocument();
     expect(within(harness).getByText("$0.00 of $2.00")).toBeInTheDocument();
 
     expect(within(consoleRegion).queryByRole("link", { name: "Fault injector" })).not.toBeInTheDocument();
@@ -43,7 +44,8 @@ describe("demo harness and console split", () => {
     expect(within(consoleRegion).queryByRole("link", { name: "Metrics" })).not.toBeInTheDocument();
     expect(within(consoleRegion).queryByRole("button", { name: "Reset demo" })).not.toBeInTheDocument();
     expect(within(consoleRegion).queryByRole("combobox", { name: "Scenario" })).not.toBeInTheDocument();
-    expect(within(consoleRegion).queryByText("REPLAY MODE")).not.toBeInTheDocument();
+    expect(within(consoleRegion).queryByText("Answers only. Plant data stays the same.")).not.toBeInTheDocument();
+    expect(within(consoleRegion).queryByRole("group", { name: "AI engine" })).not.toBeInTheDocument();
     expect(within(tabs).queryByRole("link", { name: "Glossary" })).not.toBeInTheDocument();
     expect(within(consoleRegion).getByRole("link", { name: "Glossary" })).toHaveAttribute("href", "/glossary");
   });
