@@ -6,16 +6,19 @@ import { CATEGORY_LABEL, CHANNEL_LABEL, STAGE_LABEL } from "../api/labels";
 import type { Incident, Investigation } from "../api/types";
 import { AgentTimeline } from "../components/AgentTimeline";
 import { EvidenceMatrix } from "../components/EvidenceMatrix";
+import { EvidencePack } from "../components/EvidencePack";
 import { Explain } from "../components/Explain";
 import { HistoryNote } from "../components/RecordList";
-import { Term } from "../components/Term";
 import { btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { hiddenMissingTitle, MISSING_INVESTIGATION, visibleProblem } from "../history/copy";
 import { InvestigationHistory } from "../history/InvestigationHistory";
+import { useSite } from "../context/SiteContext";
+import { toolInPlant } from "../sites/selection";
+import { placeLabel, plainNarrative } from "../investigation/format";
 import { lifecycleForIncident, lifecycleForInvestigation } from "../lifecycle";
 import { INVESTIGATION_POLL_MS } from "../investigation/timeline";
-import { buildTrace } from "../trace";
+import { parameterLabel } from "../sites/parameters";
 
 type LoadResult = "ready" | "missing" | "failed";
 
@@ -32,8 +35,14 @@ function InvestigationList({ note }: { note: string | null }) {
   );
 }
 
+function plantToolId(investigation: Investigation | null, incident: Incident | null): string | null {
+  if (incident?.toolId) return incident.toolId;
+  return investigation?.evidence.find((item) => item.toolId)?.toolId ?? null;
+}
+
 export function InvestigationPage() {
   const params = useParams();
+  const { siteId } = useSite();
   const routeInvestigationId = params.investigationId ?? "";
   const routeIncidentId = params.incidentId ?? "";
   const listing = routeInvestigationId.length === 0 && routeIncidentId.length === 0;
@@ -60,6 +69,11 @@ export function InvestigationPage() {
     setNote(null);
     setReady(listing);
     setStartError(null);
+
+    if (!routeIncidentId && !routeInvestigationId) {
+      setReady(true);
+      return;
+    }
 
     const applyError = (reason: unknown) => {
       if (cancelled) return;
@@ -100,6 +114,12 @@ export function InvestigationPage() {
       try {
         const loaded = await api.getInvestigation(routeInvestigationId);
         if (!cancelled) setInvestigation(loaded);
+        try {
+          const loadedIncident = await api.getIncident(loaded.incidentId);
+          if (!cancelled) setIncident(loadedIncident);
+        } catch {
+          // Evidence still names the tool when the incident lookup misses.
+        }
       } catch (reason: unknown) {
         if (reason instanceof ApiProblem && reason.status === 404) {
           const result = await loadIncident(routeInvestigationId);
@@ -157,22 +177,33 @@ export function InvestigationPage() {
     return <InvestigationList note={note ?? (hiddenMissingTitle(error) ? MISSING_INVESTIGATION : null)} />;
   }
   if (!ready) return <p className="text-mps-muted">Loading investigation…</p>;
+  const homeTool = plantToolId(investigation, incident);
+  if (homeTool && !toolInPlant(siteId, homeTool)) {
+    return (
+      <div>
+        <h1 className="text-mps-display font-semibold">Investigation</h1>
+        <p>This investigation is at another plant. Choose All sites to open it.</p>
+      </div>
+    );
+  }
   if (investigation) return <InvestigationDetail investigation={investigation} />;
   if (incident && !error) {
     const finished = incident.stage === "closed" || incident.stage === "approved";
     return (
       <div>
         <div className="mb-4">
-          <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">{incident.correlationId}</p>
-          <h1 className="text-mps-display font-semibold">Investigation</h1>
+          <h1 className="text-mps-display font-semibold" title={incident.correlationId}>
+            Investigation
+          </h1>
           <p className="max-w-3xl text-mps-secondary">No investigation has started for this ticket. Starting one gathers the evidence and shows the agent steps.</p>
         </div>
         <section className={panel}>
           <p>
-            <Explain text={CHANNEL_LABEL[incident.channel]} spellOut={false} /> · tool {incident.toolId}
+            <Explain text={CHANNEL_LABEL[incident.channel]} spellOut={false} /> · {placeLabel(incident.toolId, incident.chamberId)} ·{" "}
+            {parameterLabel(incident.parameter)}
           </p>
           <p className="mt-2">
-            <Explain text={incident.summary} />
+            <Explain text={plainNarrative(incident.summary)} />
           </p>
           <p className="mt-2 text-mps-secondary">Stage: {STAGE_LABEL[incident.stage]}</p>
         </section>
@@ -192,15 +223,19 @@ export function InvestigationPage() {
 }
 
 function InvestigationDetail({ investigation }: { investigation: Investigation }) {
-  const trace = buildTrace(investigation);
   const ranked = [...investigation.hypotheses].sort((a, b) => b.confidence - a.confidence);
+  const place = investigation.evidence[0]
+    ? placeLabel(investigation.evidence[0].toolId, null, investigation.evidence[0].toolName, investigation.evidence[0].chamberName)
+    : null;
 
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">{investigation.correlationId}</p>
-          <h1 className="text-mps-display font-semibold">Investigation</h1>
+          <h1 className="text-mps-display font-semibold" title={investigation.correlationId}>
+            Investigation
+          </h1>
+          {place && place !== "—" ? <p className="text-mps-secondary">{place}</p> : null}
           <p className="max-w-3xl text-mps-secondary">
             <Explain text="Read-only evidence, then ranked hypotheses. AI proposes a ranking. Violet marks the model. Cyan marks deterministic rules. The model cannot write." />
           </p>
@@ -213,7 +248,7 @@ function InvestigationDetail({ investigation }: { investigation: Investigation }
       </div>
       {investigation.escalationReason ? (
         <p className="mb-3 rounded border border-mps-warn bg-mps-panel px-3 py-2" role="status">
-          Evidence gate: <strong>escalate</strong>. <Explain text={investigation.escalationReason ?? ""} />
+          Evidence gate: <strong>escalate</strong>. <Explain text={plainNarrative(investigation.escalationReason)} spellOut={false} />
         </p>
       ) : (
         <p className="mb-3 rounded border border-mps-ok bg-mps-panel px-3 py-2">
@@ -223,44 +258,25 @@ function InvestigationDetail({ investigation }: { investigation: Investigation }
       <section className={`${panel} mb-3`}>
         <AgentTimeline investigation={investigation} />
       </section>
-      <div className="grid gap-3 lg:grid-cols-3">
+      <section className={`${panel} mb-3`}>
+        <EvidencePack items={investigation.evidence} />
+      </section>
+      <div className="grid gap-3 lg:grid-cols-2">
         <section className={panel}>
-          <h2 className="mb-2 text-mps-title font-semibold">
-            Evidence pack <span className="float-right font-mono text-mps-micro text-mps-muted">{investigation.evidence.length}</span>
-          </h2>
-          <ul className="space-y-2">
-            {investigation.evidence.map((item) => (
-              <li key={item.id} className="border-t border-mps-line pt-2">
-                <div className="font-mono text-mps-micro text-mps-nominal">{item.externalRef ?? item.id.slice(0, 8)}</div>
-                <div className="font-medium">
-                  <Explain text={item.title} spellOut={false} />
-                </div>
-                <p className="text-mps-secondary">
-                  <Explain text={item.excerpt} />
-                </p>
-                {item.whyItMatters ? <p className="text-mps-secondary">Why it matters: {item.whyItMatters}</p> : null}
-                <p className="font-mono text-mps-micro text-mps-muted">{item.source}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-        <section className={panel}>
-          <h2 className="mb-2 text-mps-title font-semibold">
-            Hypotheses <span className="float-right font-mono text-mps-micro text-mps-ai">Resolution agent</span>
-          </h2>
+          <h2 className="mb-2 text-mps-title font-semibold">Hypotheses</h2>
           {ranked.length === 0 ? <p>No root cause is asserted.</p> : null}
           <ul className="space-y-3">
             {ranked.map((hypothesis, index) => (
-              <li key={hypothesis.id} className={`border-t border-mps-line pt-2 ${index === 0 ? "border-l-2 border-l-mps-ai pl-2" : "opacity-80"}`}>
-                <div className="font-mono text-mps-micro text-mps-ai">
-                  H{index + 1} · {hypothesis.confidence.toFixed(2)} · {CATEGORY_LABEL[hypothesis.category]}
+              <li key={hypothesis.id} title={hypothesis.id} className={`border-t border-mps-line pt-2 ${index === 0 ? "border-l-2 border-l-mps-ai pl-2" : "opacity-80"}`}>
+                <div className="text-mps-secondary">
+                  {index + 1} · {hypothesis.confidence.toFixed(2)} · {CATEGORY_LABEL[hypothesis.category]}
                 </div>
                 <p>
-                  <Explain text={hypothesis.cause} spellOut={false} />
+                  <Explain text={plainNarrative(hypothesis.cause)} spellOut={false} />
                 </p>
                 {hypothesis.counterEvidence.length > 0 ? (
                   <p className="mt-1">
-                    <strong>counterEvidence:</strong> {hypothesis.counterEvidence.join(" ")}
+                    <strong>Evidence against this:</strong> {hypothesis.counterEvidence.map((line) => plainNarrative(line)).join(" ")}
                   </p>
                 ) : null}
               </li>
@@ -268,27 +284,9 @@ function InvestigationDetail({ investigation }: { investigation: Investigation }
           </ul>
         </section>
         <section className={panel}>
-          <h2 className="mb-2 text-mps-title font-semibold">Trace</h2>
-          <ol className="space-y-2">
-            {trace.map((row) => (
-              <li key={row.id} className="border-t border-mps-line pt-2">
-                <div className={`font-mono text-mps-micro uppercase ${row.kind === "ai" ? "text-mps-ai" : row.kind === "human" ? "text-mps-warn" : "text-mps-nominal"}`}>
-                  {row.kind === "ai" ? <Term id="AI" spellOut={false} /> : row.kind === "human" ? "Human" : "Rules"}
-                </div>
-                <div className="font-medium">
-                  <Explain text={row.title} spellOut={false} />
-                </div>
-                <p className="text-mps-secondary">
-                  <Explain text={row.detail} spellOut={false} />
-                </p>
-              </li>
-            ))}
-          </ol>
+          <EvidenceMatrix investigationId={investigation.id} />
         </section>
       </div>
-      <section className={`${panel} mt-3`}>
-        <EvidenceMatrix investigationId={investigation.id} />
-      </section>
     </div>
   );
 }

@@ -1,19 +1,22 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import type { AdminSession } from "../api/types";
+import { useConsole } from "../context/ConsoleContext";
 import { HARNESS_LINKS } from "../shell/navigation";
 import { ModeBanner } from "./ModeBanner";
 import { ScenarioControl } from "./ScenarioControl";
 import { Term } from "./Term";
 import { btn } from "./ui";
 
-const harnessBtn =
-  "inline-flex shrink-0 items-center whitespace-nowrap rounded border border-sn-gold bg-transparent px-2 py-1 font-pitch text-mps-body text-sn-gold hover:bg-sn-navy-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sn-gold disabled:cursor-not-allowed disabled:opacity-40";
+const resetBtn =
+  "inline-flex shrink-0 items-center whitespace-nowrap rounded bg-sn-gold px-3 py-1.5 font-pitch text-mps-body font-semibold text-sn-gold-ink hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sn-gold disabled:cursor-not-allowed disabled:opacity-40";
 
 export function HarnessBar({ session }: { session: AdminSession | null }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { clearDemo } = useConsole();
   const [resetOpen, setResetOpen] = useState(false);
   const [resetPending, setResetPending] = useState(false);
   const [resetMessage, setResetMessage] = useState<string | null>(null);
@@ -23,8 +26,10 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
     setResetMessage(null);
     try {
       const result = await api.resetDemo();
+      clearDemo();
       setResetMessage(`Demo baseline restored. Seed ${result.seed}.`);
       setResetOpen(false);
+      navigate("/");
     } catch {
       setResetMessage("The reset was not accepted.");
     } finally {
@@ -36,7 +41,7 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
     <header
       aria-label="StatusNeo demo harness"
       data-region="harness"
-      className="sticky top-0 z-banner border-b-4 border-sn-gold bg-sn-navy font-pitch text-sn-gold-wash"
+      className="z-banner shrink-0 border-b-4 border-sn-gold bg-sn-navy font-pitch text-sn-gold-wash"
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2">
         <div className="flex shrink-0 flex-col gap-0.5">
@@ -71,7 +76,7 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
         </nav>
         <ScenarioControl />
         {session?.isAdmin ? (
-          <button type="button" className={harnessBtn} onClick={() => setResetOpen(true)}>
+          <button type="button" className={resetBtn} onClick={() => setResetOpen(true)}>
             Reset demo
           </button>
         ) : null}
@@ -88,16 +93,8 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
         <div className="fixed inset-0 z-toast flex items-center justify-center bg-black/60 p-4" role="presentation">
           <div role="dialog" aria-modal="true" aria-labelledby="reset-title" className="w-full max-w-lg rounded border border-sn-gold bg-sn-navy p-4 text-sn-gold-wash shadow-panel">
             <h2 id="reset-title" className="font-pitch text-mps-title font-semibold text-sn-gold">
-              Reset the demo?
+              Reset the demo? This clears faults, alerts, tickets, investigations and CAPAs.
             </h2>
-            <p className="mt-2 font-sans text-mps-body">This restores the seeded baseline. The same seed is used on this computer and in the hosted demo.</p>
-            <ul className="mt-3 list-disc space-y-1 pl-5 font-sans text-mps-body">
-              <li>Fleet state</li>
-              <li>Tickets</li>
-              <li>Investigations</li>
-              <li>Approvals and corrective actions</li>
-              <li>Simulated clock</li>
-            </ul>
             <div className="mt-4 flex flex-wrap gap-2">
               <button type="button" className={btn} disabled={resetPending} onClick={() => void confirmReset()}>
                 {resetPending ? "Resetting…" : "Confirm reset"}

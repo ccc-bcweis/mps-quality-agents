@@ -2,13 +2,16 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import { CATEGORY_LABEL } from "../api/labels";
+import { CATEGORY_LABEL, INVESTIGATION_STAGE_LABEL } from "../api/labels";
 import type { HumanDecisionKind, Investigation } from "../api/types";
+import { AgentTimeline } from "../components/AgentTimeline";
 import { ApprovalDialog, type DecisionMode } from "../components/ApprovalDialog";
+import { EvidencePack } from "../components/EvidencePack";
 import { Explain } from "../components/Explain";
 import { HistoryNote } from "../components/RecordList";
 import { Term } from "../components/Term";
 import { btnDanger, btnOk, panel } from "../components/ui";
+import { plainNarrative } from "../investigation/format";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
 import { hiddenMissingTitle, MISSING_INVESTIGATION, visibleProblem } from "../history/copy";
 import { InvestigationHistory } from "../history/InvestigationHistory";
@@ -31,6 +34,7 @@ export function ApprovalPage() {
   useSetLifecycle(investigation?.stage === "approved" ? "capa" : "approval", investigation ? lifecycleForInvestigation(investigation.stage).escalated : false);
 
   useEffect(() => {
+    if (!investigationId) return undefined;
     let cancelled = false;
     setInvestigation(null);
     setError(null);
@@ -116,7 +120,7 @@ export function ApprovalPage() {
         </p>
         <h1 className="text-mps-display font-semibold">Approval</h1>
         <p className="max-w-3xl text-mps-secondary">
-          <Explain text="The model never holds write authority. Approve sends an approver id. The server issues the token and creates the CAPA." />
+          <Explain text="The model never holds write authority. Approve records the approver name and creates the CAPA." />
         </p>
       </div>
       {problem ? (
@@ -130,14 +134,16 @@ export function ApprovalPage() {
           {top ? (
             <>
               <p>
-                <span className="font-mono text-mps-micro text-mps-ai">{CATEGORY_LABEL[top.category]}</span> · {top.cause}
+                <span className="text-mps-ai">{CATEGORY_LABEL[top.category]}</span> · {plainNarrative(top.cause)}
               </p>
               <ul className="mt-2 list-disc pl-5">
                 {top.actions.map((action) => (
-                  <li key={action}>{action}</li>
+                  <li key={action}>{plainNarrative(action)}</li>
                 ))}
               </ul>
-              {top.counterEvidence.length > 0 ? <p className="mt-2">counterEvidence: {top.counterEvidence.join(" ")}</p> : null}
+              {top.counterEvidence.length > 0 ? (
+                <p className="mt-2">Evidence against this: {top.counterEvidence.map((line) => plainNarrative(line)).join(" ")}</p>
+              ) : null}
             </>
           ) : (
             <p>
@@ -150,7 +156,11 @@ export function ApprovalPage() {
               <p className="mt-1 text-mps-secondary">
                 <Explain text="An escalated case cannot go straight to a CAPA. Ask the agents to look again with more evidence, or override with a written reason. The reason is kept in the audit trail." />
               </p>
-              {investigation?.escalationReason ? <p className="mt-2 italic">{investigation.escalationReason}</p> : null}
+              {investigation?.escalationReason ? (
+                <p className="mt-2 italic">
+                  <Explain text={plainNarrative(investigation.escalationReason)} spellOut={false} />
+                </p>
+              ) : null}
               <label className="mt-3 block">
                 <span className="text-mps-secondary">Note or justification</span>
                 <textarea
@@ -162,8 +172,8 @@ export function ApprovalPage() {
                 />
               </label>
               <label className="mt-2 block">
-                <span className="text-mps-secondary">Approver id</span>
-                <input aria-label="Approver id" className="mt-1 block w-full rounded border border-mps-line bg-transparent p-2" value={approverId} onChange={(event) => setApproverId(event.target.value)} />
+                <span className="text-mps-secondary">Approver name</span>
+                <input aria-label="Approver name" className="mt-1 block w-full rounded border border-mps-line bg-transparent p-2" value={approverId} onChange={(event) => setApproverId(event.target.value)} />
               </label>
               <div className="mt-3 flex flex-wrap gap-2">
                 <button type="button" className={btnOk} disabled={pending} onClick={() => void decide("requestInfo", note.trim() || "More evidence requested.")}>
@@ -189,7 +199,7 @@ export function ApprovalPage() {
               </button>
             ) : null}
           </div>
-          {investigation ? <p className="mt-3 font-mono text-mps-micro text-mps-muted">Stage {investigation.stage}</p> : null}
+          {investigation ? <p className="mt-3 text-mps-secondary">Stage: {INVESTIGATION_STAGE_LABEL[investigation.stage]}</p> : null}
         </section>
         <section className={panel}>
           <h2 className="mb-2 text-mps-title font-semibold">
@@ -197,15 +207,25 @@ export function ApprovalPage() {
           </h2>
           <table className="w-full text-left">
             <tbody>
-              <tr className="border-t border-mps-line"><td className="py-1.5">No approver id</td><td className="py-1.5 font-mono">400</td></tr>
-              <tr className="border-t border-mps-line"><td className="py-1.5">Tampered, expired, or reused token</td><td className="py-1.5 font-mono">rejected</td></tr>
-              <tr className="border-t border-mps-line"><td className="py-1.5">Hash mismatch</td><td className="py-1.5 font-mono">rejected</td></tr>
+              <tr className="border-t border-mps-line"><td className="py-1.5">No approver name</td><td className="py-1.5 font-mono">400</td></tr>
+              <tr className="border-t border-mps-line"><td className="py-1.5">Used or expired approval</td><td className="py-1.5 font-mono">rejected</td></tr>
+              <tr className="border-t border-mps-line"><td className="py-1.5">Recorded action does not match</td><td className="py-1.5 font-mono">rejected</td></tr>
               <tr className="border-t border-mps-line"><td className="py-1.5">Agent write tool</td><td className="py-1.5">not registered</td></tr>
-              <tr className="border-t border-mps-line"><td className="py-1.5">Client-supplied signature</td><td className="py-1.5">ignored</td></tr>
+              <tr className="border-t border-mps-line"><td className="py-1.5">The browser does not sign the approval</td><td className="py-1.5">ignored</td></tr>
             </tbody>
           </table>
         </section>
       </div>
+      {investigation ? (
+        <>
+          <section className={`${panel} mt-3`}>
+            <EvidencePack items={investigation.evidence} />
+          </section>
+          <section className={`${panel} mt-3`}>
+            <AgentTimeline investigation={investigation} />
+          </section>
+        </>
+      ) : null}
       {mode ? (
         <ApprovalDialog
           mode={mode}

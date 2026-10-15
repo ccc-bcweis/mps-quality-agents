@@ -10,7 +10,8 @@ using Mps.Simulator.Telemetry;
 namespace Mps.Api.Demo;
 
 /// <summary>
-/// Puts tickets, investigations, approvals, CAPAs, and the simulated fleet back on the seeded baseline.
+/// Clears faults, alerts, tickets, investigations, approvals, and CAPAs.
+/// The fleet is rebuilt empty of incidents. Catalog faults are not replayed.
 /// </summary>
 public sealed class DemoResetService
 {

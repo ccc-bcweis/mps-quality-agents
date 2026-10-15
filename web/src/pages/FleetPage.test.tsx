@@ -6,17 +6,19 @@ import { renderConsole } from "../test/render";
 import { matchCopy } from "../test/matchCopy";
 
 describe("fleet overview", () => {
-  it("shows the eight-tool fab with alarm and watch tiles", async () => {
+  it("shows the eight-tool fab in a nominal state", async () => {
     const user = userEvent.setup();
     renderConsole("/");
     expect(await screen.findByRole("heading", { name: "Fleet overview" })).toBeInTheDocument();
     for (const id of ["D-01", "D-02", "E-01", "E-02", "S-01", "S-02", "C-01", "C-02"]) {
       expect(screen.getByRole("link", { name: new RegExp(id) })).toBeInTheDocument();
     }
-    const alarm = screen.getByRole("link", { name: /D-01/ });
-    expect(alarm.textContent).toMatch(/ALARM/);
-    expect(alarm.textContent).not.toMatch(/wafers\/h/);
-    expect(screen.getByRole("link", { name: /E-02/ }).textContent).toMatch(/WATCH/);
+    const deposition = screen.getByRole("link", { name: /D-01/ });
+    expect(deposition.textContent).toMatch(/NOMINAL/);
+    expect(deposition.textContent).not.toMatch(/ALARM/);
+    expect(deposition.textContent).not.toMatch(/wafers\/h/);
+    expect(screen.getByRole("link", { name: /E-02/ }).textContent).toMatch(/NOMINAL/);
+    expect(screen.getByRole("link", { name: /E-02/ }).textContent).not.toMatch(/WATCH/);
     expect(screen.getByRole("img", { name: "Meridian Precision Systems mark" })).toBeInTheDocument();
     expect(screen.getByText("Powered by StatusNeo")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Fleet performance" })).toHaveTextContent("Illustrative demo readings, not a live tool counter.");

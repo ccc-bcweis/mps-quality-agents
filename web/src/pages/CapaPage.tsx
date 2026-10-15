@@ -2,8 +2,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import { CAPA_STAGE_LABEL, formatStamp } from "../api/labels";
-import type { Capa, CapaStage, Incident, Tool } from "../api/types";
+import { approvalSentence, CAPA_STAGE_LABEL, formatStamp } from "../api/labels";
+import type { Capa, CapaStage, Incident, Investigation, Tool } from "../api/types";
+import { AgentTimeline } from "../components/AgentTimeline";
+import { EvidencePack } from "../components/EvidencePack";
 import { Explain } from "../components/Explain";
 import { HistoryNote, RecordList } from "../components/RecordList";
 import { Term } from "../components/Term";
@@ -11,11 +13,15 @@ import { btn, panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
 import { hiddenMissingTitle, MISSING_CAPA, visibleProblem } from "../history/copy";
 import { byNewestTime, toolPlainName } from "../history/order";
+import { useSite } from "../context/SiteContext";
+import { toolInPlant } from "../sites/selection";
+import { formatLocalWhen } from "../investigation/format";
 import { CAPA_STAGES, nextCapaStage } from "../lifecycle";
 
 export function CapaPage() {
   useSetLifecycle("capa");
   const { capaId } = useParams();
+  const { siteId } = useSite();
   const { capas, rememberCapa } = useConsole();
   const capasRef = useRef(capas);
   capasRef.current = capas;
@@ -23,11 +29,14 @@ export function CapaPage() {
   const [listed, setListed] = useState<Capa[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [tools, setTools] = useState<Tool[]>([]);
+  const [homeTool, setHomeTool] = useState<string | null>(null);
+  const [investigation, setInvestigation] = useState<Investigation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [missing, setMissing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [ready, setReady] = useState(false);
+  const [capaTools, setCapaTools] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -91,6 +100,64 @@ export function CapaPage() {
     };
   }, [capaId, rememberCapa]);
 
+  useEffect(() => {
+    const unknown = [...listed, ...capas]
+      .map((item) => item.incidentId)
+      .filter((id, index, all) => all.indexOf(id) === index && !incidents.some((row) => row.id === id) && !(id in capaTools));
+    if (unknown.length === 0) return undefined;
+    let cancelled = false;
+    Promise.all(unknown.map((id) => api.getIncident(id).then((incident) => [id, incident.toolId] as const).catch(() => null))).then((pairs) => {
+      if (cancelled) return;
+      setCapaTools((prev) => {
+        const next = { ...prev };
+        for (const pair of pairs) if (pair) next[pair[0]] = pair[1];
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [listed, capas, incidents, capaTools]);
+
+  useEffect(() => {
+    if (!capa) {
+      setHomeTool(null);
+      return undefined;
+    }
+    let cancelled = false;
+    api
+      .getIncident(capa.incidentId)
+      .then((incident) => {
+        if (!cancelled) setHomeTool(incident.toolId);
+      })
+      .catch(() => {
+        if (!cancelled) setHomeTool(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [capa]);
+
+  const incidentId = capa?.incidentId ?? "";
+  useEffect(() => {
+    if (!incidentId) {
+      setInvestigation(null);
+      return undefined;
+    }
+    let cancelled = false;
+    api
+      .getLatestInvestigation(incidentId)
+      .then((next) => {
+        if (!cancelled) setInvestigation(next);
+      })
+      .catch(() => {
+        if (!cancelled) setInvestigation(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [incidentId]);
+
   async function advance(stage: CapaStage) {
     if (!capa) return;
     setPending(true);
@@ -100,7 +167,8 @@ export function CapaPage() {
       const next = await api.advanceCapa(capa.id, { stage });
       setCapa(next);
       rememberCapa(next);
-      setNotice(`Moved to ${next.stage}.`);
+      const label = CAPA_STAGES.find((item) => item.id === next.stage)?.label ?? next.stage;
+      setNotice(`Moved to ${label}.`);
     } catch (reason: unknown) {
       setError(reason instanceof ApiProblem ? reason.title : "The stage change was rejected.");
     } finally {
@@ -116,16 +184,27 @@ export function CapaPage() {
     byNewestTime((item) => item.openedAt),
   );
   const showList = !capa;
+  const toolFor = (item: Capa) => incidents.find((row) => row.id === item.incidentId)?.toolId ?? capaTools[item.incidentId];
+  const visible = merged.filter((item) => {
+    const toolId = toolFor(item);
+    return !toolId || toolInPlant(siteId, toolId);
+  });
+  const elsewhere = merged.length - visible.length;
   const problem = visibleProblem(error);
-  const rows = merged.map((item) => {
-    const incident = incidents.find((row) => row.id === item.incidentId);
+  const rows = visible.map((item) => {
+    const toolId = toolFor(item);
     return {
       id: item.id,
       status: CAPA_STAGE_LABEL[item.stage],
-      toolName: toolPlainName(tools, incident?.toolId),
-      toolId: incident?.toolId,
+      toolName: toolPlainName(tools, toolId),
+      toolId,
       time: formatStamp(item.openedAt),
-      detail: <Link to={`/capas/${item.id}`}>Open</Link>,
+      detail: (
+        <>
+          <div>{item.summary}</div>
+          <Link to={`/capas/${item.id}`}>Open</Link>
+        </>
+      ),
     };
   });
 
@@ -139,6 +218,9 @@ export function CapaPage() {
           <p className="max-w-3xl text-mps-secondary">Past corrective and preventive actions, newest first.</p>
         </div>
         {missing && ready ? <HistoryNote text={MISSING_CAPA} /> : null}
+        {elsewhere > 0 ? (
+          <HistoryNote text={`${elsewhere} corrective action${elsewhere === 1 ? " is" : "s are"} at another plant. Choose All sites to see ${elsewhere === 1 ? "it" : "them"}.`} />
+        ) : null}
         {problem ? (
           <p className="mb-3 text-mps-alarm-text" role="alert">
             <Explain text={problem} spellOut={false} />
@@ -176,12 +258,14 @@ export function CapaPage() {
       {notice ? <p className="mb-3 text-mps-ok">{notice}</p> : null}
       {!capa ? (
         <p className="text-mps-muted">
-          <Explain text="No CAPA yet. Approve a recommendation to create one. The server list is empty until that token is issued." spellOut={false} />
+          <Explain text="No CAPA yet. Approve a recommendation to create one." spellOut={false} />
         </p>
+      ) : homeTool && !toolInPlant(siteId, homeTool) ? (
+        <p>This corrective action is at another plant. Choose All sites to open it.</p>
       ) : (
         <>
-          <p className="mb-3 rounded border border-mps-ok bg-mps-panel px-3 py-2">
-            Approval token consumed (single-use). Token <span className="font-mono">{capa.approvalTokenId}</span>. Action hash <span className="font-mono">{capa.actionHash}</span>.
+          <p className="mb-3 rounded border border-mps-ok bg-mps-panel px-3 py-2" role="status">
+            {capa.approvedBy && capa.approvedAt ? approvalSentence(capa.approvedBy, capa.approvedAt) : "Approved."}
           </p>
           <section className={`${panel} mb-3`}>
             <h2 className="mb-2 text-mps-title font-semibold">
@@ -210,20 +294,28 @@ export function CapaPage() {
             <section className={panel}>
               <h2 className="mb-2 text-mps-title font-semibold">Record</h2>
               <p>{capa.summary}</p>
-              <p className="mt-2 font-mono text-mps-micro text-mps-muted">Opened {capa.openedAt}</p>
-              <p className="font-mono text-mps-micro text-mps-muted">Incident {capa.incidentId}</p>
-            </section>
-            <section className={panel}>
-              <h2 className="mb-2 text-mps-title font-semibold">Audit</h2>
-              <p className="font-mono text-mps-micro text-mps-muted">
-                Token {capa.approvalTokenId}
-                <br />
-                actionHash {capa.actionHash}
-                <br />
-                stage {capa.stage}
+              <p className="mt-2 text-mps-secondary">Opened {formatLocalWhen(capa.openedAt)}</p>
+              <p className="mt-2">
+                <Link to={`/investigations/incident/${capa.incidentId}`} title={capa.incidentId}>
+                  Open the investigation
+                </Link>
               </p>
+              <p className="mt-2 text-mps-secondary">
+                {capa.approvedBy && capa.approvedAt ? approvalSentence(capa.approvedBy, capa.approvedAt) : "Approved."}
+              </p>
+              <p className="mt-2 text-mps-secondary">Stage {CAPA_STAGES.find((item) => item.id === capa.stage)?.label ?? capa.stage}</p>
             </section>
           </div>
+          {investigation ? (
+            <>
+              <section className={`${panel} mt-3`}>
+                <EvidencePack items={investigation.evidence} />
+              </section>
+              <section className={`${panel} mt-3`}>
+                <AgentTimeline investigation={investigation} />
+              </section>
+            </>
+          ) : null}
         </>
       )}
     </div>

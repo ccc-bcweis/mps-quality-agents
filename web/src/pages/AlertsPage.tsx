@@ -4,6 +4,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { formatStamp, ruleLabel, severityTone, severityWord } from "../api/labels";
 import type { Alert, Incident, Ticket, Tool } from "../api/types";
+import { CaseBriefs } from "../components/CaseBriefs";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
 import { HistoryNote, RecordList } from "../components/RecordList";
@@ -11,11 +12,14 @@ import { panel } from "../components/ui";
 import { useConsole, useSetLifecycle } from "../context/ConsoleContext";
 import { MISSING_ALERT, visibleProblem } from "../history/copy";
 import { byNewestTime, toolPlainName } from "../history/order";
+import { useSite } from "../context/SiteContext";
+import { toolInPlant } from "../sites/selection";
 
 export function AlertsPage() {
   useSetLifecycle("alert");
   const { alertId } = useParams();
   const [params] = useSearchParams();
+  const { siteId } = useSite();
   const { localAlerts } = useConsole();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -28,7 +32,7 @@ export function AlertsPage() {
   useEffect(() => {
     let cancelled = false;
     setReady(false);
-    Promise.all([api.listAlerts(), api.listTickets(), api.listIncidents(), api.listTools()])
+    Promise.all([api.listAlerts(undefined, siteId), api.listTickets(siteId), api.listIncidents(siteId), api.listTools()])
       .then(([nextAlerts, nextTickets, nextIncidents, nextTools]) => {
         if (cancelled) return;
         setAlerts(nextAlerts);
@@ -45,10 +49,11 @@ export function AlertsPage() {
     return () => {
       cancelled = true;
     };
-  }, [injected, localAlerts]);
+  }, [injected, localAlerts, siteId]);
 
   const merged = [...localAlerts, ...alerts]
     .filter((alert, index, all) => all.findIndex((item) => item.correlationId === alert.correlationId) === index)
+    .filter((alert) => toolInPlant(siteId, alert.toolId))
     .sort(byNewestTime((alert) => alert.raisedAt));
   const fresh = merged.filter((alert) => alert.correlationId.startsWith("corr-inject") || alert.correlationId.startsWith("corr-scenario"));
   const selected = alertId ? merged.find((alert) => alert.id === alertId) : undefined;
@@ -66,7 +71,6 @@ export function AlertsPage() {
       time: formatStamp(alert.raisedAt),
       detail: (
         <>
-          <div className="font-mono text-mps-micro text-mps-muted">{alert.correlationId}</div>
           <Explain text={ruleLabel(alert.rule)} />
           <div className="mt-1">
             {matched ? <Link to={`/tickets/${matched.id}`}>{matched.number}</Link> : "—"}
@@ -102,13 +106,16 @@ export function AlertsPage() {
           <p className="mt-2">
             <Explain text={ruleLabel(selected.rule)} /> · {selected.parameter}
           </p>
-          <p className="mt-2 font-mono text-mps-micro text-mps-muted">{selected.correlationId}</p>
           <p className="mt-2">
             <Link to="/alerts">All alerts</Link>
           </p>
         </section>
       ) : null}
       {!alertId || missing ? <RecordList label="Alerts" rows={rows} empty="No alerts yet." /> : null}
+      <CaseBriefs
+        incidentIds={incidents.filter((incident) => merged.some((alert) => alert.correlationId === incident.correlationId)).map((incident) => incident.id)}
+        intro="Evidence linked to these alerts"
+      />
     </div>
   );
 }

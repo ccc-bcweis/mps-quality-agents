@@ -32,8 +32,9 @@ public static class GroundingValidator
             known[item.Id] = item;
         }
 
-        // A why-it-matters note that names an id outside the pack is not load-bearing: drop it and repair, since cited ids are still checked strictly.
-        var droppedUnknownExplanations = claim.Explanations.Any(explanation => !known.ContainsKey(explanation.EvidenceId));
+        // A why-it-matters note for an id outside the pack or not cited is not load-bearing: drop it and repair, since cited ids are still checked strictly.
+        bool Keep(CitedEvidence explanation) => known.ContainsKey(explanation.EvidenceId) && claim.EvidenceIds.Contains(explanation.EvidenceId);
+        var droppedUnknownExplanations = claim.Explanations.Any(explanation => !Keep(explanation));
         if (droppedUnknownExplanations)
         {
             claim = new ResolutionClaim(
@@ -44,7 +45,7 @@ public static class GroundingValidator
                 claim.CounterEvidence,
                 claim.Actions,
                 claim.Claims,
-                claim.Explanations.Where(explanation => known.ContainsKey(explanation.EvidenceId)).ToArray(),
+                claim.Explanations.Where(Keep).ToArray(),
                 claim.EvidenceMatrix);
         }
 

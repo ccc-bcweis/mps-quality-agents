@@ -1,11 +1,14 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Api.Persistence;
 using Mps.Application.Evidence;
 using Mps.Application.Persistence;
 using Mps.Domain.Capa;
 using Mps.Domain.Equipment;
+using Mps.Domain.Evidence;
 using Mps.Domain.Incidents;
 using Mps.Domain.Investigations;
+using Mps.Simulator.Fleet;
 using Mps.Simulator.Sites;
 
 namespace Mps.Api.Http;
@@ -64,6 +67,7 @@ public static class ContractMapper
             snapshot.Evidence.Select(item =>
             {
                 notes.TryGetValue(item.Id.Value, out var note);
+                var reading = CompleteReading(item);
                 return new EvidenceResponse(
                     item.Id.Value,
                     item.Source,
@@ -73,7 +77,13 @@ public static class ContractMapper
                     item.ToolId,
                     item.ExternalRef,
                     note?.WhyItMatters,
-                    note?.SignalId);
+                    note?.SignalId,
+                    reading.Value,
+                    reading.Unit,
+                    reading.SpecLow,
+                    reading.SpecHigh,
+                    reading.ToolName,
+                    reading.ChamberName);
             }).ToArray(),
             snapshot.Hypotheses.Select(item => new HypothesisResponse(
                 item.Id.Value,
@@ -94,6 +104,86 @@ public static class ContractMapper
 
     public static CapaResponse ToResponse(CapaAction capa) =>
         new(capa.Id.Value, capa.IncidentId.Value, capa.Summary, capa.ApprovalTokenId.Value, capa.ActionHash, capa.Stage, capa.OpenedAt);
+
+    public static CapaResponse WithApproval(CapaResponse capa, ApprovalRow? approval)
+    {
+        if (approval is null || string.IsNullOrWhiteSpace(approval.ApproverId))
+        {
+            return capa;
+        }
+
+        return capa with
+        {
+            ApprovedBy = approval.ApproverId.Trim(),
+            ApprovedAt = new DateTimeOffset(DateTime.SpecifyKind(approval.IssuedAt, DateTimeKind.Utc)),
+        };
+    }
+
+    /// <summary>
+    /// Fills unit and spec from the family catalog when the pack only stored the measured value.
+    /// </summary>
+    internal static EvidenceReading CompleteReading(EvidenceItem item)
+    {
+        var reading = item.Reading;
+        var unit = reading?.Unit;
+        var specLow = reading?.SpecLow;
+        var specHigh = reading?.SpecHigh;
+        var parameter = ParameterFrom(item);
+        if (parameter is not null && FamilyFrom(item.ToolId) is { } family
+            && FamilyParameterCatalog.For(family).TryGetValue(parameter, out var limit))
+        {
+            unit ??= limit.Unit;
+            specLow ??= limit.Minimum;
+            specHigh ??= limit.Maximum;
+        }
+
+        return new EvidenceReading(
+            reading?.Value,
+            string.IsNullOrWhiteSpace(unit) ? null : unit.Trim(),
+            specLow,
+            specHigh,
+            reading?.ToolName ?? PlainEquipment.ToolName(item.ToolId),
+            reading?.ChamberName);
+    }
+
+    private static string? ParameterFrom(EvidenceItem item)
+    {
+        if (item.Source is not (EvidenceSource.Spc or EvidenceSource.Telemetry))
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(item.ExternalRef))
+        {
+            return null;
+        }
+
+        var parts = item.ExternalRef.Split(':', 4);
+        if (parts.Length < 3 || string.IsNullOrWhiteSpace(parts[2]))
+        {
+            return null;
+        }
+
+        return parts[2];
+    }
+
+    private static ToolFamily? FamilyFrom(string? toolId)
+    {
+        var name = PlainEquipment.ToolName(toolId);
+        if (name is null || string.IsNullOrWhiteSpace(toolId))
+        {
+            return null;
+        }
+
+        return toolId.Trim()[0] switch
+        {
+            'D' => ToolFamily.Deposition,
+            'E' => ToolFamily.Etch,
+            'S' => ToolFamily.Strip,
+            'C' => ToolFamily.Clean,
+            _ => null,
+        };
+    }
 
     public static string ModeFrom(string? configured) => configured?.Trim().ToLowerInvariant() switch
     {

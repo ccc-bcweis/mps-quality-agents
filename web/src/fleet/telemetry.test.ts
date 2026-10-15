@@ -16,17 +16,21 @@ describe("mock telemetry", () => {
       expect(row.unit).toBe(sensor?.unit);
     }
     const esc = body.find((row) => row.sensorId === "E-02-A-TC-ESC");
-    expect(esc).toMatchObject({ unit: "C", value: 53.1, status: "inSpec" });
+    expect(esc).toMatchObject({ unit: "C", status: "inSpec" });
+    expect(esc?.value).not.toBe(53.1);
     const reflected = body.find((row) => row.sensorId === "E-02-A-RF-SRC-RFL");
     expect(reflected?.unit).toBe("W");
 
     const deposition = await fetch("/api/tools/D-01/telemetry");
     const depositionBody = (await deposition.json()) as { sensorId: string; unit: string; value: number; status: string }[];
-    expect(depositionBody.find((row) => row.sensorId === "D-01-A-PT-CHAMBER")).toMatchObject({
-      unit: "Torr",
-      value: 6.52,
-      status: "outOfSpec",
-    });
+    const chamber = depositionBody.find((row) => row.sensorId === "D-01-A-PT-CHAMBER");
+    expect(chamber).toMatchObject({ unit: "Torr", status: "inSpec" });
+    expect(chamber?.value).not.toBe(6.52);
+
+    const faultedEsc = telemetryForTool("E-02", { applyDemoFault: true }).find((row) => row.sensorId === "E-02-A-TC-ESC");
+    expect(faultedEsc).toMatchObject({ unit: "C", value: 53.1, status: "inSpec" });
+    const faultedChamber = telemetryForTool("D-01", { applyDemoFault: true }).find((row) => row.sensorId === "D-01-A-PT-CHAMBER");
+    expect(faultedChamber).toMatchObject({ unit: "Torr", value: 6.52, status: "outOfSpec" });
 
     const missing = await fetch("/api/tools/Z-99/telemetry");
     expect(missing.status).toBe(404);

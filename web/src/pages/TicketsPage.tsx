@@ -1,9 +1,10 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { formatStamp, STAGE_LABEL, severityTone, severityWord } from "../api/labels";
 import type { Incident, Severity, Ticket, Tool } from "../api/types";
+import { CaseBriefs } from "../components/CaseBriefs";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
 import { HistoryNote, RecordList } from "../components/RecordList";
@@ -11,13 +12,17 @@ import { btnPrimary, field, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { MISSING_TICKET, visibleProblem } from "../history/copy";
 import { byNewestTime, toolPlainName } from "../history/order";
+import { plainTool } from "../investigation/format";
+import { useSite } from "../context/SiteContext";
 import { pathForIncident, pathForTicket } from "../investigation/ticketRoute";
+import { toolInPlant } from "../sites/selection";
 import { lifecycleForIncident } from "../lifecycle";
 
 export function TicketsPage() {
   useSetLifecycle("ticket");
   const navigate = useNavigate();
   const { ticketId } = useParams();
+  const { siteId } = useSite();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [tools, setTools] = useState<Tool[]>([]);
@@ -29,13 +34,17 @@ export function TicketsPage() {
   const [severity, setSeverity] = useState<Severity>("medium");
   const [pending, setPending] = useState(false);
 
-  function reload() {
-    return Promise.all([api.listTickets(), api.listIncidents(), api.listTools()]).then(([nextTickets, nextIncidents, nextTools]) => {
-      setTickets(nextTickets);
-      setIncidents(nextIncidents);
-      setTools(nextTools);
-    });
-  }
+  const reload = useCallback(() => {
+    return Promise.all([api.listTickets(siteId), api.listIncidents(siteId), api.listTools(siteId)]).then(
+      ([nextTickets, nextIncidents, nextTools]) => {
+        const visibleTools = nextTools.filter((tool) => toolInPlant(siteId, tool.id, tool.siteId));
+        setTickets(nextTickets.filter((ticket) => toolInPlant(siteId, ticket.toolId)));
+        setIncidents(nextIncidents.filter((incident) => toolInPlant(siteId, incident.toolId)));
+        setTools(visibleTools);
+        setToolId((current) => (visibleTools.some((tool) => tool.id === current) ? current : (visibleTools[0]?.id ?? current)));
+      },
+    );
+  }, [siteId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,7 +58,7 @@ export function TicketsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reload]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -128,6 +137,10 @@ export function TicketsPage() {
         </section>
       ) : null}
       {!ticketId || missing ? <RecordList label="Tickets" rows={rows} empty="No tickets yet." /> : null}
+      <CaseBriefs
+        incidentIds={incidents.filter((incident) => incident.stage !== "closed").map((incident) => incident.id)}
+        intro="Evidence linked to these tickets"
+      />
       <form className={`${panel} mt-3 grid gap-3 md:grid-cols-2`} onSubmit={onSubmit}>
         <h2 className="text-mps-title font-semibold md:col-span-2">Operator report</h2>
         <label className="text-mps-label text-mps-muted">
@@ -135,7 +148,7 @@ export function TicketsPage() {
           <select className={field} value={toolId} onChange={(event) => setToolId(event.target.value)}>
             {tools.map((tool) => (
               <option key={tool.id} value={tool.id}>
-                {tool.id} · {tool.model}
+                {plainTool(tool.id) ?? tool.name} · {tool.model}
               </option>
             ))}
           </select>

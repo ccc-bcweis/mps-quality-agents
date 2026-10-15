@@ -58,3 +58,11 @@ Additive console paths and query parameters. Existing operations are unchanged. 
 
 - `GET /api/investigations` returns every investigation, newest first. A later start on the same incident sorts before the earlier start. A newer incident sorts before an older one. The item shape is the existing `Investigation` schema.
 - `GET /api/alerts`, `GET /api/tickets`, `GET /api/investigations`, and `GET /api/capas` accept an optional `siteId` query. When it is set, the list keeps records for tools at that plant. An unknown plant returns an empty list, not a missing-record error. Omit it and the list is unchanged. Alert lists still accept `toolId`. Both filters apply together.
+## Addendum: evidence reading fields (2026-10-15)
+
+Optional fields on `EvidenceItem`. Required fields are unchanged. OpenAPI `info.version` stays 1.2.0.
+
+- `value`, `unit`, `specLow`, `specHigh` describe a sensor or chart point. `unit` is the catalog unit (`C`, `Torr`, `mTorr`).
+- `toolName` and `chamberName` are plain names (`Etch tool E-02`, `Chamber B`). `toolId` and `externalRef` stay for the audit trail.
+- The evidence pack factory stores the measured value and the plain names. The contract mapper fills unit and spec from the family parameter catalog when the external reference names the parameter.
+- The event schema is unchanged. These fields are on the console investigation response only.

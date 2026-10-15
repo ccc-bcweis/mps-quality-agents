@@ -43,7 +43,7 @@ export function InvestigationHistory({ detail }: { detail: "investigation" | "ap
   const rows = investigations
     .map((investigation) => {
       const incident = incidentById.get(investigation.incidentId);
-      const toolId = incident?.toolId;
+      const toolId = incident?.toolId ?? investigation.evidence.find((item) => item.toolId)?.toolId ?? undefined;
       return {
         id: investigation.id,
         status: INVESTIGATION_STAGE_LABEL[investigation.stage],

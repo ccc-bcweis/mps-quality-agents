@@ -238,6 +238,8 @@ export const handlers = [
             actionHash: "ABC123",
             stage: "open",
             openedAt: "2026-10-14T15:05:00Z",
+            approvedBy: body.approverId ?? "dev-user",
+            approvedAt: "2026-10-15T02:42:00.000Z",
           }
         : null;
     return HttpResponse.json({
@@ -267,6 +269,7 @@ export const handlers = [
       { status: 202 },
     ),
   ),
+  http.get("/api/audit", () => HttpResponse.json({ entries: [], traces: [] })),
   http.get("/api/admin/session", () =>
     HttpResponse.json({ mode: "local", isAdmin: true, displayName: "dev-user" }),
   ),

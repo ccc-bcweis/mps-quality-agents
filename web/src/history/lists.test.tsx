@@ -24,20 +24,10 @@ describe("history lists", () => {
     const deposition = investigations.findIndex((text) => text.includes("Deposition 01"));
     expect(etch).toBeGreaterThan(0);
     expect(deposition).toBeGreaterThan(etch);
-    expect(investigations[etch]).toContain("ESC temperature oscillation after a recipe revision.");
 
+    // The console starts nominal: no tickets until a scenario runs.
     renderConsole("/tickets");
-    expect(await screen.findByRole("table", { name: "Tickets" })).toBeInTheDocument();
-    const tickets = rowText("Tickets");
-    const newest = tickets.findIndex((text) => text.includes("TKT-1044"));
-    const older = tickets.findIndex((text) => text.includes("TKT-1042"));
-    expect(newest).toBeGreaterThan(0);
-    expect(older).toBeGreaterThan(newest);
-    expect(tickets[newest]).toContain("Etch 02");
-    expect(tickets[older]).toContain("Deposition 01");
-    const ticketTable = screen.getByRole("table", { name: "Tickets" });
-    expect(within(ticketTable).queryByText("CLOSED")).not.toBeInTheDocument();
-    expect(within(ticketTable).getByText("Closed")).toBeInTheDocument();
+    expect(await screen.findByText("No tickets yet.")).toBeInTheDocument();
   });
 
   it("opens Investigation and Approval on the lists", async () => {
@@ -54,12 +44,12 @@ describe("history lists", () => {
   it("falls back to the list when a deep link misses", async () => {
     renderConsole(`/alerts/${gone}`);
     expect(await screen.findByText(MISSING_ALERT)).toBeInTheDocument();
-    expect(screen.getByRole("table", { name: "Alerts" })).toBeInTheDocument();
+    expect(screen.getByText("No alerts yet.")).toBeInTheDocument();
     expect(screen.queryByText("No such record.")).not.toBeInTheDocument();
 
     renderConsole(`/tickets/${gone}`);
     expect(await screen.findByText(MISSING_TICKET)).toBeInTheDocument();
-    expect(screen.getByRole("table", { name: "Tickets" })).toBeInTheDocument();
+    expect(screen.getByText("No tickets yet.")).toBeInTheDocument();
     expect(screen.queryByText("No such record.")).not.toBeInTheDocument();
 
     renderConsole(`/investigations/${gone}`);
@@ -81,8 +71,7 @@ describe("history lists", () => {
 
   it("filters list endpoints by plant and keeps newest investigations first", async () => {
     expect(await api.listAlerts(undefined, "ironwood")).toEqual([]);
-    expect(await api.listAlerts(undefined, "northwater")).not.toHaveLength(0);
-    expect(await api.listAlerts(undefined, "Northwater")).not.toHaveLength(0);
+    expect(await api.listInvestigations("ironwood")).toEqual([]);
     expect((await api.listInvestigations()).map((row) => row.id)).toEqual([S1_INVESTIGATION_ID, S2_INVESTIGATION_ID]);
   });
 });

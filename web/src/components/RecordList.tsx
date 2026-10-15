@@ -39,7 +39,14 @@ export function RecordList({ label, rows, empty }: { label: string; rows: Histor
             <tr key={row.id} className="border-t border-mps-line align-top">
               <td className="break-words py-1.5 pr-3">{row.status}</td>
               <td className="break-words py-1.5 pr-3">
-                {row.toolId ? <Link to={`/tools/${row.toolId}`}>{row.toolName}</Link> : row.toolName}
+                {row.toolId ? (
+                  <>
+                    <Link to={`/tools/${row.toolId}`}>{row.toolId}</Link>
+                    {row.toolName !== row.toolId ? <span className="block text-mps-micro text-mps-muted">{row.toolName}</span> : null}
+                  </>
+                ) : (
+                  row.toolName
+                )}
               </td>
               <td className="break-words py-1.5 pr-3 font-mono text-mps-micro">{row.time}</td>
               <td className="break-words py-1.5">{row.detail}</td>
