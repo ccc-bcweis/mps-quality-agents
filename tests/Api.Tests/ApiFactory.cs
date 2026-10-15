@@ -18,6 +18,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseEnvironment("Development");
         builder.UseSetting("Otel:Enabled", "false");
         builder.UseSetting("Mps:Simulation:Enabled", "false");
+        builder.UseSetting("ConnectionStrings:Mps", "Data Source=" + _databasePath);
         builder.ConfigureServices(services =>
         {
             var descriptors = services.Where(service =>

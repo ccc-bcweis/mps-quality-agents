@@ -31,6 +31,14 @@ public sealed class LifecycleConflictException : Exception
     }
 }
 
+public sealed class CommandDeniedException : Exception
+{
+    public CommandDeniedException(string message)
+        : base(message)
+    {
+    }
+}
+
 public sealed class ApprovalForbiddenException : Exception
 {
     public ApprovalForbiddenException(string message)

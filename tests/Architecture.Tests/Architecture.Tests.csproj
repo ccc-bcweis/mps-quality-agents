@@ -9,6 +9,7 @@
     <ProjectReference Include="..\..\src\Mps.Agents\Mps.Agents.csproj" />
     <ProjectReference Include="..\..\src\Mps.Api\Mps.Api.csproj" />
     <ProjectReference Include="..\..\src\Mps.Application\Mps.Application.csproj" />
+    <ProjectReference Include="..\..\src\Mps.Bus\Mps.Bus.csproj" />
     <ProjectReference Include="..\..\src\Mps.Connectors\Mps.Connectors.csproj" />
     <ProjectReference Include="..\..\src\Mps.Domain\Mps.Domain.csproj" />
     <ProjectReference Include="..\..\src\Mps.MockEnterprise\Mps.MockEnterprise.csproj" />

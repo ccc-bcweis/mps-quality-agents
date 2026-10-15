@@ -1,5 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Api.Bus;
+
 namespace Mps.Api.Live;
 
 /// <summary>
@@ -15,6 +17,7 @@ public sealed partial class SimulationTickService : BackgroundService
 
     private readonly PlantSimulation _plant;
     private readonly StreamSpcPublisher _publisher;
+    private readonly TelemetryPublisher _telemetry;
     private readonly SimulationOptions _options;
     private readonly TimeProvider _time;
     private readonly ILogger<SimulationTickService> _logger;
@@ -22,17 +25,20 @@ public sealed partial class SimulationTickService : BackgroundService
     public SimulationTickService(
         PlantSimulation plant,
         StreamSpcPublisher publisher,
+        TelemetryPublisher telemetry,
         SimulationOptions options,
         TimeProvider time,
         ILogger<SimulationTickService> logger)
     {
         ArgumentNullException.ThrowIfNull(plant);
         ArgumentNullException.ThrowIfNull(publisher);
+        ArgumentNullException.ThrowIfNull(telemetry);
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(time);
         ArgumentNullException.ThrowIfNull(logger);
         _plant = plant;
         _publisher = publisher;
+        _telemetry = telemetry;
         _options = options;
         _time = time;
         _logger = logger;
@@ -48,6 +54,7 @@ public sealed partial class SimulationTickService : BackgroundService
         try
         {
             _plant.EnsurePrimed();
+            await _telemetry.PublishPendingAsync(stoppingToken).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -59,6 +66,7 @@ public sealed partial class SimulationTickService : BackgroundService
             try
             {
                 _plant.AdvanceTick();
+                await _telemetry.PublishPendingAsync(stoppingToken).ConfigureAwait(false);
                 await _publisher.PublishAsync(stoppingToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

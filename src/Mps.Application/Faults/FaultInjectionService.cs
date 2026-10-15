@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Application.Bus;
 using Mps.Application.Errors;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
@@ -15,7 +16,10 @@ public sealed record FaultInjectionRequest(
     string Shape,
     double Magnitude,
     RootCauseCategory RootCauseCategory,
-    bool Confounders);
+    bool Confounders,
+    string? CorrelationId = null,
+    bool PublishCommand = true,
+    Guid? FaultId = null);
 
 public sealed record FaultAccepted(Guid FaultId, string CorrelationId, Guid IncidentId);
 
@@ -41,12 +45,16 @@ public sealed class FaultInjectionService : IFaultInjectionService
     private readonly IFaultLog _faults;
     private readonly IQualityNotifier _notifier;
     private readonly TimeProvider _time;
+    private readonly ILifecycleEventSink? _events;
+    private readonly ICascadeDirectory? _cascade;
 
     public FaultInjectionService(
         IFleetCatalog fleet,
         IFaultLog faults,
         IQualityNotifier notifier,
-        TimeProvider time)
+        TimeProvider time,
+        ILifecycleEventSink? events = null,
+        ICascadeDirectory? cascade = null)
     {
         ArgumentNullException.ThrowIfNull(fleet);
         ArgumentNullException.ThrowIfNull(faults);
@@ -56,6 +64,8 @@ public sealed class FaultInjectionService : IFaultInjectionService
         _faults = faults;
         _notifier = notifier;
         _time = time;
+        _events = events;
+        _cascade = cascade;
     }
 
     public async Task<FaultAccepted> InjectAsync(FaultInjectionRequest request, CancellationToken cancellationToken)
@@ -88,10 +98,41 @@ public sealed class FaultInjectionService : IFaultInjectionService
         }
 
         var now = _time.GetUtcNow();
-        var faultId = Guid.NewGuid();
-        var correlationId = "fault-" + faultId.ToString("N");
+        var faultId = request.FaultId ?? Guid.NewGuid();
+        var correlationId = request.CorrelationId
+            ?? CommandAmbient.CorrelationId
+            ?? "fault-" + faultId.ToString("N");
         var shape = request.Shape.Trim().ToLowerInvariant();
         var category = ToCamelCase(request.RootCauseCategory.ToString());
+        var parent = CommandAmbient.EventId;
+        if (request.PublishCommand && _events is not null)
+        {
+            var eventId = await _events.PublishAsync(
+                new LifecycleEvent(
+                    LifecycleTypes.FaultInject,
+                    correlationId,
+                    parent,
+                    parent,
+                    "injector",
+                    null,
+                    toolId.ToString(),
+                    string.IsNullOrWhiteSpace(request.ChamberId) ? null : request.ChamberId.Trim(),
+                    now,
+                    new
+                    {
+                        signal = "faultInjected",
+                        toolId = toolId.ToString(),
+                        parameter = request.Parameter.Trim(),
+                        shape,
+                        magnitude = request.Magnitude,
+                        rootCauseCategory = category,
+                        body = new { faultId, correlationId },
+                    }),
+                cancellationToken).ConfigureAwait(false);
+            _cascade?.RememberFault(correlationId, toolId.ToString(), request.Parameter.Trim(), eventId);
+            _cascade?.RememberStep(correlationId, "fault", eventId);
+        }
+
         var fault = new FaultRecord(
             faultId,
             toolId.ToString(),

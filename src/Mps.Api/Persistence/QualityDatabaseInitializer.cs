@@ -24,6 +24,14 @@ public sealed class QualityDatabaseInitializer : IHostedService
         await using var scope = _scopes.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<QualityDbContext>();
         await db.Database.EnsureCreatedAsync(cancellationToken).ConfigureAwait(false);
+        if (!await TableExistsAsync(db, "Investigations", cancellationToken).ConfigureAwait(false))
+        {
+            // The file already had tables, so EnsureCreated skipped the quality schema.
+            // Rebuild it. The event log is created later, on first use.
+            await db.Database.EnsureDeletedAsync(cancellationToken).ConfigureAwait(false);
+            await db.Database.EnsureCreatedAsync(cancellationToken).ConfigureAwait(false);
+        }
+
         await EnsureInvestigationSequenceAsync(db, cancellationToken).ConfigureAwait(false);
         if (await db.Tools.AnyAsync(cancellationToken).ConfigureAwait(false))
         {
@@ -54,6 +62,35 @@ public sealed class QualityDatabaseInitializer : IHostedService
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    private static async Task<bool> TableExistsAsync(QualityDbContext db, string name, CancellationToken cancellationToken)
+    {
+        var connection = db.Database.GetDbConnection();
+        var openedHere = connection.State != ConnectionState.Open;
+        if (openedHere)
+        {
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        try
+        {
+            await using var command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = $name;";
+            var parameter = command.CreateParameter();
+            parameter.ParameterName = "$name";
+            parameter.Value = name;
+            command.Parameters.Add(parameter);
+            var scalar = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+            return Convert.ToInt64(scalar, CultureInfo.InvariantCulture) > 0;
+        }
+        finally
+        {
+            if (openedHere)
+            {
+                await connection.CloseAsync().ConfigureAwait(false);
+            }
+        }
+    }
 
     /// <summary>
     /// EnsureCreated does not add columns to a database from an earlier run.

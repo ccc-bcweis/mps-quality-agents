@@ -32,6 +32,7 @@ public sealed class ApiExceptionHandler : IExceptionHandler
         ResourceNotFoundException => (StatusCodes.Status404NotFound, "No such record."),
         LifecycleConflictException => (StatusCodes.Status409Conflict, "The lifecycle rejected the transition."),
         ApprovalForbiddenException => (StatusCodes.Status403Forbidden, "Approval rejected by the token rules."),
+        CommandDeniedException => (StatusCodes.Status403Forbidden, "The command is not allowed for this caller."),
         DomainRuleException => (StatusCodes.Status400BadRequest, "The request failed validation."),
         BadHttpRequestException => (StatusCodes.Status400BadRequest, "The request failed validation."),
         _ => null,

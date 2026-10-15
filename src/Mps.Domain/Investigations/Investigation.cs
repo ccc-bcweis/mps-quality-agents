@@ -102,4 +102,7 @@ public sealed class InvestigationSnapshot
     public string? EscalationReason { get; }
 
     public string CorrelationId { get; }
+
+    public InvestigationSnapshot WithEvidence(IReadOnlyList<EvidenceItem> evidence) =>
+        new(Id, IncidentId, Stage, evidence, Hypotheses, EscalationReason, CorrelationId);
 }

@@ -1,11 +1,15 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using System.Text.Json;
+
 using Microsoft.EntityFrameworkCore;
 
 using Mps.Api.Auth;
+using Mps.Api.Bus;
 using Mps.Api.Demo;
 using Mps.Api.Live;
 using Mps.Api.Persistence;
+using Mps.Application.Bus;
 using Mps.Application.Decisions;
 using Mps.Application.Errors;
 using Mps.Application.Faults;
@@ -27,6 +31,8 @@ namespace Mps.Api.Http;
 
 public static class QualityEndpoints
 {
+    private static readonly JsonSerializerOptions ResetJson = new(JsonSerializerDefaults.Web);
+
     public static void Map(WebApplication app)
     {
         ArgumentNullException.ThrowIfNull(app);
@@ -88,13 +94,20 @@ public static class QualityEndpoints
             var rows = await incidents.ListAsync(cancellationToken).ConfigureAwait(false);
             return Results.Ok(rows.Select(row => ContractMapper.ToResponse(row.Incident)).Where(row => MatchesSite(siteId, row.SiteId)).ToArray());
         });
-        app.MapPost("/api/incidents", async (OpenIncidentBody? body, IIntakeService intake, CancellationToken cancellationToken) =>
+        app.MapPost("/api/incidents", async (
+            OpenIncidentBody? body,
+            IIntakeService intake,
+            CommandGateway commands,
+            HttpContext http,
+            IConfiguration configuration,
+            CancellationToken cancellationToken) =>
         {
             if (body is null)
             {
                 throw new IntakeValidationException("Incident body is required.");
             }
 
+            commands.Ensure(LifecycleTypes.OperatorReport, Caller(http, configuration));
             var result = await intake.AcceptAsync(
                 new IntakeSubmission(
                     IncidentChannel.OperatorReport,
@@ -132,8 +145,12 @@ public static class QualityEndpoints
             IInvestigationService investigations,
             IInvestigationNarrativeLog narratives,
             IIncidentLog incidents,
+            CommandGateway commands,
+            HttpContext http,
+            IConfiguration configuration,
             CancellationToken cancellationToken) =>
         {
+            commands.Ensure(LifecycleTypes.InvestigationStart, Caller(http, configuration));
             var snapshot = await investigations.StartAsync(new IncidentId(incidentId), cancellationToken).ConfigureAwait(false);
             var narrative = await narratives.GetAsync(snapshot.Id, cancellationToken).ConfigureAwait(false);
             var site = await SiteForIncidentAsync(incidents, snapshot.IncidentId, cancellationToken).ConfigureAwait(false);
@@ -184,6 +201,9 @@ public static class QualityEndpoints
             IInvestigationNarrativeLog narratives,
             IIncidentLog incidents,
             QualityDbContext db,
+            CommandGateway commands,
+            HttpContext http,
+            IConfiguration configuration,
             CancellationToken cancellationToken) =>
         {
             if (body?.Kind is null)
@@ -191,6 +211,7 @@ public static class QualityEndpoints
                 throw new IntakeValidationException("Decision kind is required.");
             }
 
+            commands.Ensure(LifecycleTypes.ApprovalGrant, Caller(http, configuration));
             var id = new InvestigationId(investigationId);
             var outcome = await decisions.DecideAsync(
                 id,
@@ -239,6 +260,9 @@ public static class QualityEndpoints
             ICapaLifecycleService capas,
             IIncidentLog incidents,
             QualityDbContext db,
+            CommandGateway commands,
+            HttpContext http,
+            IConfiguration configuration,
             CancellationToken cancellationToken) =>
         {
             if (body?.Stage is null)
@@ -246,7 +270,22 @@ public static class QualityEndpoints
                 throw new IntakeValidationException("CAPA stage is required.");
             }
 
-            var stored = await capas.AdvanceAsync(new CapaId(capaId), body.Stage.Value, cancellationToken).ConfigureAwait(false);
+            commands.Ensure(LifecycleTypes.CapaAdvance, Caller(http, configuration));
+            var current = await capas.GetAsync(new CapaId(capaId), cancellationToken).ConfigureAwait(false);
+            var incident = await incidents.GetAsync(current.Capa.IncidentId, cancellationToken).ConfigureAwait(false);
+            var correlation = incident?.Incident.CorrelationId ?? "capa-" + capaId.ToString("N");
+            var toolId = incident?.Incident.ToolId.ToString();
+            var parent = commands.Cascade.FindStep(correlation, "capa") ?? commands.Cascade.FindStep(correlation, "approval");
+            var stored = await commands.RunAsync(
+                LifecycleTypes.CapaAdvance,
+                correlation,
+                "quality",
+                toolId,
+                incident?.Incident.ChamberId,
+                parent,
+                new { capaId, stage = body.Stage.Value.ToString() },
+                token => capas.AdvanceAsync(new CapaId(capaId), body.Stage.Value, token),
+                cancellationToken).ConfigureAwait(false);
             var site = await SiteForIncidentAsync(incidents, stored.Capa.IncidentId, cancellationToken).ConfigureAwait(false);
             return Results.Ok(await WithApprovalAsync(db, ContractMapper.ToResponse(stored.Capa, site), cancellationToken).ConfigureAwait(false));
         });
@@ -255,16 +294,37 @@ public static class QualityEndpoints
             var caller = Caller(http, configuration);
             return Results.Ok(new AdminSessionResponse(caller.Mode, caller.IsAdmin, caller.DisplayName));
         });
-        app.MapPost("/api/admin/reset", async (HttpContext http, IConfiguration configuration, DemoResetService reset, ScenarioEvidenceBoard board, IManualMeasurementLog measurements, CancellationToken cancellationToken) =>
+        app.MapPost("/api/admin/reset", async (HttpContext http, IConfiguration configuration, DemoResetService reset, ScenarioEvidenceBoard board, IManualMeasurementLog measurements, CommandGateway commands, CancellationToken cancellationToken) =>
         {
-            if (!Caller(http, configuration).IsAdmin)
+            var caller = Caller(http, configuration);
+            if (!caller.IsAdmin)
             {
                 return Results.Problem(title: "Admin role is required.", statusCode: StatusCodes.Status403Forbidden);
             }
 
+            var hard = true;
+            if (http.Request.ContentLength > 0)
+            {
+                ResetBody? body;
+                try
+                {
+                    body = await http.Request.ReadFromJsonAsync<ResetBody>(ResetJson, cancellationToken).ConfigureAwait(false);
+                }
+                catch (JsonException)
+                {
+                    throw new IntakeValidationException("Reset body is not valid.");
+                }
+
+                if (string.Equals(body?.Kind, "soft", StringComparison.OrdinalIgnoreCase))
+                {
+                    hard = false;
+                }
+            }
+
+            commands.Ensure(hard ? LifecycleTypes.ResetHard : LifecycleTypes.ResetSoft, caller);
             board.Clear();
             measurements.Clear();
-            var baseline = await reset.ResetAsync(cancellationToken).ConfigureAwait(false);
+            var baseline = await reset.ResetAsync(hard, cancellationToken).ConfigureAwait(false);
             return Results.Ok(baseline);
         });
         app.MapPost("/api/printouts/inspect", async (HttpRequest request, IDocumentIntake intake, CancellationToken cancellationToken) =>
@@ -301,12 +361,20 @@ public static class QualityEndpoints
                 inspection.ParseMethod,
                 reading.OutOfSpec));
         });
-        app.MapPost("/api/printouts/confirm", async (PrintoutConfirmBody? body, IDocumentIntake intake, CancellationToken cancellationToken) =>
+        app.MapPost("/api/printouts/confirm", async (
+            PrintoutConfirmBody? body,
+            IDocumentIntake intake,
+            CommandGateway commands,
+            HttpContext http,
+            IConfiguration configuration,
+            CancellationToken cancellationToken) =>
         {
             if (body is null)
             {
                 throw new IntakeValidationException("Printout body is required.");
             }
+
+            commands.Ensure(LifecycleTypes.DocumentUpload, Caller(http, configuration));
 
             if (body.ObservedAt is null || body.Value is null || body.SpecMinimum is null || body.SpecMaximum is null)
             {
@@ -359,8 +427,15 @@ public static class QualityEndpoints
             }).ToArray();
             return Results.Ok(rows);
         });
-        app.MapPost("/api/injector/scenarios/{scenarioId}", async (string scenarioId, ScenarioTrigger scenarios, CancellationToken cancellationToken) =>
+        app.MapPost("/api/injector/scenarios/{scenarioId}", async (
+            string scenarioId,
+            ScenarioTrigger scenarios,
+            CommandGateway commands,
+            HttpContext http,
+            IConfiguration configuration,
+            CancellationToken cancellationToken) =>
         {
+            commands.Ensure(LifecycleTypes.ScenarioStart, Caller(http, configuration));
             var run = await scenarios.RunAsync(scenarioId, cancellationToken).ConfigureAwait(false);
             if (run is null)
             {
@@ -369,12 +444,21 @@ public static class QualityEndpoints
 
             return Results.Json(run, statusCode: StatusCodes.Status202Accepted);
         });
-        app.MapPost("/api/faults", async (FaultBody? body, IFaultInjectionService faults, PlantSimulation plant, CancellationToken cancellationToken) =>
+        app.MapPost("/api/faults", async (
+            FaultBody? body,
+            IFaultInjectionService faults,
+            PlantSimulation plant,
+            CommandGateway commands,
+            HttpContext http,
+            IConfiguration configuration,
+            CancellationToken cancellationToken) =>
         {
             if (body is null)
             {
                 throw new IntakeValidationException("Fault body is required.");
             }
+
+            commands.Ensure(LifecycleTypes.FaultInject, Caller(http, configuration));
 
             if (body.RootCauseCategory is null)
             {
@@ -398,6 +482,11 @@ public static class QualityEndpoints
                 cancellationToken).ConfigureAwait(false);
             plant.TryApplyFreeForm(body.ToolId ?? string.Empty, body.ChamberId, body.Parameter ?? string.Empty, body.Shape ?? string.Empty, body.Magnitude.Value);
             return Results.Json(new FaultAcceptedResponse(accepted.FaultId, accepted.CorrelationId), statusCode: StatusCodes.Status202Accepted);
+        });
+        app.MapGet("/api/trace/{eventId}", (string eventId, CausalTraceService traces) =>
+        {
+            var trace = traces.Build(eventId);
+            return trace is null ? Results.NotFound() : Results.Ok(trace);
         });
         app.MapGet("/api/audit", async (QualityDbContext db, CancellationToken cancellationToken) =>
         {
@@ -468,3 +557,5 @@ public static class QualityEndpoints
 }
 
 public sealed record AdminSessionResponse(string Mode, bool IsAdmin, string DisplayName);
+
+public sealed record ResetBody(string? Kind);

@@ -29,7 +29,8 @@ public sealed class EvidenceItem
         DateTimeOffset observedAt,
         string? toolId,
         string? externalRef,
-        EvidenceReading? reading = null)
+        EvidenceReading? reading = null,
+        IReadOnlyList<string>? sourceEventIds = null)
     {
         if (id.IsEmpty)
         {
@@ -44,6 +45,7 @@ public sealed class EvidenceItem
         ToolId = string.IsNullOrWhiteSpace(toolId) ? null : toolId.Trim();
         ExternalRef = string.IsNullOrWhiteSpace(externalRef) ? null : externalRef.Trim();
         Reading = Normalize(reading);
+        SourceEventIds = NormalizeIds(sourceEventIds);
     }
 
     public EvidenceId Id { get; }
@@ -61,6 +63,36 @@ public sealed class EvidenceItem
     public string? ExternalRef { get; }
 
     public EvidenceReading? Reading { get; }
+
+    public IReadOnlyList<string> SourceEventIds { get; }
+
+    public EvidenceItem WithSourceEventIds(IReadOnlyList<string> sourceEventIds) =>
+        new(Id, Source, Title, Excerpt, ObservedAt, ToolId, ExternalRef, Reading, sourceEventIds);
+
+    private static List<string> NormalizeIds(IReadOnlyList<string>? sourceEventIds)
+    {
+        if (sourceEventIds is null || sourceEventIds.Count == 0)
+        {
+            return [];
+        }
+
+        var list = new List<string>(sourceEventIds.Count);
+        foreach (var id in sourceEventIds)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                continue;
+            }
+
+            var trimmed = id.Trim();
+            if (!list.Contains(trimmed, StringComparer.Ordinal))
+            {
+                list.Add(trimmed);
+            }
+        }
+
+        return list;
+    }
 
     private static EvidenceReading? Normalize(EvidenceReading? reading)
     {

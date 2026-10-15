@@ -176,6 +176,28 @@ export type EvidenceItem = {
   specHigh?: number | null;
   toolName?: string | null;
   chamberName?: string | null;
+  sourceEventIds?: string[] | null;
+};
+
+export type TraceNode = {
+  eventId: string;
+  type: string;
+  summary: string;
+  occurredAt: string;
+  toolId?: string | null;
+  toolName?: string | null;
+  value?: number | null;
+  limitLow?: number | null;
+  limitHigh?: number | null;
+  children: TraceNode[];
+  truncated: boolean;
+};
+
+export type CausalTrace = {
+  focusEventId: string;
+  rootEventId: string;
+  ancestors: TraceNode[];
+  tree: TraceNode;
 };
 
 export type Hypothesis = {
