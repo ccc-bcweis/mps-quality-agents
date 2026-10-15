@@ -12,6 +12,7 @@ namespace Mps.Api.Demo;
 /// <summary>
 /// Clears faults, alerts, tickets, investigations, approvals, and CAPAs.
 /// The fleet is rebuilt empty of incidents. Catalog faults are not replayed.
+/// Plant metadata lives outside this database, so reset does not read or delete it.
 /// </summary>
 public sealed class DemoResetService
 {

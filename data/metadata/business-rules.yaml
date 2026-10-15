@@ -1,0 +1,320 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# First match wins, lowest order first. Only the last rule may leave when empty.
+rules:
+  - id: rule-critical-human
+    name: Critical signal needs a person
+    order: 10
+    whenPlain: When the severity is critical.
+    thenPlain: Open a ticket, set the priority to critical, send it to the shift lead, ask a person to review it, and start an investigation.
+    why: A critical signal can affect the wafers or the tool, so a person reviews it before any corrective action.
+    when:
+      severity: critical
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: critical }
+      - { type: route-to-queue, queue: Shift lead }
+      - { type: escalate-to-human }
+      - { type: auto-investigate }
+  - id: rule-evidence-conflict
+    name: Conflicting records stop for a person
+    order: 20
+    whenPlain: When the records disagree.
+    thenPlain: Ask a person to review the case.
+    why: Conflicting records are not enough to choose a cause. A person decides what to trust. An escalated case cannot skip that review and go straight to a corrective action.
+    when:
+      evidenceSufficiency: contradictory
+    actions:
+      - { type: escalate-to-human }
+  - id: rule-evidence-gap
+    name: Thin evidence stops for a person
+    order: 30
+    whenPlain: When the evidence is not enough.
+    thenPlain: Ask a person to review the case.
+    why: Thin evidence needs a person before the case can move on.
+    when:
+      evidenceSufficiency: insufficient
+    actions:
+      - { type: escalate-to-human }
+  - id: rule-low-confidence
+    name: Low confidence stops for a person
+    order: 40
+    whenPlain: When the investigation confidence is below one half.
+    thenPlain: Ask a person to review the case.
+    why: A weak ranking is not ready for a person to approve as the cause.
+    when:
+      confidenceBelow: 0.5
+    actions:
+      - { type: escalate-to-human }
+  - id: rule-evidence-enough
+    name: Enough evidence keeps the investigation going
+    order: 50
+    whenPlain: When the evidence is enough to keep investigating.
+    thenPlain: Keep the investigation going.
+    why: Enough evidence means the investigation can continue without opening another ticket.
+    when:
+      evidenceSufficiency: sufficient
+    actions:
+      - { type: auto-investigate }
+  - id: rule-sc1-edge-ring
+    name: Edge ring temperature on the second etch tool
+    order: 110
+    whenPlain: When a high alert is on chuck temperature at the etch tool in bay two.
+    thenPlain: Open a ticket, set the priority to high, send it to process engineering, and start an investigation.
+    why: That pattern matches an edge ring or an engineering change on one chamber. A person is not required yet.
+    when:
+      requiresAlert: true
+      severityAtLeast: high
+      toolId: E-02
+      parameterId: escTemperature
+      parameterClass: temperature
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: high }
+      - { type: route-to-queue, queue: Process engineering }
+      - { type: auto-investigate }
+  - id: rule-sc2-calibration
+    name: Calibration temperature on the first etch tool
+    order: 120
+    whenPlain: When a high alert is on chuck temperature at the etch tool in bay one.
+    thenPlain: Open a ticket, set the priority to high, send it to maintenance, and start an investigation.
+    why: That pattern matches an overdue calibration. Maintenance owns the ticket.
+    when:
+      requiresAlert: true
+      severityAtLeast: high
+      toolId: E-01
+      parameterId: escTemperature
+      parameterClass: temperature
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: high }
+      - { type: route-to-queue, queue: Maintenance }
+      - { type: auto-investigate }
+  - id: rule-sc3-gas-lot
+    name: Shared etch gas flow
+    order: 130
+    whenPlain: When a high alert is on the etch gas flow.
+    thenPlain: Open a ticket, set the priority to high, send it to supplier quality, and start an investigation.
+    why: The same gas step on the etch tools points at a shared gas lot. Supplier quality owns the ticket.
+    when:
+      requiresAlert: true
+      severityAtLeast: high
+      parameterId: cf4Flow
+      parameterClass: flow
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: high }
+      - { type: route-to-queue, queue: Supplier quality }
+      - { type: auto-investigate }
+  - id: rule-sc4-drift
+    name: Etch rate drift
+    order: 140
+    whenPlain: When a high alert is on etch rate at the etch tool in bay one.
+    thenPlain: Open a ticket, set the priority to high, send it to process engineering, and start an investigation.
+    why: A rising etch rate is process drift. Process engineering owns the ticket.
+    when:
+      requiresAlert: true
+      severityAtLeast: high
+      toolId: E-01
+      parameterId: etchRate
+      parameterClass: output
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: high }
+      - { type: route-to-queue, queue: Process engineering }
+      - { type: auto-investigate }
+  - id: rule-sc5-precursor
+    name: Shared film thickness
+    order: 150
+    whenPlain: When a high alert is on film thickness.
+    thenPlain: Open a ticket, set the priority to high, send it to supplier quality, and start an investigation.
+    why: The same film thickness step at more than one plant points at one precursor lot. Supplier quality owns the ticket.
+    when:
+      requiresAlert: true
+      severityAtLeast: high
+      parameterId: filmThickness
+      parameterClass: output
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: high }
+      - { type: route-to-queue, queue: Supplier quality }
+      - { type: auto-investigate }
+  - id: rule-sc6-source-power
+    name: Source power on the first etch tool
+    order: 160
+    whenPlain: When a high alert is on source power at the etch tool in bay one.
+    thenPlain: Open a ticket, set the priority to high, send it to maintenance, and start an investigation.
+    why: A source power printout points at the equipment. Maintenance owns the ticket.
+    when:
+      requiresAlert: true
+      severityAtLeast: high
+      toolId: E-01
+      parameterId: rfSourcePower
+      parameterClass: power
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: high }
+      - { type: route-to-queue, queue: Maintenance }
+      - { type: auto-investigate }
+  - id: rule-sc7-bearing
+    name: Vibration on the second deposition tool
+    order: 170
+    whenPlain: When a high alert is on vibration at the deposition tool in bay two.
+    thenPlain: Open a ticket, set the priority to high, send it to maintenance, and start an investigation.
+    why: That vibration pattern matches a pump bearing. Maintenance owns the ticket.
+    when:
+      requiresAlert: true
+      severityAtLeast: high
+      toolId: D-02
+      parameterId: vibrationRms
+      parameterClass: vibration
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: high }
+      - { type: route-to-queue, queue: Maintenance }
+      - { type: auto-investigate }
+  - id: rule-sc8-recipe-edit
+    name: Bias power on the extra etch tool
+    order: 180
+    whenPlain: When a high alert is on bias power at the extra etch tool on the left.
+    thenPlain: Open a ticket, set the priority to high, send it to process engineering, and start an investigation.
+    why: That pattern matches an unauthorized recipe edit. Process engineering owns the ticket.
+    when:
+      requiresAlert: true
+      severityAtLeast: high
+      toolId: E-03
+      parameterId: rfBiasPower
+      parameterClass: power
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: high }
+      - { type: route-to-queue, queue: Process engineering }
+      - { type: auto-investigate }
+  - id: rule-ironwood-chuck
+    name: Ironwood chuck temperature
+    order: 190
+    whenPlain: When a high alert is on chuck temperature at Ironwood Fab.
+    thenPlain: Open a ticket, set the priority to high, send it to process engineering, and start an investigation.
+    why: Chuck temperature alerts at Ironwood Fab go to process engineering.
+    when:
+      requiresAlert: true
+      severityAtLeast: high
+      siteId: ironwood
+      parameterId: escTemperature
+      parameterClass: temperature
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: high }
+      - { type: route-to-queue, queue: Process engineering }
+      - { type: auto-investigate }
+  - id: rule-quality-nonconformance
+    name: Quality nonconformance
+    order: 500
+    whenPlain: When someone logs a quality nonconformance.
+    thenPlain: Open a ticket, set the priority to high, and send it to quality review.
+    why: A nonconformance is already a formal defect record, so it becomes a ticket without asking a person to take over.
+    when:
+      channel: QmsNonconformance
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: high }
+      - { type: route-to-queue, queue: Quality review }
+  - id: rule-supplier-notice
+    name: Supplier quality notice
+    order: 510
+    whenPlain: When a supplier sends a quality notice.
+    thenPlain: Open a ticket, set the priority to high, and send it to supplier quality.
+    why: A supplier notice is about material, so supplier quality owns the ticket.
+    when:
+      channel: SupplierQualityNotice
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: high }
+      - { type: route-to-queue, queue: Supplier quality }
+  - id: rule-fault-script
+    name: Scripted fault
+    order: 520
+    whenPlain: When a scripted fault is injected.
+    thenPlain: Open a ticket, set the priority to high, and send it to process engineering.
+    why: A scripted fault is a presenter story. It still opens a ticket the same way a real signal would.
+    when:
+      channel: FaultInjector
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: high }
+      - { type: route-to-queue, queue: Process engineering }
+  - id: rule-operator-report
+    name: Operator report
+    order: 530
+    whenPlain: When an operator reports a problem.
+    thenPlain: Open a ticket and send it to process engineering.
+    why: An operator report is a new case. It opens a ticket, and it does not ask a person to take over unless the severity is critical.
+    when:
+      channel: OperatorReport
+    actions:
+      - { type: open-ticket }
+      - { type: route-to-queue, queue: Process engineering }
+  - id: rule-repeat-signal
+    name: Repeated high alert
+    order: 670
+    whenPlain: When the same high alert has already happened at least three times.
+    thenPlain: Open a ticket, set the priority to high, send it to process engineering, and start an investigation.
+    why: A signal that keeps returning needs a ticket.
+    when:
+      requiresAlert: true
+      severityAtLeast: high
+      repeatAtLeast: 3
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: high }
+      - { type: route-to-queue, queue: Process engineering }
+      - { type: auto-investigate }
+  - id: rule-western-electric-one
+    name: Point far outside the normal spread
+    order: 680
+    whenPlain: When a high alert cites the first western electric rule.
+    thenPlain: Open a ticket, set the priority to high, send it to process engineering, and start an investigation.
+    why: A point far outside the normal spread is a real excursion, so it opens a ticket.
+    when:
+      requiresAlert: true
+      severityAtLeast: high
+      alertRuleId: western-electric-1
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: high }
+      - { type: route-to-queue, queue: Process engineering }
+      - { type: auto-investigate }
+  - id: rule-high-signal
+    name: Any other high alert
+    order: 700
+    whenPlain: When any other high alert arrives.
+    thenPlain: Open a ticket, set the priority to high, send it to process engineering, and start an investigation.
+    why: A high statistical alert opens a ticket and starts an investigation.
+    when:
+      requiresAlert: true
+      severityAtLeast: high
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: high }
+      - { type: route-to-queue, queue: Process engineering }
+      - { type: auto-investigate }
+  - id: rule-watch-signal
+    name: Watch a medium or low alert
+    order: 800
+    whenPlain: When an alert is medium or low.
+    thenPlain: Watch the signal. Do not open a ticket.
+    why: A medium or low statistical signal stays on the alert list until it becomes high.
+    when:
+      requiresAlert: true
+      severityAtMost: medium
+    actions: []
+  - id: rule-intake-default
+    name: Anything else still opens a ticket
+    order: 900
+    whenPlain: When nothing earlier matches.
+    thenPlain: Open a ticket, set the priority to medium, and send it to process engineering.
+    why: Every new case still gets a ticket so it is not lost.
+    when: {}
+    actions:
+      - { type: open-ticket }
+      - { type: set-priority, priority: medium }
+      - { type: route-to-queue, queue: Process engineering }

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.meridian-precision.example/metadata/lines.schema.json",
+  "title": "LinesMetadataFile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["lines"],
+  "properties": {
+    "lines": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "capabilityId", "name", "lineType", "sequence", "characteristics", "includesLineIds", "toolIds"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "capabilityId": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "lineType": {
+            "type": "string",
+            "enum": ["end-to-end", "photoresist-strip", "clean", "thin-film-deposition", "wafer-etch"]
+          },
+          "sequence": { "type": "integer", "minimum": 0 },
+          "characteristics": { "type": "string", "minLength": 1 },
+          "includesLineIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "toolIds": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    }
+  }
+}

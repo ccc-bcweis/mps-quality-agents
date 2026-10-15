@@ -5,6 +5,7 @@ using Mps.Application.Intake;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
 using Mps.Application.Tests.Fakes;
+using Mps.Application.Tests.Metadata;
 using Mps.Domain.Equipment;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
@@ -210,7 +211,7 @@ public sealed class IntakeServiceTests
                 fleet.Add(tool);
             }
 
-            Service = new IntakeService(fleet, Incidents, Ticketing, NullQualityNotifier.Instance, new FixedTime(Now));
+            Service = new IntakeService(fleet, Incidents, Ticketing, NullQualityNotifier.Instance, new FixedTime(Now), DemoRules.Engine);
         }
 
         public InMemoryIncidentLog Incidents { get; }

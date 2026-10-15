@@ -1,0 +1,70 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+tools:
+  - id: C-01
+    name: Clean tool in bay one
+    siteId: northwater
+    lineId: nw-clean
+    toolType: Wet clean
+    simulated: true
+    inputs: &cleanInputs
+      - name: Stripped wafer
+        description: A wafer ready for the wet rinse.
+    outputs: &cleanOutputs
+      - name: Clean wafer
+        description: Chemicals and loose particles are rinsed off.
+    parameters: &cleanParameters
+      - { id: bathTemperature, name: Bath temperature, parameterClass: temperature, unit: C, telemetry: true, lcl: 60, ucl: 70, alertLow: 62, alertHigh: 68, nominal: 65 }
+      - { id: ambientPressure, name: Ambient pressure, parameterClass: pressure, unit: atm, telemetry: true, lcl: 0.98, ucl: 1.02, alertLow: 0.99, alertHigh: 1.01, nominal: 1 }
+      - { id: sc1Flow, name: First bath flow, parameterClass: flow, unit: L/min, telemetry: true, lcl: 0.5, ucl: 2, alertLow: 0.8, alertHigh: 1.5, nominal: 1.1 }
+      - { id: sc2Flow, name: Second bath flow, parameterClass: flow, unit: L/min, telemetry: true, lcl: 0.5, ucl: 2, alertLow: 0.8, alertHigh: 1.5, nominal: 1.1 }
+      - { id: diwFlow, name: Rinse flow, parameterClass: flow, unit: L/min, telemetry: true, lcl: 0.8, ucl: 3, alertLow: 1.2, alertHigh: 2.2, nominal: 1.6 }
+      - { id: megasonicPower, name: Megasonic power, parameterClass: power, unit: W, telemetry: true, lcl: 500, ucl: 900, alertLow: 550, alertHigh: 850, nominal: 700 }
+      - { id: spinChuckRunout, name: Spin chuck runout, parameterClass: alignment, unit: mm, telemetry: true, lcl: 0, ucl: 0.15, alertLow: 0.01, alertHigh: 0.1, nominal: 0.02 }
+      - { id: vibrationRms, name: Vibration, parameterClass: vibration, unit: mm/s, telemetry: true, lcl: 0, ucl: 3, alertLow: 0.3, alertHigh: 2.5, nominal: 0.9 }
+      - { id: particlesAdders, name: Particle adders, parameterClass: particles, unit: count, telemetry: true, lcl: 0, ucl: 5, alertLow: 0.5, alertHigh: 4, nominal: 1 }
+      - { id: residueCount, name: Residue count, parameterClass: particles, unit: count, telemetry: true, lcl: 0, ucl: 5, alertLow: 0, alertHigh: 3, nominal: 0 }
+  - id: C-02
+    name: Clean tool in bay two
+    siteId: northwater
+    lineId: nw-clean
+    toolType: Wet clean
+    simulated: true
+    inputs: *cleanInputs
+    outputs: *cleanOutputs
+    parameters: *cleanParameters
+  - id: I-C-01
+    name: Ironwood clean tool
+    siteId: ironwood
+    lineId: iw-clean
+    toolType: Wet clean
+    simulated: true
+    inputs: *cleanInputs
+    outputs: *cleanOutputs
+    parameters: *cleanParameters
+  - id: P-C-01
+    name: Lumen clean tool, first
+    siteId: lumen
+    lineId: lm-clean
+    toolType: Wet clean
+    simulated: true
+    inputs: *cleanInputs
+    outputs: *cleanOutputs
+    parameters: *cleanParameters
+  - id: P-C-02
+    name: Lumen clean tool, second
+    siteId: lumen
+    lineId: lm-clean
+    toolType: Wet clean
+    simulated: true
+    inputs: *cleanInputs
+    outputs: *cleanOutputs
+    parameters: *cleanParameters
+  - id: P-C-03
+    name: Lumen clean tool, third
+    siteId: lumen
+    lineId: lm-clean
+    toolType: Wet clean
+    simulated: true
+    inputs: *cleanInputs
+    outputs: *cleanOutputs
+    parameters: *cleanParameters

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.meridian-precision.example/metadata/company.schema.json",
+  "title": "CompanyMetadataFile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["company"],
+  "properties": {
+    "company": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "purpose", "description", "industry"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "purpose": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "industry": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

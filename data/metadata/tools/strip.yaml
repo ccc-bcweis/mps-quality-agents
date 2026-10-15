@@ -1,0 +1,67 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+tools:
+  - id: S-01
+    name: Strip tool in bay one
+    siteId: northwater
+    lineId: nw-strip
+    toolType: Photoresist strip
+    simulated: true
+    inputs: &stripInputs
+      - name: Etched wafer
+        description: A wafer that still carries photoresist after etch.
+    outputs: &stripOutputs
+      - name: Stripped wafer
+        description: The resist is gone and the wafer is ready to rinse.
+    parameters: &stripParameters
+      - { id: temperature, name: Strip temperature, parameterClass: temperature, unit: C, telemetry: true, lcl: 250, ucl: 280, alertLow: 253, alertHigh: 277, nominal: 262 }
+      - { id: chamberPressure, name: Chamber pressure, parameterClass: pressure, unit: Torr, telemetry: true, lcl: 0.8, ucl: 1.5, alertLow: 0.9, alertHigh: 1.4, nominal: 1.1 }
+      - { id: remotePlasmaPower, name: Remote plasma power, parameterClass: power, unit: W, telemetry: true, lcl: 2000, ucl: 4000, alertLow: 2200, alertHigh: 3800, nominal: 2800 }
+      - { id: o2Flow, name: Oxygen flow, parameterClass: flow, unit: sccm, telemetry: true, lcl: 1000, ucl: 4000, alertLow: 1500, alertHigh: 3000, nominal: 2000 }
+      - { id: ashRate, name: Ash rate, parameterClass: output, unit: nm/min, telemetry: true, lcl: 100, ucl: 2500, alertLow: 340, alertHigh: 2260, nominal: 1100 }
+      - { id: particlesAdders, name: Particle adders, parameterClass: particles, unit: count, telemetry: true, lcl: 0, ucl: 10, alertLow: 1, alertHigh: 8, nominal: 3 }
+      - { id: vibrationRms, name: Vibration, parameterClass: vibration, unit: mm/s, telemetry: true, lcl: 0, ucl: 2.5, alertLow: 0.25, alertHigh: 2.25, nominal: 0.7 }
+  - id: S-02
+    name: Strip tool in bay two
+    siteId: northwater
+    lineId: nw-strip
+    toolType: Photoresist strip
+    simulated: true
+    inputs: *stripInputs
+    outputs: *stripOutputs
+    parameters: *stripParameters
+  - id: I-S-01
+    name: Ironwood strip tool
+    siteId: ironwood
+    lineId: iw-strip
+    toolType: Photoresist strip
+    simulated: true
+    inputs: *stripInputs
+    outputs: *stripOutputs
+    parameters: *stripParameters
+  - id: P-S-01
+    name: Lumen strip tool, first
+    siteId: lumen
+    lineId: lm-strip
+    toolType: Photoresist strip
+    simulated: true
+    inputs: *stripInputs
+    outputs: *stripOutputs
+    parameters: *stripParameters
+  - id: P-S-02
+    name: Lumen strip tool, second
+    siteId: lumen
+    lineId: lm-strip
+    toolType: Photoresist strip
+    simulated: true
+    inputs: *stripInputs
+    outputs: *stripOutputs
+    parameters: *stripParameters
+  - id: P-S-03
+    name: Lumen strip tool, third
+    siteId: lumen
+    lineId: lm-strip
+    toolType: Photoresist strip
+    simulated: true
+    inputs: *stripInputs
+    outputs: *stripOutputs
+    parameters: *stripParameters

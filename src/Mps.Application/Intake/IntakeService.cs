@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
 using Mps.Application.Errors;
+using Mps.Application.Metadata;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
 using Mps.Application.Writes;
@@ -25,24 +26,28 @@ public sealed class IntakeService : IIntakeService
     private readonly ITicketingPort _ticketing;
     private readonly IQualityNotifier _notifier;
     private readonly TimeProvider _time;
+    private readonly IBusinessRuleEngine _rules;
 
     public IntakeService(
         IFleetCatalog fleet,
         IIncidentLog incidents,
         ITicketingPort ticketing,
         IQualityNotifier notifier,
-        TimeProvider time)
+        TimeProvider time,
+        IBusinessRuleEngine rules)
     {
         ArgumentNullException.ThrowIfNull(fleet);
         ArgumentNullException.ThrowIfNull(incidents);
         ArgumentNullException.ThrowIfNull(ticketing);
         ArgumentNullException.ThrowIfNull(notifier);
         ArgumentNullException.ThrowIfNull(time);
+        ArgumentNullException.ThrowIfNull(rules);
         _fleet = fleet;
         _incidents = incidents;
         _ticketing = ticketing;
         _notifier = notifier;
         _time = time;
+        _rules = rules;
     }
 
     public async Task<IntakeResult> AcceptAsync(IntakeSubmission submission, CancellationToken cancellationToken)
@@ -91,9 +96,20 @@ public sealed class IntakeService : IIntakeService
         var open = await _incidents.FindOpenAsync(toolId, parameter, cancellationToken).ConfigureAwait(false);
         if (open is not null)
         {
-            return new IntakeResult(open.Incident, null, linkedToExisting: true, open.EscalationRequired);
+            return new IntakeResult(open.Incident, null, linkedToExisting: true, open.EscalationRequired, open.Decision);
         }
 
+        var decision = _rules.Evaluate(new RuleContext
+        {
+            Severity = severity,
+            ToolId = submission.ToolId,
+            ParameterId = parameter,
+            Channel = submission.Channel.ToString(),
+            AlertRuleId = submission.AlertRuleId,
+            RepeatCount = submission.RepeatCount,
+            Confidence = submission.Confidence,
+            EvidenceSufficiency = submission.EvidenceSufficiency,
+        });
         var occurredAt = submission.OccurredAt ?? _time.GetUtcNow();
         var correlationId = submission.CorrelationId ?? "intake-" + Guid.NewGuid().ToString("N");
         var chamberId = string.IsNullOrWhiteSpace(submission.ChamberId) ? null : submission.ChamberId.Trim();
@@ -107,12 +123,12 @@ public sealed class IntakeService : IIntakeService
             summary,
             correlationId,
             occurredAt);
-        var stored = new StoredIncident(incident, SeverityRules.ForcesEscalation(severity), hasEscalated: false);
+        var stored = new StoredIncident(incident, decision.EscalatesToHuman, hasEscalated: false, decision);
         await _incidents.AddAsync(stored, cancellationToken).ConfigureAwait(false);
         var ticket = await _ticketing.OpenAsync(incident, summary, cancellationToken).ConfigureAwait(false);
         await _notifier.TicketOpenedAsync(ticket, cancellationToken).ConfigureAwait(false);
         await _notifier.IncidentChangedAsync(incident, cancellationToken).ConfigureAwait(false);
-        return new IntakeResult(incident, ticket, linkedToExisting: false, stored.EscalationRequired);
+        return new IntakeResult(incident, ticket, linkedToExisting: false, stored.EscalationRequired, decision);
     }
 
     private static bool ContainsDisallowedControl(string value)
