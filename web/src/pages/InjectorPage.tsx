@@ -180,7 +180,7 @@ export function InjectorPage() {
             </li>
             <li>The investigation starts from that alert. Nothing is staged on this click.</li>
           </ol>
-          <p className="mt-3 font-mono text-mps-micro text-mps-muted">One request carries one tool id. The S4 preset sends E-01 and E-02.</p>
+          <p className="mt-3 font-mono text-mps-micro text-mps-muted">One request carries one tool id.</p>
         </section>
       </div>
     </div>
