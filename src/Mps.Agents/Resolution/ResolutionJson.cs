@@ -36,7 +36,7 @@ public static class ResolutionJson
             request = JsonSerializer.Deserialize<ResolutionRequest>(json, Options);
             return request is not null;
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException)
         {
             return false;
         }
@@ -100,9 +100,9 @@ public static class ResolutionJson
                 return false;
             }
 
-            if (root.TryGetProperty("outcome", out var outcome) && outcome.GetString() == "escalate")
+            if (root.TryGetProperty("outcome", out var outcome) && Str(outcome) == "escalate")
             {
-                escalateReason = root.TryGetProperty("reason", out var reason) ? reason.GetString() : null;
+                escalateReason = root.TryGetProperty("reason", out var reason) ? Str(reason) : null;
                 if (string.IsNullOrWhiteSpace(escalateReason))
                 {
                     error = "escalation is missing a reason";
@@ -112,16 +112,22 @@ public static class ResolutionJson
                 return true;
             }
 
-            if (!root.TryGetProperty("category", out var categoryElement) || !TryCategory(categoryElement.GetString(), out var category))
+            if (!root.TryGetProperty("category", out var categoryElement) || !TryCategory(Str(categoryElement), out var category))
             {
                 error = "resolution category is missing";
                 return false;
             }
 
-            var cause = root.TryGetProperty("cause", out var causeElement) ? causeElement.GetString() : null;
+            var cause = root.TryGetProperty("cause", out var causeElement) ? Str(causeElement) : null;
             if (string.IsNullOrWhiteSpace(cause))
             {
                 error = "resolution cause is missing";
+                return false;
+            }
+
+            if (TryCategory(cause.Trim(), out _))
+            {
+                error = "resolution cause repeats the class name; describe the record, tool, and mechanism";
                 return false;
             }
 
@@ -160,7 +166,7 @@ public static class ResolutionJson
                 matrix);
             return true;
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException)
         {
             error = "resolution reply is not JSON";
             return false;
@@ -197,7 +203,7 @@ public static class ResolutionJson
 
         foreach (var item in array.EnumerateArray())
         {
-            var value = item.GetString();
+            var value = Str(item);
             if (!Guid.TryParse(value, out var parsed) || parsed == Guid.Empty)
             {
                 error = "resolution evidence id is not a GUID";
@@ -239,7 +245,7 @@ public static class ResolutionJson
                 return false;
             }
 
-            var text = item.TryGetProperty("whyItMatters", out var textElement) ? textElement.GetString() : null;
+            var text = item.TryGetProperty("whyItMatters", out var textElement) ? Str(textElement) : null;
             if (string.IsNullOrWhiteSpace(text))
             {
                 error = "whyItMatters text is missing";
@@ -249,7 +255,7 @@ public static class ResolutionJson
             string? signalId = null;
             if (item.TryGetProperty("signalId", out var signalElement) && signalElement.ValueKind == JsonValueKind.String)
             {
-                signalId = signalElement.GetString();
+                signalId = Str(signalElement);
             }
 
             explanations.Add(new CitedEvidence(evidenceId, text, signalId));
@@ -281,7 +287,7 @@ public static class ResolutionJson
                 return false;
             }
 
-            if (!item.TryGetProperty("category", out var categoryElement) || !TryCategory(categoryElement.GetString(), out var category))
+            if (!item.TryGetProperty("category", out var categoryElement) || !TryCategory(Str(categoryElement), out var category))
             {
                 error = "evidenceMatrix category is missing";
                 return false;
@@ -293,14 +299,14 @@ public static class ResolutionJson
                 return false;
             }
 
-            if (!item.TryGetProperty("stance", out var stanceElement) || !TryStance(stanceElement.GetString(), out var stance))
+            if (!item.TryGetProperty("stance", out var stanceElement) || !TryStance(Str(stanceElement), out var stance))
             {
                 error = "evidenceMatrix stance is missing";
                 return false;
             }
 
             var why = item.TryGetProperty("whyItMatters", out var whyElement) && whyElement.ValueKind == JsonValueKind.String
-                ? whyElement.GetString()
+                ? Str(whyElement)
                 : null;
             matrix.Add(new EvidenceMatrixEntry(category, evidenceId, stance, why));
         }
@@ -316,7 +322,7 @@ public static class ResolutionJson
             return false;
         }
 
-        var value = idElement.GetString();
+        var value = Str(idElement);
         if (!Guid.TryParse(value, out var parsed) || parsed == Guid.Empty)
         {
             return false;
@@ -366,7 +372,7 @@ public static class ResolutionJson
 
         foreach (var item in array.EnumerateArray())
         {
-            var value = item.GetString();
+            var value = Str(item);
             if (!string.IsNullOrWhiteSpace(value))
             {
                 values.Add(value.Trim());
@@ -408,5 +414,30 @@ public static class ResolutionJson
             RootCauseCategory.ProcessDrift => "processDrift",
             _ => throw new ArgumentOutOfRangeException(nameof(category)),
         };
+    }
+
+    /// <summary>Models sometimes return an object or number where a string belongs. Take the text instead of throwing.</summary>
+    private static string? Str(JsonElement element)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.String:
+                return element.GetString();
+            case JsonValueKind.Null:
+            case JsonValueKind.Undefined:
+                return null;
+            case JsonValueKind.Object:
+                foreach (var name in new[] { "text", "summary", "description", "cause", "action", "value", "reason", "id" })
+                {
+                    if (element.TryGetProperty(name, out var inner) && inner.ValueKind == JsonValueKind.String)
+                    {
+                        return inner.GetString();
+                    }
+                }
+
+                return element.GetRawText();
+            default:
+                return element.GetRawText();
+        }
     }
 }

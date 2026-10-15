@@ -40,7 +40,7 @@ public sealed class ResolutionAgent : IResolutionAgent
         {
             if (call == 2)
             {
-                messages.Add(new ChatMessage(ChatRole.User, "The previous reply was not the JSON object. Return only the JSON object."));
+                messages.Add(new ChatMessage(ChatRole.User, "The previous reply was not the JSON object (" + (problem ?? "not JSON") + "). Return only the JSON object."));
             }
 
             var response = await _chat.GetResponseAsync(messages, cancellationToken: cancellationToken).ConfigureAwait(false);
