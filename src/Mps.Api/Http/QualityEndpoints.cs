@@ -31,6 +31,8 @@ namespace Mps.Api.Http;
 
 public static class QualityEndpoints
 {
+    private const int ReplayCaptureTicks = 90;
+
     private static readonly JsonSerializerOptions ResetJson = new(JsonSerializerDefaults.Web);
 
     public static void Map(WebApplication app)
@@ -392,7 +394,7 @@ public static class QualityEndpoints
             mode.UseReplay(scenario.Id, messages);
             return Results.Ok(mode.Snapshot());
         });
-        app.MapPost("/api/admin/replay/{scenarioId}", async (string scenarioId, HttpContext http, IConfiguration configuration, ScenarioReplayRecorder recorder, ScenarioTrigger trigger, CancellationToken cancellationToken) =>
+        app.MapPost("/api/admin/replay/{scenarioId}", async (string scenarioId, HttpContext http, IConfiguration configuration, ScenarioReplayRecorder recorder, ScenarioTrigger trigger, Mps.Api.Live.PlantSimulation plant, Mps.Api.Bus.TelemetryPublisher publisher, CancellationToken cancellationToken) =>
         {
             var caller = Caller(http, configuration);
             if (!caller.IsAdmin)
@@ -413,6 +415,13 @@ public static class QualityEndpoints
                     if (run is null)
                     {
                         throw new InvalidOperationException("Scenario " + scenario.Id + " did not run.");
+                    }
+
+                    // The scenario streams through the plant tick. Step the plant so the recording holds the streamed readings.
+                    for (var tick = 0; tick < ReplayCaptureTicks; tick++)
+                    {
+                        plant.AdvanceTick();
+                        await publisher.PublishPendingAsync(token).ConfigureAwait(false);
                     }
                 },
                 cancellationToken).ConfigureAwait(false);

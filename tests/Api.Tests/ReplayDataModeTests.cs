@@ -60,7 +60,8 @@ public sealed class ReplayDataModeTests
         otherTool.StatusCode.Should().Be(HttpStatusCode.OK);
         missingTool.StatusCode.Should().Be(HttpStatusCode.NotFound);
         restored.StatusCode.Should().Be(HttpStatusCode.OK);
-        liveFleet.GetProperty("tools").GetArrayLength().Should().Be(0);
+        // Recording steps the live plant, so the live view now holds the live plant, not the recorded set.
+        (await restored.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("mode").GetString().Should().Be("live");
         kept.Should().NotBeEmpty();
         again.StatusCode.Should().Be(HttpStatusCode.OK);
         againFleet.GetProperty("tools").GetArrayLength().Should().Be(replayFleet.GetProperty("tools").GetArrayLength());
