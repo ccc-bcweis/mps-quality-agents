@@ -147,6 +147,10 @@ public sealed class PrintoutEndpointTests
         alert.GetProperty("severity").GetString().Should().Be("high", "a reading outside the printed spec is an alarm, not a watch");
         var tool = await client.GetFromJsonAsync<JsonElement>("/api/tools/E-01/live");
         tool.GetProperty("status").GetString().Should().Be("alarm");
+        var audit = await client.GetFromJsonAsync<JsonElement>("/api/audit");
+        audit.GetProperty("entries").EnumerateArray().Should().Contain(entry =>
+            entry.GetProperty("kind").GetString() == "manualReading"
+            && entry.GetProperty("summary").GetString()!.Contains("corrected by the user from the printed", StringComparison.Ordinal));
     }
 
     [Fact]

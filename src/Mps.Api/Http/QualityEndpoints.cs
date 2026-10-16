@@ -670,9 +670,9 @@ public static class QualityEndpoints
             var trace = traces.Build(eventId);
             return trace is null ? Results.NotFound() : Results.Ok(trace);
         });
-        app.MapGet("/api/audit", async (QualityDbContext db, CancellationToken cancellationToken) =>
+        app.MapGet("/api/audit", async (QualityDbContext db, IManualMeasurementLog measurements, CancellationToken cancellationToken) =>
         {
-            return Results.Ok(await AuditLog.ReadAsync(db, cancellationToken).ConfigureAwait(false));
+            return Results.Ok(await AuditLog.ReadAsync(db, measurements, cancellationToken).ConfigureAwait(false));
         });
         app.MapGet("/api/metrics", async (
             IMetricsLog metrics,
