@@ -18,7 +18,7 @@ public static class SiteResponses
             ToThroughput(site.Kpis));
     }
 
-    public static SiteDetailResponse ToDetail(SimulatedSite site)
+    public static SiteDetailResponse ToDetail(SimulatedSite site, Func<string, string>? liveStatus = null)
     {
         return new SiteDetailResponse(
             site.Id,
@@ -29,7 +29,7 @@ public static class SiteResponses
             site.Bays.Select(bay => new SiteBayDetailResponse(
                 bay.Id,
                 bay.Name,
-                bay.Tools.Select(ToPlaced).ToArray(),
+                bay.Tools.Select(tool => ToPlaced(tool, liveStatus)).ToArray(),
                 ToThroughput(bay.Kpis))).ToArray(),
             site.Flows.Select(flow => new WaferFlowResponse(flow.FromBayId, flow.ToBayId, flow.Label)).ToArray(),
             ToThroughput(site.Kpis));
@@ -55,10 +55,15 @@ public static class SiteResponses
                     row.Reason)).ToArray())).ToArray());
     }
 
-    private static PlacedToolResponse ToPlaced(PlacedTool tool)
+    private static PlacedToolResponse ToPlaced(PlacedTool tool, Func<string, string>? liveStatus)
     {
-        return new PlacedToolResponse(tool.Id, tool.Name, tool.Family, tool.Model, tool.Status, tool.X, tool.Y, tool.SiteId);
+        // Status comes from the same live rule as the Production line and tool page, never the site seed.
+        var status = liveStatus is null ? tool.Status : SiteStatus(liveStatus(tool.Id));
+        return new PlacedToolResponse(tool.Id, tool.Name, tool.Family, tool.Model, status, tool.X, tool.Y, tool.SiteId);
     }
+
+    /// <summary>The site contract spells watch as warning.</summary>
+    public static string SiteStatus(string liveStatus) => liveStatus == "watch" ? "warning" : liveStatus;
 
     private static ThroughputResponse ToThroughput(ThroughputKpi kpis)
     {

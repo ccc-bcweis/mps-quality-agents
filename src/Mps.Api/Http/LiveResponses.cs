@@ -27,6 +27,16 @@ public static class LiveResponses
         return new FleetLiveResponse(plant.SimulatedNow, tools);
     }
 
+    /// <summary>
+    /// The one tool status every view reads: Sites, Production line tiles and the tool page.
+    /// Worst live reading against its operating window; nominal when the tool has no readings yet.
+    /// </summary>
+    public static string ToolStatus(PlantSimulation plant, string toolId)
+    {
+        ArgumentNullException.ThrowIfNull(plant);
+        return MapAll(plant, plant.Log.SnapshotForTool(toolId)).Status;
+    }
+
     public static ToolLiveResponse? Tool(PlantSimulation plant, string toolId)
     {
         ArgumentNullException.ThrowIfNull(plant);
