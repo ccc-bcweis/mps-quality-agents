@@ -301,6 +301,8 @@ export const handlers = [
       outOfSpec: true,
     }),
   ),
+  http.get("/api/manual-readings", () => HttpResponse.json([])),
+  http.get("/api/manual-readings/:evidenceId/file", () => new HttpResponse(null, { status: 404 })),
   http.post("/api/printouts/confirm", () =>
     HttpResponse.json({
       evidenceId: "77777777-7777-4777-8777-777777777777",

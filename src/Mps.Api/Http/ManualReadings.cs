@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
 using System.Globalization;
+
 using Mps.Api.Live;
 using Mps.Application.Printouts;
 

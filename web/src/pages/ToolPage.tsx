@@ -2,8 +2,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import { FAMILY_PROCESS } from "../api/labels";
-import type { Alert, Incident, Investigation, Ticket, Tool } from "../api/types";
+import { FAMILY_PROCESS, formatStamp } from "../api/labels";
+import type { Alert, Incident, Investigation, ManualReading, Ticket, Tool } from "../api/types";
+import type { SchematicReading } from "../components/ToolSchematic";
+import type { FleetSensor } from "../fleet/sensors";
 import { linkedForTool } from "../fleet/linkedRecords";
 import { ruleLabel } from "../api/labels";
 import { SpcChart } from "../components/SpcChart";
@@ -21,6 +23,8 @@ import { statusTone, storyFor, windowRows } from "../fleet/catalog";
 import { sensorsForTool } from "../fleet/sensors";
 import { liveReadingMap, overlayWindows, seriesLimits, seriesPoints, storyWithLive } from "../live/overlay";
 import { usePolled } from "../live/usePolled";
+import { latestManual, manualMarker, manualTile, seriesFor } from "../live/manual";
+import { statusReasons } from "../live/statusReasons";
 import { fleetSensors, fleetTemplates } from "virtual:fleet-sensors";
 
 export function ToolPage() {
@@ -36,6 +40,8 @@ export function ToolPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const focused = useRef(false);
   const live = usePolled(() => api.getToolLive(toolId), toolId);
+  const manualReadings = usePolled(() => api.listManualReadings(toolId), `manual:${toolId}`);
+  const liveAlerts = usePolled(() => api.listAlerts(toolId, "all"), `alerts:${toolId}`);
   const story = tool ? storyFor(tool, alerts) : null;
   useSetLifecycle(story?.lifecycle ?? "alert", story?.escalated ?? false);
   const toolSensors = useMemo(
@@ -115,7 +121,12 @@ export function ToolPage() {
   const livePoints = seriesPoints(live, seriesParameter, selected?.chamberId);
   const serverLimits = seriesLimits(live, seriesParameter, selected?.chamberId);
   const pointCount = livePoints && livePoints.length > 0 ? livePoints.length : 60;
-  const readings = liveReadingMap(live?.readings);
+  const readings = withManualTiles(liveReadingMap(live?.readings), toolSensors, manualReadings);
+  const chartManual = manualMarker(
+    seriesFor(live, seriesParameter, selected?.chamberId),
+    latestManual(manualReadings, seriesParameter, selected?.chamberId),
+  );
+  const reasons = statusReasons(shown.status, liveAlerts ?? alerts, manualReadings ?? []);
   const windows = overlayWindows(windowRows(tool), live?.readings);
   const linked = linkedForTool(tool.id, { ...records, alerts });
 
@@ -167,6 +178,21 @@ export function ToolPage() {
           </div>
         ))}
       </div>
+      {reasons.length > 0 ? (
+        <section aria-label="Why this status" className={`${panel} mt-3`}>
+          <h2 className="mb-1 text-mps-title font-semibold">Why {tool.id} shows {shown.status === "alarm" ? "alarm" : "watch"}</h2>
+          <ul className="grid gap-1">
+            {reasons.map((reason) => (
+              <li key={reason.alertId} className="flex flex-wrap items-center gap-2">
+                <Link className={btnSm} to={`/alerts/${reason.alertId}`}>
+                  Alert
+                </Link>
+                <span className="min-w-0 flex-1 break-words">{reason.text}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       <PlainMetrics toolIds={[tool.id]} />
       <div className={`${panel} mt-3`}>
         <ToolSchematic family={tool.family} sensors={toolSensors} selectedId={selectedId} onSelect={showSensor} readings={readings} />
@@ -188,6 +214,7 @@ export function ToolPage() {
           endValue={chart.endValue}
           points={livePoints}
           cumulative={selected?.kind === "cumulative"}
+          manual={selected?.kind === "cumulative" ? undefined : chartManual}
         />
         {selected?.kind === "cumulative" ? (
           <p className="mt-2">
@@ -228,7 +255,7 @@ export function ToolPage() {
         </div>
         <div className={panel}>
           <h2 className="mb-2 text-mps-title font-semibold">Linked records</h2>
-          {linked.tickets.length + linked.alerts.length + linked.investigations.length === 0 ? (
+          {linked.tickets.length + linked.alerts.length + linked.investigations.length + (manualReadings?.length ?? 0) === 0 ? (
             <p className="text-mps-muted">No tickets, alerts or investigations on this tool yet.</p>
           ) : (
             <ul aria-label="Linked records" className="grid gap-1.5">
@@ -246,6 +273,22 @@ export function ToolPage() {
                     Alert
                   </Link>
                   <span className="min-w-0 flex-1 break-words">{ruleLabel(alert.rule)}</span>
+                </li>
+              ))}
+              {(manualReadings ?? []).slice(0, 5).map((reading) => (
+                <li key={reading.evidenceId} className="flex flex-wrap items-center gap-2" data-manual-reading="true">
+                  {reading.fileUrl ? (
+                    <a className={btnSm} href={reading.fileUrl} target="_blank" rel="noreferrer">
+                      Printout
+                    </a>
+                  ) : (
+                    <span className="font-mono text-mps-micro uppercase text-mps-muted">Manual</span>
+                  )}
+                  <span className={`min-w-0 flex-1 break-words ${reading.outOfSpec ? "text-mps-alarm-text" : ""}`}>
+                    {reading.source} Observed {formatStamp(reading.observedAt)}
+                    {reading.printedObservedAt ? ` (printed ${formatStamp(reading.printedObservedAt)}, set to now by the user)` : ""}.
+                    {reading.olderThanWindow ? " Older than the chart window." : ""}
+                  </span>
                 </li>
               ))}
               {linked.investigations.slice(0, 5).map((investigation) => (
@@ -271,4 +314,20 @@ export function ToolPage() {
       </div>
     </div>
   );
+}
+
+/** Puts a confirmed bench reading on its sensor tile: the printed value, a Manual badge, colored by the printed spec. */
+function withManualTiles(
+  map: Map<string, SchematicReading> | undefined,
+  sensors: FleetSensor[],
+  manual: ManualReading[] | null,
+): Map<string, SchematicReading> | undefined {
+  if (!manual || manual.length === 0) return map;
+  const next = new Map(map ?? []);
+  for (const sensor of sensors) {
+    if (!sensor.parameter) continue;
+    const reading = latestManual(manual, sensor.parameter, sensor.chamberId);
+    if (reading && (!reading.chamberId || !sensor.chamberId || reading.chamberId === sensor.chamberId)) next.set(sensor.id, manualTile(reading));
+  }
+  return next;
 }

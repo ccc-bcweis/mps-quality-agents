@@ -7,6 +7,7 @@ import type { Incident, PrintoutConfirmation, PrintoutConfirmRequest, Severity, 
 import { CaseBriefs } from "../components/CaseBriefs";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
+import { ObservedAtField } from "../components/ObservedAtField";
 import { HistoryNote, RecordList } from "../components/RecordList";
 import { btnPrimary, field, panel, btn, btnSm } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
@@ -233,10 +234,14 @@ export function TicketsPage() {
                 Chamber
                 <input className={field} value={draft.chamberId ?? ""} onChange={(event) => patchDraft({ chamberId: event.target.value })} />
               </label>
-              <label className="text-mps-label text-mps-muted">
-                Observed at
-                <input className={field} value={draft.observedAt} onChange={(event) => patchDraft({ observedAt: event.target.value })} />
-              </label>
+              <ObservedAtField
+                toolId={draft.toolId}
+                chamberId={draft.chamberId}
+                parameter={draft.parameter}
+                value={draft.observedAt}
+                printed={draft.printedObservedAt}
+                onChange={(observedAt, printedObservedAt) => patchDraft({ observedAt, printedObservedAt })}
+              />
               <label className="text-mps-label text-mps-muted">
                 Instrument
                 <select className={field} value={draft.instrument} onChange={(event) => patchDraft({ instrument: event.target.value })}>
@@ -329,6 +334,7 @@ export function TicketsPage() {
         specMaximum: inspection.specMaximum,
         shape: inspection.shape,
         operatorInitials: inspection.operatorInitials,
+        fileId: inspection.fileId ?? null,
       });
     } catch (reason: unknown) {
       setDraft(null);

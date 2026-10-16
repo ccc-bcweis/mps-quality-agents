@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import type { ManualMarker } from "../live/manual";
 import { mpsColor } from "../brand/colors";
 import { Term } from "./Term";
 import { buildSeries, limits, seedFrom, violatesWesternElectric1, violatesWesternElectric2, type SeriesShape, type SpcPoint } from "../spc/series";
@@ -14,6 +15,7 @@ export function SpcChart({
   endValue,
   points: livePoints,
   cumulative = false,
+  manual,
 }: {
   seedKey: string;
   label: string;
@@ -26,6 +28,8 @@ export function SpcChart({
   points?: SpcPoint[];
   /** A running count. Drawn as a trend with no SPC limits or rule checks. */
   cumulative?: boolean;
+  /** A confirmed bench reading, drawn as its own marker. */
+  manual?: ManualMarker;
 }) {
   const points = livePoints && livePoints.length > 0 ? livePoints : buildSeries({ seed: seedFrom(seedKey), mean, sigma, shape, endValue });
   const values = points.map((point) => point.value);
@@ -68,7 +72,10 @@ export function SpcChart({
           <CartesianGrid stroke={mpsColor.line} strokeDasharray="3 3" />
           <XAxis dataKey="index" tick={{ fill: mpsColor.muted, fontSize: 10 }} stroke={mpsColor.line} />
           <YAxis
-            domain={[Math.min(band.lcl3 - center.sigma, ...values), Math.max(band.ucl3 + center.sigma, ...values)]}
+            domain={[
+              Math.min(band.lcl3 - center.sigma, ...values, ...(manual ? [manual.value] : [])),
+              Math.max(band.ucl3 + center.sigma, ...values, ...(manual ? [manual.value] : [])),
+            ]}
             tick={{ fill: mpsColor.muted, fontSize: 10 }}
             tickFormatter={(value: number) => axisNumber(value, center.sigma)}
             tickCount={6}
@@ -88,6 +95,17 @@ export function SpcChart({
           <ReferenceLine y={band.lcl3} stroke={mpsColor.alarm} strokeDasharray="4 3" />
           <ReferenceLine y={band.mean} stroke={mpsColor.muted} label={{ value: "mean", fill: mpsColor.muted, fontSize: 10, position: "right" }} />
           <Line type="monotone" dataKey="value" stroke={mpsColor.secondary} strokeWidth={1.4} dot={false} isAnimationActive={false} />
+          {manual ? (
+            <ReferenceDot
+              x={points[Math.min(manual.index, points.length - 1)]?.index ?? 0}
+              y={manual.value}
+              r={7}
+              fill={manual.outOfSpec ? mpsColor.alarm : mpsColor.nominal}
+              stroke={mpsColor.warn}
+              strokeWidth={3}
+              label={{ value: manual.clamped ? "Manual (older)" : "Manual", fill: mpsColor.warn, fontSize: 10, position: "top" }}
+            />
+          ) : null}
         </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -96,6 +114,11 @@ export function SpcChart({
         <span>σ2 <i className="inline-block h-2 w-3 bg-mps-warn" /></span>
         <span>σ3 <i className="inline-block h-2 w-3 bg-mps-alarm" /></span>
         <span className="text-mps-secondary">{finding}</span>
+        {manual ? (
+          <span data-manual-marker="true" className="text-mps-warn">
+            {manual.label}.{manual.clamped ? " Observed before this window, so it is pinned to the left edge." : ""}
+          </span>
+        ) : null}
         <span>
           <Term id="UCL" spellOut={false} /> and <Term id="LCL" spellOut={false} /> are the outer chart lines.
         </span>

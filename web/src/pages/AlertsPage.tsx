@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { formatStamp, ruleLabel, severityTone, severityWord } from "../api/labels";
-import type { Alert, Incident, Ticket, Tool } from "../api/types";
+import type { Alert, Incident, Ticket, Tool, ManualReading } from "../api/types";
 import { CaseBriefs } from "../components/CaseBriefs";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
@@ -25,6 +25,7 @@ export function AlertsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [tools, setTools] = useState<Tool[]>([]);
+  const [manual, setManual] = useState<ManualReading[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const injected = params.get("injected") === "1";
@@ -32,9 +33,16 @@ export function AlertsPage() {
   useEffect(() => {
     let cancelled = false;
     setReady(false);
-    Promise.all([api.listAlerts(undefined, siteId), api.listTickets(siteId), api.listIncidents(siteId), api.listTools()])
-      .then(([nextAlerts, nextTickets, nextIncidents, nextTools]) => {
+    Promise.all([
+      api.listAlerts(undefined, siteId),
+      api.listTickets(siteId),
+      api.listIncidents(siteId),
+      api.listTools(),
+      api.listManualReadings().catch(() => [] as ManualReading[]),
+    ])
+      .then(([nextAlerts, nextTickets, nextIncidents, nextTools, nextManual]) => {
         if (cancelled) return;
+        setManual(nextManual);
         setAlerts(nextAlerts);
         setTickets(nextTickets);
         setIncidents(nextIncidents);
@@ -115,6 +123,21 @@ export function AlertsPage() {
           <p className="mt-2">
             <Explain text={ruleLabel(selected.rule)} /> · {selected.parameter}
           </p>
+          {(() => {
+            const reading = manual.find((row) => row.alertId === selected.id);
+            if (!reading) return null;
+            return (
+              <p className="mt-2" data-alert-source="true">
+                Source: {reading.source} Observed {formatStamp(reading.observedAt)}
+                {reading.printedObservedAt ? ` (printed ${formatStamp(reading.printedObservedAt)}, set to now by the user)` : ""}.{" "}
+                {reading.fileUrl ? (
+                  <a className={btnSm} href={reading.fileUrl} target="_blank" rel="noreferrer">
+                    Open printout
+                  </a>
+                ) : null}
+              </p>
+            );
+          })()}
           <p className="mt-2">
             <Link className={btn} to="/alerts">All alerts</Link>
           </p>

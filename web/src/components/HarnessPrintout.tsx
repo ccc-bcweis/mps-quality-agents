@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { api, ApiProblem } from "../api/client";
 import type { PrintoutConfirmRequest, PrintoutInspection } from "../api/types";
+import { ObservedAtField } from "./ObservedAtField";
 
 const TIP =
   "Upload a bench printout. The console reads the sheet, then you confirm the reading. A reading outside the printed limits also moves the tool.";
@@ -67,6 +68,16 @@ export function HarnessPrintout() {
           <p className="whitespace-nowrap text-mps-body text-sn-gold-wash">
             Read {draft.value} {draft.unit} on {draft.toolId}.
           </p>
+          <ObservedAtField
+            toolId={draft.toolId}
+            chamberId={draft.chamberId}
+            parameter={draft.parameter}
+            value={draft.observedAt}
+            printed={draft.printedObservedAt}
+            onChange={(observedAt, printedObservedAt) => setDraft((current) => (current ? { ...current, observedAt, printedObservedAt } : current))}
+            className="rounded border border-sn-gold bg-transparent px-2 py-1 font-mono text-mps-body text-sn-gold-wash"
+            labelClassName="flex flex-wrap items-center gap-2 text-mps-body text-sn-gold-wash"
+          />
           <button className={harnessBtn} type="button" disabled={pending} onClick={() => void onConfirm()}>
             {pending ? "Saving…" : "Confirm reading"}
           </button>
@@ -99,5 +110,6 @@ function toDraft(inspection: PrintoutInspection): PrintoutConfirmRequest {
     specMaximum: inspection.specMaximum,
     shape: inspection.shape,
     operatorInitials: inspection.operatorInitials,
+    fileId: inspection.fileId ?? null,
   };
 }

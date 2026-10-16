@@ -36,6 +36,8 @@ public sealed class ConsoleApiContractTests
         "/api/faults",
         "/api/printouts/inspect",
         "/api/printouts/confirm",
+        "/api/manual-readings",
+        "/api/manual-readings/{evidenceId}/file",
         "/api/admin/session",
         "/api/admin/reset/progress",
         "/api/admin/reset",

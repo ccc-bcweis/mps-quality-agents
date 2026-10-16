@@ -508,6 +508,47 @@ paths:
                 $ref: "#/components/schemas/PrintoutConfirmation"
         "400":
           $ref: "#/components/responses/BadRequest"
+  /api/manual-readings:
+    get:
+      tags: [printouts]
+      operationId: listManualReadings
+      summary: Confirmed bench readings, newest observed first
+      parameters:
+        - name: toolId
+          in: query
+          required: false
+          schema: { type: string }
+        - name: siteId
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: Manual readings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ManualReading"
+  /api/manual-readings/{evidenceId}/file:
+    get:
+      tags: [printouts]
+      operationId: getManualReadingFile
+      summary: The uploaded printout sheet for a manual reading
+      parameters:
+        - name: evidenceId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The original file
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        "404":
+          description: No file was kept for this reading
   /api/admin/session:
     get:
       tags: [admin]
@@ -1620,6 +1661,11 @@ components:
           enum: [text, model]
         outOfSpec:
           type: boolean
+        fileId:
+          type: string
+          format: uuid
+          nullable: true
+          description: The uploaded file the server kept. Send it on confirm to attach the sheet as evidence.
     PrintoutConfirmRequest:
       type: object
       additionalProperties: false
@@ -1651,6 +1697,40 @@ components:
         operatorInitials:
           type: string
           nullable: true
+        printedObservedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: The time printed on the sheet when the user pressed Now. Kept on the record for the audit trail.
+        fileId:
+          type: string
+          format: uuid
+          nullable: true
+    ManualReading:
+      type: object
+      additionalProperties: false
+      required: [evidenceId, incidentId, toolId, siteId, parameter, instrument, value, unit, specMinimum, specMaximum, outOfSpec, observedAt, olderThanWindow, source]
+      properties:
+        evidenceId: { type: string, format: uuid }
+        incidentId: { type: string, format: uuid }
+        alertId: { type: string, format: uuid, nullable: true }
+        toolId: { type: string }
+        siteId: { type: string }
+        chamberId: { type: string, nullable: true }
+        parameter: { type: string }
+        instrument: { type: string }
+        value: { type: number }
+        unit: { type: string }
+        specMinimum: { type: number }
+        specMaximum: { type: number }
+        outOfSpec: { type: boolean }
+        observedAt: { type: string, format: date-time }
+        printedObservedAt: { type: string, format: date-time, nullable: true }
+        olderThanWindow: { type: boolean, description: True when the observed time is before the oldest point the chart window holds. }
+        operatorInitials: { type: string, nullable: true }
+        fileName: { type: string, nullable: true }
+        fileUrl: { type: string, nullable: true }
+        source: { type: string, description: Plain sentence naming the instrument and printout. }
     PrintoutConfirmation:
       type: object
       additionalProperties: false
