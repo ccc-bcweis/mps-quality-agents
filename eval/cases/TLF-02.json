@@ -1,0 +1,15 @@
+{
+  "id": "TLF-02",
+  "group": "toolFailure",
+  "groundTruth": null,
+  "expected": {
+    "behavior": "escalate",
+    "category": null,
+    "forbiddenInCause": []
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "D-03",
+    "signalShape": "unknown"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "DRF-02",
+  "group": "processDrift",
+  "groundTruth": null,
+  "expected": {
+    "behavior": "recommend",
+    "category": "processDrift",
+    "forbiddenInCause": []
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "E-02",
+    "signalShape": "ramp",
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000401"
+    ],
+    "pmSummaries": []
+  }
+}

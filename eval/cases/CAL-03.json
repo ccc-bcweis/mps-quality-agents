@@ -1,0 +1,33 @@
+{
+  "id": "CAL-03",
+  "group": "equipmentCalibrationOrAlignment",
+  "groundTruth": null,
+  "expected": {
+    "behavior": "recommend",
+    "category": "equipmentCalibrationOrAlignment",
+    "forbiddenInCause": []
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "E-01",
+    "signalShape": "step",
+    "overdueInstruments": [
+      "RF match sensor"
+    ],
+    "overdueEvidenceIds": [
+      "00000000-0000-0000-0000-000000000202"
+    ],
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000212"
+    ],
+    "notes": [
+      {
+        "id": "00000000-0000-0000-0000-000000000202",
+        "externalRef": "CAL-E-01",
+        "title": "RF match sensor calibration overdue",
+        "detail": "Calibration of RF match sensor on E-01 is 21 days overdue.",
+        "source": "enterprise"
+      }
+    ]
+  }
+}

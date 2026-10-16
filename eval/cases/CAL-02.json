@@ -1,0 +1,33 @@
+{
+  "id": "CAL-02",
+  "group": "equipmentCalibrationOrAlignment",
+  "groundTruth": "FLT-CAL-S02",
+  "expected": {
+    "behavior": "recommend",
+    "category": "equipmentCalibrationOrAlignment",
+    "forbiddenInCause": []
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "S-02",
+    "signalShape": "step",
+    "overdueInstruments": [
+      "O2 MFC"
+    ],
+    "overdueEvidenceIds": [
+      "00000000-0000-0000-0000-000000000201"
+    ],
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000211"
+    ],
+    "notes": [
+      {
+        "id": "00000000-0000-0000-0000-000000000201",
+        "externalRef": "CAL-S-02",
+        "title": "O2 MFC calibration overdue",
+        "detail": "Calibration of O2 MFC on S-02 is 21 days overdue.",
+        "source": "enterprise"
+      }
+    ]
+  }
+}

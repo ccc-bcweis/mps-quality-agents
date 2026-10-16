@@ -1,0 +1,18 @@
+{
+  "id": "MIS-01",
+  "group": "missingEvidence",
+  "groundTruth": null,
+  "expected": {
+    "behavior": "escalate",
+    "category": null,
+    "forbiddenInCause": []
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "D-01",
+    "signalShape": "step",
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000500"
+    ]
+  }
+}

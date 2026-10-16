@@ -2,7 +2,15 @@
 
 Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
-This folder is the home for the LLM evaluation suite. The runner is E1 and is not in this change. Nothing here calls a model, and this folder holds no keys.
+This folder is the home for the LLM evaluation suite. Nothing here calls a model, and this folder holds no keys.
+
+## Run it
+
+- `python3 eval/gen_cases.py` writes the 24 cases in `eval/cases/` from the ground-truth faults (`data/groundtruth`). Expectations come from ground truth, never from runner output.
+- `dotnet run --project eval/Eval.Runner` runs every case through the replay-mode ranker (`RootCauseRanker`, no network model), writes `eval/results/latest.json`, prints misses, and exits non-zero when a gate fails.
+- CI runs it on every push (step "Eval (replay mode, gates)"), and `EvalSuiteTests` fails if the committed `latest.json` is stale.
+- The API ships `latest.json` and `/api/metrics` reports its `categoryAccuracy` until live investigations carry graded categories.
+- Replay scores the deterministic ranker. A live-model run with promptfoo and an independent citation judge is the next step and is not in CI.
 
 ## Tools
 

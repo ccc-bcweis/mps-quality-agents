@@ -694,7 +694,7 @@ public static class QualityEndpoints
                 rollup.Mode,
                 rollup.CompletionRate,
                 rollup.GroundingScore,
-                rollup.CategoryAccuracy,
+                rollup.CategoryAccuracy ?? EvalAccuracy.Value,
                 rollup.ToolFailureCount,
                 rollup.LatencyP95Ms,
                 MetricsRollup.CostPerSuccess(spendToday, rollup.SuccessfulToday),
@@ -738,6 +738,21 @@ public static class QualityEndpoints
             ? caller with { IsAdmin = true }
             : caller;
     }
+
+    /// <summary>Top-1 category accuracy from the CI replay eval (eval/results/latest.json), shipped with the build.</summary>
+    private static readonly Lazy<double?> EvalAccuracy = new(() =>
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "eval", "latest.json");
+        if (!File.Exists(path))
+        {
+            return null;
+        }
+
+        using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+        return doc.RootElement.TryGetProperty("categoryAccuracy", out var value) && value.ValueKind == System.Text.Json.JsonValueKind.Number
+            ? value.GetDouble()
+            : null;
+    });
 
     private static async Task<double> LiveSpendAsync(IServiceProvider services, TimeProvider time, double fallback, CancellationToken cancellationToken)
     {

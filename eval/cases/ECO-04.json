@@ -1,0 +1,36 @@
+{
+  "id": "ECO-04",
+  "group": "engineeringChange",
+  "groundTruth": null,
+  "expected": {
+    "behavior": "recommend",
+    "category": "engineeringChange",
+    "forbiddenInCause": []
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "D-02",
+    "signalShape": "oscillation",
+    "ecoIds": [
+      "ECO-4490"
+    ],
+    "ecoEvidenceIds": [
+      "00000000-0000-0000-0000-000000000103"
+    ],
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000113"
+    ],
+    "notes": [
+      {
+        "id": "00000000-0000-0000-0000-000000000103",
+        "externalRef": "ECO-4490",
+        "title": "Edge ring revision on D-02",
+        "detail": "Replace the chamber A edge ring on D-02. Recipe setpoints are unchanged.",
+        "source": "enterprise"
+      }
+    ],
+    "pmSummaries": [
+      "WO-PM-D02-11 routine PM closed; no parts changed."
+    ]
+  }
+}

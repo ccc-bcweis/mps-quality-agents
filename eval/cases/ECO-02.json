@@ -1,0 +1,36 @@
+{
+  "id": "ECO-02",
+  "group": "engineeringChange",
+  "groundTruth": "FLT-ECO-4471",
+  "expected": {
+    "behavior": "recommend",
+    "category": "engineeringChange",
+    "forbiddenInCause": []
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "E-02",
+    "signalShape": "step",
+    "ecoIds": [
+      "ECO-4471"
+    ],
+    "ecoEvidenceIds": [
+      "00000000-0000-0000-0000-000000000101"
+    ],
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000111"
+    ],
+    "notes": [
+      {
+        "id": "00000000-0000-0000-0000-000000000101",
+        "externalRef": "ECO-4471",
+        "title": "Edge ring revision on E-02",
+        "detail": "Replace the chamber A edge ring on E-02. Recipe setpoints are unchanged.",
+        "source": "enterprise"
+      }
+    ],
+    "pmSummaries": [
+      "WO-PM-8821 routine PM closed; no parts changed."
+    ]
+  }
+}

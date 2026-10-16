@@ -12,6 +12,7 @@
     <ProjectReference Include="..\Mps.Simulator\Mps.Simulator.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\..\eval\results\latest.json" Link="eval\latest.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\..\data\fleet\*.yaml" Link="data\fleet\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
