@@ -46,6 +46,7 @@ public sealed partial class StreamSpcPublisher
     {
         _started.Clear();
         _watch.Clear();
+        _checked.Clear();
     }
 
     public async Task PublishAsync(CancellationToken cancellationToken)
@@ -147,20 +148,19 @@ public sealed partial class StreamSpcPublisher
             }
 
             var key = reading.ToolId + "|" + reading.ChamberId + "|" + reading.Parameter;
-            if (taken.Contains(key) || _watch.ContainsKey(key))
+            if (taken.Contains(key))
             {
                 continue;
             }
 
-            var window = _plant.WindowAt(reading.ToolId, reading.Parameter, reading.At);
-            if (window is null)
-            {
-                continue;
-            }
-
-            var z = (reading.Value - window.Nominal) / Math.Max(window.Sigma, 1e-6);
-            var outside = reading.Value < window.Minimum || reading.Value > window.Maximum;
-            if (Math.Abs(z) <= SpcCoverage.LimitSigma && !outside)
+            // Every point that arrived since the last check, not only the newest: a single breaking sample
+            // (a printout, or a spike followed by a normal reading in the same tick) must still reach the rules.
+            var checkedTo = _checked.TryGetValue(key, out var last) ? last : DateTimeOffset.MinValue;
+            var fresh = _plant.Log.Window(reading.ToolId, reading.ChamberId, reading.Parameter, SpcCoverage.RecentReadings)
+                .Where(point => point.At > checkedTo)
+                .ToArray();
+            _checked[key] = reading.At;
+            if (!fresh.Any(point => Breaks(reading.ToolId, reading.Parameter, point)))
             {
                 continue;
             }
@@ -176,6 +176,20 @@ public sealed partial class StreamSpcPublisher
         }
 
         return samples;
+    }
+
+    private readonly ConcurrentDictionary<string, DateTimeOffset> _checked = new(StringComparer.Ordinal);
+
+    private bool Breaks(string toolId, string parameter, LivePoint point)
+    {
+        var window = _plant.WindowAt(toolId, parameter, point.At);
+        if (window is null)
+        {
+            return false;
+        }
+
+        var z = (point.Value - window.Nominal) / Math.Max(window.Sigma, 1e-6);
+        return Math.Abs(z) > SpcCoverage.LimitSigma || point.Value < window.Minimum || point.Value > window.Maximum;
     }
 
     /// <summary>Samples for signals whose fault is gone, used only to clear their alerts.</summary>

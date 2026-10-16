@@ -62,14 +62,8 @@ public sealed class ScenarioTrigger
         {
             if (string.Equals(scenario.Id, "SC-6", StringComparison.OrdinalIgnoreCase))
             {
-                var fromPrintout = await RunOscilloscopePrintoutAsync(scenario, cancellationToken).ConfigureAwait(false);
-                if (fromPrintout is not null)
-                {
-                    return fromPrintout;
-                }
-
-                // The file is missing, so the command subscriber did not apply a signal. Apply the stream signal once.
-                _plant.ApplyStream(scenario);
+                // The oscilloscope sheet is evidence that enters as one manual sample, the same path as any reading.
+                await AddOscilloscopePrintoutAsync(cancellationToken).ConfigureAwait(false);
             }
 
             var telemetry = Rebase(ScriptedScenarioCatalog.Sample(scenario, _plant.Runtime.Fleet, _plant.Runtime.Seed), _plant.SimulatedNow);
@@ -108,34 +102,34 @@ public sealed class ScenarioTrigger
     private static double SigmaOf(ScriptedScenario scenario) =>
         scenario.MagnitudeKind == MagnitudeKind.Percent ? Math.CopySign(4.5d, scenario.Magnitude) : scenario.Magnitude;
 
-    /// <summary>
-    /// SC-6 is the oscilloscope sheet. Confirming it injects the oscillation. The catalog signal is not applied as well.
-    /// A missing file falls back to the normal scenario path.
-    /// </summary>
-    private async Task<ScenarioRun?> RunOscilloscopePrintoutAsync(ScriptedScenario scenario, CancellationToken cancellationToken)
+    /// <summary>SC-6's oscilloscope sheet, confirmed at the plant clock (the Now button) so it joins the live window.</summary>
+    private async Task AddOscilloscopePrintoutAsync(CancellationToken cancellationToken)
     {
         var path = FindSample("oscilloscope-e01.pdf");
         if (path is null)
         {
-            return null;
+            return;
         }
 
         var bytes = await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false);
         var inspection = await _printouts.InspectAsync(bytes, "application/pdf", "oscilloscope-e01.pdf", cancellationToken).ConfigureAwait(false);
-        var confirmed = await _printouts.ConfirmAsync(inspection.Reading, cancellationToken).ConfigureAwait(false);
-        if (confirmed.FaultId is not Guid faultId || string.IsNullOrWhiteSpace(confirmed.CorrelationId))
+        var printed = inspection.Reading;
+        var reading = new PrintoutReading(
+            printed.ToolId,
+            printed.ChamberId,
+            _plant.SimulatedNow,
+            printed.Instrument,
+            printed.Parameter,
+            printed.Value,
+            printed.Unit,
+            printed.SpecMinimum,
+            printed.SpecMaximum,
+            printed.Shape,
+            printed.OperatorInitials)
         {
-            return null;
-        }
-
-        var telemetry = Rebase(ScriptedScenarioCatalog.Sample(scenario, _plant.Runtime.Fleet, _plant.Runtime.Seed), _plant.SimulatedNow);
-        var points = telemetry.Select(point => new ScenarioPointResponse(point.ToolId, point.ChamberId, point.Parameter, point.At, point.Value)).ToArray();
-        return new ScenarioRun(
-            scenario.Id,
-            _plant.Runtime.Seed,
-            faultId,
-            confirmed.CorrelationId,
-            points);
+            PrintedObservedAt = printed.ObservedAt,
+        };
+        await _printouts.ConfirmAsync(reading, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<CommandAmbient.Opened?> OpenCommandAsync(ScriptedScenario scenario, CancellationToken cancellationToken)

@@ -141,6 +141,7 @@ describe("tool detail with a manual reading", () => {
             observedAt: "2026-08-29T09:40:00Z",
             printedObservedAt: null,
             olderThanWindow: true,
+            active: true,
             operatorInitials: "JL",
             fileName: "thermocouple-logger-e01.png",
             fileUrl: "/api/manual-readings/77777777-7777-4777-8777-777777777777/file",
@@ -157,7 +158,7 @@ describe("tool detail with a manual reading", () => {
             chamberId: "E-02-A",
             parameter: "escTemperature",
             severity: "high",
-            rule: "manualMeasurement",
+            rule: "WE1",
             raisedAt: "2026-09-01T00:01:00Z",
             correlationId: "printout-1",
             status: "active",
@@ -194,5 +195,81 @@ describe("tool detail with a manual reading", () => {
     const linked = screen.getByRole("list", { name: "Linked records" });
     expect(linked).toHaveTextContent(/Older than the chart window/);
     expect(screen.getByRole("link", { name: "Printout" })).toHaveAttribute("href", "/api/manual-readings/77777777-7777-4777-8777-777777777777/file");
+  });
+});
+
+describe("tool detail after the manual reading is resolved", () => {
+  it("shows the live tile, no alarm reason, and the marker as resolved history", async () => {
+    server.use(
+      http.get("/api/manual-readings", () =>
+        HttpResponse.json([
+          {
+            evidenceId: "77777777-7777-4777-8777-777777777777",
+            incidentId: "66666666-6666-4666-8666-666666666666",
+            alertId: "44444444-4444-4444-8444-444444444444",
+            toolId: "E-02",
+            siteId: "northwater",
+            chamberId: "E-02-A",
+            parameter: "escTemperature",
+            instrument: "thermocoupleLogger",
+            value: 68,
+            unit: "C",
+            specMinimum: 40,
+            specMaximum: 60,
+            outOfSpec: true,
+            observedAt: "2026-09-01T00:00:10Z",
+            printedObservedAt: "2026-08-29T09:40:00Z",
+            olderThanWindow: false,
+            active: false,
+            operatorInitials: "JL",
+            fileName: "thermocouple-logger-e01.png",
+            fileUrl: "/api/manual-readings/77777777-7777-4777-8777-777777777777/file",
+            source: "Manual reading from the thermocouple logger printout thermocouple-logger-e01.png, operator JL: 68 C (spec 40-60), out of spec.",
+          },
+        ]),
+      ),
+      http.get("/api/alerts", () =>
+        HttpResponse.json([
+          {
+            id: "44444444-4444-4444-8444-444444444444",
+            toolId: "E-02",
+            siteId: "northwater",
+            chamberId: "E-02-A",
+            parameter: "escTemperature",
+            severity: "high",
+            rule: "WE1",
+            raisedAt: "2026-09-01T00:00:10Z",
+            correlationId: "c-1",
+            status: "cleared",
+            clearedAt: "2026-09-01T00:01:30Z",
+          },
+        ]),
+      ),
+      http.get("/api/tools/:toolId/live", () =>
+        HttpResponse.json({
+          toolId: "E-02",
+          siteId: "northwater",
+          simulatedNow: "2026-09-01T00:02:00Z",
+          status: "nominal",
+          readings: [{ sensorId: "E-02-A-ESC-TEMP", parameter: "escTemperature", chamberId: "E-02-A", unit: "C", at: "2026-09-01T00:00:15Z", value: 51, status: "nominal" }],
+          series: [
+            {
+              parameter: "escTemperature",
+              chamberId: "E-02-A",
+              center: 50,
+              sigma: 3,
+              points: [
+                { at: "2026-09-01T00:00:00Z", value: 50 },
+                { at: "2026-09-01T00:00:15Z", value: 51 },
+              ],
+            },
+          ],
+        }),
+      ),
+    );
+    renderConsole("/tools/E-02");
+    expect(await screen.findByText(/Manual reading 68 C \(thermocouple logger\), resolved/)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /Why E-02 shows alarm/ })).not.toBeInTheDocument();
+    expect(document.querySelector("[data-manual-badge]")).toBeNull();
   });
 });

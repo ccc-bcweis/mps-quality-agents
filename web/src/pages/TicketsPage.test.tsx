@@ -84,7 +84,7 @@ describe("tickets", () => {
     expect(within(parameter).getAllByRole("option", { name: /RF power \(W\), spec 300-600/ }).length).toBeGreaterThan(0);
   });
 
-  it("confirms an oscilloscope printout and shows the alert", async () => {
+  it("confirms an oscilloscope printout as a manual sample", async () => {
     const user = userEvent.setup();
     renderConsole("/tickets");
     expect(await screen.findByRole("heading", { name: "Upload telemetry" })).toBeInTheDocument();
@@ -93,7 +93,6 @@ describe("tickets", () => {
 
     expect(await screen.findByDisplayValue("2140", undefined, { timeout: 8000 })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Confirm reading" }));
-    expect(await screen.findByText(/An oscillation was applied to Source RF power on E-01 and an alert was opened/)).toBeInTheDocument();
-    expect(screen.getByText(/Manual measurement: oscilloscope on E-01, rfPower 2140 W/)).toBeInTheDocument();
+    expect(await screen.findByText(/added to Source RF power on E-01 as a manual sample\. It is outside the spec/)).toBeInTheDocument();
   });
 });

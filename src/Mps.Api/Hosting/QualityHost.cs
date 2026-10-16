@@ -150,6 +150,7 @@ public static class QualityHost
         builder.Services.AddScoped<IHumanDecisionService, HumanDecisionService>();
         builder.Services.AddSingleton<IManualMeasurementLog, InMemoryManualMeasurementLog>();
         builder.Services.AddSingleton<Mps.Api.Printouts.PrintoutFileStore>();
+        builder.Services.AddSingleton<IManualSampleSink, Mps.Api.Printouts.PlantManualSampleSink>();
         builder.Services.AddSingleton<IPrintoutTextExtractor, PdfTextExtractor>();
         builder.Services.AddSingleton<IPrintoutFieldParser, LabeledPrintoutParser>();
         builder.Services.AddSingleton<IPrintoutModelReader, PrintoutModelReader>();

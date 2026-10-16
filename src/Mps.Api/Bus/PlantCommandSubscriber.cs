@@ -10,7 +10,7 @@ namespace Mps.Api.Bus;
 /// <summary>
 /// Applies a scenario or a manual fault when its command arrives. Scripted fault commands are records only:
 /// the scenario command already applied every signal, and applying them again would stack the fault.
-/// SC-6 is the oscilloscope sheet. The printout confirmation applies that fault, so the scenario command does not.
+/// SC-6 runs like every other scenario; its oscilloscope sheet is added as one manual sample, not as a fault.
 /// </summary>
 public sealed class PlantCommandSubscriber : IHostedService, IDisposable
 {
@@ -69,7 +69,7 @@ public sealed class PlantCommandSubscriber : IHostedService, IDisposable
     {
         _ = cancellationToken;
         var scenarioId = PayloadReader.String(envelope.Payload, "scenarioId");
-        if (scenarioId is null || string.Equals(scenarioId, "SC-6", StringComparison.OrdinalIgnoreCase))
+        if (scenarioId is null)
         {
             return ValueTask.CompletedTask;
         }

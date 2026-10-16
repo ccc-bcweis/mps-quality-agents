@@ -42,7 +42,9 @@ export type ManualMarker = { index: number; value: number; clamped: boolean; lab
  */
 export function manualMarker(series: LiveSeries | undefined, reading: ManualReading | undefined): ManualMarker | undefined {
   if (!reading) return undefined;
-  const label = `Manual reading ${reading.value} ${reading.unit} (${instrumentWords(reading.instrument)})`;
+  const label = `Manual reading ${reading.value} ${reading.unit} (${instrumentWords(reading.instrument)})${reading.active ? "" : ", resolved"}`;
+  // A resolved reading stays on the chart as history but no longer draws in alarm color.
+  reading = { ...reading, outOfSpec: reading.outOfSpec && reading.active };
   const points = series?.points ?? [];
   if (points.length === 0) return { index: 0, value: reading.value, clamped: reading.olderThanWindow, label, outOfSpec: reading.outOfSpec };
   const at = Date.parse(reading.observedAt);

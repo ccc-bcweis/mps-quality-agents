@@ -9,14 +9,12 @@ public sealed class ManualMeasurement
 {
     public const string WhyItMatters = "A technician measured this on a bench instrument, so the investigation can cite the printed reading and not only the tool's own sensor.";
 
-    public const string AlertRule = "manualMeasurement";
-
-    public ManualMeasurement(EvidenceItem evidence, Guid incidentId)
+    public ManualMeasurement(EvidenceItem evidence, Guid? incidentId)
     {
         ArgumentNullException.ThrowIfNull(evidence);
         if (incidentId == Guid.Empty)
         {
-            throw new ArgumentException("Incident id is required.", nameof(incidentId));
+            throw new ArgumentException("Incident id cannot be empty.", nameof(incidentId));
         }
 
         Evidence = evidence;
@@ -25,13 +23,11 @@ public sealed class ManualMeasurement
 
     public EvidenceItem Evidence { get; }
 
-    public Guid IncidentId { get; }
+    /// <summary>The incident an out-of-spec reading opened or joined; null for an in-spec reading (evidence only).</summary>
+    public Guid? IncidentId { get; }
 
     /// <summary>The confirmed reading, with its observed time and any correction.</summary>
     public PrintoutReading? Reading { get; init; }
-
-    /// <summary>The alert an out-of-spec reading raised.</summary>
-    public Guid? AlertId { get; init; }
 
     /// <summary>The uploaded printout file, when the console kept it.</summary>
     public Guid? FileId { get; init; }

@@ -372,14 +372,10 @@ function instrumentChoices(current: string): { id: string; label: string }[] {
 }
 
 function confirmNote(draft: PrintoutConfirmRequest, result: PrintoutConfirmation): string {
-  if (!result.outOfSpec) return "The reading is inside the printed spec. It was stored as evidence.";
-  const motion =
-    draft.shape === "oscillation"
-      ? "An oscillation"
-      : draft.shape === "ramp"
-        ? "A ramp"
-        : draft.shape === "intermittent"
-          ? "An intermittent change"
-          : "A step";
-  return `${motion} was applied to ${parameterLabel(result.catalogParameter)} on ${draft.toolId} and an alert was opened.`;
+  const where = `${parameterLabel(result.catalogParameter)} on ${draft.toolId}`;
+  if (!result.appliedToSimulation) return `The reading was stored as evidence for ${where}.`;
+  // The reading is one manual sample in the same series as the sensor; the process-control rules decide any alert.
+  return result.outOfSpec
+    ? `The reading was added to ${where} as a manual sample. It is outside the spec, so the process-control rules will raise an alert and a ticket.`
+    : `The reading was added to ${where} as a manual sample. It is inside the spec, so no ticket is opened.`;
 }

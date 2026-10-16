@@ -298,7 +298,7 @@ public sealed class PrintoutConfirmBody
 
 public sealed record ManualReadingResponse(
     Guid EvidenceId,
-    Guid IncidentId,
+    Guid? IncidentId,
     Guid? AlertId,
     string ToolId,
     string SiteId,
@@ -316,6 +316,7 @@ public sealed record ManualReadingResponse(
     string? OperatorInitials,
     string? FileName,
     string? FileUrl,
-    string Source);
+    string Source,
+    bool Active);
 
 public sealed record ReplayCaptureResponse(string ScenarioId, int MessageCount);

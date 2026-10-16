@@ -19,7 +19,7 @@ public sealed record PrintoutInspection(PrintoutReading Reading, string ParseMet
 
 public sealed record PrintoutConfirmation(
     Guid EvidenceId,
-    Guid IncidentId,
+    Guid? IncidentId,
     Guid? FaultId,
     string? CorrelationId,
     Guid? AlertId,
@@ -51,12 +51,8 @@ public sealed class DocumentIntakeService : IDocumentIntake
     private readonly IPrintoutTextExtractor _extractor;
     private readonly IPrintoutFieldParser _parser;
     private readonly IPrintoutModelReader _model;
-    private readonly IIntakeService _intake;
-    private readonly IFaultInjectionService _faults;
-    private readonly IAlertLog _alerts;
-    private readonly IQualityNotifier _notifier;
     private readonly IManualMeasurementLog _measurements;
-    private readonly ISimulationFaultPort _simulation;
+    private readonly IManualSampleSink _samples;
     private readonly TimeProvider _time;
     private readonly ILifecycleEventSink? _events;
     private readonly ICascadeDirectory? _cascade;
@@ -65,12 +61,8 @@ public sealed class DocumentIntakeService : IDocumentIntake
         IPrintoutTextExtractor extractor,
         IPrintoutFieldParser parser,
         IPrintoutModelReader model,
-        IIntakeService intake,
-        IFaultInjectionService faults,
-        IAlertLog alerts,
-        IQualityNotifier notifier,
         IManualMeasurementLog measurements,
-        ISimulationFaultPort simulation,
+        IManualSampleSink samples,
         TimeProvider time,
         ILifecycleEventSink? events = null,
         ICascadeDirectory? cascade = null)
@@ -78,22 +70,14 @@ public sealed class DocumentIntakeService : IDocumentIntake
         ArgumentNullException.ThrowIfNull(extractor);
         ArgumentNullException.ThrowIfNull(parser);
         ArgumentNullException.ThrowIfNull(model);
-        ArgumentNullException.ThrowIfNull(intake);
-        ArgumentNullException.ThrowIfNull(faults);
-        ArgumentNullException.ThrowIfNull(alerts);
-        ArgumentNullException.ThrowIfNull(notifier);
         ArgumentNullException.ThrowIfNull(measurements);
-        ArgumentNullException.ThrowIfNull(simulation);
+        ArgumentNullException.ThrowIfNull(samples);
         ArgumentNullException.ThrowIfNull(time);
         _extractor = extractor;
         _parser = parser;
         _model = model;
-        _intake = intake;
-        _faults = faults;
-        _alerts = alerts;
-        _notifier = notifier;
         _measurements = measurements;
-        _simulation = simulation;
+        _samples = samples;
         _time = time;
         _events = events;
         _cascade = cascade;
@@ -127,62 +111,9 @@ public sealed class DocumentIntakeService : IDocumentIntake
     {
         ArgumentNullException.ThrowIfNull(reading);
         var catalogParameter = PrintoutReading.CatalogParameter(reading.ToolId, reading.Parameter);
-        var summary = Summary(reading, catalogParameter);
-        var severity = reading.OutOfSpec ? Severity.High : Severity.Low;
         var opened = await OpenCommandAsync(reading, catalogParameter, cancellationToken).ConfigureAwait(false);
         using var command = CommandAmbient.Adopt(opened);
-
-        // The fault, the reading, and the alert land before intake so the business rule hangs off the alert.
-        Guid? faultId = null;
-        string? faultCorrelation = null;
-        var applied = false;
-        Alert? alert = null;
-        if (reading.OutOfSpec)
-        {
-            var shape = reading.Shape ?? "step";
-            var magnitude = reading.MagnitudeSigma();
-            var accepted = await _faults.InjectAsync(
-                new FaultInjectionRequest(
-                    reading.ToolId,
-                    reading.ChamberId,
-                    catalogParameter,
-                    shape,
-                    magnitude,
-                    RootCauseCategory.EquipmentCalibrationOrAlignment,
-                    false),
-                cancellationToken).ConfigureAwait(false);
-            faultId = accepted.FaultId;
-            faultCorrelation = accepted.CorrelationId;
-            // A hosted bus applies the fault while the command is published. Applying it here as well stacks the signal.
-            applied = _events is not null
-                || _simulation.TryApply(reading.ToolId, reading.ChamberId, catalogParameter, shape, magnitude);
-            // Times use the plant clock at confirm, so the reading sorts before its alert and ticket. The printed time stays on the sheet.
-            await PublishReadingAsync(reading, catalogParameter, accepted.CorrelationId, cancellationToken).ConfigureAwait(false);
-            alert = new Alert(
-                AlertId.New(),
-                new ToolId(reading.ToolId),
-                reading.ChamberId,
-                catalogParameter,
-                Severity.High,
-                ManualMeasurement.AlertRule,
-                _time.GetUtcNow(),
-                accepted.CorrelationId);
-            await _alerts.AddAsync(alert, cancellationToken).ConfigureAwait(false);
-            await _notifier.AlertRaisedAsync(alert, cancellationToken).ConfigureAwait(false);
-        }
-
-        var intake = await _intake.AcceptAsync(
-            new IntakeSubmission(
-                IncidentChannel.OperatorReport,
-                reading.ToolId,
-                reading.ChamberId,
-                catalogParameter,
-                summary,
-                severity,
-                signalSeverity: null,
-                faultCorrelation ?? CommandAmbient.CorrelationId,
-                _time.GetUtcNow()),
-            cancellationToken).ConfigureAwait(false);
+        var correlationId = CommandAmbient.CorrelationId ?? "printout-" + Guid.NewGuid().ToString("N");
 
         var evidence = new EvidenceItem(
             EvidenceId.New(),
@@ -192,38 +123,34 @@ public sealed class DocumentIntakeService : IDocumentIntake
             _time.GetUtcNow(),
             reading.ToolId,
             "printout:" + reading.ToolId + ":" + catalogParameter);
-        evidence = await StampDocumentAsync(evidence, reading, catalogParameter, intake.Incident.CorrelationId, cancellationToken)
-            .ConfigureAwait(false);
-        _measurements.Add(new ManualMeasurement(evidence, intake.Incident.Id.Value)
+        evidence = await StampDocumentAsync(evidence, reading, catalogParameter, correlationId, cancellationToken).ConfigureAwait(false);
+        _measurements.Add(new ManualMeasurement(evidence, null)
         {
             Reading = reading,
-            AlertId = alert?.Id.Value,
             FileId = fileId,
             FileName = fileName,
         });
 
-        if (!reading.OutOfSpec || alert is null || faultId is null)
-        {
-            return new PrintoutConfirmation(
-                evidence.Id.Value,
-                intake.Incident.Id.Value,
-                null,
-                null,
-                null,
-                false,
-                false,
-                reading.Parameter,
-                catalogParameter);
-        }
+        // No printout workflow: the reading becomes one sample in the same series as the tool's sensor, and the
+        // generic pipeline (spec window, SPC and Western Electric rules, alert, ticket, investigation, auto-clear) decides.
+        await PublishReadingAsync(reading, catalogParameter, correlationId, cancellationToken).ConfigureAwait(false);
+        var ingested = _samples.Ingest(new ManualSample(
+            reading.ToolId,
+            reading.ChamberId,
+            catalogParameter,
+            reading.Unit,
+            reading.ObservedAt,
+            reading.Value,
+            evidence.Id.Value));
 
         return new PrintoutConfirmation(
             evidence.Id.Value,
-            intake.Incident.Id.Value,
-            faultId,
-            faultCorrelation,
-            alert.Id.Value,
-            applied,
-            true,
+            null,
+            null,
+            correlationId,
+            null,
+            ingested,
+            reading.OutOfSpec,
             reading.Parameter,
             catalogParameter);
     }
@@ -308,7 +235,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
             return;
         }
 
-        var parent = _cascade?.FaultEventId(reading.ToolId, catalogParameter) ?? CommandAmbient.EventId;
+        var parent = CommandAmbient.EventId;
         await _events.PublishAsync(
             new LifecycleEvent(
                 LifecycleTypes.TelemetryReading,

@@ -46,3 +46,20 @@ public interface IManualMeasurementLog
 
     void Clear();
 }
+
+/// <summary>A bench reading as a plain sample, tagged manual and carrying its evidence id.</summary>
+public sealed record ManualSample(
+    string ToolId,
+    string? ChamberId,
+    string Parameter,
+    string Unit,
+    DateTimeOffset ObservedAt,
+    double Value,
+    Guid EvidenceId);
+
+/// <summary>Feeds a manual sample into the same ingest path the tool's telemetry uses.</summary>
+public interface IManualSampleSink
+{
+    /// <summary>False when the tool or parameter has no live series to join.</summary>
+    bool Ingest(ManualSample sample);
+}
