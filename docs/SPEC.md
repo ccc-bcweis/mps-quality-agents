@@ -437,3 +437,8 @@ CI: build with `TreatWarningsAsErrors` + .NET analyzers (`latest-recommended`) +
 2. StatusNeo logo use: OK to use their public logo on the deck/console, or text-only "StatusNeo" wordmark?
 3. Reviewer access emails for the Entra invites (Kartik and team), when known.
 4. Which live injection to throw in S4: the gas-lot supply problem or a calibration drift?
+
+### Signal shape: read against the recipe, wait for enough readings
+- The shape is judged on reading minus the recipe-step nominal at each point (`TelemetryWindow.Nominals`, from the plant's recipe windows), so a recipe step change is neither hidden nor reported as the shape.
+- If the readings do not show a shape yet, the investigation re-reads the signal and its rule breaks (`data/metadata/investigation.yaml`, `shapeWait`: attempts and delay) before handing the pack to resolution.
+- SPC thresholds (control-limit σ, 2σ watch level, Western Electric 1/2/3σ and run lengths) live in `data/metadata/spc-rules.yaml`; offline tiles and chart fallbacks in `data/metadata/offline-floor.json`.

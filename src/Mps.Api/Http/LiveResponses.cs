@@ -81,8 +81,9 @@ public static class LiveResponses
         var counter = IsCounter(reading.Parameter, reading.SensorId);
         var window = counter ? null : plant.WindowAt(reading.ToolId, reading.Parameter, reading.At);
         double? sigma = window is null ? null : Math.Max(window.Sigma, 1e-6);
-        double? controlLow = window is null ? null : window.Nominal - (3d * sigma!.Value);
-        double? controlHigh = window is null ? null : window.Nominal + (3d * sigma!.Value);
+        var rules = Mps.Application.Spc.SpcRuleSettings.Shared;
+        double? controlLow = window is null ? null : rules.ControlLimits(window.Nominal, sigma!.Value).Low;
+        double? controlHigh = window is null ? null : rules.ControlLimits(window.Nominal, sigma!.Value).High;
         return new LiveReadingResponse(
             reading.SensorId,
             reading.Parameter,
@@ -115,7 +116,7 @@ public static class LiveResponses
         }
 
         var sigma = Math.Max(window.Sigma, 1e-6);
-        return Math.Abs(value - window.Nominal) > (2d * sigma) ? "watch" : "nominal";
+        return Math.Abs(value - window.Nominal) > (Mps.Application.Spc.SpcRuleSettings.Shared.WatchSigma * sigma) ? "watch" : "nominal";
     }
 
     private static string Worse(string left, string right)

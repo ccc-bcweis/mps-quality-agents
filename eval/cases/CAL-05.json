@@ -1,0 +1,33 @@
+{
+  "id": "CAL-05",
+  "group": "equipmentCalibrationOrAlignment",
+  "groundTruth": null,
+  "expected": {
+    "behavior": "recommend",
+    "category": "equipmentCalibrationOrAlignment",
+    "forbiddenInCause": []
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "D-01",
+    "signalShape": "oscillation",
+    "overdueInstruments": [
+      "Baratron manometer"
+    ],
+    "overdueEvidenceIds": [
+      "00000000-0000-0000-0000-000000000204"
+    ],
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000214"
+    ],
+    "notes": [
+      {
+        "id": "00000000-0000-0000-0000-000000000204",
+        "externalRef": "CAL-D-01",
+        "title": "Baratron manometer calibration overdue",
+        "detail": "Calibration of Baratron manometer on D-01 is 21 days overdue.",
+        "source": "enterprise"
+      }
+    ]
+  }
+}

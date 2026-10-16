@@ -13,9 +13,9 @@ for i,(tool,eco,shape,conf) in enumerate([("E-02","ECO-4471","oscillation",None)
        "notes":[note(0x100+i,eco,f"Edge ring revision on {tool}",f"Replace the chamber A edge ring on {tool}. Recipe setpoints are unchanged.")]}
     if conf: r["pmSummaries"]=[f"{conf} routine PM closed; no parts changed."]
     case(f"ECO-{i+1:02}","engineeringChange","FLT-ECO-4471" if eco=="ECO-4471" else None,"recommend","engineeringChange",r)
-# Calibration (4)
-for i,(tool,inst,lot) in enumerate([("S-02","O2 MFC","N2H2-190"),("S-02","O2 MFC",None),("E-01","RF match sensor",None),("D-03","Baratron manometer","CF4-014")]):
-    r={"scopeKind":"chamber","scopeKey":tool,"signalShape":"step","overdueInstruments":[inst],"overdueEvidenceIds":[G(0x200+i)],"signalEvidenceIds":[G(0x210+i)],
+# Calibration (5; CAL-05 is the live D-01 oscillation read against the recipe nominal)
+for i,(tool,inst,lot) in enumerate([("S-02","O2 MFC","N2H2-190"),("S-02","O2 MFC",None),("E-01","RF match sensor",None),("D-03","Baratron manometer","CF4-014"),("D-01","Baratron manometer",None)]):
+    r={"scopeKind":"chamber","scopeKey":tool,"signalShape":"oscillation" if tool=="D-01" else "step","overdueInstruments":[inst],"overdueEvidenceIds":[G(0x200+i)],"signalEvidenceIds":[G(0x210+i)],
        "notes":[note(0x200+i,f"CAL-{tool}",f"{inst} calibration overdue",f"Calibration of {inst} on {tool} is 21 days overdue.")]}
     if lot: r["lotIds"]=[lot]; r["notes"].append(note(0x220+i,lot,f"Lot {lot}",f"Material lot {lot} received; supplier notice none; certificate in spec."))
     case(f"CAL-{i+1:02}","equipmentCalibrationOrAlignment","FLT-CAL-S02" if tool=="S-02" else None,"recommend","equipmentCalibrationOrAlignment",r)

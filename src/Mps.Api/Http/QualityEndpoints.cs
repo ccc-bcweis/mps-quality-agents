@@ -48,7 +48,7 @@ public static class QualityEndpoints
                 throw new IntakeValidationException("Query family must be deposition, etch, strip, or clean.");
             }
 
-            return Results.Ok(SiteResponses.ToComparison(SiteComparison.Compare(world, parsed)));
+            return Results.Ok(SiteResponses.ToComparison(SiteComparison.Compare(world, parsed, Mps.Application.Spc.SpcRuleSettings.Shared.ControlLimitSigma, Mps.Application.Spc.SpcRuleSettings.Shared.WatchSigma)));
         });
         app.MapGet("/api/sites/{siteId}", async (string siteId, SiteWorld world, IAlertLog alerts, CancellationToken cancellationToken) =>
         {

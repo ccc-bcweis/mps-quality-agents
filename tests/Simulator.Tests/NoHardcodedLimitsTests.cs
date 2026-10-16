@@ -32,7 +32,7 @@ public sealed partial class NoHardcodedLimitsTests
                     continue;
                 }
 
-                if (LimitTable().IsMatch(code) || UnitRange().IsMatch(code) || WindowLiteral().IsMatch(code))
+                if (LimitTable().IsMatch(code) || UnitRange().IsMatch(code) || WindowLiteral().IsMatch(code) || SigmaLiteral().IsMatch(code))
                 {
                     hits.Add($"{Path.GetRelativePath(src, file)}:{index + 1}: {code}");
                 }
@@ -47,6 +47,9 @@ public sealed partial class NoHardcodedLimitsTests
 
     [GeneratedRegex(@"""[^""]*\d(?:\.\d+)?\s?[–-]\s?\d+(?:\.\d+)?\s?(?:°C|Torr|mTorr|sccm|kW|mm/s)\b[^""]*""")]
     private static partial Regex UnitRange();
+
+    [GeneratedRegex(@"(?:\(\s*\d+(?:\.\d+)?d\s*\*\s*\w*[Ss]igma|Math\.Abs\(z\)\s*[<>]=?\s*\d|SameSideBeyond\([^)]*,\s*\d+(?:\.\d+)?d\))")]
+    private static partial Regex SigmaLiteral();
 
     [GeneratedRegex(@"new (?:OperatingWindow|ParameterLimit|ControlBaseline)\([^)]*\b\d+(?:\.\d+)?d?\s*,\s*\d+(?:\.\d+)?d?")]
     private static partial Regex WindowLiteral();

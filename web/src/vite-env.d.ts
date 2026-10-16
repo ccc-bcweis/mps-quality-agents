@@ -26,3 +26,12 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+declare module "virtual:offline-floor" {
+  export const offlineFloor: {
+    nominalSpark: number[];
+    stories: Record<string, unknown>;
+    faultStories: Record<string, unknown>;
+    fallbackChart: unknown;
+  };
+}

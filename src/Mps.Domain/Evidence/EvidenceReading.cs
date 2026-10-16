@@ -17,11 +17,9 @@ public sealed record EvidenceReading(
     double? Center = null,
     double? Sigma = null)
 {
-    /// <summary>Lower control limit: centre minus three sigma. Empty without both.</summary>
-    public double? ControlLow => Center is double center && Sigma is double sigma ? center - (3d * sigma) : null;
-
-    /// <summary>Upper control limit: centre plus three sigma. Empty without both.</summary>
-    public double? ControlHigh => Center is double center && Sigma is double sigma ? center + (3d * sigma) : null;
+    /// <summary>Control limits: centre plus or minus <paramref name="sigmas"/> sigma (from the SPC rule settings). Empty without both.</summary>
+    public (double? Low, double? High) ControlLimits(double sigmas) =>
+        Center is double center && Sigma is double sigma ? (center - (sigmas * sigma), center + (sigmas * sigma)) : (null, null);
 
     /// <summary>True when the value sits outside the recipe spec. Empty when either is missing.</summary>
     public bool? IsOutOfSpec => Value is double value && (SpecLow is not null || SpecHigh is not null)

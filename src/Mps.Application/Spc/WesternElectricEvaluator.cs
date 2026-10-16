@@ -41,6 +41,8 @@ public static class WesternElectricEvaluator
         SpcViolation? eightOnOneSide = null;
         SpcViolation? rising = null;
 
+        var rules = SpcRuleSettings.Shared;
+        var we = rules.WesternElectric;
         for (var index = 0; index < ordered.Length; index++)
         {
             var point = ordered[index];
@@ -58,7 +60,7 @@ public static class WesternElectricEvaluator
                     Severity.High);
             }
 
-            if (Math.Abs(z) > 3d)
+            if (Math.Abs(z) > we.Rule1.Sigma)
             {
                 beyondThree = Create(
                     SpcRuleNames.WesternElectric1,
@@ -67,10 +69,10 @@ public static class WesternElectricEvaluator
                     parameterName,
                     point,
                     baseline,
-                    Math.Abs(z) >= 4d ? Severity.Critical : Severity.High);
+                    Math.Abs(z) >= rules.CriticalSigma ? Severity.Critical : Severity.High);
             }
 
-            if (index >= 2 && SameSideBeyond(ordered, baseline, index - 2, index, 2d) >= 2)
+            if (index >= we.Rule2.Window - 1 && SameSideBeyond(ordered, baseline, index - (we.Rule2.Window - 1), index, we.Rule2.Sigma) >= we.Rule2.Count)
             {
                 twoOfThree = Create(
                     SpcRuleNames.WesternElectric2,
@@ -82,7 +84,7 @@ public static class WesternElectricEvaluator
                     Severity.High);
             }
 
-            if (index >= 4 && SameSideBeyond(ordered, baseline, index - 4, index, 1d) >= 4)
+            if (index >= we.Rule3.Window - 1 && SameSideBeyond(ordered, baseline, index - (we.Rule3.Window - 1), index, we.Rule3.Sigma) >= we.Rule3.Count)
             {
                 fourOfFive = Create(
                     SpcRuleNames.WesternElectric3,
@@ -94,7 +96,7 @@ public static class WesternElectricEvaluator
                     Severity.Medium);
             }
 
-            if (index >= 7 && RunOnOneSide(ordered, baseline, index - 7, index))
+            if (index >= we.Rule4.Count - 1 && RunOnOneSide(ordered, baseline, index - (we.Rule4.Count - 1), index))
             {
                 eightOnOneSide = Create(
                     SpcRuleNames.WesternElectric4,
@@ -106,7 +108,7 @@ public static class WesternElectricEvaluator
                     Severity.Medium);
             }
 
-            if (index >= 5 && StrictlyRising(ordered, index - 5, index))
+            if (index >= rules.NelsonRising.Count - 1 && StrictlyRising(ordered, index - (rules.NelsonRising.Count - 1), index))
             {
                 rising = Create(
                     SpcRuleNames.NelsonSixRising,

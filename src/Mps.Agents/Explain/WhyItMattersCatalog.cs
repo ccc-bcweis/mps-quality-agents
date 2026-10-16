@@ -258,7 +258,8 @@ public sealed class WhyItMattersCatalog
             return null;
         }
 
-        var state = LimitState.Of(reading.Value, reading.SpecLow, reading.SpecHigh, reading.ControlLow, reading.ControlHigh, reading.Center is not null);
+        var (controlLow, controlHigh) = reading.ControlLimits(Mps.Application.Spc.SpcRuleSettings.Shared.ControlLimitSigma);
+        var state = LimitState.Of(reading.Value, reading.SpecLow, reading.SpecHigh, controlLow, controlHigh, reading.Center is not null);
         var latest = item.Source == EvidenceSource.Telemetry ? "The latest reading" : "This reading";
         return state switch
         {

@@ -8,6 +8,8 @@ namespace Mps.Simulator.Tests;
 
 public sealed class SitePlantTests
 {
+    private static readonly Mps.Application.Spc.SpcRuleSettings Rules = Mps.Application.Spc.SpcRuleSettings.Load(Path.Combine(RepoPaths.Root(), "data", "metadata", "spc-rules.yaml"));
+
     private static readonly FleetCatalog Fleet = FleetCatalogLoader.Load(RepoPaths.FleetDirectory());
 
     [Fact]
@@ -48,14 +50,14 @@ public sealed class SitePlantTests
         first.Sites.Select(site => site.Kpis.WaferStartsPerHour).Should().Equal(second.Sites.Select(site => site.Kpis.WaferStartsPerHour));
         ToolIds(first).Should().Equal(ToolIds(other));
 
-        var etch = SiteComparison.Compare(first, ToolFamily.Etch);
-        var again = SiteComparison.Compare(second, ToolFamily.Etch);
+        var etch = SiteComparison.Compare(first, ToolFamily.Etch, Rules.ControlLimitSigma, Rules.WatchSigma);
+        var again = SiteComparison.Compare(second, ToolFamily.Etch, Rules.ControlLimitSigma, Rules.WatchSigma);
         etch.ReferenceSiteId.Should().Be(SiteIds.Northwater);
         Flagged(etch).Should().Equal(Flagged(again));
         Flagged(etch).Should().BeEquivalentTo("escTemperature@ironwood", "wallTemperature@ironwood");
-        Flagged(SiteComparison.Compare(first, ToolFamily.Deposition)).Should().BeEmpty();
-        Flagged(SiteComparison.Compare(first, ToolFamily.Strip)).Should().BeEmpty();
-        Flagged(SiteComparison.Compare(first, ToolFamily.Clean)).Should().BeEmpty();
+        Flagged(SiteComparison.Compare(first, ToolFamily.Deposition, Rules.ControlLimitSigma, Rules.WatchSigma)).Should().BeEmpty();
+        Flagged(SiteComparison.Compare(first, ToolFamily.Strip, Rules.ControlLimitSigma, Rules.WatchSigma)).Should().BeEmpty();
+        Flagged(SiteComparison.Compare(first, ToolFamily.Clean, Rules.ControlLimitSigma, Rules.WatchSigma)).Should().BeEmpty();
 
         var esc = etch.Parameters.Should().ContainSingle(row => row.Parameter == "escTemperature").Subject;
         esc.Sites.Should().ContainSingle(row => row.SiteId == SiteIds.Northwater && !row.Discrepancy && row.Reason == null);

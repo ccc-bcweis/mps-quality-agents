@@ -12,7 +12,8 @@ const SRC = path.resolve(__dirname, "..");
 const LIMIT_LITERAL = [
   /\d(?:\.\d+)?\s?[–-]\s?\d+(?:\.\d+)?\s?(?:°C|Torr|mTorr|sccm|kW|W|mm\/s|nm)\b/,
   /≤\s?\d+\s?adders/,
-  /\b(?:specLow|specHigh|controlLow|controlHigh|minimum|maximum)\s*:\s*\d/,
+  /\b(?:specLow|specHigh|controlLow|controlHigh|minimum|maximum|mean|sigma|endValue|nominal)\s*:\s*-?\d/,
+  /\bvalue:\s*"[\d.]+\s?(?:°C|Torr|mTorr|sccm|kW|W|mm\/s|nm)/,
 ];
 
 function files(dir: string): string[] {
@@ -36,5 +37,10 @@ describe("no hard-coded limits in UI code", () => {
         });
     }
     expect(hits).toEqual([]);
+  });
+
+  it("keeps one parameter label map, shared with the server", () => {
+    const owners = files(SRC).filter((file) => /const PARAMETER_LABEL\b/.test(fs.readFileSync(file, "utf8")));
+    expect(owners.map((file) => path.relative(SRC, file))).toEqual([path.join("sites", "parameters.ts")]);
   });
 });

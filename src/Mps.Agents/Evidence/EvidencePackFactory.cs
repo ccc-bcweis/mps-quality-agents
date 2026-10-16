@@ -191,7 +191,8 @@ public static class EvidencePackFactory
 
         if (violation.Center is double center)
         {
-            text += "; control limits " + Num(center - (3d * violation.Sigma)) + " to " + Num(center + (3d * violation.Sigma)) + " (centre " + Num(center) + ")";
+            var (low, high) = Mps.Application.Spc.SpcRuleSettings.Shared.ControlLimits(center, violation.Sigma);
+            text += "; control limits " + Num(low) + " to " + Num(high) + " (centre " + Num(center) + ")";
         }
 
         return text;
@@ -233,7 +234,12 @@ public static class EvidencePackFactory
             return SignalShape.Unknown;
         }
 
-        var points = window.Points.OrderBy(point => point.At).ToArray();
+        // Judge the shape on reading minus recipe nominal, so a recipe step change does not hide or fake a shape.
+        var nominals = window.Nominals is { } known && known.Count == window.Points.Count ? known : null;
+        var points = window.Points
+            .Select((point, index) => nominals is null ? point : new Mps.Domain.Telemetry.TelemetryPoint(point.At, point.Value - nominals[index]))
+            .OrderBy(point => point.At)
+            .ToArray();
         var values = points.Select(point => point.Value).ToArray();
         var lastSix = values.Skip(Math.Max(0, values.Length - 24)).ToArray();
         if (SignalShapeClassifier.IsSwinging(lastSix, values))

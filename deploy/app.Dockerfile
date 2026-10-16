@@ -10,6 +10,7 @@ COPY web/ ./
 COPY contracts/msw/ /src/contracts/msw/
 COPY data/glossary.yaml /src/data/glossary.yaml
 COPY data/fleet/ /src/data/fleet/
+COPY data/metadata/ /src/data/metadata/
 ARG VITE_USE_MSW=false
 ARG VITE_API_BASE=
 ENV VITE_USE_MSW=$VITE_USE_MSW

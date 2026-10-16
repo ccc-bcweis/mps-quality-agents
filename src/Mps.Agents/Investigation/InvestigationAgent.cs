@@ -24,6 +24,7 @@ public sealed class InvestigationAgent : IInvestigationAgent
     private readonly TimeProvider _time;
     private readonly InvestigationLimits _limits;
     private readonly IManualMeasurementLog? _measurements;
+    private readonly ShapeWait _shapeWait;
 
     public InvestigationAgent(
         ReadOnlyToolSession tools,
@@ -31,7 +32,8 @@ public sealed class InvestigationAgent : IInvestigationAgent
         PromptCatalog prompts,
         TimeProvider? time = null,
         InvestigationLimits? limits = null,
-        IManualMeasurementLog? measurements = null)
+        IManualMeasurementLog? measurements = null,
+        ShapeWait? shapeWait = null)
     {
         ArgumentNullException.ThrowIfNull(tools);
         ArgumentNullException.ThrowIfNull(chat);
@@ -42,6 +44,7 @@ public sealed class InvestigationAgent : IInvestigationAgent
         _time = time ?? TimeProvider.System;
         _limits = limits ?? new InvestigationLimits();
         _measurements = measurements;
+        _shapeWait = shapeWait ?? ShapeWait.None;
     }
 
     public async Task<GatherResult> GatherAsync(Incident incident, CancellationToken cancellationToken)
@@ -117,6 +120,7 @@ public sealed class InvestigationAgent : IInvestigationAgent
             }
         }
 
+        await WaitForShapeAsync(incident, from, until, harvest, cancellationToken).ConfigureAwait(false);
         var facts = EvidencePackFactory.Build(incident, harvest);
         var extra = _measurements?.ForTool(incident.ToolId.Value);
         if (extra is { Count: > 0 })
@@ -161,5 +165,25 @@ public sealed class InvestigationAgent : IInvestigationAgent
         }
 
         return new ChatOptions { Tools = tools };
+    }
+
+    /// <summary>
+    /// Too soon after onset the readings cannot show a shape. Re-read the signal and its rule breaks until the shape is
+    /// clear or the configured attempts run out, so the resolution agent is not handed "no clear shape" for a real signal.
+    /// </summary>
+    private async Task WaitForShapeAsync(Incident incident, DateTimeOffset from, DateTimeOffset until, ToolHarvest harvest, CancellationToken cancellationToken)
+    {
+        if (harvest.Telemetry is null)
+        {
+            return;
+        }
+
+        for (var attempt = 0; attempt < _shapeWait.Attempts && EvidencePackFactory.ShapeOf(harvest.Telemetry, harvest.Violations) == SignalShape.Unknown; attempt++)
+        {
+            await Task.Delay(_shapeWait.Delay, _time, cancellationToken).ConfigureAwait(false);
+            harvest.Violations.Clear();
+            await _tools.ExecuteAsync(AgentToolNames.SpcGetViolations, incident, from, until, harvest, cancellationToken).ConfigureAwait(false);
+            await _tools.ExecuteAsync(AgentToolNames.TelemetryGetWindow, incident, from, until, harvest, cancellationToken).ConfigureAwait(false);
+        }
     }
 }

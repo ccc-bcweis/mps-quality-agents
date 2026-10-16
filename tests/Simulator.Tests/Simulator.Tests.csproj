@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Mps.Simulator\Mps.Simulator.csproj" />
+    <ProjectReference Include="..\..\src\Mps.Application\Mps.Application.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="FluentAssertions" />
