@@ -51,6 +51,7 @@ public sealed partial class StreamSpcPublisher
     public async Task PublishAsync(CancellationToken cancellationToken)
     {
         var samples = Capture();
+        samples.AddRange(CaptureLimitBreaks(samples));
         var recovering = CaptureRecovering();
         if (samples.Count == 0 && recovering.Count == 0)
         {
@@ -119,6 +120,57 @@ public sealed partial class StreamSpcPublisher
             var sample = BuildSample(fault.ToolId, chamber, fault.Parameter, fault.Onset);
             if (sample is not null)
             {
+                samples.Add(sample);
+            }
+        }
+
+        return samples;
+    }
+
+    /// <summary>
+    /// Every periodic series is checked against its limits, faulted or not, so nothing is charted with limits and
+    /// never checked. Only a reading beyond <see cref="SpcCoverage.LimitSigma"/> sigma or outside its window is sent
+    /// on to the rules engine; quiet series cost nothing.
+    /// </summary>
+    private List<SpcSample> CaptureLimitBreaks(List<SpcSample> faulted)
+    {
+        var samples = new List<SpcSample>();
+        var taken = new HashSet<string>(
+            faulted.Select(sample => sample.ToolId + "|" + sample.ChamberId + "|" + sample.Parameter),
+            StringComparer.Ordinal);
+        var now = _plant.SimulatedNow;
+        foreach (var reading in _plant.Log.Snapshot())
+        {
+            if (!SpcCoverage.IsEvaluated(reading.Parameter, reading.SensorId))
+            {
+                continue;
+            }
+
+            var key = reading.ToolId + "|" + reading.ChamberId + "|" + reading.Parameter;
+            if (taken.Contains(key) || _watch.ContainsKey(key))
+            {
+                continue;
+            }
+
+            var window = _plant.WindowAt(reading.ToolId, reading.Parameter, reading.At);
+            if (window is null)
+            {
+                continue;
+            }
+
+            var z = (reading.Value - window.Nominal) / Math.Max(window.Sigma, 1e-6);
+            var outside = reading.Value < window.Minimum || reading.Value > window.Maximum;
+            if (Math.Abs(z) <= SpcCoverage.LimitSigma && !outside)
+            {
+                continue;
+            }
+
+            var recent = _plant.Log.Window(reading.ToolId, reading.ChamberId, reading.Parameter, SpcCoverage.RecentReadings);
+            var since = recent.Count > 0 ? recent[0].At : reading.At;
+            var sample = BuildSample(reading.ToolId, reading.ChamberId, reading.Parameter, since);
+            if (sample is not null)
+            {
+                _watch[key] = (reading.ToolId, reading.ChamberId, reading.Parameter, since, now);
                 samples.Add(sample);
             }
         }

@@ -6,7 +6,7 @@ import { CONSOLE_TABS } from "../shell/navigation";
 import { expandHarness } from "../test/harness";
 import { renderConsole } from "../test/render";
 
-const CONSOLE_TAB_LABELS = ["Sites", "Fleet", "Tool", "Alerts", "Tickets", "Investigation", "Approval", "CAPA", "Rules & Process"];
+const CONSOLE_TAB_LABELS = ["Sites", "Production line", "Tool", "Alerts", "Tickets", "Investigation", "Approval", "CAPA", "Rules & Process"];
 
 describe("demo harness and console split", () => {
   it("keeps presenter controls out of the console region", async () => {
@@ -66,7 +66,7 @@ describe("demo harness and console split", () => {
     expect(screen.queryByRole("region", { name: "Meridian Precision Systems console" })).not.toBeInTheDocument();
     expect(within(panel).queryByRole("navigation", { name: "Console" })).not.toBeInTheDocument();
     await user.click(within(panel).getByRole("link", { name: "Open the console" }));
-    expect(await screen.findByRole("heading", { name: "Fleet overview" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Production line overview" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Meridian Precision Systems console" })).toBeInTheDocument();
   });
 

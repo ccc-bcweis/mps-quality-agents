@@ -1059,6 +1059,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/LivePoint"
+        center:
+          type: number
+          nullable: true
+          description: Center line the rules engine checks. Null for cumulative counters.
+        sigma:
+          type: number
+          nullable: true
+          description: One sigma for the rules engine. Null for cumulative counters.
     LivePoint:
       type: object
       additionalProperties: false

@@ -11,7 +11,7 @@ describe("fleet overview", () => {
   it("shows the eight-tool fab in a nominal state", async () => {
     const user = userEvent.setup();
     renderConsole("/");
-    expect(await screen.findByRole("heading", { name: "Fleet overview" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Production line overview" })).toBeInTheDocument();
     for (const id of ["D-01", "D-02", "E-01", "E-02", "S-01", "S-02", "C-01", "C-02"]) {
       expect(screen.getByRole("link", { name: new RegExp(id) })).toBeInTheDocument();
     }
@@ -23,7 +23,7 @@ describe("fleet overview", () => {
     expect(screen.getByRole("link", { name: /E-02/ }).textContent).not.toMatch(/WATCH/);
     expect(screen.getByRole("img", { name: "Meridian Precision Systems mark" })).toBeInTheDocument();
     expect(screen.getByText("Powered by StatusNeo")).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Fleet performance" })).toHaveTextContent("Illustrative readings, not a live tool counter.");
+    expect(screen.getByRole("region", { name: "Production line performance" })).toHaveTextContent("Illustrative readings, not a live tool counter.");
     expect(screen.getByText("26.4 wafers/h")).toBeInTheDocument();
     expect(screen.getByText("78.4%")).toBeInTheDocument();
     expect(screen.getByText("22.0 wafers/h")).toBeInTheDocument();

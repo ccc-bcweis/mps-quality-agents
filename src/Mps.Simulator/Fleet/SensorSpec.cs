@@ -64,7 +64,8 @@ public sealed record SensorSpec
         SensorLimits limits,
         string? chamberId,
         string? parameter,
-        string? tracksSensorId)
+        string? tracksSensorId,
+        string? kind = null)
     {
         if (string.IsNullOrWhiteSpace(id))
         {
@@ -101,7 +102,20 @@ public sealed record SensorSpec
         ChamberId = string.IsNullOrWhiteSpace(chamberId) ? null : chamberId.Trim();
         Parameter = string.IsNullOrWhiteSpace(parameter) ? null : parameter.Trim();
         TracksSensorId = string.IsNullOrWhiteSpace(tracksSensorId) ? null : tracksSensorId.Trim();
+        Kind = string.IsNullOrWhiteSpace(kind) ? SensorKinds.Periodic : kind.Trim();
+        if (!SensorKinds.IsKnown(Kind))
+        {
+            throw new ArgumentException("Sensor kind must be periodic or cumulative.", nameof(kind));
+        }
     }
+
+    /// <summary>
+    /// <see cref="SensorKinds.Periodic"/>: each reading stands alone and is SPC-charted against its limits.
+    /// <see cref="SensorKinds.Cumulative"/>: a running count. Shown as a count or trend, never with SPC limits.
+    /// </summary>
+    public string Kind { get; }
+
+    public bool IsCumulative => Kind == SensorKinds.Cumulative;
 
     public string Id { get; }
 
@@ -130,4 +144,13 @@ public sealed record SensorSpec
     {
         return ChamberId ?? toolId;
     }
+}
+
+public static class SensorKinds
+{
+    public const string Periodic = "periodic";
+
+    public const string Cumulative = "cumulative";
+
+    public static bool IsKnown(string kind) => kind is Periodic or Cumulative;
 }

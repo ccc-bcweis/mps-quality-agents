@@ -23,7 +23,7 @@ describe("reset demo", () => {
     expect(dialog).toHaveTextContent(RESET_COPY);
     await user.click(screen.getByRole("button", { name: "Confirm hard reset" }));
     expect(await screen.findByText("Demo baseline restored. Seed 4242.")).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { name: "Fleet overview" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Production line overview" })).toBeInTheDocument();
     expect((await screen.findByRole("link", { name: /D-01/ })).textContent).toMatch(/NOMINAL/);
     expect(screen.getByRole("link", { name: /E-02/ }).textContent).toMatch(/NOMINAL/);
     expect(screen.queryByText("ALARM")).not.toBeInTheDocument();

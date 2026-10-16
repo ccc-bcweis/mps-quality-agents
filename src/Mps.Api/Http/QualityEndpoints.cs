@@ -50,10 +50,12 @@ public static class QualityEndpoints
 
             return Results.Ok(SiteResponses.ToComparison(SiteComparison.Compare(world, parsed)));
         });
-        app.MapGet("/api/sites/{siteId}", (string siteId, SiteWorld world) =>
+        app.MapGet("/api/sites/{siteId}", (string siteId, SiteWorld world, PlantSimulation plant) =>
         {
             var site = world.Find(siteId);
-            return site is null ? Results.NotFound() : Results.Ok(SiteResponses.ToDetail(site));
+            return site is null
+                ? Results.NotFound()
+                : Results.Ok(SiteResponses.ToDetail(site, toolId => LiveResponses.ToolStatus(plant, toolId)));
         });
         app.MapGet("/api/tools", (string? siteId, PlantSimulation plant) =>
         {

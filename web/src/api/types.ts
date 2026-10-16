@@ -380,6 +380,9 @@ export type LiveSeries = {
   parameter: string;
   chamberId: string;
   points: LivePoint[];
+  /** Limits the rules engine checks. Null or absent for cumulative counters. */
+  center?: number | null;
+  sigma?: number | null;
 };
 
 export type FleetLiveTool = {

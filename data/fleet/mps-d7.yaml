@@ -83,7 +83,7 @@ tools:
       - { id: D-01-B-RF-RFL, type: rfReflectedPower, unit: W, subsystem: rfGenerator, schematicAnchor: b.rf.reflected, minimum: 0, maximum: 90, nominal: 14.4, warningMinimum: 9, warningMaximum: 81, chamberId: D-01-B, tracksSensorId: D-01-B-RF-FWD }
       - { id: D-01-RUN-RATE, type: runRate, unit: wafers/hour, subsystem: waferHandler, schematicAnchor: tool.runRate, minimum: 8, maximum: 14, nominal: 12, warningMinimum: 8.6, warningMaximum: 13.4 }
       - { id: D-01-THROUGHPUT, type: throughput, unit: wafers/hour, subsystem: waferHandler, schematicAnchor: tool.throughput, minimum: 7, maximum: 14, nominal: 11.4, warningMinimum: 7.7, warningMaximum: 13.3 }
-      - { id: D-01-OUTPUT, type: output, unit: wafers, subsystem: waferHandler, schematicAnchor: tool.output, minimum: 0, maximum: 14, nominal: 12, warningMinimum: 1.4, warningMaximum: 12.6 }
+      - { id: D-01-OUTPUT, type: output, unit: wafers, kind: cumulative, subsystem: waferHandler, schematicAnchor: tool.output, minimum: 0, maximum: 14, nominal: 12, warningMinimum: 1.4, warningMaximum: 12.6 }
       - { id: D-01-YIELD, type: yield, unit: percent, subsystem: waferHandler, schematicAnchor: tool.yield, minimum: 90, maximum: 100, nominal: 97, warningMinimum: 91, warningMaximum: 99 }
   - id: D-02
     name: Deposition D-02
@@ -118,5 +118,5 @@ tools:
       - { id: D-02-B-RF-RFL, type: rfReflectedPower, unit: W, subsystem: rfGenerator, schematicAnchor: b.rf.reflected, minimum: 0, maximum: 90, nominal: 14.4, warningMinimum: 9, warningMaximum: 81, chamberId: D-02-B, tracksSensorId: D-02-B-RF-FWD }
       - { id: D-02-RUN-RATE, type: runRate, unit: wafers/hour, subsystem: waferHandler, schematicAnchor: tool.runRate, minimum: 8, maximum: 14, nominal: 12, warningMinimum: 8.6, warningMaximum: 13.4 }
       - { id: D-02-THROUGHPUT, type: throughput, unit: wafers/hour, subsystem: waferHandler, schematicAnchor: tool.throughput, minimum: 7, maximum: 14, nominal: 11.4, warningMinimum: 7.7, warningMaximum: 13.3 }
-      - { id: D-02-OUTPUT, type: output, unit: wafers, subsystem: waferHandler, schematicAnchor: tool.output, minimum: 0, maximum: 14, nominal: 12, warningMinimum: 1.4, warningMaximum: 12.6 }
+      - { id: D-02-OUTPUT, type: output, unit: wafers, kind: cumulative, subsystem: waferHandler, schematicAnchor: tool.output, minimum: 0, maximum: 14, nominal: 12, warningMinimum: 1.4, warningMaximum: 12.6 }
       - { id: D-02-YIELD, type: yield, unit: percent, subsystem: waferHandler, schematicAnchor: tool.yield, minimum: 90, maximum: 100, nominal: 97, warningMinimum: 91, warningMaximum: 99 }

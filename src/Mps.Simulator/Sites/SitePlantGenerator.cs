@@ -147,7 +147,8 @@ public static class SitePlantGenerator
                 sensor.Limits,
                 sensor.ChamberId is null ? null : Rewrite(sensor.ChamberId, template.Id, id),
                 sensor.Parameter,
-                sensor.TracksSensorId is null ? null : Rewrite(sensor.TracksSensorId, template.Id, id)))
+                sensor.TracksSensorId is null ? null : Rewrite(sensor.TracksSensorId, template.Id, id),
+                sensor.Kind))
             .ToArray();
         return new ToolSpec(id, name, template.Family, template.Model, bay, chambers, template.Recipes, sensors);
     }

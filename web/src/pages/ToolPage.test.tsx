@@ -91,6 +91,8 @@ describe("tool detail", () => {
             {
               parameter: "etchRate",
               chamberId: "E-01-A",
+              center: 350,
+              sigma: 20,
               points: Array.from({ length: 12 }, (_, index) => ({
                 at: "2026-09-01T00:00:00Z",
                 value: index < 8 ? 350 : 250,

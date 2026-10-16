@@ -98,7 +98,7 @@ tools:
       - { id: E-01-B-RF-BIAS-RFL, type: rfReflectedPower, unit: W, subsystem: rfGenerator, schematicAnchor: b.rf.bias.reflected, minimum: 0, maximum: 75, nominal: 10.5, warningMinimum: 7.5, warningMaximum: 67.5, chamberId: E-01-B, tracksSensorId: E-01-B-RF-BIAS-FWD }
       - { id: E-01-RUN-RATE, type: runRate, unit: wafers/hour, subsystem: waferHandler, schematicAnchor: tool.runRate, minimum: 8, maximum: 14, nominal: 12, warningMinimum: 8.6, warningMaximum: 13.4 }
       - { id: E-01-THROUGHPUT, type: throughput, unit: wafers/hour, subsystem: waferHandler, schematicAnchor: tool.throughput, minimum: 7, maximum: 14, nominal: 11.4, warningMinimum: 7.7, warningMaximum: 13.3 }
-      - { id: E-01-OUTPUT, type: output, unit: wafers, subsystem: waferHandler, schematicAnchor: tool.output, minimum: 0, maximum: 14, nominal: 12, warningMinimum: 1.4, warningMaximum: 12.6 }
+      - { id: E-01-OUTPUT, type: output, unit: wafers, kind: cumulative, subsystem: waferHandler, schematicAnchor: tool.output, minimum: 0, maximum: 14, nominal: 12, warningMinimum: 1.4, warningMaximum: 12.6 }
       - { id: E-01-YIELD, type: yield, unit: percent, subsystem: waferHandler, schematicAnchor: tool.yield, minimum: 90, maximum: 100, nominal: 97, warningMinimum: 91, warningMaximum: 99 }
   - id: E-02
     name: Etch E-02
@@ -143,5 +143,5 @@ tools:
       - { id: E-02-B-RF-BIAS-RFL, type: rfReflectedPower, unit: W, subsystem: rfGenerator, schematicAnchor: b.rf.bias.reflected, minimum: 0, maximum: 75, nominal: 10.5, warningMinimum: 7.5, warningMaximum: 67.5, chamberId: E-02-B, tracksSensorId: E-02-B-RF-BIAS-FWD }
       - { id: E-02-RUN-RATE, type: runRate, unit: wafers/hour, subsystem: waferHandler, schematicAnchor: tool.runRate, minimum: 8, maximum: 14, nominal: 12, warningMinimum: 8.6, warningMaximum: 13.4 }
       - { id: E-02-THROUGHPUT, type: throughput, unit: wafers/hour, subsystem: waferHandler, schematicAnchor: tool.throughput, minimum: 7, maximum: 14, nominal: 11.4, warningMinimum: 7.7, warningMaximum: 13.3 }
-      - { id: E-02-OUTPUT, type: output, unit: wafers, subsystem: waferHandler, schematicAnchor: tool.output, minimum: 0, maximum: 14, nominal: 12, warningMinimum: 1.4, warningMaximum: 12.6 }
+      - { id: E-02-OUTPUT, type: output, unit: wafers, kind: cumulative, subsystem: waferHandler, schematicAnchor: tool.output, minimum: 0, maximum: 14, nominal: 12, warningMinimum: 1.4, warningMaximum: 12.6 }
       - { id: E-02-YIELD, type: yield, unit: percent, subsystem: waferHandler, schematicAnchor: tool.yield, minimum: 90, maximum: 100, nominal: 97, warningMinimum: 91, warningMaximum: 99 }

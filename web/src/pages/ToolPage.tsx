@@ -19,7 +19,7 @@ import { toolInPlant } from "../sites/selection";
 import { chartSpec } from "../fleet/chartSpec";
 import { statusTone, storyFor, windowRows } from "../fleet/catalog";
 import { sensorsForTool } from "../fleet/sensors";
-import { liveReadingMap, overlayWindows, seriesPoints, storyWithLive } from "../live/overlay";
+import { liveReadingMap, overlayWindows, seriesLimits, seriesPoints, storyWithLive } from "../live/overlay";
 import { usePolled } from "../live/usePolled";
 import { fleetSensors, fleetTemplates } from "virtual:fleet-sensors";
 
@@ -113,6 +113,7 @@ export function ToolPage() {
   const chart = selected ? chartSpec(selected, story) : story.chart;
   const seriesParameter = selected?.parameter ?? focusParameter ?? chart.parameter;
   const livePoints = seriesPoints(live, seriesParameter, selected?.chamberId);
+  const serverLimits = seriesLimits(live, seriesParameter, selected?.chamberId);
   const pointCount = livePoints && livePoints.length > 0 ? livePoints.length : 60;
   const readings = liveReadingMap(live?.readings);
   const windows = overlayWindows(windowRows(tool), live?.readings);
@@ -129,7 +130,7 @@ export function ToolPage() {
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">
-            <Link className={btnSm} to="/">Fleet</Link> · {tool.bay} · {tool.model}
+            <Link className={btnSm} to="/">Production line</Link> · {tool.bay} · {tool.model}
           </p>
           <h1 className="text-mps-display font-semibold">
             Tool {tool.id} · {FAMILY_PROCESS[tool.family]}
@@ -172,7 +173,7 @@ export function ToolPage() {
       </div>
       <div id="spc-chart" className={`${panel} mt-3 scroll-mt-16`}>
         <h2 className="mb-2 text-mps-title font-semibold">
-          <Explain text={`SPC · ${chart.label}`} />{" "}
+          <Explain text={`${selected?.kind === "cumulative" ? "Count" : "SPC"} · ${chart.label}`} />{" "}
           <span className="float-right font-mono text-mps-micro font-normal text-mps-muted">
             σ = {chart.sigma} {chart.unit} · n = {pointCount}
           </span>
@@ -181,12 +182,25 @@ export function ToolPage() {
           seedKey={`${tool.id}:${chart.parameter}`}
           label={chart.label}
           unit={chart.unit}
-          mean={chart.mean}
-          sigma={chart.sigma}
+          mean={serverLimits?.mean ?? chart.mean}
+          sigma={serverLimits?.sigma ?? chart.sigma}
           shape={chart.shape}
           endValue={chart.endValue}
           points={livePoints}
+          cumulative={selected?.kind === "cumulative"}
         />
+        {selected?.kind === "cumulative" ? (
+          <p className="mt-2">
+            {(() => {
+              const rate = toolSensors.find((sensor) => sensor.type === "runRate");
+              return rate ? (
+                <button type="button" className={btnSm} onClick={() => showSensor(rate)}>
+                  Show run rate (wafers/hour) with limits
+                </button>
+              ) : null;
+            })()}
+          </p>
+        ) : null}
       </div>
       <div className="mt-3 grid gap-3 lg:grid-cols-2">
         <div className={panel}>

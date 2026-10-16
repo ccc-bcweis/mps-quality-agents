@@ -75,7 +75,7 @@ describe("site selection", () => {
     expect(localStorage.getItem(SITE_STORAGE_KEY)).toBe("ironwood");
     expect(await screen.findByRole("link", { name: /Etch I-E-01/ })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("link", { name: "Fleet" }));
+    await user.click(screen.getByRole("link", { name: "Production line" }));
     expect(await screen.findByText("No tools at this plant.")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /D-01/ })).not.toBeInTheDocument();
 

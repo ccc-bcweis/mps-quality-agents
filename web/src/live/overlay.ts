@@ -98,3 +98,13 @@ export function seriesPoints(live: ToolLive | null, parameter: string, chamberId
   if (!match) return undefined;
   return match.points.map((point, index) => ({ index, value: point.value }));
 }
+
+/** The center and sigma the rules engine uses for this series, when the server sent them. */
+export function seriesLimits(live: ToolLive | null, parameter: string, chamberId?: string): { mean: number; sigma: number } | undefined {
+  if (!live) return undefined;
+  const rows = live.series.filter((series) => series.parameter === parameter && series.points.length > 0);
+  const match: LiveSeries | undefined =
+    rows.find((series) => chamberId !== undefined && series.chamberId === chamberId) ?? rows[0];
+  if (!match || match.center == null || match.sigma == null || !(match.sigma > 0)) return undefined;
+  return { mean: match.center, sigma: match.sigma };
+}

@@ -11,6 +11,8 @@ import { useSite } from "../context/SiteContext";
 import { FloorPlan } from "../sites/FloorPlan";
 import { PlantStructure } from "../sites/PlantStructure";
 import { formatPct } from "../sites/floorLayout";
+import { withLiveStatus } from "../sites/liveStatus";
+import { usePolled } from "../live/usePolled";
 
 function RoleLine({ role }: { role: SiteDetail["role"] }) {
   if (role === "Strip, clean, and pilot line") {
@@ -35,6 +37,7 @@ export function SitesPage() {
   const linked = params.get("site");
   const [sites, setSites] = useState<SiteSummary[] | null>(null);
   const [detail, setDetail] = useState<SiteDetail | null>(null);
+  const live = usePolled(() => api.listFleetLive(), "fleet");
   const [listError, setListError] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [structure, setStructure] = useState<MetadataSite[] | null>(null);
@@ -183,7 +186,7 @@ export function SitesPage() {
             </dl>
           </section>
           <div className="mt-4">
-            <FloorPlan site={detail} />
+            <FloorPlan site={withLiveStatus(detail, live)} />
           </div>
           <ul aria-label="Status lights" className="mt-3 flex flex-wrap gap-4 text-mps-body">
             <li className="inline-flex items-center gap-2">

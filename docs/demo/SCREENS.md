@@ -21,8 +21,8 @@ Charcoal application inside the gold frame.
 
 | Screen | Where | Notes |
 |---|---|---|
-| Sites | `/sites` | Three plants. The tab sits before Fleet. |
-| Fleet | `/` | Eight tools, two bays. |
+| Sites | `/sites` | Three plants. The tab sits before Production line. |
+| Production line | `/` | Eight tools, two bays. |
 | Tool | `/tools/:toolId` | Schematic and the process window. |
 | Alerts | `/alerts` | Rules-engine alerts, newest first. A missing alert falls back to the list. |
 | Tickets | `/tickets` | Normalized intake, newest first. Operator report and Upload telemetry sit side by side. A missing ticket falls back to the list. |

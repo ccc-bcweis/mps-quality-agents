@@ -27,6 +27,16 @@ public static class LiveResponses
         return new FleetLiveResponse(plant.SimulatedNow, tools);
     }
 
+    /// <summary>
+    /// The one tool status every view reads: Sites, Production line tiles and the tool page.
+    /// Worst live reading against its operating window; nominal when the tool has no readings yet.
+    /// </summary>
+    public static string ToolStatus(PlantSimulation plant, string toolId)
+    {
+        ArgumentNullException.ThrowIfNull(plant);
+        return MapAll(plant, plant.Log.SnapshotForTool(toolId)).Status;
+    }
+
     public static ToolLiveResponse? Tool(PlantSimulation plant, string toolId)
     {
         ArgumentNullException.ThrowIfNull(plant);
@@ -40,12 +50,18 @@ public static class LiveResponses
         var series = readings
             .OrderBy(reading => reading.Parameter, StringComparer.Ordinal)
             .ThenBy(reading => reading.ChamberId, StringComparer.Ordinal)
-            .Select(reading => new LiveSeriesResponse(
-                reading.Parameter,
-                reading.ChamberId,
-                plant.Log.Window(toolId, reading.ChamberId, reading.Parameter)
-                    .Select(point => new LivePointResponse(point.At, point.Value))
-                    .ToArray()))
+            .Select(reading =>
+            {
+                var window = IsCounter(reading.Parameter, reading.SensorId) ? null : plant.WindowAt(toolId, reading.Parameter, reading.At);
+                return new LiveSeriesResponse(
+                    reading.Parameter,
+                    reading.ChamberId,
+                    plant.Log.Window(toolId, reading.ChamberId, reading.Parameter)
+                        .Select(point => new LivePointResponse(point.At, point.Value))
+                        .ToArray(),
+                    window?.Nominal,
+                    window is null ? null : Math.Max(window.Sigma, 1e-6));
+            })
             .ToArray();
         return new ToolLiveResponse(toolId, SiteOf(plant, toolId), plant.SimulatedNow, mapped.Status, mapped.Readings, series);
     }
@@ -84,10 +100,7 @@ public static class LiveResponses
     }
 
     /// <summary>The wafer output counter climbs all hour by design, so it never sets a watch or alarm.</summary>
-    private static bool IsCounter(string parameter, string? sensorId) =>
-        string.Equals(parameter, SensorCatalog.Output, StringComparison.OrdinalIgnoreCase)
-        || parameter.EndsWith("-OUTPUT", StringComparison.OrdinalIgnoreCase)
-        || (sensorId?.EndsWith("-OUTPUT", StringComparison.OrdinalIgnoreCase) ?? false);
+    private static bool IsCounter(string parameter, string? sensorId) => Mps.Api.Live.SpcCoverage.IsCumulative(parameter, sensorId);
 
     private static string StatusOf(double value, OperatingWindow? window)
     {
