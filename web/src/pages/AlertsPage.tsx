@@ -60,7 +60,8 @@ export function AlertsPage() {
   }, [injected, localAlerts, siteId]);
 
   const merged = [...localAlerts, ...alerts]
-    .filter((alert, index, all) => all.findIndex((item) => item.correlationId === alert.correlationId) === index)
+    // One row per alert. Two tools in one scenario share a correlation id but each has its own alert.
+    .filter((alert, index, all) => all.findIndex((item) => item.id === alert.id) === index)
     .filter((alert) => toolInPlant(siteId, alert.toolId))
     .sort(byNewestTime((alert) => alert.raisedAt));
   const fresh = merged.filter((alert) => alert.correlationId.startsWith("corr-inject") || alert.correlationId.startsWith("corr-scenario"));
@@ -68,8 +69,14 @@ export function AlertsPage() {
   const missing = Boolean(alertId) && ready && !selected;
   const problem = visibleProblem(error);
 
-  const rows = merged.map((alert) => {
-    const incident = incidents.find((item) => item.correlationId === alert.correlationId);
+  // The list shows active alerts only, so it matches the alarm and watch counts on the Production line.
+  const active = merged.filter((alert) => alert.status !== "cleared");
+  const incidentFor = (alert: Alert) =>
+    incidents.find((item) => item.correlationId === alert.correlationId && item.toolId === alert.toolId) ??
+    incidents.find((item) => item.correlationId === alert.correlationId);
+  const selectedIncident = selected ? incidentFor(selected) : undefined;
+  const rows = active.map((alert) => {
+    const incident = incidentFor(alert);
     const matched = tickets.find((item) => item.incidentId === incident?.id);
     return {
       id: alert.id,
@@ -141,13 +148,10 @@ export function AlertsPage() {
           <p className="mt-2">
             <Link className={btn} to="/alerts">All alerts</Link>
           </p>
+          {selectedIncident ? <CaseBriefs incidentIds={[selectedIncident.id]} intro="Evidence for this alert" /> : null}
         </section>
       ) : null}
-      {!alertId || missing ? <RecordList label="Alerts" rows={rows} empty="No alerts yet." /> : null}
-      <CaseBriefs
-        incidentIds={incidents.filter((incident) => merged.some((alert) => alert.correlationId === incident.correlationId)).map((incident) => incident.id)}
-        intro="Evidence linked to these alerts"
-      />
+      {!alertId || missing ? <RecordList label="Alerts" rows={rows} empty="No active alerts." /> : null}
     </div>
   );
 }
