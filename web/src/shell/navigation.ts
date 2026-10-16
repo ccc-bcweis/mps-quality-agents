@@ -24,7 +24,7 @@ export const CONSOLE_TABS: ConsoleTab[] = [
   { to: "/alerts", label: "Alerts", match: (path) => path.startsWith("/alerts") },
   { to: "/tickets", label: "Tickets", match: (path) => path.startsWith("/tickets") },
   { to: "/investigations", label: "Investigation", match: (path) => path.startsWith("/investigations") },
-  { to: "/approvals", label: "Approval", match: (path) => path.startsWith("/approvals") },
+  { to: "/approvals", label: "Decisions", match: (path) => path.startsWith("/approvals") },
   { to: "/capas", label: "CAPA", match: (path) => path.startsWith("/capas") },
   { to: "/rules", label: "Rules & Process", match: (path) => path.startsWith("/rules") },
 ];

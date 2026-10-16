@@ -58,7 +58,7 @@ export function InvestigationHistory({ detail }: { detail: "investigation" | "ap
           <>
             <div>{incident?.summary ?? "Investigation"}</div>
             <div className="mt-1">
-              <Link to={detail === "approval" ? `/approvals/${investigation.id}` : `/investigations/${investigation.id}`} className={btnSm}>Open</Link>
+              <Link to={detail === "approval" ? `/investigations/${investigation.id}#decision` : `/investigations/${investigation.id}`} className={btnSm}>Open</Link>
             </div>
           </>
         ),
@@ -68,7 +68,7 @@ export function InvestigationHistory({ detail }: { detail: "investigation" | "ap
 
   return (
     <RecordList
-      label={detail === "approval" ? "Approvals" : "Investigations"}
+      label={detail === "approval" ? "Decisions" : "Investigations"}
       rows={rows}
       empty={detail === "approval" ? "No approvals yet." : "No investigations yet."}
     />

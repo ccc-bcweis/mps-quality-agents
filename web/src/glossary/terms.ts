@@ -19,6 +19,8 @@ export function lookupTerm(id: string): GlossaryTerm | undefined {
   if (direct) return direct;
   if (/^western electric rules?$/i.test(id)) return byTerm.get("western electric rules");
   if (/^nelson rules?(?: \d+)?$/i.test(id)) return byTerm.get("nelson rules");
+  // Plurals of plain words ("supplier notices") open the singular entry.
+  if (/s$/i.test(id) && byTerm.has(id.toLowerCase().slice(0, -1))) return byTerm.get(id.toLowerCase().slice(0, -1));
   const base = ruleCodeBase(id);
   return base ? byTerm.get(base.toLowerCase()) : undefined;
 }

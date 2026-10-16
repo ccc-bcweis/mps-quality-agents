@@ -1,0 +1,23 @@
+{
+  "id": "OSC-01",
+  "group": "signalShape",
+  "groundTruth": "free-form oscillation on D-01-A chamber pressure (Bryan's live run, 2026-10-16)",
+  "expected": {
+    "behavior": "escalate",
+    "category": null,
+    "forbiddenInCause": ["gradual", "ramp", "drift", "rise"]
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "D-01/D-01-A",
+    "signalShape": "oscillation",
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000400"
+    ],
+    "noticeIds": ["SN-SIH4-088"],
+    "lotIds": ["SIH4-088"],
+    "notes": [
+      {"id": "00000000-0000-0000-0000-000000000401", "source": "erp", "title": "Ruled out: Supplier notice SN-SIH4-088", "detail": "Silane lot SIH4-088 matches the purchase specification.", "externalRef": "SN-SIH4-088"}
+    ]
+  }
+}

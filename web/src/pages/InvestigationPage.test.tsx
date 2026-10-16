@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { S1_INVESTIGATION_ID, S2_INVESTIGATION_ID } from "../mocks/demoData";
 import { matchCopy } from "../test/matchCopy";
@@ -24,7 +25,7 @@ describe("investigation", () => {
     expect(screen.getAllByText("Rules").length).toBeGreaterThan(0);
     expect(screen.getAllByText("AI").length).toBeGreaterThan(0);
     const steps = screen.getByRole("list", { name: "Agent steps" });
-    expect(within(steps).getAllByText(/engineering change, equipment calibration, material lot, and process drift/).length).toBeGreaterThan(0);
+    expect(steps.textContent).toMatch(/engineering change, equipment calibration, material lot, and process drift/);
     expect(within(steps).getAllByText(/Duration/).length).toBeGreaterThan(0);
     expect(steps.querySelector('[data-status="running"]')).toBeNull();
     expect(step(steps, "Human approval")).toHaveAttribute("data-status", "queued");
@@ -47,5 +48,36 @@ describe("investigation", () => {
     );
     expect(screen.getByRole("table", { name: "Evidence pack" })).toHaveTextContent("6.52 Torr, spec 2-6 Torr");
     expect(screen.getByRole("table", { name: "Root-cause evidence matrix" })).toHaveTextContent("rules out");
+  });
+
+  it("puts the decision on the investigation page, without architecture remarks or the enforcement table", async () => {
+    renderConsole(`/investigations/${S1_INVESTIGATION_ID}`);
+    const decision = await screen.findByRole("region", { name: "Decision" });
+    expect(within(decision).getByRole("button", { name: "Approve CAPA + containment" })).toBeInTheDocument();
+    expect(within(decision).getByRole("button", { name: "Request more evidence" })).toBeInTheDocument();
+    expect(within(decision).getByRole("button", { name: "Reject" })).toBeInTheDocument();
+    expect(within(decision).getByLabelText("Note or justification")).toBeInTheDocument();
+    expect(within(decision).getByLabelText("Approver name")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Go to decision" })).toHaveAttribute("href", "#decision");
+    expect(document.body.textContent).not.toMatch(/write authority|Enforcement|No approver name|human-gated/);
+  });
+
+  it("an old approval link opens the investigation at its decision", async () => {
+    renderConsole(`/approvals/${S1_INVESTIGATION_ID}`);
+    expect(await screen.findByRole("region", { name: "Decision" })).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "Evidence pack" })).toBeInTheDocument();
+  });
+
+  it("agent steps open and close from the whole row with a chevron", async () => {
+    const user = userEvent.setup();
+    renderConsole(`/investigations/${S1_INVESTIGATION_ID}`);
+    const steps = await screen.findByRole("list", { name: "Agent steps" });
+    expect(within(steps).queryByText("Details")).not.toBeInTheDocument();
+    const row = within(steps).getAllByRole("button")[0];
+    expect(row).toHaveAttribute("aria-expanded", "false");
+    await user.click(row);
+    expect(row).toHaveAttribute("aria-expanded", "true");
+    await user.click(row);
+    expect(row).toHaveAttribute("aria-expanded", "false");
   });
 });

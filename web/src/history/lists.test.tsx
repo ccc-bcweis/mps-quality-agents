@@ -34,7 +34,7 @@ describe("history lists", () => {
     renderConsole("/");
     const nav = await screen.findByRole("navigation", { name: "Console" });
     const investigation = within(nav).getByRole("link", { name: "Investigation" });
-    const approval = within(nav).getByRole("link", { name: "Approval" });
+    const approval = within(nav).getByRole("link", { name: "Decisions" });
     expect(investigation).toHaveAttribute("href", "/investigations");
     expect(approval).toHaveAttribute("href", "/approvals");
     expect(investigation.getAttribute("href")).not.toContain(S1_INVESTIGATION_ID);
@@ -57,9 +57,9 @@ describe("history lists", () => {
     expect(await screen.findByRole("table", { name: "Investigations" })).toBeInTheDocument();
     expect(screen.queryByText("No such record.")).not.toBeInTheDocument();
 
+    // An old approval link opens the investigation's Decision section, so a missing one falls back the same way.
     renderConsole(`/approvals/${gone}`);
-    expect(await screen.findByText(MISSING_INVESTIGATION)).toBeInTheDocument();
-    expect(await screen.findByRole("table", { name: "Approvals" })).toBeInTheDocument();
+    expect((await screen.findAllByText(MISSING_INVESTIGATION)).length).toBeGreaterThan(0);
     expect(screen.queryByText("No such record.")).not.toBeInTheDocument();
 
     renderConsole(`/capas/${gone}`);

@@ -6,7 +6,7 @@ import { CONSOLE_TABS } from "../shell/navigation";
 import { expandHarness } from "../test/harness";
 import { renderConsole } from "../test/render";
 
-const CONSOLE_TAB_LABELS = ["Sites", "Production line", "Tool", "Alerts", "Tickets", "Investigation", "Approval", "CAPA", "Rules & Process"];
+const CONSOLE_TAB_LABELS = ["Sites", "Production line", "Tool", "Alerts", "Tickets", "Investigation", "Decisions", "CAPA", "Rules & Process"];
 
 describe("demo harness and console split", () => {
   it("keeps presenter controls out of the console region", async () => {

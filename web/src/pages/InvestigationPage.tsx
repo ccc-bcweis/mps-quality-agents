@@ -1,10 +1,11 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { CATEGORY_LABEL, CHANNEL_LABEL, STAGE_LABEL } from "../api/labels";
 import type { Incident, Investigation } from "../api/types";
 import { AgentTimeline } from "../components/AgentTimeline";
+import { DecisionPanel } from "../components/DecisionPanel";
 import { EvidenceMatrix } from "../components/EvidenceMatrix";
 import { EvidencePack } from "../components/EvidencePack";
 import { Explain } from "../components/Explain";
@@ -186,7 +187,7 @@ export function InvestigationPage() {
       </div>
     );
   }
-  if (investigation) return <InvestigationDetail investigation={investigation} />;
+  if (investigation) return <InvestigationDetail investigation={investigation} onChange={setInvestigation} />;
   if (incident && !error) {
     const finished = incident.stage === "closed" || incident.stage === "closedByDemoReset" || incident.stage === "approved";
     return (
@@ -222,7 +223,11 @@ export function InvestigationPage() {
   return <p className="text-mps-alarm-text">{visibleProblem(error) ?? "Investigation did not load."}</p>;
 }
 
-function InvestigationDetail({ investigation }: { investigation: Investigation }) {
+function InvestigationDetail({ investigation, onChange }: { investigation: Investigation; onChange: (next: Investigation) => void }) {
+  const location = useLocation();
+  useEffect(() => {
+    if (location.hash === "#decision") document.getElementById("decision")?.scrollIntoView?.({ block: "start" });
+  }, [location.hash]);
   const ranked = [...investigation.hypotheses].sort((a, b) => b.confidence - a.confidence);
   const place = investigation.evidence[0]
     ? placeLabel(investigation.evidence[0].toolId, null, investigation.evidence[0].toolName, investigation.evidence[0].chamberName)
@@ -237,14 +242,12 @@ function InvestigationDetail({ investigation }: { investigation: Investigation }
           </h1>
           {place && place !== "—" ? <p className="text-mps-secondary">{place}</p> : null}
           <p className="max-w-3xl text-mps-secondary">
-            <Explain text="Read-only evidence, then ranked hypotheses. AI proposes a ranking. Violet marks the model. Cyan marks fixed rule checks. The model cannot write." />
+            <Explain text="Evidence first, then the ranked causes and your decision. Violet marks the AI. Cyan marks fixed rule checks." />
           </p>
         </div>
-        {investigation.stage === "recommendationReady" ? (
-          <Link className={btnPrimary} to={`/approvals/${investigation.id}`}>
-            Review recommendation
-          </Link>
-        ) : null}
+        <a className={btnPrimary} href="#decision" onClick={(event) => { event.preventDefault(); document.getElementById("decision")?.scrollIntoView?.({ block: "start" }); }}>
+          Go to decision
+        </a>
       </div>
       {investigation.escalationReason ? (
         <p className="mb-3 rounded border border-mps-warn bg-mps-panel px-3 py-2" role="status">
@@ -252,9 +255,10 @@ function InvestigationDetail({ investigation }: { investigation: Investigation }
         </p>
       ) : (
         <p className="mb-3 rounded border border-mps-ok bg-mps-panel px-3 py-2">
-          Evidence gate: <strong>sufficient</strong> for a recommendation. Confounders are listed on the hypothesis and have to be addressed.
+          Evidence gate: <strong>sufficient</strong> for a recommendation. Records that look related but are not the cause are listed as ruled out.
         </p>
       )}
+      <DecisionPanel investigation={investigation} onChange={onChange} />
       <section className={`${panel} mb-3`}>
         <AgentTimeline investigation={investigation} />
       </section>

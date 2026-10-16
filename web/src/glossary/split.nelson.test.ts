@@ -31,3 +31,11 @@ describe("misleading records glossary entry", () => {
     expect(lookupTerm("misleading records (to rule out)")?.definition).toMatch(/not the cause/);
   });
 });
+
+describe("supplier and material words in AI text", () => {
+  it("link to the glossary", () => {
+    const parts = splitGlossary("The silane notice: a Supplier notice for one material lot.").filter((p) => p.kind === "term");
+    expect(parts.map((p) => (p.kind === "term" ? p.term : ""))).toEqual(["silane", "Supplier notice", "material lot"]);
+    expect(lookupTerm("supplier notices")?.term).toBe("supplier notice");
+  });
+});

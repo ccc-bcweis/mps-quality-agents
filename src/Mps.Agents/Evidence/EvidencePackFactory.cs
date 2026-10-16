@@ -34,10 +34,11 @@ public static class EvidencePackFactory
                 violation.Parameter,
                 violation.At.ToString("O", CultureInfo.InvariantCulture),
                 violation.Rule);
-            items.Add(Item(incident, EvidenceSource.Spc, Mps.Application.Spc.SpcRuleNames.Plain(violation.Rule) + " on " + Mps.Domain.Telemetry.ParameterNames.Display(violation.Parameter), reference, violation.At, violation.ToolId.Value, Text($"{Mps.Application.Spc.SpcRuleNames.Plain(violation.Rule)} broke on {violation.ToolId.Value} {violation.ChamberId ?? string.Empty} {Mps.Domain.Telemetry.ParameterNames.Display(violation.Parameter)} at {Stamp(violation.At)}: value {Num(violation.Value)}, {Num(violation.Sigma)} sigma from the mean, severity {violation.Severity}."), violation.ChamberId, violation.Value));
+            items.Add(Item(incident, EvidenceSource.Spc, Mps.Application.Spc.SpcRuleNames.Plain(violation.Rule) + " on " + Mps.Domain.Telemetry.ParameterNames.Display(violation.Parameter), reference, violation.At, violation.ToolId.Value, Text($"{Mps.Application.Spc.SpcRuleNames.Plain(violation.Rule)} broke on {violation.ToolId.Value} {violation.ChamberId ?? string.Empty} {Mps.Domain.Telemetry.ParameterNames.Display(violation.Parameter)} at {Stamp(violation.At)}: value {Num(violation.Value)} (one sigma is {Num(violation.Sigma)}), severity {violation.Severity}."), violation.ChamberId, violation.Value));
             observations.Add(new ImpactObservation(violation.ToolId.Value, violation.ChamberId, null, null));
         }
 
+        var shape = ShapeOf(harvest.Telemetry, harvest.Violations);
         if (harvest.Telemetry is not null)
         {
             var window = harvest.Telemetry;
@@ -48,7 +49,7 @@ public static class EvidencePackFactory
                 window.Parameter,
                 window.From.ToString("O", CultureInfo.InvariantCulture));
             var latest = window.Points.Count == 0 ? (double?)null : window.Points[^1].Value;
-            items.Add(Item(incident, EvidenceSource.Telemetry, Mps.Domain.Telemetry.ParameterNames.Display(window.Parameter) + " readings", reference, window.To, window.ToolId.Value, DescribeWindow(window), incident.ChamberId, latest));
+            items.Add(Item(incident, EvidenceSource.Telemetry, Mps.Domain.Telemetry.ParameterNames.Display(window.Parameter) + " readings", reference, window.To, window.ToolId.Value, DescribeWindow(window, shape), incident.ChamberId, latest));
         }
 
         foreach (var eco in harvest.Ecos)
@@ -121,9 +122,6 @@ public static class EvidencePackFactory
             observations.Add(new ImpactObservation(incident.ToolId.Value, incident.ChamberId, null, null));
         }
 
-        var shape = harvest.Telemetry is null
-            ? SignalShape.Unknown
-            : SignalShapeClassifier.Classify(harvest.Telemetry.Points);
         var catalog = WhyItMattersCatalog.Shared;
         var pack = new EvidencePack(
             items,
@@ -174,7 +172,7 @@ public static class EvidencePackFactory
     private static string Num(double value) => value.ToString("0.###", CultureInfo.InvariantCulture);
 
     /// <summary>Numbers the model needs to judge shape: baseline, latest, extremes and shift in baseline sigmas.</summary>
-    internal static string DescribeWindow(Mps.Domain.Telemetry.TelemetryWindow window)
+    public static string DescribeWindow(Mps.Domain.Telemetry.TelemetryWindow window, SignalShape shape = SignalShape.Unknown)
     {
         var points = window.Points;
         if (points.Count == 0)
@@ -188,6 +186,46 @@ public static class EvidencePackFactory
         var sd = Math.Sqrt(head.Select(value => (value - mean) * (value - mean)).Average());
         var late = tail.Average();
         var shift = sd > 1e-9 ? (late - mean) / sd : 0d;
-        return Text($"{Mps.Domain.Telemetry.ParameterNames.Display(window.Parameter)} on {window.ToolId.Value}, {points.Count} samples {Stamp(window.From)} to {Stamp(window.To)}: early mean {Num(mean)} (sd {Num(sd)}), late mean {Num(late)}, min {Num(points.Min(point => point.Value))}, max {Num(points.Max(point => point.Value))}, last {Num(points[^1].Value)}; late shift {Num(shift)} baseline sigmas.");
+        return Text($"{Mps.Domain.Telemetry.ParameterNames.Display(window.Parameter)} on {window.ToolId.Value}, {points.Count} samples {Stamp(window.From)} to {Stamp(window.To)}: early mean {Num(mean)} (sd {Num(sd)}), late mean {Num(late)}, min {Num(points.Min(point => point.Value))}, max {Num(points.Max(point => point.Value))}, last {Num(points[^1].Value)}; late shift {Num(shift)} baseline sigmas. Shape from the data since the first rule break: {ShapeWords(shape)}.");
     }
+
+    /// <summary>
+    /// The shape of the signal since it started breaking rules. A long window is mostly normal readings, so the shape is
+    /// read from the readings since the first violation (less a short lead-in), and from the whole window otherwise.
+    /// </summary>
+    public static SignalShape ShapeOf(Mps.Domain.Telemetry.TelemetryWindow? window, IReadOnlyList<Mps.Domain.Telemetry.SpcViolation> violations)
+    {
+        ArgumentNullException.ThrowIfNull(violations);
+        if (window is null)
+        {
+            return SignalShape.Unknown;
+        }
+
+        var points = window.Points.OrderBy(point => point.At).ToArray();
+        if (violations.Count > 0)
+        {
+            var onset = violations.Min(violation => violation.At).AddMinutes(-10);
+            var recent = points.Where(point => point.At >= onset).ToArray();
+            if (recent.Length >= 8)
+            {
+                var near = SignalShapeClassifier.Classify(recent);
+                if (near != SignalShape.Unknown)
+                {
+                    return near;
+                }
+            }
+        }
+
+        return SignalShapeClassifier.Classify(points);
+    }
+
+    /// <summary>Plain words for the shape, so a summary cannot call an oscillation a gradual rise.</summary>
+    public static string ShapeWords(SignalShape shape) => shape switch
+    {
+        SignalShape.Step => "a step (a sudden jump that stays)",
+        SignalShape.Ramp => "a gradual drift in one direction",
+        SignalShape.Oscillation => "an oscillation (the reading swings up and down repeatedly)",
+        SignalShape.Intermittent => "intermittent spikes that come and go",
+        _ => "no clear shape",
+    };
 }
