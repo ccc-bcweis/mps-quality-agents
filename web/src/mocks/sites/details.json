@@ -8,7 +8,7 @@
     "bays": [
       {
         "id": "Bay-1",
-        "name": "Bay 1",
+        "name": "Cleanroom bay 1",
         "tools": [
           {
             "id": "D-01",
@@ -61,7 +61,7 @@
       },
       {
         "id": "Bay-2",
-        "name": "Bay 2",
+        "name": "Cleanroom bay 2",
         "tools": [
           {
             "id": "D-02",
@@ -114,7 +114,7 @@
       },
       {
         "id": "Bay-3",
-        "name": "Bay 3 deposition",
+        "name": "Cleanroom bay 3",
         "tools": [
           {
             "id": "D-03",
@@ -147,7 +147,7 @@
       },
       {
         "id": "Bay-4",
-        "name": "Bay 4 etch",
+        "name": "Cleanroom bay 4",
         "tools": [
           {
             "id": "E-03",
@@ -218,7 +218,7 @@
     "bays": [
       {
         "id": "I-Bay-1",
-        "name": "Deposition 1",
+        "name": "Cleanroom bay 1",
         "tools": [
           {
             "id": "I-D-01",
@@ -251,7 +251,7 @@
       },
       {
         "id": "I-Bay-2",
-        "name": "Etch",
+        "name": "Cleanroom bay 2",
         "tools": [
           {
             "id": "I-E-01",
@@ -294,7 +294,7 @@
       },
       {
         "id": "I-Bay-3",
-        "name": "Deposition 2",
+        "name": "Cleanroom bay 3",
         "tools": [
           {
             "id": "I-D-03",
@@ -327,7 +327,7 @@
       },
       {
         "id": "I-Bay-4",
-        "name": "Etch finish",
+        "name": "Cleanroom bay 4",
         "tools": [
           {
             "id": "I-E-04",
@@ -403,7 +403,7 @@
     "bays": [
       {
         "id": "P-Bay-1",
-        "name": "Strip",
+        "name": "Cleanroom bay 1",
         "tools": [
           {
             "id": "P-S-01",
@@ -446,7 +446,7 @@
       },
       {
         "id": "P-Bay-2",
-        "name": "Clean",
+        "name": "Cleanroom bay 2",
         "tools": [
           {
             "id": "P-C-01",
@@ -489,7 +489,7 @@
       },
       {
         "id": "P-Bay-3",
-        "name": "Pilot deposition",
+        "name": "Pilot line bay 3",
         "tools": [
           {
             "id": "P-D-01",
@@ -522,7 +522,7 @@
       },
       {
         "id": "P-Bay-4",
-        "name": "Pilot etch",
+        "name": "Pilot line bay 4",
         "tools": [
           {
             "id": "P-E-01",

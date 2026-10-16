@@ -158,6 +158,22 @@ public sealed class SpcAlertServiceTests
     }
 
     [Fact]
+    public async Task AClearedPointDoesNotRaiseAgainFromALaterWindow()
+    {
+        // A point alerts once. After the alert clears, a window that still holds the old breaking point must not reopen it.
+        var fixture = new Fixture();
+        await fixture.Service.RaiseAsync(SpcSeries.Sample(0d, 4d), CancellationToken.None);
+        var nominal = SpcSeries.Shifted(TimeSpan.FromMinutes(2), 0d, 0.1d, -0.2d, 0.3d, 0d, 0.1d, -0.1d, 0.2d);
+        await fixture.Service.RaiseAsync(new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, nominal), CancellationToken.None);
+        fixture.Alerts.Alerts.Single().IsActive.Should().BeFalse();
+
+        var window = SpcSeries.Values(0d, 4d).Concat(nominal).ToArray();
+        await fixture.Service.RaiseAsync(new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, window), CancellationToken.None);
+
+        fixture.Alerts.Alerts.Should().ContainSingle().Which.IsActive.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task SlowDriftLikeSc4At10xStaysActiveEscalatesToAlarmAndOpensATicket()
     {
         // SC-4: etch rate ramps down about 3.5 sigma, 15-second samples, the publisher sends the last 20 points each tick.

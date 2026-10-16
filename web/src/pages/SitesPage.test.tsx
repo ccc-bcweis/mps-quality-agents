@@ -31,7 +31,7 @@ describe("sites overview", () => {
     expect(within(structure).queryByText("nw-manufacturing")).not.toBeInTheDocument();
     expect(within(structure).queryByText("D-01")).not.toBeInTheDocument();
 
-    expect(screen.getByText("Bay 3 deposition")).toBeInTheDocument();
+    expect(screen.getByText("Cleanroom bay 3")).toBeInTheDocument();
     expect(screen.getByText(/Deposited wafers move to bay 1 for etch/)).toBeInTheDocument();
 
     const nominal = screen.getByRole("link", { name: /Deposition D-01/ });
@@ -72,9 +72,9 @@ describe("sites overview", () => {
     const user = userEvent.setup();
     renderConsole("/sites?site=lumen");
     expect(await screen.findByRole("heading", { name: "Lumen Pilot Works" })).toBeInTheDocument();
-    expect(screen.getByText("Pilot deposition")).toBeInTheDocument();
+    expect(screen.getByText("Pilot line bay 3")).toBeInTheDocument();
     expect(await within(await screen.findByRole("region", { name: "Plant structure" })).findByText("Lumen deposition leg")).toBeInTheDocument();
-    expect(screen.getAllByText("Pilot deposition")).toHaveLength(1);
+    expect(screen.getAllByText("Pilot line bay 3")).toHaveLength(1);
     const pilot = screen.getAllByText(matchCopy(/pilot line/i))[0];
     expect(pilot).toBeTruthy();
     if (!pilot) return;

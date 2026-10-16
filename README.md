@@ -4,6 +4,8 @@
 
 This repo is a **StatusNeo proposal demo** for a fictional customer, **Meridian Precision Systems (MPS)**, a semiconductor process-equipment maker (thin-film deposition, plasma etch, photoresist strip, wafer clean). The demo is an agentic **Manufacturing Quality & Engineering Issue Resolution** workflow. A simulated tool fleet streams sensor telemetry, and SPC (Western Electric) alerts open tickets. An Investigation Agent and a Resolution Agent work out the root cause from grounded evidence in mock MES/QMS/PLM/ERP/maintenance systems and documents. A CAPA is created **only after explicit human approval**, with full traceability, evaluation and cost tracking.
 
+Design decisions are in [docs/adr](docs/adr/README.md). Bench printouts are ingested as ordinary samples tagged `source=manual` and go through the same rules engine as sensor telemetry (ADR-013). Tool status everywhere is the worst active alert.
+
 > **Built openly with AI.** The code will be written by AI coding agents (Grok Build) working in parallel lanes, under human architecture, code review, CI, test and evaluation gates. Progress is tracked on the GitHub Project board and in issues.
 
 All companies, equipment, people and data in this repo are **fictional and synthetic**.

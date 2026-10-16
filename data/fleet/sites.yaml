@@ -1,6 +1,7 @@
 # Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 # Three fictional plants. Positions, telemetry, and throughput come from Mps:Demo:Seed (default 4242).
 # Place names are invented. Tool models stay the fictional MPS family names.
+# Bay names are shared by the console Production line headers and the floor plans (docs/diagrams/fab-floor.mjs).
 sites:
   - id: northwater
     name: Northwater Fab
@@ -10,26 +11,26 @@ sites:
     toolPrefix: ""
     bays:
       - id: Bay-1
-        name: Bay 1
+        name: Cleanroom bay 1
         tools:
           - { id: D-01 }
           - { id: E-01 }
           - { id: S-01 }
           - { id: C-01 }
       - id: Bay-2
-        name: Bay 2
+        name: Cleanroom bay 2
         tools:
           - { id: D-02 }
           - { id: E-02 }
           - { id: S-02 }
           - { id: C-02 }
       - id: Bay-3
-        name: Bay 3 deposition
+        name: Cleanroom bay 3
         tools:
           - { id: D-03, template: D-01, name: Deposition D-03 }
           - { id: D-04, template: D-01, name: Deposition D-04 }
       - id: Bay-4
-        name: Bay 4 etch
+        name: Cleanroom bay 4
         tools:
           - { id: E-03, template: E-01, name: Etch E-03 }
           - { id: E-04, template: E-01, name: Etch E-04 }
@@ -46,23 +47,23 @@ sites:
     toolPrefix: "I-"
     bays:
       - id: I-Bay-1
-        name: Deposition 1
+        name: Cleanroom bay 1
         tools:
           - { id: I-D-01, template: D-01, name: Deposition I-D-01 }
           - { id: I-D-02, template: D-01, name: Deposition I-D-02 }
       - id: I-Bay-2
-        name: Etch
+        name: Cleanroom bay 2
         tools:
           - { id: I-E-01, template: E-01, name: Etch I-E-01 }
           - { id: I-E-02, template: E-01, name: Etch I-E-02 }
           - { id: I-E-03, template: E-01, name: Etch I-E-03 }
       - id: I-Bay-3
-        name: Deposition 2
+        name: Cleanroom bay 3
         tools:
           - { id: I-D-03, template: D-01, name: Deposition I-D-03 }
           - { id: I-D-04, template: D-01, name: Deposition I-D-04 }
       - id: I-Bay-4
-        name: Etch finish
+        name: Cleanroom bay 4
         tools:
           - { id: I-E-04, template: E-01, name: Etch I-E-04 }
           - { id: I-S-01, template: S-01, name: Strip I-S-01 }
@@ -84,24 +85,24 @@ sites:
     toolPrefix: "P-"
     bays:
       - id: P-Bay-1
-        name: Strip
+        name: Cleanroom bay 1
         tools:
           - { id: P-S-01, template: S-01, name: Strip P-S-01 }
           - { id: P-S-02, template: S-01, name: Strip P-S-02 }
           - { id: P-S-03, template: S-01, name: Strip P-S-03 }
       - id: P-Bay-2
-        name: Clean
+        name: Cleanroom bay 2
         tools:
           - { id: P-C-01, template: C-01, name: Clean P-C-01 }
           - { id: P-C-02, template: C-01, name: Clean P-C-02 }
           - { id: P-C-03, template: C-01, name: Clean P-C-03 }
       - id: P-Bay-3
-        name: Pilot deposition
+        name: Pilot line bay 3
         tools:
           - { id: P-D-01, template: D-01, name: Deposition P-D-01 }
           - { id: P-D-02, template: D-01, name: Deposition P-D-02 }
       - id: P-Bay-4
-        name: Pilot etch
+        name: Pilot line bay 4
         tools:
           - { id: P-E-01, template: E-01, name: Etch P-E-01 }
           - { id: P-E-02, template: E-01, name: Etch P-E-02 }

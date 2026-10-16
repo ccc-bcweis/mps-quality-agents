@@ -7,7 +7,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { collectLabelIssues, loadFonts, Sheet, logoInner } from './sheet.mjs';
-import { SHEETS } from './sheets.mjs';
+import { SHEETS as BASE_SHEETS } from './sheets.mjs';
+import { floorSheets } from './fab-floor.mjs';
 import { drawSiteMap } from './sites-map.mjs';
 import { drawDeckPlaceholders } from './deck-art.mjs';
 
@@ -26,10 +27,11 @@ const checkOnly = args.includes('--check');
 
 function edgePath() {
   const candidates = [
+    process.env.MPS_BROWSER,
     'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
     'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
   ];
-  const found = candidates.find((p) => fs.existsSync(p));
+  const found = candidates.find((p) => p && fs.existsSync(p));
   if (!found) throw new Error('Microsoft Edge (msedge.exe) was not found');
   return found;
 }
@@ -204,13 +206,24 @@ function writeSlideArt(fonts) {
   }
 }
 
+let SHEETS = BASE_SHEETS;
+
+// Floor plans come from data/fleet/sites.yaml, the same file the console reads for bay names.
+async function loadFloorSheets() {
+  const mjs = path.join(tools, 'node_modules', 'js-yaml', 'dist', 'js-yaml.mjs');
+  const yaml = await import(pathToFileURL(mjs).href);
+  const doc = yaml.load(fs.readFileSync(path.join(repo, 'data', 'fleet', 'sites.yaml'), 'utf8'));
+  return floorSheets(doc.sites);
+}
+
 async function main() {
   assertOverlapCheckWorks();
+  SHEETS = [...BASE_SHEETS, ...(await loadFloorSheets())];
   const parse = await loadParse();
   const fonts = loadFonts(path.join(here, 'fonts'), parse);
   writeSlideArt(fonts);
   const logo = logoInner(fs.readFileSync(path.join(repo, 'design', 'brand', 'logo-concept-1.svg'), 'utf8'));
-  const selected = SHEETS.filter((s) => !only || s.slug === only);
+  const selected = SHEETS.filter((s) => !only || s.slug === only || s.slug.startsWith(`${only}-`));
   if (!selected.length) throw new Error(`no sheet named ${only}`);
 
   for (const meta of selected) {

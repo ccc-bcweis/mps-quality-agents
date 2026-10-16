@@ -1,5 +1,7 @@
 # ADR-007: Bench printout intake
 
+> Partly superseded by ADR-013 (2026-10-16): confirming a printout no longer injects a fault or opens its own ticket. The reading is one manual sample on the normal ingest path.
+
 Status: Accepted for this demo build (issue #110, recorded by the document-intake lane) — 2026-10-15
 Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 

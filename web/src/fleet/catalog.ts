@@ -271,10 +271,13 @@ export function windowRows(tool: Tool): WindowRow[] {
   });
 }
 
-export function bayCaption(bay: string): string {
-  if (bay === "Bay A") return "deposition / etch";
-  if (bay === "Bay B") return "strip / clean";
-  return bay;
+const FAMILY_ORDER = ["deposition", "etch", "strip", "clean"];
+
+/** "Deposition, etch, strip, clean": the families in a bay, in process order. The floor plans print the same caption. */
+export function bayCaption(families: string[]): string {
+  const present = FAMILY_ORDER.filter((family) => families.includes(family));
+  const text = present.join(", ");
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 export function statusTone(status: ToolStory["status"]): Tone {
