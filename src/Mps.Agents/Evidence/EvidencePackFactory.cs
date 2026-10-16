@@ -34,7 +34,7 @@ public static class EvidencePackFactory
                 violation.Parameter,
                 violation.At.ToString("O", CultureInfo.InvariantCulture),
                 violation.Rule);
-            items.Add(Item(incident, EvidenceSource.Spc, violation.Rule + " " + violation.Parameter, reference, violation.At, violation.ToolId.Value, Text($"SPC rule {violation.Rule} broke on {violation.ToolId.Value} {violation.ChamberId ?? string.Empty} {violation.Parameter} at {Stamp(violation.At)}: value {Num(violation.Value)}, {Num(violation.Sigma)} sigma from the mean, severity {violation.Severity}."), violation.ChamberId, violation.Value));
+            items.Add(Item(incident, EvidenceSource.Spc, Mps.Application.Spc.SpcRuleNames.Plain(violation.Rule) + " on " + violation.Parameter, reference, violation.At, violation.ToolId.Value, Text($"{Mps.Application.Spc.SpcRuleNames.Plain(violation.Rule)} broke on {violation.ToolId.Value} {violation.ChamberId ?? string.Empty} {violation.Parameter} at {Stamp(violation.At)}: value {Num(violation.Value)}, {Num(violation.Sigma)} sigma from the mean, severity {violation.Severity}."), violation.ChamberId, violation.Value));
             observations.Add(new ImpactObservation(violation.ToolId.Value, violation.ChamberId, null, null));
         }
 

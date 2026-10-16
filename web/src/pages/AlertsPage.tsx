@@ -15,6 +15,11 @@ import { byNewestTime, toolPlainName } from "../history/order";
 import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
 
+/** "1 sample out of limits", "12 samples out of limits". Counts distinct readings, not rule checks. */
+export function samplesOutOfLimits(count: number): string {
+  return `${count} sample${count === 1 ? "" : "s"} out of limits`;
+}
+
 export function AlertsPage() {
   useSetLifecycle("alert");
   const { alertId } = useParams();
@@ -92,10 +97,10 @@ export function AlertsPage() {
       detail: (
         <>
           <Explain text={ruleLabel(alert.rule)} />
-          {alert.lastSeenAt && alert.lastSeenAt !== alert.raisedAt ? (
-            <div className="mt-1 text-mps-micro text-mps-muted">
-              Still firing · last seen {formatStamp(alert.lastSeenAt)}
-              {alert.occurrences && alert.occurrences > 1 ? ` · ${alert.occurrences} checks` : ""}
+          {alert.occurrences && alert.occurrences > 0 ? (
+            <div className="mt-1 text-mps-micro text-mps-muted" data-alert-samples="true">
+              {samplesOutOfLimits(alert.occurrences)}
+              {alert.lastSeenAt && alert.lastSeenAt !== alert.raisedAt ? ` · still firing, last seen ${formatStamp(alert.lastSeenAt)}` : ""}
             </div>
           ) : null}
           <div className="mt-1">
@@ -113,7 +118,9 @@ export function AlertsPage() {
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-mps-display font-semibold">Alerts</h1>
-          <p className="text-mps-secondary">Spec-window violations and Western Electric rules. Debounced per tool and parameter. The rules engine is deterministic.</p>
+          <p className="text-mps-secondary">
+            <Explain text="Readings outside the spec window, or patterns flagged by the Western Electric rules and Nelson rules. One alert per tool and parameter while the problem lasts." />
+          </p>
         </div>
       </div>
       {injected ? (

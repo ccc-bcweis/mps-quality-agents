@@ -16,13 +16,15 @@ function patternFor(terms: GlossaryTerm[]): RegExp | null {
   const linkable = terms.filter((term) => isAcronymTerm(term.term) && term.term !== "Western Electric rules");
   const rules = terms.some((term) => term.term === "WE");
   if (linkable.length === 0 && !rules) return null;
-  const key = `${terms.some((term) => term.term === "Western Electric rules") ? "WER|" : ""}${linkable.map((term) => term.term).join("\n")}|${rules ? "WE-#" : ""}`;
+  const key = `${terms.some((term) => term.term === "Western Electric rules") ? "WER|" : ""}${terms.some((term) => term.term === "Nelson rules") ? "NR|" : ""}${linkable.map((term) => term.term).join("\n")}|${rules ? "WE-#" : ""}`;
   if (cachedPattern && cachedKey === key) return cachedPattern;
   const sorted = [...linkable].sort((a, b) => b.term.length - a.term.length);
   const parts = sorted.map((term) => escapeRegExp(term.term));
   if (rules) parts.unshift("WE-\\d+");
   // "Western Electric rule 2" and "Western Electric rules" both open the Western Electric rules definition.
   if (terms.some((term) => term.term === "Western Electric rules")) parts.unshift("Western Electric rules?");
+  // "Nelson rule 6" opens its own definition; "Nelson rule" and "Nelson rules" open the general one.
+  if (terms.some((term) => term.term === "Nelson rules")) parts.unshift("Nelson rules?(?: \\d+)?");
   const body = parts.join("|");
   cachedKey = key;
   cachedPattern = new RegExp(`(?<![A-Za-z0-9-])(?:${body})(?![A-Za-z0-9-])`, "g");

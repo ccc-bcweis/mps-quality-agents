@@ -60,7 +60,7 @@ const WE1 = "Western Electric rules, rule 1: one point is more than 3σ from the
 const WE2 = "Western Electric rules, rule 2: 2 of the last 3 points are more than 2σ out on the same side";
 const WE3 = "Western Electric rules, rule 3: 4 of the last 5 points are more than 1σ out on the same side";
 const WE4 = "Western Electric rules, rule 4: 8 points in a row on one side of the average";
-const NELSON = "Trend rule: 6 points in a row each higher than the last";
+const NELSON = "Nelson rule 6: 6 readings in a row, each higher than the last";
 const WINDOW = "Reading outside the spec window";
 
 /** Plain words for the rule that fired. Keys cover both the API names and the older camel-case names. */

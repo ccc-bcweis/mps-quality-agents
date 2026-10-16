@@ -187,7 +187,7 @@ export function ToolPage() {
                 <Link className={btnSm} to={`/alerts/${reason.alertId}`}>
                   Alert
                 </Link>
-                <span className="min-w-0 flex-1 break-words">{reason.text}</span>
+                <span className="min-w-0 flex-1 break-words"><Explain text={reason.text} /></span>
               </li>
             ))}
           </ul>
@@ -272,7 +272,7 @@ export function ToolPage() {
                   <Link className={btnSm} to={`/alerts/${alert.id}`}>
                     Alert
                   </Link>
-                  <span className="min-w-0 flex-1 break-words">{ruleLabel(alert.rule)}</span>
+                  <span className="min-w-0 flex-1 break-words"><Explain text={ruleLabel(alert.rule)} /></span>
                 </li>
               ))}
               {(manualReadings ?? []).slice(0, 5).map((reading) => (
@@ -301,7 +301,7 @@ export function ToolPage() {
               ))}
             </ul>
           )}
-          <p className="mt-3 font-mono text-mps-micro text-mps-muted">Deterministic rules draw the chart. The model has not written anything.</p>
+          <p className="mt-3 font-mono text-mps-micro text-mps-muted">Fixed rule checks draw this chart. The AI has not written anything here.</p>
           <div className="mt-3 flex gap-2">
             <Link className={btn} to="/alerts">
               Alerts

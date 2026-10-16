@@ -215,7 +215,7 @@ export function ApprovalPage() {
         </section>
         <section className={panel}>
           <h2 className="mb-2 text-mps-title font-semibold">
-            Enforcement <span className="float-right font-mono text-mps-micro text-mps-nominal">deterministic</span>
+            Enforcement <span className="float-right font-mono text-mps-micro text-mps-nominal">fixed rules</span>
           </h2>
           <table className="w-full text-left">
             <tbody>
