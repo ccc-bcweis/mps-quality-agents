@@ -202,6 +202,13 @@ public static class EvidencePackFactory
         }
 
         var points = window.Points.OrderBy(point => point.At).ToArray();
+        var values = points.Select(point => point.Value).ToArray();
+        var lastSix = values.Skip(Math.Max(0, values.Length - 24)).ToArray();
+        if (SignalShapeClassifier.IsSwinging(lastSix, values))
+        {
+            return SignalShape.Oscillation;
+        }
+
         if (violations.Count > 0)
         {
             var onset = violations.Min(violation => violation.At).AddMinutes(-10);

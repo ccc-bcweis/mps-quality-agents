@@ -67,4 +67,26 @@ public sealed class SignalShapeFromDataTests
         shape.Should().Be(SignalShape.Oscillation);
         EvidencePackFactory.DescribeWindow(window, shape).Should().Contain("oscillation").And.NotContain("gradual");
     }
+
+    // Live readings from the owner's run (D-01 chamber pressure, 2026-10-16 16:35-16:50 ET): a recipe step down on
+    // both chambers, then an injected oscillation on chamber A only.
+    private static readonly double[] LiveA = [3.467d, 3.532d, 3.471d, 3.531d, 3.422d, 3.457d, 3.487d, 3.51d, 3.541d, 3.592d, 3.592d, 3.573d, 3.635d, 3.666d, 3.645d, 3.576d, 3.603d, 3.461d, 3.553d, 3.498d, 3.456d, 3.535d, 3.453d, 3.499d, 3.039d, 3.12d, 3.044d, 2.99d, 2.965d, 2.984d, 2.982d, 2.995d, 2.922d, 2.968d, 2.959d, 3.022d, 2.978d, 3.081d, 3.004d, 2.991d, 3.021d, 2.993d, 3.051d, 2.945d, 3.001d, 2.958d, 3.388d, 3.552d, 4.458d, 4.435d, 4.128d, 3.807d, 3.435d, 2.953d, 2.575d, 2.516d, 2.715d, 2.955d, 3.472d, 3.889d, 4.307d, 4.48d, 4.565d, 4.357d, 3.883d, 3.54d, 3.194d, 2.738d];
+
+    private static readonly double[] LiveB = [3.487d, 3.443d, 3.58d, 3.467d, 3.486d, 3.439d, 3.471d, 3.547d, 3.635d, 3.54d, 3.626d, 3.583d, 3.609d, 3.537d, 3.61d, 3.618d, 3.476d, 3.511d, 3.497d, 3.427d, 3.56d, 3.483d, 3.531d, 3.438d, 3.025d, 3.006d, 3.033d, 2.987d, 2.984d, 2.986d, 3.079d, 3.018d, 2.961d, 3.031d, 3.036d, 3.097d, 3.012d, 2.928d, 3.039d, 2.979d, 2.968d, 2.963d, 3.06d, 3.018d, 3.097d, 3.005d, 3.081d, 3.047d, 3.482d, 3.436d, 3.376d, 3.56d, 3.482d, 3.473d, 3.478d, 3.489d, 3.58d, 3.581d, 3.551d, 3.53d, 3.596d, 3.58d, 3.649d, 3.622d, 3.468d, 3.506d, 3.498d, 3.479d];
+
+    [Fact]
+    public void TheLiveOscillationIsSeenOnceItHasSwungTwice()
+    {
+        var early = LiveA.Take(60).ToArray();
+        SignalShapeClassifier.IsSwinging(early.Skip(early.Length - 24).ToArray(), early).Should().BeTrue();
+        SignalShapeClassifier.IsSwinging(LiveA.Skip(LiveA.Length - 24).ToArray(), LiveA).Should().BeTrue();
+    }
+
+    [Fact]
+    public void ARecipeStepOrOneSidedSpikesAreNotSwings()
+    {
+        SignalShapeClassifier.IsSwinging(LiveB.Skip(LiveB.Length - 24).ToArray(), LiveB).Should().BeFalse();
+        var spikes = LiveB.Select((value, index) => index is 60 or 64 ? value + 1.5d : value).ToArray();
+        SignalShapeClassifier.IsSwinging(spikes.Skip(spikes.Length - 24).ToArray(), spikes).Should().BeFalse();
+    }
 }

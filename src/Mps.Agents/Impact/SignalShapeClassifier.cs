@@ -321,4 +321,112 @@ public static class SignalShapeClassifier
 
         return false;
     }
+
+    /// <summary>
+    /// True when the recent readings swing back and forth at least twice, each move many times the normal
+    /// reading-to-reading noise, and reach well above and well below the usual level. Noise, a step, a ramp, or
+    /// spikes on one side do not.
+    /// </summary>
+    public static bool IsSwinging(IReadOnlyList<double> recent, IReadOnlyList<double> whole)
+    {
+        ArgumentNullException.ThrowIfNull(recent);
+        ArgumentNullException.ThrowIfNull(whole);
+        if (recent.Count < 8 || whole.Count < 16)
+        {
+            return false;
+        }
+
+        var steps = new List<double>(whole.Count);
+        for (var i = 1; i < whole.Count; i++)
+        {
+            steps.Add(Math.Abs(whole[i] - whole[i - 1]));
+        }
+
+        var noise = Median(steps) / 0.954d;
+        if (noise <= 0d)
+        {
+            return false;
+        }
+
+        // Count how often the readings cross from well above the usual level to well below it, or back.
+        var center = Median(whole);
+        var band = 4d * noise;
+        var last = 0;
+        var crossings = 0;
+        foreach (var value in recent)
+        {
+            var zone = value > center + band ? 1 : value < center - band ? -1 : 0;
+            if (zone == 0)
+            {
+                continue;
+            }
+
+            if (last != 0 && zone != last)
+            {
+                crossings++;
+            }
+
+            last = zone;
+        }
+
+        return crossings >= 2 && Reversals(recent, 6d * noise) >= 2;
+    }
+
+    private static int Reversals(IReadOnlyList<double> values, double threshold)
+    {
+        var high = values[0];
+        var low = values[0];
+        var trend = 0;
+        var reversals = 0;
+        for (var i = 1; i < values.Count; i++)
+        {
+            var x = values[i];
+            switch (trend)
+            {
+                case 0:
+                    high = Math.Max(high, x);
+                    low = Math.Min(low, x);
+                    if (high - x >= threshold)
+                    {
+                        trend = -1;
+                        low = x;
+                    }
+                    else if (x - low >= threshold)
+                    {
+                        trend = 1;
+                        high = x;
+                    }
+
+                    break;
+                case 1:
+                    if (x > high)
+                    {
+                        high = x;
+                    }
+                    else if (high - x >= threshold)
+                    {
+                        trend = -1;
+                        low = x;
+                        reversals++;
+                    }
+
+                    break;
+                default:
+                    if (x < low)
+                    {
+                        low = x;
+                    }
+                    else if (x - low >= threshold)
+                    {
+                        trend = 1;
+                        high = x;
+                        reversals++;
+                    }
+
+                    break;
+            }
+        }
+
+        return reversals;
+    }
 }
