@@ -1709,10 +1709,10 @@ components:
     ManualReading:
       type: object
       additionalProperties: false
-      required: [evidenceId, incidentId, toolId, siteId, parameter, instrument, value, unit, specMinimum, specMaximum, outOfSpec, observedAt, olderThanWindow, source]
+      required: [evidenceId, toolId, siteId, parameter, instrument, value, unit, specMinimum, specMaximum, outOfSpec, observedAt, olderThanWindow, source, active]
       properties:
         evidenceId: { type: string, format: uuid }
-        incidentId: { type: string, format: uuid }
+        incidentId: { type: string, format: uuid, nullable: true, description: "The ticket the rules engine opened for this sample, if any." }
         alertId: { type: string, format: uuid, nullable: true }
         toolId: { type: string }
         siteId: { type: string }
@@ -1731,10 +1731,11 @@ components:
         fileName: { type: string, nullable: true }
         fileUrl: { type: string, nullable: true }
         source: { type: string, description: Plain sentence naming the instrument and printout. }
+        active: { type: boolean, description: "True while the alert this sample raised is still active. A resolved reading is history only." }
     PrintoutConfirmation:
       type: object
       additionalProperties: false
-      required: [evidenceId, incidentId, appliedToSimulation, outOfSpec, printedParameter, catalogParameter]
+      required: [evidenceId, appliedToSimulation, outOfSpec, printedParameter, catalogParameter]
       properties:
         evidenceId:
           type: string
@@ -1742,6 +1743,7 @@ components:
         incidentId:
           type: string
           format: uuid
+          nullable: true
         faultId:
           type: string
           format: uuid

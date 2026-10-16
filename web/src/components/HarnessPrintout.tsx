@@ -37,7 +37,7 @@ export function HarnessPrintout() {
     setError(null);
     try {
       const confirmed = await api.confirmPrintout(draft);
-      setNote(confirmed.appliedToSimulation ? "Stored the reading. The tool will show the fault." : "Stored the reading.");
+      setNote(confirmed.appliedToSimulation ? "Stored the reading as a manual sample. The process-control rules decide any alert." : "Stored the reading.");
       setDraft(null);
     } catch (reason: unknown) {
       setError(reason instanceof ApiProblem ? reason.title : "The reading was not stored.");

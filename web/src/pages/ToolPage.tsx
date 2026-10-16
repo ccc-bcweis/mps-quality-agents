@@ -327,7 +327,8 @@ function withManualTiles(
   for (const sensor of sensors) {
     if (!sensor.parameter) continue;
     const reading = latestManual(manual, sensor.parameter, sensor.chamberId);
-    if (reading && (!reading.chamberId || !sensor.chamberId || reading.chamberId === sensor.chamberId)) next.set(sensor.id, manualTile(reading));
+    // Only a reading behind an active alert drives the tile; once resolved the live sensor value shows again.
+    if (reading && reading.active && (!reading.chamberId || !sensor.chamberId || reading.chamberId === sensor.chamberId)) next.set(sensor.id, manualTile(reading));
   }
   return next;
 }

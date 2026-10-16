@@ -567,54 +567,14 @@ export const handlers = [
     const body = (await request.json()) as PrintoutConfirmRequest;
     const outOfSpec = body.value < body.specMinimum || body.value > body.specMaximum;
     const catalogParameter = catalogParameterFor(body.toolId, body.parameter);
-    const correlationId = `corr-printout-${crypto.randomUUID().slice(0, 8)}`;
-    const incidentId = crypto.randomUUID();
-    const raisedAt = body.observedAt || new Date().toISOString();
-    const summary = `Manual measurement: ${body.instrument} on ${body.toolId}, ${body.parameter} ${body.value} ${body.unit}.`;
-    const incident: Incident = {
-      id: incidentId,
-      toolId: body.toolId,
-      chamberId: body.chamberId ?? null,
-      parameter: catalogParameter,
-      channel: "operatorReport",
-      severity: outOfSpec ? "high" : "low",
-      summary,
-      correlationId,
-      openedAt: raisedAt,
-      stage: "ticketOpened",
-    };
-    const ticket: Ticket = {
-      id: crypto.randomUUID(),
-      number: `TKT-${1300 + mockExtras().tickets.length}`,
-      incidentId,
-      toolId: body.toolId,
-      title: summary,
-      openedAt: raisedAt,
-    };
-    mockExtras().incidents.push(incident);
-    mockExtras().tickets.push(ticket);
-    let alertId: string | null = null;
-    if (outOfSpec) {
-      alertId = crypto.randomUUID();
-      const alert: Alert = {
-        id: alertId,
-        toolId: body.toolId,
-        chamberId: body.chamberId ?? null,
-        parameter: catalogParameter,
-        severity: "high",
-        rule: "manualMeasurement",
-        raisedAt,
-        correlationId,
-      };
-      mockExtras().alerts.push(alert);
-    }
+    // A printout is one manual sample on the normal ingest path; the rules engine, not the confirm call, raises any alert.
     return HttpResponse.json({
       evidenceId: crypto.randomUUID(),
-      incidentId,
-      faultId: outOfSpec ? crypto.randomUUID() : null,
-      correlationId: outOfSpec ? correlationId : null,
-      alertId,
-      appliedToSimulation: outOfSpec,
+      incidentId: null,
+      faultId: null,
+      correlationId: null,
+      alertId: null,
+      appliedToSimulation: true,
       outOfSpec,
       printedParameter: body.parameter,
       catalogParameter,

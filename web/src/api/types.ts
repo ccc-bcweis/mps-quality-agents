@@ -143,7 +143,8 @@ export type PrintoutInspection = {
 
 export type ManualReading = {
   evidenceId: string;
-  incidentId: string;
+  /** The ticket the rules engine opened for this sample, if any. */
+  incidentId?: string | null;
   alertId?: string | null;
   toolId: string;
   siteId: string;
@@ -163,6 +164,8 @@ export type ManualReading = {
   fileName?: string | null;
   fileUrl?: string | null;
   source: string;
+  /** True while the alert this sample raised is still active. A resolved reading is history only. */
+  active: boolean;
 };
 
 export type PrintoutConfirmRequest = {
@@ -184,7 +187,7 @@ export type PrintoutConfirmRequest = {
 
 export type PrintoutConfirmation = {
   evidenceId: string;
-  incidentId: string;
+  incidentId?: string | null;
   faultId?: string | null;
   correlationId?: string | null;
   alertId?: string | null;

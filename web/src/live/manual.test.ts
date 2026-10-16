@@ -20,6 +20,7 @@ const reading: ManualReading = {
   outOfSpec: true,
   observedAt: "2026-10-12T09:40:00Z",
   olderThanWindow: true,
+  active: true,
   source: "Manual reading from the thermocouple logger printout thermocouple-logger-e01.png, operator JL: 68 C (spec 40-60), out of spec.",
 };
 
@@ -58,13 +59,19 @@ describe("manual readings", () => {
     expect(manualTile({ ...reading, value: 50, outOfSpec: false }).status).toBe("inSpec");
   });
 
+  it("keeps a resolved reading on the chart as history, not in alarm color", () => {
+    const marker = manualMarker(series, { ...reading, active: false })!;
+    expect(marker.outOfSpec).toBe(false);
+    expect(marker.label).toContain("resolved");
+  });
+
   it("matches the chamber", () => {
     expect(latestManual([reading], "escTemperature", "E-01-B")).toBeUndefined();
     expect(latestManual([reading], "escTemperature", "E-01-A")).toBe(reading);
   });
 
   it("explains a status with the printout and instrument behind the alert", () => {
-    const alert = { id: "a1", toolId: "E-01", chamberId: "E-01-A", parameter: "escTemperature", severity: "high", rule: "manualMeasurement", status: "active" } as Alert;
+    const alert = { id: "a1", toolId: "E-01", chamberId: "E-01-A", parameter: "escTemperature", severity: "high", rule: "WE1", status: "active" } as Alert;
     const reasons = statusReasons("alarm", [alert], [reading]);
     expect(reasons).toHaveLength(1);
     expect(reasons[0].text).toMatch(/^Alarm: Manual reading from the thermocouple logger printout/);
