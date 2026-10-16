@@ -80,6 +80,46 @@ public sealed class ManualSampleIngestTests
         run.Alerts.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task AnInSpecReadingNextToABreakingOneDoesNotInheritItsAlert()
+    {
+        await using var factory = Factory();
+        var client = factory.CreateClient();
+        var (plant, publish) = Parts(factory);
+        await WarmAsync(plant, publish);
+
+        var inSpecAt = plant.SimulatedNow;
+        await Confirm(client, inSpecAt, 50d);
+        plant.AdvanceTick();
+        await Confirm(client, plant.SimulatedNow, 68d);
+        await publish();
+
+        var readings = await client.GetFromJsonAsync<JsonElement>("/api/manual-readings", Json);
+        var inSpec = readings.EnumerateArray().Single(row => row.GetProperty("value").GetDouble() == 50d);
+        var outOfSpec = readings.EnumerateArray().Single(row => row.GetProperty("value").GetDouble() == 68d);
+        outOfSpec.GetProperty("active").GetBoolean().Should().BeTrue();
+        inSpec.GetProperty("active").GetBoolean().Should().BeFalse();
+        inSpec.GetProperty("incidentId").ValueKind.Should().Be(JsonValueKind.Null);
+    }
+
+    private static async Task Confirm(HttpClient client, DateTimeOffset at, double value)
+    {
+        var response = await client.PostAsJsonAsync("/api/printouts/confirm", new
+        {
+            toolId = Tool,
+            chamberId = Chamber,
+            observedAt = at,
+            instrument = "thermocoupleLogger",
+            parameter = Parameter,
+            value,
+            unit = "C",
+            specMinimum = 40d,
+            specMaximum = 60d,
+            operatorInitials = "JL",
+        });
+        response.EnsureSuccessStatusCode();
+    }
+
     private sealed record Outcome(IReadOnlyList<(string Rule, string Severity)> Alerts, int Tickets);
 
     private static async Task<Outcome> RunAsync(bool manual, bool outOfSpec)

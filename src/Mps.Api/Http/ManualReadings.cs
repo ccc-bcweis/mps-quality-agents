@@ -30,7 +30,9 @@ public static class ManualReadings
             .Where(row => string.Equals(row.ToolId.ToString(), reading.ToolId, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(row.Parameter, catalog, StringComparison.Ordinal)
                 && (reading.ChamberId is null || row.ChamberId is null || string.Equals(row.ChamberId, reading.ChamberId, StringComparison.OrdinalIgnoreCase))
-                && row.RaisedAt >= reading.ObservedAt)
+                // The rules engine stamps an alert with the time of the point that broke the rule, so a reading owns
+                // only an alert raised at its own time. A nearby in-spec reading must not inherit another point's alert.
+                && (row.RaisedAt - reading.ObservedAt).Duration() <= TimeSpan.FromSeconds(1))
             .OrderBy(row => row.RaisedAt)
             .FirstOrDefault();
         var incident = alert is null
