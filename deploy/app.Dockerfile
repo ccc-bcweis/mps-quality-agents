@@ -21,6 +21,7 @@ WORKDIR /src
 COPY Directory.Build.props Directory.Packages.props global.json nuget.config ./
 COPY src/ src/
 COPY prompts/ prompts/
+COPY eval/results/ eval/results/
 RUN dotnet restore src/Mps.Api/Mps.Api.csproj
 RUN dotnet publish src/Mps.Api/Mps.Api.csproj --configuration Release --no-restore --output /app/publish /p:UseAppHost=false
 

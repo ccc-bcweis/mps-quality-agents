@@ -24,4 +24,5 @@ tests
 docs
 design
 eval
+!eval/results/latest.json
 data/groundtruth
