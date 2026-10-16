@@ -13,6 +13,7 @@ import {
   whatItShows,
 } from "../investigation/format";
 import { groupEvidence, rangeText } from "../investigation/evidenceGroups";
+import { LIMIT_LABEL, limitClass } from "../investigation/limits";
 
 function hoverRecord(item: EvidenceItem): string {
   return [item.externalRef, item.id].filter((part) => part && part.length > 0).join(" · ");
@@ -53,6 +54,11 @@ export function EvidencePack({ items }: { items: EvidenceItem[] }) {
                 <td className="break-words py-2 pr-2">
                   <Explain text={whatItShows(item)} spellOut={false} />
                   {range ? <div className="text-mps-micro text-mps-muted">{range}</div> : null}
+                  {row.rules.length > 1 ? (
+                    <div className="text-mps-micro text-mps-muted">
+                      <Explain text={`Rules: ${row.rules.join("; ")}`} spellOut={false} />
+                    </div>
+                  ) : null}
                   <details className="mt-1">
                     <summary className={`${btn} inline-flex list-none [&::-webkit-details-marker]:hidden`}>Details</summary>
                     <p className="mt-1 break-words text-mps-secondary">{readableExcerpt(fullText(item))}</p>
@@ -65,7 +71,14 @@ export function EvidencePack({ items }: { items: EvidenceItem[] }) {
                     Show the cause for {whatItShows(item)}
                   </button>
                 </td>
-                <td className="break-words py-2 pr-2">{valueVsSpec(item)}</td>
+                <td className="break-words py-2 pr-2">
+                  {valueVsSpec(item)}
+                  {item.limitState ? (
+                    <div className={`text-mps-micro font-semibold ${limitClass(item.limitState)}`} data-testid="limit-state">
+                      <Explain text={LIMIT_LABEL[item.limitState]} spellOut={false} />
+                    </div>
+                  ) : null}
+                </td>
                 <td className="break-words py-2 pr-2">{row.count > 1 ? `${formatLocalWhen(row.first)} – ${formatLocalWhen(row.last)}` : formatLocalWhen(item.observedAt)}</td>
                 <td className="break-words py-2 pr-2">
                   {item.whyItMatters ? <Explain text={plainNarrative(item.whyItMatters)} spellOut={false} /> : "—"}

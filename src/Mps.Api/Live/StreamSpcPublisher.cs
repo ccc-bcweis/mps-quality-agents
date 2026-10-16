@@ -257,7 +257,7 @@ public sealed partial class StreamSpcPublisher
             new ToolId(toolId),
             chamber,
             parameter,
-            new ControlBaseline(0d, 1d, null, null),
+            ControlBaseline.StandardScore,
             zPoints)
         {
             Display = lastWindow is null ? null : new SpcDisplay(lastWindow.Nominal, Math.Max(lastWindow.Sigma, 1e-6), lastWindow.Unit, _plant.FamilyLabel(toolId)),

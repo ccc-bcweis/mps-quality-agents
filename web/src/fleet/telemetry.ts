@@ -19,7 +19,7 @@ export type TelemetrySample = {
 /** One frozen demo sample. The same ids and units the simulator emits. */
 export const TELEMETRY_AT = "2026-10-14T15:00:00.000Z";
 
-/** Pitch scenes. D-01 chamber A pressure is outside the 2–6 Torr spec. E-02 chamber A ESC stays inside the warning band. */
+/** Offline pitch scenes only (no live API): one frozen reading per scene. Limits still come from the fleet sensor data. */
 const DEMO_VALUE: Record<string, number> = {
   "D-01-A-PT-CHAMBER": 6.52,
   "E-02-A-TC-ESC": 53.1,

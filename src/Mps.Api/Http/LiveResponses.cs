@@ -78,7 +78,11 @@ public static class LiveResponses
 
     private static LiveReadingResponse Map(PlantSimulation plant, LiveReading reading)
     {
-        var window = plant.WindowAt(reading.ToolId, reading.Parameter, reading.At);
+        var counter = IsCounter(reading.Parameter, reading.SensorId);
+        var window = counter ? null : plant.WindowAt(reading.ToolId, reading.Parameter, reading.At);
+        double? sigma = window is null ? null : Math.Max(window.Sigma, 1e-6);
+        double? controlLow = window is null ? null : window.Nominal - (3d * sigma!.Value);
+        double? controlHigh = window is null ? null : window.Nominal + (3d * sigma!.Value);
         return new LiveReadingResponse(
             reading.SensorId,
             reading.Parameter,
@@ -86,7 +90,13 @@ public static class LiveResponses
             reading.Unit,
             reading.At,
             reading.Value,
-            IsCounter(reading.Parameter, reading.SensorId) ? "nominal" : StatusOf(reading.Value, window));
+            counter ? "nominal" : StatusOf(reading.Value, window),
+            window?.Minimum,
+            window?.Maximum,
+            window?.Nominal,
+            controlLow,
+            controlHigh,
+            window is null ? null : Mps.Domain.Evidence.LimitState.Of(reading.Value, window.Minimum, window.Maximum, controlLow, controlHigh));
     }
 
     /// <summary>The wafer output counter climbs all hour by design, so it never sets a watch or alarm.</summary>

@@ -23,3 +23,28 @@ describe("groupEvidence", () => {
     expect(rangeText(rows[1])).toBe("");
   });
 });
+
+describe("one row per alert", () => {
+  it("lists the rules that broke on one reading and keeps other parameters apart", () => {
+    const at = "2026-10-16T22:16:10Z";
+    const spc = (rule: string, parameter: string, value: number) => ({
+      id: `${rule}-${parameter}`,
+      source: "spc" as const,
+      title: `${rule} on ${parameter}`,
+      excerpt: "x",
+      observedAt: at,
+      toolId: "E-02",
+      externalRef: `spc:E-02:${parameter}:${at}:${rule}`,
+      value,
+      unit: "C",
+    });
+    const rows = groupEvidence([
+      spc("Western Electric rule 1", "escTemperature", 54.669),
+      spc("Western Electric rule 2", "escTemperature", 54.669),
+      spc("Western Electric rule 4", "wallTemperature", 59.9),
+    ]);
+    expect(rows).toHaveLength(2);
+    expect(rangeText(rows[0])).toBe("2 rules on 1 reading");
+    expect(rows[0].rules).toEqual(["Western Electric rule 1", "Western Electric rule 2"]);
+  });
+});

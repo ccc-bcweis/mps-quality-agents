@@ -133,7 +133,18 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
             record => record.CalibrationId));
 
     /// <summary>The staged scenario's own records, or null when no scripted scenario is active.</summary>
-    private Seed? Overlay => _board?.ActiveScenarioId is { } id && _overlays.TryGetValue(id, out var overlay) ? overlay : null;
+    private Seed? Overlay
+    {
+        get
+        {
+            if (_board?.ActiveScenarioId is not { } id || !_overlays.TryGetValue(id, out var overlay))
+            {
+                return null;
+            }
+
+            return overlay.AnchorAt is { } anchor && _board.ActivatedAt is { } staged ? overlay.Shifted(staged - anchor) : overlay;
+        }
+    }
 
     /// <summary>Scenario rows win over seed rows with the same id, and are not date-filtered: the scenario scopes them.</summary>
     private static IEnumerable<T> Merge<T>(IEnumerable<T> seed, IEnumerable<T> overlay, Func<T, string> key)
@@ -149,6 +160,24 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
 
     private sealed class Seed
     {
+        /// <summary>Scenario onset the record dates were written against. Present only on scenario overlays.</summary>
+        public DateTimeOffset? AnchorAt { get; set; }
+
+        /// <summary>The same records moved by one offset, so a scenario keeps its timeline relative to when it was staged.</summary>
+        public Seed Shifted(TimeSpan by) => new()
+        {
+            Runs = Runs,
+            Lots = Lots,
+            Configs = Configs,
+            MaterialUses = MaterialUses,
+            Ncrs = Ncrs?.Select(row => new NcrRecord(row.NcrId, row.ToolId, row.Title, row.OpenedAt + by, row.LotId)).ToArray(),
+            Ecos = Ecos?.Select(row => new EcoRecord(row.EcoId, row.Title, row.ToolId, row.RecipeId, row.EffectiveAt + by, row.ChangeSummary)).ToArray(),
+            MaterialLots = MaterialLots?.Select(row => new MaterialLot(row.LotId, row.MaterialCode, row.SupplierName, row.ReceivedAt + by, row.NoticeId)).ToArray(),
+            Notices = Notices?.Select(row => new SupplierNotice(row.NoticeId, row.SupplierName, row.MaterialCode, row.LotId, row.Summary, row.IssuedAt + by)).ToArray(),
+            WorkOrders = WorkOrders?.Select(row => new WorkOrder(row.WorkOrderId, row.ToolId, row.ChamberId, row.Kind, row.PerformedAt + by, row.Summary)).ToArray(),
+            Calibrations = Calibrations?.Select(row => new CalibrationRecord(row.CalibrationId, row.ToolId, row.Instrument, row.DueAt + by, row.CompletedAt + by, row.IsOverdue)).ToArray(),
+        };
+
         public ProcessRun[]? Runs { get; set; }
 
         public LotReference[]? Lots { get; set; }

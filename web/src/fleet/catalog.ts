@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import type { Tool, ToolFamily } from "../api/types";
+import type { Tool } from "../api/types";
 import type { Tone } from "../api/labels";
 import type { LifecycleId } from "../lifecycle";
 import type { SeriesShape } from "../spc/series";
@@ -38,7 +38,7 @@ const faultStories: Record<string, ToolStory> = {
   "D-01": {
     status: "alarm",
     recipe: "DEP-SIO-2",
-    note: "Chamber pressure stepped outside the 2–6 Torr window.",
+    note: "Chamber pressure stepped up.",
     lifecycle: "alert",
     escalated: false,
     params: [
@@ -52,7 +52,7 @@ const faultStories: Record<string, ToolStory> = {
   "E-02": {
     status: "watch",
     recipe: "ETCH-OX-14",
-    note: "Western Electric rule 2 on ESC temperature, still inside 40–60 °C.",
+    note: "Western Electric rule 2 on ESC temperature.",
     lifecycle: "alert",
     escalated: false,
     params: [
@@ -204,72 +204,18 @@ export function storyFor(tool: Tool, alerts: { toolId: string; status?: string }
   );
 }
 
+/** One Operating windows row, built only from live readings and the recipe-step window the server sends. */
 export type WindowRow = {
   parameter: string;
   label: string;
+  /** Recipe spec for the running step, e.g. "46.0–54.0 °C". */
   window: string;
+  /** Control limits: centre ± 3σ. */
+  control: string;
   now: string;
   tone: Tone | "muted";
+  state: string;
 };
-
-const WINDOWS: Record<ToolFamily, { parameter: string; label: string; window: string }[]> = {
-  deposition: [
-    { parameter: "chamberPressure", label: "Chamber pressure", window: "2–6 Torr" },
-    { parameter: "heaterTemperature", label: "Heater", window: "350–400 °C" },
-    { parameter: "rfPower", label: "RF power", window: "300–600 W" },
-    { parameter: "particles", label: "Particles >45 nm", window: "≤10 adders" },
-  ],
-  etch: [
-    { parameter: "chamberPressure", label: "Chamber pressure", window: "20–80 mTorr" },
-    { parameter: "escTemperature", label: "ESC temperature", window: "40–60 °C" },
-    { parameter: "wallTemperature", label: "Wall", window: "60 °C" },
-    { parameter: "sourceRf", label: "Source RF", window: "1–2 kW" },
-    { parameter: "biasRf", label: "Bias RF", window: "200–500 W" },
-    { parameter: "particles", label: "Particles >45 nm", window: "≤15 adders" },
-  ],
-  strip: [
-    { parameter: "chamberPressure", label: "Chamber pressure", window: "0.8–1.5 Torr" },
-    { parameter: "temperature", label: "Temperature", window: "250–280 °C" },
-    { parameter: "remoteRf", label: "Remote plasma", window: "2–4 kW" },
-    { parameter: "particles", label: "Particles >45 nm", window: "≤10 adders" },
-  ],
-  clean: [
-    { parameter: "bathTemperature", label: "Chemical bath", window: "60–70 °C" },
-    { parameter: "megasonic", label: "Megasonic", window: "500–900 W" },
-    { parameter: "particles", label: "Particles >45 nm", window: "≤5 adders" },
-  ],
-};
-
-const NOW: Record<string, Record<string, { value: string; tone: Tone }>> = {
-  "D-01": {
-    chamberPressure: { value: "4.10 Torr", tone: "nominal" },
-    heaterTemperature: { value: "372 °C", tone: "nominal" },
-    rfPower: { value: "448 W", tone: "nominal" },
-    particles: { value: "4", tone: "nominal" },
-  },
-  "E-02": {
-    chamberPressure: { value: "44 mTorr", tone: "nominal" },
-    escTemperature: { value: "51.0 °C", tone: "nominal" },
-    wallTemperature: { value: "60.2 °C", tone: "nominal" },
-    sourceRf: { value: "1.50 kW", tone: "nominal" },
-    biasRf: { value: "320 W", tone: "nominal" },
-    particles: { value: "6", tone: "nominal" },
-  },
-};
-
-export function windowRows(tool: Tool): WindowRow[] {
-  const readings = NOW[tool.id] ?? {};
-  return WINDOWS[tool.family].map((row) => {
-    const reading = readings[row.parameter];
-    return {
-      parameter: row.parameter,
-      label: row.label,
-      window: row.window,
-      now: reading?.value ?? "—",
-      tone: reading?.tone ?? "muted",
-    };
-  });
-}
 
 const FAMILY_ORDER = ["deposition", "etch", "strip", "clean"];
 

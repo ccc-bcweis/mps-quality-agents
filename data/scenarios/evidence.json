@@ -1,5 +1,6 @@
 {
   "SC-1": {
+    "anchorAt": "2026-08-31T06:00:00Z",
     "ecos": [
       {
         "ecoId": "ECO-4471",
@@ -7,7 +8,7 @@
         "toolId": "E-02",
         "recipeId": "OXIDE-ETCH",
         "effectiveAt": "2026-08-29T06:00:00Z",
-        "changeSummary": "Replace the chamber A edge ring with revision C. OXIDE-ETCH setpoints are unchanged."
+        "changeSummary": "Replace the chamber A edge ring with revision C (from revision B). Revision C is thinner, which narrows the gap between the ring and the electrostatic chuck; the supplier qualification notes the chuck temperature loop can oscillate at this gap. OXIDE-ETCH setpoints are unchanged."
       }
     ],
     "workOrders": [

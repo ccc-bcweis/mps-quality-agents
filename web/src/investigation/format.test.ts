@@ -46,9 +46,9 @@ describe("evidence formatting", () => {
   it("shows the reading against the spec window", () => {
     expect(
       valueVsSpec({ value: 31.4, unit: "C", specLow: 28, specHigh: 30, excerpt: "" }),
-    ).toBe("31.4 °C, spec 28-30 °C");
+    ).toBe("31.4 °C, recipe spec 28-30 °C");
     expect(valueVsSpec({ excerpt: "The latest reading is 6.52 Torr, outside the 2–6 Torr window." })).toBe(
-      "6.52 Torr, spec 2-6 Torr",
+      "6.52 Torr, recipe spec 2-6 Torr",
     );
     expect(valueVsSpec({ excerpt: "Calibration is current." })).toBe("—");
     expect(formatMeasure(31.4)).toBe("31.4");
@@ -81,7 +81,7 @@ describe("evidence formatting", () => {
       specHigh: 6,
     });
     expect(whatItShows(reading)).toBe("Chamber pressure on Deposition tool D-01, Chamber A");
-    expect(valueVsSpec(reading)).toBe("6.52 Torr, spec 2-6 Torr");
+    expect(valueVsSpec(reading)).toBe("6.52 Torr, recipe spec 2-6 Torr");
   });
 
   it("labels a step duration without a raw status code", () => {

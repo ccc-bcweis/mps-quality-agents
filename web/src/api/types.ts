@@ -219,7 +219,15 @@ export type EvidenceItem = {
   toolName?: string | null;
   chamberName?: string | null;
   sourceEventIds?: string[] | null;
+  /** Centre ± 3σ of the control chart the rule was judged against. */
+  controlLow?: number | null;
+  controlHigh?: number | null;
+  center?: number | null;
+  limitState?: LimitState | null;
 };
+
+/** outOfSpec: outside the recipe spec. outOfControl: inside spec but statistically unusual. */
+export type LimitState = "outOfSpec" | "outOfControl" | "inControl";
 
 export type TraceNode = {
   eventId: string;
@@ -408,6 +416,13 @@ export type LiveReading = {
   at: string;
   value: number;
   status: LiveStatus;
+  /** Recipe-step window from the fleet data; absent for counters. */
+  specLow?: number | null;
+  specHigh?: number | null;
+  center?: number | null;
+  controlLow?: number | null;
+  controlHigh?: number | null;
+  limitState?: LimitState | null;
 };
 
 export type LivePoint = { at: string; value: number };

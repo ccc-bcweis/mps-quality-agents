@@ -8,7 +8,7 @@ import { ApprovalDialog, type DecisionMode } from "./ApprovalDialog";
 import { Explain } from "./Explain";
 import { Term } from "./Term";
 import { btnDanger, btnOk, btnPrimary, panel } from "./ui";
-import { plainNarrative } from "../investigation/format";
+import { plainFinding } from "../investigation/format";
 import { useConsole } from "../context/ConsoleContext";
 import { visibleProblem } from "../history/copy";
 
@@ -79,15 +79,27 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
       {top ? (
         <>
           <p>
-            <span className="text-mps-ai">{CATEGORY_LABEL[top.category]}</span> · <Explain text={plainNarrative(top.cause)} spellOut={false} />
+            <span className="text-mps-ai">{CATEGORY_LABEL[top.category]}</span> · <Explain text={plainFinding(top.cause)} spellOut={false} />
           </p>
-          <ul className="mt-2 list-disc pl-5">
-            {top.actions.map((action) => (
-              <li key={action}>
-                <Explain text={plainNarrative(action)} spellOut={false} />
-              </li>
-            ))}
-          </ul>
+          <div className="mt-3" data-testid="recommended-action">
+            <h3 className="font-semibold">Recommended action</h3>
+            {top.actions.length === 0 ? (
+              <p className="text-mps-muted">The agents named a cause but no action; request more evidence.</p>
+            ) : (
+              <ul className="mt-1 grid gap-1">
+                {top.actions.map((action) => {
+                  const kind = /^containment:/i.test(action) ? "Containment" : /^preventive:/i.test(action) ? "Preventive" : null;
+                  const text = kind ? action.slice(action.indexOf(":") + 1).trim() : action;
+                  return (
+                    <li key={action}>
+                      {kind ? <span className="mr-1 font-semibold">{kind}:</span> : null}
+                      <Explain text={plainFinding(text)} spellOut={false} />
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         </>
       ) : (
         <p>

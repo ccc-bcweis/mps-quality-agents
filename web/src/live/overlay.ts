@@ -4,6 +4,8 @@ import type { Tone } from "../api/labels";
 import type { ToolStory, WindowRow } from "../fleet/catalog";
 import { formatValue, type SensorStatus } from "../fleet/telemetry";
 import type { SpcPoint } from "../spc/series";
+import { LIMIT_LABEL, limitTone, rangeLabel } from "../investigation/limits";
+import { unitLabel } from "../sites/parameters";
 
 const PARAMETER_LABEL: Record<string, string> = {
   chamberPressure: "Chamber pressure",
@@ -86,7 +88,7 @@ export function storyWithLive(story: ToolStory, live: FleetLiveTool | undefined,
   if (!live || live.readings.length === 0) return story;
   const params = live.readings.slice(0, 3).map((reading) => ({
     label: parameterLabel(reading.parameter),
-    value: `${formatValue(reading.value, reading.unit)} ${reading.unit}`,
+    value: `${formatValue(reading.value, reading.unit)} ${unitLabel(reading.unit)}`,
     tone: toneFor(reading.status),
   }));
   return {
@@ -97,18 +99,23 @@ export function storyWithLive(story: ToolStory, live: FleetLiveTool | undefined,
   };
 }
 
-export function overlayWindows(rows: WindowRow[], readings: LiveReading[] | undefined): WindowRow[] {
-  if (!readings || readings.length === 0) return rows;
-  return rows.map((row) => {
-    const reading = readings.find((item) => item.parameter === row.parameter);
-    if (!reading) return row;
-    const tone: WindowRow["tone"] = reading.status === "alarm" ? "alarm" : reading.status === "watch" ? "warn" : "nominal";
-    return {
-      ...row,
-      now: `${formatValue(reading.value, reading.unit)} ${reading.unit}`,
-      tone,
-    };
-  });
+/**
+ * Operating windows from data only: each live reading with a recipe-step window becomes a row. Spec, control limits,
+ * colour and wording all come from the server's window and limit state. No reading, no row.
+ */
+export function overlayWindows(readings: LiveReading[] | undefined): WindowRow[] {
+  if (!readings) return [];
+  return readings
+    .filter((reading) => reading.specLow != null && reading.specHigh != null)
+    .map((reading) => ({
+      parameter: `${reading.parameter}|${reading.chamberId}`,
+      label: `${parameterLabel(reading.parameter)} (${reading.chamberId})`,
+      window: rangeLabel(reading.specLow, reading.specHigh, reading.unit),
+      control: rangeLabel(reading.controlLow, reading.controlHigh, reading.unit),
+      now: `${formatValue(reading.value, reading.unit)} ${unitLabel(reading.unit)}`,
+      tone: limitTone(reading.limitState),
+      state: reading.limitState ? LIMIT_LABEL[reading.limitState] : "—",
+    }));
 }
 
 export function sensorStatus(status: LiveReading["status"]): SensorStatus {

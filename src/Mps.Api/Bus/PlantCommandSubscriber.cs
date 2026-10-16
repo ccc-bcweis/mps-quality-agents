@@ -79,7 +79,7 @@ public sealed class PlantCommandSubscriber : IHostedService, IDisposable
             return ValueTask.CompletedTask;
         }
 
-        _board.Activate(scenario.Id);
+        _board.Activate(scenario.Id, _plant.SimulatedNow);
         _plant.ApplyStream(scenario);
         return ValueTask.CompletedTask;
     }

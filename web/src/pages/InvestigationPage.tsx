@@ -16,7 +16,7 @@ import { hiddenMissingTitle, MISSING_INVESTIGATION, visibleProblem } from "../hi
 import { InvestigationHistory } from "../history/InvestigationHistory";
 import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
-import { placeLabel, plainNarrative } from "../investigation/format";
+import { placeLabel, plainFinding, plainNarrative } from "../investigation/format";
 import { lifecycleForIncident, lifecycleForInvestigation } from "../lifecycle";
 import { INVESTIGATION_POLL_MS } from "../investigation/timeline";
 import { parameterLabel } from "../sites/parameters";
@@ -276,7 +276,7 @@ function InvestigationDetail({ investigation, onChange }: { investigation: Inves
                   {index + 1} · {hypothesis.confidence.toFixed(2)} · {CATEGORY_LABEL[hypothesis.category]}
                 </div>
                 <p>
-                  <Explain text={plainNarrative(hypothesis.cause)} spellOut={false} />
+                  <Explain text={plainFinding(hypothesis.cause)} spellOut={false} />
                 </p>
                 {hypothesis.counterEvidence.length > 0 ? (
                   <p className="mt-1">

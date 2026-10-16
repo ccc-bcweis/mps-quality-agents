@@ -1,0 +1,53 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Family envelopes from the spec table, loaded at startup. Every recipe step window in data/fleet must sit inside its
+# family envelope and use its unit. These are validation bounds, never shown as a spec: the spec is the recipe step window.
+# Bounds that the spec only names (film thickness, edge-ring height, flows) are fictional demo limits.
+deposition:
+  - { parameter: chamberPressure, unit: Torr, minimum: 2, maximum: 6 }
+  - { parameter: heaterTemperature, unit: C, minimum: 350, maximum: 400 }
+  - { parameter: rfPower, unit: W, minimum: 300, maximum: 600 }
+  - { parameter: sih4Flow, unit: sccm, minimum: 5, maximum: 80 }
+  - { parameter: n2oFlow, unit: sccm, minimum: 200, maximum: 1500 }
+  - { parameter: nh3Flow, unit: sccm, minimum: 10, maximum: 200 }
+  - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.15 }
+  - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.5 }
+  - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 10 }
+  - { parameter: filmThickness, unit: nm, minimum: 50, maximum: 800 }
+  - { parameter: filmUniformity, unit: percent, minimum: 0, maximum: 5 }
+etch:
+  - { parameter: chamberPressure, unit: mTorr, minimum: 20, maximum: 80 }
+  - { parameter: escTemperature, unit: C, minimum: 40, maximum: 60 }
+  - { parameter: wallTemperature, unit: C, minimum: 55, maximum: 65 }
+  - { parameter: rfSourcePower, unit: W, minimum: 1000, maximum: 2000 }
+  - { parameter: rfBiasPower, unit: W, minimum: 200, maximum: 500 }
+  - { parameter: cf4Flow, unit: sccm, minimum: 10, maximum: 200 }
+  - { parameter: chf3Flow, unit: sccm, minimum: 5, maximum: 120 }
+  - { parameter: o2Flow, unit: sccm, minimum: 0, maximum: 100 }
+  - { parameter: arFlow, unit: sccm, minimum: 20, maximum: 500 }
+  - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.15 }
+  - { parameter: edgeRingHeight, unit: mm, minimum: 1.5, maximum: 2.5 }
+  - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.5 }
+  - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 15 }
+  - { parameter: etchRate, unit: nm/min, minimum: 50, maximum: 800 }
+  - { parameter: endpointTime, unit: s, minimum: 15, maximum: 180 }
+strip:
+  - { parameter: chamberPressure, unit: Torr, minimum: 0.8, maximum: 1.5 }
+  - { parameter: temperature, unit: C, minimum: 250, maximum: 280 }
+  - { parameter: remotePlasmaPower, unit: W, minimum: 2000, maximum: 4000 }
+  - { parameter: o2Flow, unit: sccm, minimum: 200, maximum: 5000 }
+  - { parameter: n2h2Flow, unit: sccm, minimum: 50, maximum: 2000 }
+  - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.15 }
+  - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.5 }
+  - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 10 }
+  - { parameter: ashRate, unit: nm/min, minimum: 100, maximum: 2500 }
+clean:
+  - { parameter: ambientPressure, unit: atm, minimum: 0.97, maximum: 1.03 }
+  - { parameter: bathTemperature, unit: C, minimum: 60, maximum: 70 }
+  - { parameter: megasonicPower, unit: W, minimum: 500, maximum: 900 }
+  - { parameter: sc1Flow, unit: L/min, minimum: 0.4, maximum: 2.5 }
+  - { parameter: sc2Flow, unit: L/min, minimum: 0.4, maximum: 2.5 }
+  - { parameter: diwFlow, unit: L/min, minimum: 0.5, maximum: 3 }
+  - { parameter: spinChuckRunout, unit: mm, minimum: 0, maximum: 0.20 }
+  - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 3 }
+  - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 5 }
+  - { parameter: residueCount, unit: count, minimum: 0, maximum: 20 }

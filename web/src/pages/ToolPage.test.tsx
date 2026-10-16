@@ -13,8 +13,8 @@ describe("tool detail", () => {
     expect(await screen.findByRole("heading", { name: /Tool E-02/ })).toBeInTheDocument();
     const chart = await screen.findByRole("figure", { name: /SPC chart of ESC temperature/ });
     expect(chart).toHaveAccessibleName(/SPC chart of ESC temperature/i);
-    expect(screen.getByRole("cell", { name: "40–60 °C" })).toBeInTheDocument();
-    expect(screen.getAllByText("51.0 °C").length).toBeGreaterThan(0);
+    expect(screen.getByText("No live readings with a recipe window yet.")).toBeInTheDocument();
+    expect(screen.queryByText("40–60 °C")).not.toBeInTheDocument();
     expect(screen.queryByText("53.1 °C osc")).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Tool performance" })).toHaveTextContent("24.0 wafers/h");
     expect(screen.getByText("Illustrative readings, not a live tool counter.")).toBeInTheDocument();

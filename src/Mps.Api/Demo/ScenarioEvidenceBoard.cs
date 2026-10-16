@@ -10,13 +10,23 @@ public sealed class ScenarioEvidenceBoard
 {
     private volatile string? _active;
 
+    private DateTimeOffset? _activatedAt;
+
     public string? ActiveScenarioId => _active;
 
-    public void Activate(string scenarioId)
+    /// <summary>Plant time the scenario was staged; scenario records keep their spacing from its anchor, shifted to here.</summary>
+    public DateTimeOffset? ActivatedAt => _activatedAt;
+
+    public void Activate(string scenarioId, DateTimeOffset? activatedAt = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(scenarioId);
+        _activatedAt = activatedAt;
         _active = scenarioId.Trim();
     }
 
-    public void Clear() => _active = null;
+    public void Clear()
+    {
+        _active = null;
+        _activatedAt = null;
+    }
 }

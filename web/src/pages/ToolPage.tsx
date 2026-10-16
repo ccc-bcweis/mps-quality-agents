@@ -19,7 +19,7 @@ import { visibleProblem } from "../history/copy";
 import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
 import { chartSpec } from "../fleet/chartSpec";
-import { statusTone, storyFor, windowRows } from "../fleet/catalog";
+import { statusTone, storyFor } from "../fleet/catalog";
 import { sensorsForTool } from "../fleet/sensors";
 import { liveReadingMap, overlayWindows, seriesLimits, seriesPoints, storyWithLive } from "../live/overlay";
 import { usePolled } from "../live/usePolled";
@@ -127,7 +127,7 @@ export function ToolPage() {
     latestManual(manualReadings, seriesParameter, selected?.chamberId),
   );
   const reasons = statusReasons(shown.status, liveAlerts ?? alerts, manualReadings ?? []);
-  const windows = overlayWindows(windowRows(tool), live?.readings);
+  const windows = overlayWindows(live?.readings);
   const linked = linkedForTool(tool.id, { ...records, alerts });
 
   function showSensor(sensor: (typeof toolSensors)[number]) {
@@ -232,26 +232,40 @@ export function ToolPage() {
       <div className="mt-3 grid gap-3 lg:grid-cols-2">
         <div className={panel}>
           <h2 className="mb-2 text-mps-title font-semibold">Operating windows (recipe {story.recipe})</h2>
-          <table className="w-full text-left">
-            <thead>
-              <tr className="font-mono text-mps-micro uppercase text-mps-muted">
-                <th className="py-1 font-medium">Parameter</th>
-                <th className="py-1 font-medium">Window</th>
-                <th className="py-1 font-medium">Now</th>
-              </tr>
-            </thead>
-            <tbody>
-              {windows.map((row) => (
-                <tr key={row.parameter} className="border-t border-mps-line">
-                  <td className="py-1.5">
-                    <Explain text={row.label} />
-                  </td>
-                  <td className="py-1.5 font-mono">{row.window}</td>
-                  <td className={`py-1.5 font-mono ${row.tone === "alarm" ? "text-mps-alarm-text" : row.tone === "warn" ? "text-mps-warn" : ""}`}>{row.now}</td>
+          {windows.length === 0 ? (
+            <p className="text-mps-muted">No live readings with a recipe window yet.</p>
+          ) : (
+            <table aria-label="Operating windows" className="w-full text-left">
+              <thead>
+                <tr className="font-mono text-mps-micro uppercase text-mps-muted">
+                  <th className="py-1 font-medium">Parameter</th>
+                  <th className="py-1 font-medium">
+                    <Explain text="Recipe spec" spellOut={false} />
+                  </th>
+                  <th className="py-1 font-medium">
+                    <Explain text="Control limits" spellOut={false} />
+                  </th>
+                  <th className="py-1 font-medium">Now</th>
+                  <th className="py-1 font-medium">State</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {windows.map((row) => (
+                  <tr key={row.parameter} className="border-t border-mps-line">
+                    <td className="py-1.5">
+                      <Explain text={row.label} />
+                    </td>
+                    <td className="py-1.5 font-mono">{row.window}</td>
+                    <td className="py-1.5 font-mono">{row.control}</td>
+                    <td className={`py-1.5 font-mono ${row.tone === "alarm" ? "text-mps-alarm-text" : row.tone === "warn" ? "text-mps-warn" : ""}`}>{row.now}</td>
+                    <td className={`py-1.5 ${row.tone === "alarm" ? "text-mps-alarm-text" : row.tone === "warn" ? "text-mps-warn" : ""}`}>
+                      <Explain text={row.state} spellOut={false} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
         <div className={panel}>
           <h2 className="mb-2 text-mps-title font-semibold">Linked records</h2>

@@ -56,7 +56,7 @@ public sealed class WhyItMattersCatalogTests
         specific.WhyItMatters.Should().Be("A parameter level sentence covers this temperature point.");
         specific.SignalId.Should().Be("specific-esc");
         broad.WhyItMatters.Should().Be("A source level sentence covers every telemetry point.");
-        skipped.WhyItMatters.Should().Be("Chuck temperature moved outside the recipe window, which can change etch depth.");
+        skipped.WhyItMatters.Should().Be("This sensor's readings are part of the signal under investigation; open them to compare against the recipe spec.");
         skipped.SignalId.Should().Be("skipped-temp");
         record.WhyItMatters.Should().Be(
             "An engineering change landed just before this signal moved, which can change the process result.");
