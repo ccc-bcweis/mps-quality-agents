@@ -351,15 +351,15 @@ export function drawPhysical(sheet) {
   const dataY = 620;
   const dataH = 110;
   const cols = [
-    ['queue', 'Storage queue', 'API hands off the investigation'],
-    ['sql', 'Azure SQL serverless', 'Incidents, audit, spend ledger'],
-    ['search', 'AI Search or in-proc', 'Hybrid index, or the local file'],
-    ['aoai', 'Azure OpenAI', 'gpt-5.4-mini, TPM quota'],
+    ['queue', 'Queue (demo: in-process)', 'API hands off the investigation', 'Production: Azure Service Bus'],
+    ['sql', 'Store (demo: SQLite)', 'Incidents, audit, spend ledger', 'Production: Azure SQL'],
+    ['search', 'Index (demo: in-process)', 'Documents and records', 'Production: Azure AI Search'],
+    ['aoai', 'Azure OpenAI', 'gpt-5.4-mini, TPM quota', 'Production: PTU or quota tier'],
   ];
   const dGap = 14;
   const dW = (rgW - 32 - dGap * 3) / 4;
   cols.forEach((c, i) => {
-    sheet.node(c[0], rgX + 16 + i * (dW + dGap), dataY, dW, dataH, [c[1], c[2]], 'deploy');
+    sheet.node(c[0], rgX + 16 + i * (dW + dGap), dataY, dW, dataH, c.slice(1), 'deploy');
   });
 
   const busY = 568;
@@ -408,7 +408,7 @@ export function drawPhysical(sheet) {
     910,
     rgW - 32,
     110,
-    'Rollback is a Container Apps revision. Prompt and model versions roll back without a full app rollback. DR for the demo is IaC redeploy plus SQL geo-backup, configured at stand-up.',
+    'Production swaps: Service Bus for the queue, Azure SQL for SQLite, Azure AI Search for the in-process index, Front Door with WAF, private endpoints, and APIM in front of the model gateway. Rollback is a Container Apps revision.',
   );
 
   const plantY = 1036;
@@ -1835,7 +1835,7 @@ export const SHEETS = [
     kicker: 'PHYSICAL ARCHITECTURE',
     title: 'Physical architecture',
     slug: 'physical',
-    version: 'v1.1',
+    version: 'v1.2',
     draw: drawPhysical,
     legend: [
       { tone: 'human', label: 'Identity. Entra, invite only.' },
@@ -1844,6 +1844,7 @@ export const SHEETS = [
       { tone: 'gov', label: 'Traces, Key Vault, and the simulated plants.' },
       { tone: 'review', label: 'Manual deploy gate.' },
       { tone: 'ok', label: 'OIDC. No stored cloud secrets.' },
+      { tone: 'neutral', label: 'Data nodes: demo service, then the production swap.' },
     ],
   },
   {

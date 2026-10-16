@@ -47,9 +47,9 @@ flowchart TB
       EVD["Scenario evidence"]
     end
 
-    Q["Storage queue"]
-    SQL[("Serverless SQL")]
-    SRCH[("Search index")]
+    Q["Queue (demo: in-process)<br/>Production: Azure Service Bus"]
+    SQL[("Store (demo: SQLite)<br/>Production: Azure SQL")]
+    SRCH[("Index (demo: in-process)<br/>Production: Azure AI Search")]
     AOAI["Azure OpenAI"]
     KV["Key Vault"]
     MI["Managed identity"]
@@ -90,6 +90,19 @@ flowchart TB
   GH --> APIc
   GH --> HRN
 ```
+
+## Production swaps
+
+The demo keeps every moving part in one Container App. Each swap below changes an adapter, not the agents or the workflow.
+
+| Demo | Production | Why |
+|---|---|---|
+| In-process queue | Azure Service Bus (sessions per incident, dead-letter) | Durable hand-off, retry, scale the worker on depth |
+| SQLite on the app volume | Azure SQL (zone-redundant) | Concurrency, point-in-time restore, audit retention |
+| In-process document index | Azure AI Search (hybrid vector + keyword) | Corpus size, security trimming, relevance tuning |
+| In-memory spend ledger | Azure SQL ledger table | Cap survives restarts and replicas |
+| Container Apps ingress | Front Door + WAF, private endpoints, APIM in front of the model gateway | Edge protection, private data plane, per-caller quotas |
+| App Insights traces | Plus Event Hubs for tool telemetry | Plant-scale ingest |
 
 ## Plants and the two screen layers
 
@@ -133,7 +146,7 @@ Azure OpenAI runs gpt-5.4-mini in eastus2 behind the gateway cap (gpt-4o-mini wa
 
 ## Large-format print
 
-ARCH D sheet (36 × 24 in, landscape), v1.1, 2026-10-14. The mermaid block above is the source. The plotter files are hand-composed so labels do not cross. v1.1 adds the three simulated plants, the Sites routes, the harness-over-console split, scenario evidence on the mock read, and the refusal of a bare approve. The print sheet labels the GitHub environment `azure-demo`. The identity table in this file still says `demo`. See [`cicd.md`](cicd.md).
+ARCH D sheet (36 × 24 in, landscape), v1.2, 2026-10-16. v1.2 shows each data node as the demo service with its production swap. The mermaid block above is the source. The plotter files are hand-composed so labels do not cross. v1.1 adds the three simulated plants, the Sites routes, the harness-over-console split, scenario evidence on the mock read, and the refusal of a bare approve. The print sheet labels the GitHub environment `azure-demo`. The identity table in this file still says `demo`. See [`cicd.md`](cicd.md).
 
 - [`print/physical-archD.pdf`](print/physical-archD.pdf)
 - [`print/physical-archD.svg`](print/physical-archD.svg)
