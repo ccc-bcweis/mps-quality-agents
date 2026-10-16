@@ -48,7 +48,7 @@ public static class EvidencePackFactory
                 window.Parameter,
                 window.From.ToString("O", CultureInfo.InvariantCulture));
             var latest = window.Points.Count == 0 ? (double?)null : window.Points[^1].Value;
-            items.Add(Item(incident, EvidenceSource.Telemetry, window.Parameter + " window", reference, window.To, window.ToolId.Value, DescribeWindow(window), incident.ChamberId, latest));
+            items.Add(Item(incident, EvidenceSource.Telemetry, Mps.Domain.Telemetry.ParameterNames.Display(window.Parameter) + " readings", reference, window.To, window.ToolId.Value, DescribeWindow(window), incident.ChamberId, latest));
         }
 
         foreach (var eco in harvest.Ecos)
