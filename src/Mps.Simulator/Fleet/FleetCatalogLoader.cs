@@ -198,7 +198,8 @@ public static class FleetCatalogLoader
                     new SensorLimits(sensor.Minimum.Value, sensor.Maximum.Value, sensor.Nominal.Value, sensor.WarningMinimum.Value, sensor.WarningMaximum.Value),
                     sensor.ChamberId,
                     sensor.Parameter,
-                    sensor.TracksSensorId));
+                    sensor.TracksSensorId,
+                    sensor.Kind));
             }
             catch (ArgumentException exception)
             {
@@ -375,6 +376,8 @@ public static class FleetCatalogLoader
         public string? Parameter { get; set; }
 
         public string? TracksSensorId { get; set; }
+
+        public string? Kind { get; set; }
 
         public double? Minimum { get; set; }
 

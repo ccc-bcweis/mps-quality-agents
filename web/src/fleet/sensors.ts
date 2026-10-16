@@ -20,6 +20,8 @@ export type FleetSensor = {
   chamberId?: string;
   parameter?: string;
   tracksSensorId?: string;
+  /** periodic: SPC-charted against its limits. cumulative: a running count, shown without SPC limits. */
+  kind: "periodic" | "cumulative";
   limits: SensorLimits;
 };
 
@@ -153,6 +155,7 @@ function toSensor(raw: Raw, toolId: string, family: ToolFamily): FleetSensor {
     chamberId: raw.chamberId || undefined,
     parameter: raw.parameter || undefined,
     tracksSensorId: raw.tracksSensorId || undefined,
+    kind: raw.kind === "cumulative" ? "cumulative" : "periodic",
     limits,
   };
 }
