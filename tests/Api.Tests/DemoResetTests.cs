@@ -52,6 +52,7 @@ public sealed class DemoResetTests
 
         var first = await client.PostAsync("/api/admin/reset", null);
         var secondNumber = await OpenAndApproveAsync(client, "E-02", "escTemperature");
+        (await client.PostAsJsonAsync("/api/demo/speed", new { speed = 10, strideSeconds = 30 })).EnsureSuccessStatusCode();
         var second = await client.PostAsync("/api/admin/reset", null);
         var firstBody = await first.Content.ReadFromJsonAsync<JsonElement>(Json);
         var secondBody = await second.Content.ReadFromJsonAsync<JsonElement>(Json);
@@ -75,6 +76,8 @@ public sealed class DemoResetTests
         incidents.GetArrayLength().Should().Be(0);
         tickets.GetArrayLength().Should().Be(0);
         capas.GetArrayLength().Should().Be(0);
+        var speed = await client.GetFromJsonAsync<JsonElement>("/api/demo/speed");
+        speed.GetProperty("speed").GetInt32().Should().Be(1);
         tools.GetArrayLength().Should().Be(32);
     }
 

@@ -15,6 +15,7 @@ import { hiddenMissingTitle, MISSING_CAPA, visibleProblem } from "../history/cop
 import { byNewestTime, toolPlainName } from "../history/order";
 import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
+import { splitBySite } from "../sites/splitBySite";
 import { formatLocalWhen } from "../investigation/format";
 import { CAPA_STAGES, nextCapaStage } from "../lifecycle";
 
@@ -22,7 +23,7 @@ export function CapaPage() {
   useSetLifecycle("capa");
   const { capaId } = useParams();
   const { siteId } = useSite();
-  const { capas, rememberCapa } = useConsole();
+  const { capas, rememberCapa, syncCapas } = useConsole();
   const capasRef = useRef(capas);
   capasRef.current = capas;
   const [capa, setCapa] = useState<Capa | null>(null);
@@ -46,6 +47,7 @@ export function CapaPage() {
         if (cancelled) return;
         setListed(nextCapas);
         setServerListed(true);
+        syncCapas(nextCapas.map((item) => item.id));
         setIncidents(nextIncidents);
         setTools(nextTools);
       })
@@ -58,7 +60,7 @@ export function CapaPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [syncCapas]);
 
   useEffect(() => {
     let cancelled = false;
@@ -182,18 +184,13 @@ export function CapaPage() {
   const currentIndex = CAPA_STAGES.findIndex((item) => item.id === current);
   const upcoming = capa ? nextCapaStage(capa.stage) : null;
 
-  const merged = [...listed, ...capas.filter((item) => !listed.some((row) => row.id === item.id))].sort(
+  // The server list is the record. Tab memory only fills in while the server list has not loaded.
+  const merged = (serverListed ? listed : [...listed, ...capas.filter((item) => !listed.some((row) => row.id === item.id))]).sort(
     byNewestTime((item) => item.openedAt),
   );
   const showList = !capa;
   const toolFor = (item: Capa) => item.toolId ?? incidents.find((row) => row.id === item.incidentId)?.toolId ?? capaTools[item.incidentId];
-  const visible = merged.filter((item) => {
-    const toolId = toolFor(item);
-    // A CAPA remembered in this tab whose incident is gone (the demo was reset) has no tool: drop it rather than show "Unknown tool".
-    if (!toolId) return !serverListed;
-    return toolInPlant(siteId, toolId);
-  });
-  const elsewhere = merged.length - visible.length;
+  const { visible, elsewhere } = splitBySite(merged, siteId, toolFor);
   const problem = visibleProblem(error);
   const rows = visible.map((item) => {
     const toolId = toolFor(item);
@@ -325,3 +322,4 @@ export function CapaPage() {
     </div>
   );
 }
+

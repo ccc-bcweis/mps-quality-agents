@@ -22,6 +22,8 @@ type ConsoleValue = {
   setLifecycle: (view: LifecycleView) => void;
   capas: Capa[];
   rememberCapa: (capa: Capa) => void;
+  /** Drop remembered CAPAs the server no longer has (another client reset the demo). */
+  syncCapas: (serverIds: string[]) => void;
   localAlerts: Alert[];
   rememberLocalAlert: (alert: Alert) => void;
   revision: number;
@@ -123,6 +125,16 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const syncCapas = useCallback((serverIds: string[]) => {
+    setCapas((current) => {
+      const keep = current.filter((item) => serverIds.includes(item.id));
+      if (keep.length === current.length) return current;
+      if (keep.length === 0) sessionStorage.removeItem(CAPA_KEY);
+      else sessionStorage.setItem(CAPA_KEY, JSON.stringify(keep));
+      return keep;
+    });
+  }, []);
+
   const rememberLocalAlert = useCallback((alert: Alert) => {
     setLocalAlerts((current) => [alert, ...current.filter((item) => item.correlationId !== alert.correlationId)]);
   }, []);
@@ -155,6 +167,7 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
       setLifecycle,
       capas,
       rememberCapa,
+      syncCapas,
       localAlerts,
       rememberLocalAlert,
       revision,
@@ -177,6 +190,7 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
       setLifecycle,
       capas,
       rememberCapa,
+      syncCapas,
       localAlerts,
       rememberLocalAlert,
       revision,
