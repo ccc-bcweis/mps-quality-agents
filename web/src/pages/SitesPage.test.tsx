@@ -13,7 +13,7 @@ describe("sites overview", () => {
     const nav = await screen.findByRole("navigation", { name: "Console" });
     const labels = within(nav).getAllByRole("link").map((link) => link.textContent ?? "");
     expect(labels.indexOf("Sites")).toBeGreaterThanOrEqual(0);
-    expect(labels.indexOf("Sites")).toBeLessThan(labels.indexOf("Fleet"));
+    expect(labels.indexOf("Sites")).toBeLessThan(labels.indexOf("Production line"));
 
     expect(await screen.findByRole("heading", { name: "Sites" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Northwater Fab", selected: true })).toBeInTheDocument();

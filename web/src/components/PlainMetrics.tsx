@@ -19,9 +19,9 @@ export function PlainMetrics({ toolIds, spellOut = true }: { toolIds: string[]; 
   const figures = rows.length === 1 ? rows[0] : rollup(rows);
   const single = rows.length === 1;
   return (
-    <section className={`${panel} mt-3`} aria-label={single ? "Tool performance" : "Fleet performance"}>
+    <section className={`${panel} mt-3`} aria-label={single ? "Tool performance" : "Production line performance"}>
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-mps-title font-semibold">{single ? "This tool" : "Fleet average"}</h2>
+        <h2 className="text-mps-title font-semibold">{single ? "This tool" : "Production line average"}</h2>
         <p className="text-mps-micro text-mps-muted">{PERFORMANCE_CAPTION}</p>
       </div>
       <dl className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">

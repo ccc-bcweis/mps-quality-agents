@@ -83,7 +83,7 @@ export function FleetPage() {
           <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">
             {plantName} · {rows.length} tools · {families} families
           </p>
-          <h1 className="text-mps-display font-semibold">Fleet overview</h1>
+          <h1 className="text-mps-display font-semibold">Production line overview</h1>
           <p className="text-mps-secondary">
             <Explain text={`${rows.length} tools, ${families} families. SPC windows and Western Electric rules watch chamber pressure, ESC temperature, and RF power. Tiles open tool detail.`} />
           </p>

@@ -118,7 +118,7 @@ describe("harness collapse, replay, and soft reset", () => {
     await user.click(screen.getByRole("button", { name: "Confirm hard reset" }));
     expect(await screen.findByText("Filling a week of healthy readings.")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Fleet overview" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Production line overview" })).toBeInTheDocument();
     release();
     expect(await screen.findByText("Demo baseline restored. Seed 4242.")).toBeInTheDocument();
   });

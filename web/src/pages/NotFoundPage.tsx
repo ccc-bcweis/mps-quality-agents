@@ -9,7 +9,7 @@ export function NotFoundPage() {
     <div>
       <h1 className="text-mps-display font-semibold">Screen not found</h1>
       <p className="mt-2">
-        <Link className={btn} to="/">Return to the fleet</Link>
+        <Link className={btn} to="/">Return to the production line</Link>
       </p>
     </div>
   );

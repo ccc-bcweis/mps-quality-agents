@@ -130,7 +130,7 @@ export function ToolPage() {
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">
-            <Link className={btnSm} to="/">Fleet</Link> · {tool.bay} · {tool.model}
+            <Link className={btnSm} to="/">Production line</Link> · {tool.bay} · {tool.model}
           </p>
           <h1 className="text-mps-display font-semibold">
             Tool {tool.id} · {FAMILY_PROCESS[tool.family]}

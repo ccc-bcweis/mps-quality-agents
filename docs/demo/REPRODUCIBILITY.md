@@ -32,7 +32,7 @@ The sample window is the first 30 seconds after 2026-09-01T00:00:00Z, so the ser
 
 ## Plant-data replay
 
-Live is the running plant. Replay swaps the fleet, the tool charts, and the alerts to a recorded scenario. Recordings are bus messages in `data/replay/<scenario>/messages.jsonl`, written by `tools/ReplayRecorder` or `POST /api/admin/replay/{scenarioId}`. Saved model answers stay in `data/replay/scripted/` and are not those files. `POST /api/demo/data-mode` with `live` puts the console back on the running plant and leaves the recording in place. The answer engine (saved answers or a live model) is a separate switch.
+Live is the running plant. Replay swaps the production line, the tool charts, and the alerts to a recorded scenario. Recordings are bus messages in `data/replay/<scenario>/messages.jsonl`, written by `tools/ReplayRecorder` or `POST /api/admin/replay/{scenarioId}`. Saved model answers stay in `data/replay/scripted/` and are not those files. `POST /api/demo/data-mode` with `live` puts the console back on the running plant and leaves the recording in place. The answer engine (saved answers or a live model) is a separate switch.
 
 ## Model replay
 
