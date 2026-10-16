@@ -4,9 +4,6 @@
     <!-- The shared test package set matches names that end in .Tests. This project does not. -->
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <!-- CI calls dotnet test with no filter. This property keeps Category=PendingLane
-         off that run. A command-line filter overrides it. -->
-    <VSTestTestCaseFilter>Category!=PendingLane</VSTestTestCaseFilter>
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

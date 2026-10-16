@@ -17,7 +17,8 @@ internal readonly record struct ApiCall(HttpStatusCode Status, string Body)
     public JsonElement Require(HttpStatusCode expected)
     {
         Status.Should().Be(expected, "response body was {0}", Body);
-        return Json();
+        // Error and not-found responses can carry no body.
+        return string.IsNullOrWhiteSpace(Body) ? default : Json();
     }
 }
 

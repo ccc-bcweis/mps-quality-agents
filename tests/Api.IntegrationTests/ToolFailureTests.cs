@@ -10,7 +10,6 @@ namespace Mps.Api.IntegrationTests;
 /// A repeated CAPA create is an idempotent conflict. Ground truth is not on this API.
 /// Spec sections 2.5, 2.6, and 7.4.
 /// </summary>
-[Trait("Category", "PendingLane")]
 public sealed class ToolFailureTests
 {
     [Fact]

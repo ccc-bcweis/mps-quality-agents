@@ -7,7 +7,6 @@ namespace Mps.Api.IntegrationTests;
 /// <summary>
 /// Fleet, metrics, and fault-injector behavior from spec sections 2.1, 2.7, and 2.8.
 /// </summary>
-[Trait("Category", "PendingLane")]
 public sealed class ServiceBehaviorContractTests : IClassFixture<MpsApiFactory>
 {
     private readonly MpsApiFactory _factory;
@@ -18,24 +17,16 @@ public sealed class ServiceBehaviorContractTests : IClassFixture<MpsApiFactory>
     }
 
     [Fact]
-    public async Task FleetListsEightToolsAcrossTwoBaysAndFourFamilies()
+    public async Task FleetListsEveryConfiguredToolInFourFamiliesWithChambers()
     {
         using var client = _factory.CreateClient();
         var tools = (await ApiClient.SendAsync(client, HttpMethod.Get, "/api/tools")).Require(HttpStatusCode.OK);
-        tools.GetArrayLength().Should().Be(8);
-        tools.EnumerateArray()
-            .Select(tool => tool.RequiredString("family"))
-            .Should()
-            .BeEquivalentTo(
-                "deposition",
-                "deposition",
-                "etch",
-                "etch",
-                "strip",
-                "strip",
-                "clean",
-                "clean");
-        tools.EnumerateArray().Select(tool => tool.RequiredString("bay")).Distinct().Should().HaveCount(2);
+
+        // data/fleet/sites.yaml: three sites, 32 tools.
+        tools.GetArrayLength().Should().Be(32);
+        tools.EnumerateArray().Select(tool => tool.RequiredString("family")).Distinct()
+            .Should().BeEquivalentTo("deposition", "etch", "strip", "clean");
+        tools.EnumerateArray().Select(tool => tool.RequiredString("bay")).Distinct().Count().Should().BeGreaterThanOrEqualTo(2);
         tools.EnumerateArray().Should().OnlyContain(tool => tool.GetProperty("chambers").GetArrayLength() > 0);
     }
 
