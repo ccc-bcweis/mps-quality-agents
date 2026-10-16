@@ -36,14 +36,14 @@ function chambers(names: string[]): Tool["chambers"] {
 }
 
 export const tools: Tool[] = [
-  { id: "D-01", name: "Deposition 01", family: "deposition", model: "MPS-D7", bay: "Bay A", siteId: "northwater", chambers: chambers(["Chamber A", "Chamber B"]) },
-  { id: "D-02", name: "Deposition 02", family: "deposition", model: "MPS-D7", bay: "Bay A", siteId: "northwater", chambers: chambers(["Chamber A", "Chamber B"]) },
-  { id: "E-01", name: "Etch 01", family: "etch", model: "MPS-E7", bay: "Bay A", siteId: "northwater", chambers: chambers(["Chamber A", "Chamber B"]) },
-  { id: "E-02", name: "Etch 02", family: "etch", model: "MPS-E7", bay: "Bay A", siteId: "northwater", chambers: chambers(["Chamber A", "Chamber B"]) },
-  { id: "S-01", name: "Strip 01", family: "strip", model: "MPS-S7", bay: "Bay B", siteId: "northwater", chambers: chambers(["Chamber A", "Chamber B"]) },
-  { id: "S-02", name: "Strip 02", family: "strip", model: "MPS-S7", bay: "Bay B", siteId: "northwater", chambers: chambers(["Chamber A", "Chamber B"]) },
-  { id: "C-01", name: "Clean 01", family: "clean", model: "MPS-C7", bay: "Bay B", siteId: "northwater", chambers: chambers(["Chamber A"]) },
-  { id: "C-02", name: "Clean 02", family: "clean", model: "MPS-C7", bay: "Bay B", siteId: "northwater", chambers: chambers(["Chamber A"]) },
+  { id: "D-01", name: "Deposition 01", family: "deposition", model: "MPS-D7", bay: "Bay-1", siteId: "northwater", chambers: chambers(["Chamber A", "Chamber B"]) },
+  { id: "D-02", name: "Deposition 02", family: "deposition", model: "MPS-D7", bay: "Bay-2", siteId: "northwater", chambers: chambers(["Chamber A", "Chamber B"]) },
+  { id: "E-01", name: "Etch 01", family: "etch", model: "MPS-E7", bay: "Bay-1", siteId: "northwater", chambers: chambers(["Chamber A", "Chamber B"]) },
+  { id: "E-02", name: "Etch 02", family: "etch", model: "MPS-E7", bay: "Bay-2", siteId: "northwater", chambers: chambers(["Chamber A", "Chamber B"]) },
+  { id: "S-01", name: "Strip 01", family: "strip", model: "MPS-S7", bay: "Bay-1", siteId: "northwater", chambers: chambers(["Chamber A", "Chamber B"]) },
+  { id: "S-02", name: "Strip 02", family: "strip", model: "MPS-S7", bay: "Bay-2", siteId: "northwater", chambers: chambers(["Chamber A", "Chamber B"]) },
+  { id: "C-01", name: "Clean 01", family: "clean", model: "MPS-C7", bay: "Bay-1", siteId: "northwater", chambers: chambers(["Chamber A"]) },
+  { id: "C-02", name: "Clean 02", family: "clean", model: "MPS-C7", bay: "Bay-2", siteId: "northwater", chambers: chambers(["Chamber A"]) },
 ];
 
 export const alerts: Alert[] = [

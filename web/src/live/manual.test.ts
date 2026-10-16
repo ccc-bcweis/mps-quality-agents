@@ -79,3 +79,15 @@ describe("manual readings", () => {
     expect(statusReasons("alarm", [{ ...alert, status: "cleared" }], [reading])).toEqual([]);
   });
 });
+
+import { sensorLabel } from "./overlay";
+
+describe("sensor labels", () => {
+  it("turns sensor ids into short plain labels", () => {
+    expect(sensorLabel("E-01-A-RF-BIAS-RFL")).toBe("A Bias RF reflected");
+    expect(sensorLabel("I-E-02-B-RF-SRC-RFL")).toBe("B Source RF reflected");
+    expect(sensorLabel("D-01-A-RF-RFL")).toBe("A RF reflected");
+    expect(sensorLabel("C-01-RUN-RATE")).toBe("Run rate");
+    expect(sensorLabel("escTemperature")).toBeNull();
+  });
+});

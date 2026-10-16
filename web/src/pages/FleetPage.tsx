@@ -27,6 +27,20 @@ export function FleetPage() {
   const [error, setError] = useState<string | null>(null);
   const [sparks, setSparks] = useState<Record<string, number[]>>({});
   const live = usePolled(() => api.listFleetLive(), "fleet");
+  // Bay names come from data/fleet/sites.yaml through /api/sites, the same source as the floor plans.
+  const [bayNames, setBayNames] = useState<Map<string, string>>(new Map());
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .listSites()
+      .then((sites) => {
+        if (!cancelled) setBayNames(new Map(sites.flatMap((site) => site.bays.map((bay) => [bay.id, bay.name] as const))));
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -107,8 +121,8 @@ export function FleetPage() {
       {rows.length > 0 ? <PlainMetrics toolIds={rows.map((tool) => tool.id)} /> : null}
       {bays.map((bay) => (
         <section key={bay} className="mt-5">
-          <h2 className="mb-2 font-mono text-mps-micro uppercase tracking-widest text-mps-muted">
-            {bay} · {bayCaption(bay)}
+          <h2 className="mb-2 font-mono text-mps-micro tracking-wider text-mps-muted">
+            {bayNames.get(bay) ?? bay} · {bayCaption(rows.filter((tool) => tool.bay === bay).map((tool) => tool.family))}
           </h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {stories
@@ -130,10 +144,10 @@ export function FleetPage() {
                       <div className="mt-2 space-y-1 font-mono text-mps-micro">
                         {story.params.map((param) => (
                           <div key={param.label} className="flex min-w-0 justify-between gap-2">
-                            <span className="min-w-0 break-words text-mps-muted">
+                            <span className="min-w-0 break-words text-left text-mps-muted">
                               <Explain text={param.label} />
                             </span>
-                            <span className={param.tone === "alarm" ? "text-mps-alarm-text" : param.tone === "warn" ? "text-mps-warn" : "text-mps-secondary"}>
+                            <span className={"shrink-0 text-right " + param.tone === "alarm" ? "text-mps-alarm-text" : param.tone === "warn" ? "text-mps-warn" : "text-mps-secondary"}>
                               {param.value}
                             </span>
                           </div>

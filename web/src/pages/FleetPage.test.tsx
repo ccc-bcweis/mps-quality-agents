@@ -67,3 +67,33 @@ describe("fleet overview", () => {
     expect(screen.getByRole("link", { name: /D-01/ }).textContent).toMatch(/NOMINAL/);
   });
 });
+
+describe("production line labels", () => {
+  it("names each bay from the site data with its families, like the floor plans", async () => {
+    renderConsole("/");
+    expect(await screen.findByRole("heading", { name: "Cleanroom bay 1 · Deposition, etch, strip, clean" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Cleanroom bay 2 · Deposition, etch, strip, clean" })).toBeInTheDocument();
+  });
+
+  it("shows a sensor id as a short plain label", async () => {
+    server.use(
+      http.get("/api/fleet/live", () =>
+        HttpResponse.json({
+          simulatedNow: "2026-09-01T00:04:00Z",
+          tools: [
+            {
+              toolId: "E-01",
+              siteId: "northwater",
+              status: "nominal",
+              readings: [{ sensorId: "E-01-A-RF-BIAS-RFL", parameter: "E-01-A-RF-BIAS-RFL", chamberId: "E-01-A", unit: "W", at: "2026-09-01T00:04:00Z", value: 12, status: "nominal" }],
+            },
+          ],
+        }),
+      ),
+    );
+    renderConsole("/");
+    const tile = await screen.findByRole("link", { name: /E-01/ });
+    await waitFor(() => expect(tile.textContent).toContain("A Bias RF reflected"));
+    expect(tile.textContent).not.toMatch(/R F|B I A S/);
+  });
+});
