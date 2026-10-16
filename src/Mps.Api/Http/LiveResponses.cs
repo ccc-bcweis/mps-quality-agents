@@ -90,10 +90,7 @@ public static class LiveResponses
     }
 
     /// <summary>The wafer output counter climbs all hour by design, so it never sets a watch or alarm.</summary>
-    private static bool IsCounter(string parameter, string? sensorId) =>
-        string.Equals(parameter, SensorCatalog.Output, StringComparison.OrdinalIgnoreCase)
-        || parameter.EndsWith("-OUTPUT", StringComparison.OrdinalIgnoreCase)
-        || (sensorId?.EndsWith("-OUTPUT", StringComparison.OrdinalIgnoreCase) ?? false);
+    private static bool IsCounter(string parameter, string? sensorId) => Mps.Api.Live.SpcCoverage.IsCumulative(parameter, sensorId);
 
     private static string StatusOf(double value, OperatingWindow? window)
     {
