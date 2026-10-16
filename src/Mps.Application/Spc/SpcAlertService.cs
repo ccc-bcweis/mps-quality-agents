@@ -94,7 +94,7 @@ public sealed class SpcAlertService
         var active = history.Where(item => item.IsActive).OrderByDescending(item => item.RaisedAt).FirstOrDefault();
         if (active is not null)
         {
-            var escalated = active.Update(WesternElectricEvaluator.JoinRules(violations), severity, at);
+            var escalated = active.Update(WesternElectricEvaluator.JoinRules(violations), severity, at, DistinctSamples(violations));
             await _alerts.UpdateAsync(active, cancellationToken).ConfigureAwait(false);
             await _notifier.AlertRaisedAsync(active, cancellationToken).ConfigureAwait(false);
             if (!escalated)
@@ -124,6 +124,7 @@ public sealed class SpcAlertService
             rule,
             at,
             correlationId);
+        alert.Restore(at, DistinctSamples(violations));
         await _alerts.AddAsync(alert, cancellationToken).ConfigureAwait(false);
         await _notifier.AlertRaisedAsync(alert, cancellationToken).ConfigureAwait(false);
         return await DecideAsync(sample, violations, alert, rule, severity, at, correlationId, history.Count, cancellationToken).ConfigureAwait(false);
@@ -172,6 +173,10 @@ public sealed class SpcAlertService
             cancellationToken).ConfigureAwait(false);
         return new SpcAlertOutcome(violations, alert, intake.Incident, intake.Ticket, debounced: false, decision);
     }
+
+    /// <summary>Readings that broke at least one rule. Several rules on one reading count once.</summary>
+    private static int DistinctSamples(IReadOnlyList<SpcViolation> violations) =>
+        violations.Select(violation => violation.At).Distinct().Count();
 
     /// <summary>Clears active alerts on this signal once the last readings have stayed in control long enough.</summary>
     public async Task ClearRecoveredAsync(SpcSample sample, CancellationToken cancellationToken)

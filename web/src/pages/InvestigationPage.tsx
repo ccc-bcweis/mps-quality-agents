@@ -237,7 +237,7 @@ function InvestigationDetail({ investigation }: { investigation: Investigation }
           </h1>
           {place && place !== "—" ? <p className="text-mps-secondary">{place}</p> : null}
           <p className="max-w-3xl text-mps-secondary">
-            <Explain text="Read-only evidence, then ranked hypotheses. AI proposes a ranking. Violet marks the model. Cyan marks deterministic rules. The model cannot write." />
+            <Explain text="Read-only evidence, then ranked hypotheses. AI proposes a ranking. Violet marks the model. Cyan marks fixed rule checks. The model cannot write." />
           </p>
         </div>
         {investigation.stage === "recommendationReady" ? (

@@ -139,7 +139,8 @@ public sealed class SpcAlertServiceTests
         alert.IsActive.Should().BeTrue();
         alert.Severity.Should().BeOneOf(Severity.High, Severity.Critical);
         alert.LastSeenAt.Should().BeAfter(alert.RaisedAt.AddMinutes(60));
-        alert.Occurrences.Should().BeGreaterThan(1);
+        // Occurrences counts distinct readings that broke a rule, not evaluation passes: at most one per sample.
+        alert.Occurrences.Should().BeInRange(60 * 4, 70 * 4, "the count is distinct out-of-limit readings, not rule checks");
         alert.Rule.Split('+').Should().OnlyHaveUniqueItems();
         fixture.Ticketing.Tickets.Should().ContainSingle();
     }

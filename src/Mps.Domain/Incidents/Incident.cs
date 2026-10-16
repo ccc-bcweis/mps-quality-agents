@@ -89,7 +89,7 @@ public sealed class Alert
     /// <summary>Time of the newest violation folded into this alert.</summary>
     public DateTimeOffset LastSeenAt { get; private set; }
 
-    /// <summary>How many evaluations found violations while this alert was active.</summary>
+    /// <summary>Distinct readings (samples) that broke a rule while this alert was active.</summary>
     public int Occurrences { get; private set; }
 
     public string CorrelationId { get; }
@@ -105,7 +105,7 @@ public sealed class Alert
     /// Folds a later violation on the same signal into this active alert: rules are appended, severity keeps its peak,
     /// and the last-seen time moves forward. Returns true when the severity rose (watch to alarm).
     /// </summary>
-    public bool Update(string rule, Severity severity, DateTimeOffset at)
+    public bool Update(string rule, Severity severity, DateTimeOffset at, int newSamples = 1)
     {
         if (!IsActive)
         {
@@ -133,7 +133,7 @@ public sealed class Alert
             LastSeenAt = at;
         }
 
-        Occurrences++;
+        Occurrences += Math.Max(0, newSamples);
         return escalated;
     }
 
