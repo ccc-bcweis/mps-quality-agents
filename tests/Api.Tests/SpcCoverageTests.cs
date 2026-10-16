@@ -1,8 +1,11 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
 using FluentAssertions;
+
 using Microsoft.Extensions.DependencyInjection;
+
 using Mps.Api.Live;
+
 using Xunit;
 
 namespace Mps.Api.Tests;
