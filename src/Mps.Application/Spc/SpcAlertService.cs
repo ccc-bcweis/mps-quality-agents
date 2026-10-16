@@ -55,7 +55,6 @@ public sealed class SpcAlertService
     public async Task<SpcAlertOutcome> RaiseAsync(SpcSample sample, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(sample);
-        await ClearRecoveredAsync(sample, cancellationToken).ConfigureAwait(false);
         var violations = WesternElectricEvaluator.Evaluate(
             sample.ToolId,
             sample.ChamberId,
@@ -64,18 +63,20 @@ public sealed class SpcAlertService
             sample.Points);
         if (violations.Count == 0)
         {
+            // Only a series that is back in control may clear: a live violation keeps the alert active.
+            await ClearRecoveredAsync(sample, cancellationToken).ConfigureAwait(false);
             return new SpcAlertOutcome(violations, null, null, null, debounced: false);
         }
 
         var at = violations.Max(violation => violation.At);
         var history = await _alerts.ListBySignalAsync(sample.ToolId, sample.Parameter, sample.ChamberId, cancellationToken)
             .ConfigureAwait(false);
-        if (SpcDebounce.ShouldSuppress(history, sample.ToolId, sample.ChamberId, sample.Parameter, at, _debounce))
+        var severity = WesternElectricEvaluator.Highest(violations);
+        if (SpcDebounce.ShouldSuppress(history, sample.ToolId, sample.ChamberId, sample.Parameter, at, _debounce, severity))
         {
             return new SpcAlertOutcome(violations, null, null, null, debounced: true);
         }
 
-        var severity = WesternElectricEvaluator.Highest(violations);
         var rule = WesternElectricEvaluator.JoinRules(violations);
         var correlationId = _hints?.CorrelationFor(sample.ToolId.ToString(), sample.Parameter)
             ?? "spc-" + Guid.NewGuid().ToString("N");
@@ -137,6 +138,14 @@ public sealed class SpcAlertService
             .ConfigureAwait(false);
         var active = history.Where(alert => alert.IsActive).ToArray();
         if (active.Length == 0)
+        {
+            return;
+        }
+
+        // A run inside +/-2 sigma can still be out of control (eight on one side during a slow drift).
+        var trailing = sample.Points.Skip(Math.Max(0, sample.Points.Count - AlertClearing.InControlReadings)).ToArray();
+        if (WesternElectricEvaluator.Evaluate(sample.ToolId, sample.ChamberId, sample.Parameter, sample.Baseline, sample.Points)
+            .Any(violation => violation.At >= trailing[0].At))
         {
             return;
         }

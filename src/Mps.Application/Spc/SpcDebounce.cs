@@ -17,7 +17,8 @@ public static class SpcDebounce
         string? chamberId,
         string parameter,
         DateTimeOffset at,
-        TimeSpan window)
+        TimeSpan window,
+        Severity? severity = null)
     {
         ArgumentNullException.ThrowIfNull(existing);
         if (window <= TimeSpan.Zero)
@@ -28,6 +29,12 @@ public static class SpcDebounce
         var normalizedChamber = string.IsNullOrWhiteSpace(chamberId) ? null : chamberId.Trim();
         foreach (var alert in existing)
         {
+            // A cleared alert never hides a new violation, and a watch never hides an escalation to alarm.
+            if (severity is not null && (!alert.IsActive || alert.Severity < severity.Value))
+            {
+                continue;
+            }
+
             if (alert.ToolId != toolId)
             {
                 continue;
