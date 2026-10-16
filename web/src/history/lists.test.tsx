@@ -44,7 +44,7 @@ describe("history lists", () => {
   it("falls back to the list when a deep link misses", async () => {
     renderConsole(`/alerts/${gone}`);
     expect(await screen.findByText(MISSING_ALERT)).toBeInTheDocument();
-    expect(screen.getByText("No alerts yet.")).toBeInTheDocument();
+    expect(screen.getByText("No active alerts.")).toBeInTheDocument();
     expect(screen.queryByText("No such record.")).not.toBeInTheDocument();
 
     renderConsole(`/tickets/${gone}`);
