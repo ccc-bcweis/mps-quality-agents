@@ -90,6 +90,10 @@ export type Alert = {
   /** Active until the signal stays in control for 8 readings in a row. */
   status?: "active" | "cleared";
   clearedAt?: string | null;
+  /** Newest violation folded into this active alert. */
+  lastSeenAt?: string | null;
+  /** Evaluations that found violations while the alert was active. */
+  occurrences?: number;
 };
 
 export type Ticket = {

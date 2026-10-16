@@ -10,6 +10,9 @@ public interface IAlertLog
 {
     Task AddAsync(Alert alert, CancellationToken cancellationToken);
 
+    /// <summary>Saves rule, severity, last-seen time and count after <see cref="Alert.Update"/>.</summary>
+    Task UpdateAsync(Alert alert, CancellationToken cancellationToken);
+
     /// <summary>Marks the alert cleared at <paramref name="at"/>. A no-op when it is already cleared.</summary>
     Task ClearAsync(AlertId id, DateTimeOffset at, CancellationToken cancellationToken);
 

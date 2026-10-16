@@ -92,6 +92,12 @@ export function AlertsPage() {
       detail: (
         <>
           <Explain text={ruleLabel(alert.rule)} />
+          {alert.lastSeenAt && alert.lastSeenAt !== alert.raisedAt ? (
+            <div className="mt-1 text-mps-micro text-mps-muted">
+              Still firing · last seen {formatStamp(alert.lastSeenAt)}
+              {alert.occurrences && alert.occurrences > 1 ? ` · ${alert.occurrences} checks` : ""}
+            </div>
+          ) : null}
           <div className="mt-1">
             {matched ? <Link className={btnSm} to={`/tickets/${matched.id}`}>{matched.number}</Link> : "—"}
             {" · "}

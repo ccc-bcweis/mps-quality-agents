@@ -29,7 +29,9 @@ public sealed record AlertResponse(
     string CorrelationId,
     string SiteId,
     string Status = "active",
-    DateTimeOffset? ClearedAt = null);
+    DateTimeOffset? ClearedAt = null,
+    DateTimeOffset? LastSeenAt = null,
+    int Occurrences = 1);
 
 public sealed record TicketResponse(
     Guid Id,
