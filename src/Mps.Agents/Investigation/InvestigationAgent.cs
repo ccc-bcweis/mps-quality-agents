@@ -4,6 +4,7 @@ using Microsoft.Extensions.AI;
 
 using Mps.Agents.Evidence;
 using Mps.Agents.Explain;
+using Mps.Agents.Hosting;
 using Mps.Agents.Impact;
 using Mps.Agents.Prompts;
 using Mps.Agents.Tools;
@@ -18,7 +19,7 @@ namespace Mps.Agents.Investigation;
 public sealed class InvestigationAgent : IInvestigationAgent
 {
     private readonly ReadOnlyToolSession _tools;
-    private readonly IChatClient _chat;
+    private readonly Microsoft.Agents.AI.ChatClientAgent _agent;
     private readonly PromptCatalog _prompts;
     private readonly TimeProvider _time;
     private readonly InvestigationLimits _limits;
@@ -36,7 +37,7 @@ public sealed class InvestigationAgent : IInvestigationAgent
         ArgumentNullException.ThrowIfNull(chat);
         ArgumentNullException.ThrowIfNull(prompts);
         _tools = tools;
-        _chat = chat;
+        _agent = QualityAgents.Create(chat, QualityAgents.InvestigationName, "Gathers evidence with read-only enterprise tools.");
         _prompts = prompts;
         _time = time ?? TimeProvider.System;
         _limits = limits ?? new InvestigationLimits();
@@ -67,7 +68,7 @@ public sealed class InvestigationAgent : IInvestigationAgent
                 return GatherResult.Stopped("Investigation exceeded 60 seconds.", calls, prompt.Id, prompt.Version);
             }
 
-            var response = await _chat.GetResponseAsync(messages, ToolOptions(), cancellationToken).ConfigureAwait(false);
+            var response = await QualityAgents.TurnAsync(_agent, messages, ToolOptions(), cancellationToken).ConfigureAwait(false);
             if (response.Messages.Count > 0)
             {
                 messages.AddRange(response.Messages);

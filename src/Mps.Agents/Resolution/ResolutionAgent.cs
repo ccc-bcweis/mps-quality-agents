@@ -2,6 +2,7 @@
 
 using Microsoft.Extensions.AI;
 
+using Mps.Agents.Hosting;
 using Mps.Agents.Prompts;
 using Mps.Agents.Ranking;
 
@@ -14,14 +15,14 @@ public sealed class ResolutionAgent : IResolutionAgent
 {
     public const int MaxModelCalls = 2;
 
-    private readonly IChatClient _chat;
+    private readonly Microsoft.Agents.AI.ChatClientAgent _agent;
     private readonly PromptCatalog _prompts;
 
     public ResolutionAgent(IChatClient chat, PromptCatalog prompts)
     {
         ArgumentNullException.ThrowIfNull(chat);
         ArgumentNullException.ThrowIfNull(prompts);
-        _chat = chat;
+        _agent = QualityAgents.Create(chat, QualityAgents.ResolutionName, "Ranks the root cause from the evidence pack as one JSON object.");
         _prompts = prompts;
     }
 
@@ -43,7 +44,7 @@ public sealed class ResolutionAgent : IResolutionAgent
                 messages.Add(new ChatMessage(ChatRole.User, "The previous reply was not the JSON object (" + (problem ?? "not JSON") + "). Return only the JSON object."));
             }
 
-            var response = await _chat.GetResponseAsync(messages, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var response = await QualityAgents.TurnAsync(_agent, messages, null, cancellationToken).ConfigureAwait(false);
             if (response.Messages.Count > 0)
             {
                 messages.AddRange(response.Messages);
