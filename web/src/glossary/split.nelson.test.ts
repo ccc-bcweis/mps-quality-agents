@@ -25,3 +25,9 @@ describe("parameter ids in text", () => {
     expect(plainParameters("E-01-A-MFC-CF4 stays")).toBe("E-01-A-MFC-CF4 stays");
   });
 });
+
+describe("misleading records glossary entry", () => {
+  it("explains the injector switch", () => {
+    expect(lookupTerm("misleading records (to rule out)")?.definition).toMatch(/not the cause/);
+  });
+});

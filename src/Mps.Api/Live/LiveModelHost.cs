@@ -78,7 +78,7 @@ public static class LiveModelHost
         services.AddSingleton(provider => new SeedEnterpriseTools(
             Path.Combine(dataDirectory, "seed", "enterprise.json"),
             Path.Combine(dataDirectory, "scenarios", "evidence.json"),
-            provider.GetService<Mps.Api.Demo.ScenarioEvidenceBoard>()));
+            provider.GetService<Mps.Api.Demo.ScenarioEvidenceBoard>()).WithConfounders(provider.GetService<Mps.Application.Faults.ConfounderBoard>()));
         services.AddSingleton<DemoSignalTools>();
         services.AddSingleton(_ => new HybridDocumentSearch(Path.Combine(dataDirectory, "index", "embeddings.json")));
         services.AddSingleton<InvestigationSessionStore>();

@@ -51,6 +51,7 @@ public sealed class DemoResetService
     private readonly IIncidentLog _incidents;
     private readonly IInvestigationLog _investigations;
     private readonly ScenarioEvidenceBoard _board;
+    private readonly Mps.Application.Faults.ConfounderBoard _confounders;
     private readonly IManualMeasurementLog _measurements;
     private readonly ScriptedScenarioContext _context;
     private readonly ResetProgress _progress;
@@ -67,6 +68,7 @@ public sealed class DemoResetService
         IIncidentLog incidents,
         IInvestigationLog investigations,
         ScenarioEvidenceBoard board,
+        Mps.Application.Faults.ConfounderBoard confounders,
         IManualMeasurementLog measurements,
         ScriptedScenarioContext context,
         ResetProgress progress)
@@ -96,6 +98,7 @@ public sealed class DemoResetService
         _incidents = incidents;
         _investigations = investigations;
         _board = board;
+        _confounders = confounders;
         _measurements = measurements;
         _context = context;
         _progress = progress;
@@ -196,6 +199,7 @@ public sealed class DemoResetService
     private void ClearOverlays()
     {
         _board.Clear();
+        _confounders.Clear();
         _measurements.Clear();
         _context.Set(null);
         _traces.Clear();
