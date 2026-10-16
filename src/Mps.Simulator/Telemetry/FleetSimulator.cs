@@ -135,7 +135,7 @@ public sealed class FleetSimulator : ITelemetrySource
 
     /// <summary>
     /// Advances one simulated second at a time so the seeded cursor matches a 1 Hz run.
-    /// <paramref name="sampleStrideSeconds"/> keeps every Nth second (and the last second) in the returned list.
+    /// <paramref name="sampleStrideSeconds"/> keeps every Nth second of plant time since the origin in the returned list.
     /// </summary>
     public IReadOnlyList<TelemetryFrame> Advance(TimeSpan simulatedElapsed, int sampleStrideSeconds)
     {
@@ -155,9 +155,13 @@ public sealed class FleetSimulator : ITelemetrySource
             var frames = new List<TelemetryFrame>();
             for (var second = 0; second < seconds; second++)
             {
-                var keep = sampleStrideSeconds == 1 || second == seconds - 1 || (second + 1) % sampleStrideSeconds == 0;
                 var at = _now;
                 var elapsed = checked((int)(at - Origin).TotalSeconds);
+
+                // Kept readings sit on a fixed grid of plant time (every Nth second since the origin), not on the end
+                // of each call. Real time advances about two seconds per tick, so keeping "the last second of the call"
+                // produced a reading every tick instead of one per stride.
+                var keep = sampleStrideSeconds == 1 || (elapsed + 1) % sampleStrideSeconds == 0;
                 foreach (var tool in Fleet.Tools)
                 {
                     var schedule = RecipeSchedule.Locate(tool, elapsed);

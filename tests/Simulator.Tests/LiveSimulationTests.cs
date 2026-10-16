@@ -28,6 +28,22 @@ public sealed class LiveSimulationTests
     }
 
     [Fact]
+    public void RealTimeTicksOfTwoSecondsStillKeepOneReadingPerStride()
+    {
+        // The live plant catches up about two seconds per tick. Ten minutes at a 15-second stride is 40 readings, not 300.
+        var simulator = new FleetSimulator(Catalog, 4242, Origin);
+        var frames = new List<TelemetryFrame>();
+        for (var tick = 0; tick < 300; tick++)
+        {
+            frames.AddRange(simulator.Advance(TimeSpan.FromSeconds(2), 15));
+        }
+
+        var kept = Series(frames);
+        kept.Should().HaveCount(40);
+        kept.Zip(kept.Skip(1), (a, b) => b.SimulatedAt - a.SimulatedAt).Should().OnlyContain(gap => gap == TimeSpan.FromSeconds(15));
+    }
+
+    [Fact]
     public void TheSameSeedProducesTheSameDecimatedStream()
     {
         var first = Series(new FleetSimulator(Catalog, 4242, Origin).Advance(TimeSpan.FromSeconds(45), 15));

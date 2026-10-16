@@ -57,3 +57,14 @@ export function unitLabel(unit: string): string {
   if (unit === "percent") return "%";
   return unit;
 }
+
+let parameterPattern: RegExp | null = null;
+
+/** Replaces raw parameter ids inside server or model text ("cf4Flow shift") with display names ("CF4 flow shift"). */
+export function plainParameters(text: string): string {
+  if (!parameterPattern) {
+    const ids = Object.keys(PARAMETER_LABEL).sort((left, right) => right.length - left.length);
+    parameterPattern = new RegExp(`(?<![A-Za-z0-9-])(?:${ids.join("|")})(?![A-Za-z0-9-])`, "g");
+  }
+  return text.replace(parameterPattern, (id) => PARAMETER_LABEL[id] ?? id);
+}

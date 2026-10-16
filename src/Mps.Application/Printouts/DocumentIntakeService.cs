@@ -262,9 +262,9 @@ public sealed class DocumentIntakeService : IDocumentIntake
     {
         var applied = catalogParameter.Equals(reading.Parameter, StringComparison.Ordinal)
             ? string.Empty
-            : " Applied to " + catalogParameter + ".";
+            : " Applied to " + Mps.Domain.Telemetry.ParameterNames.Display(catalogParameter) + ".";
         return "Manual measurement: " + reading.Instrument + " on " + reading.ToolId + ", "
-            + reading.Parameter + " " + Num(reading.Value) + " " + reading.Unit
+            + Mps.Domain.Telemetry.ParameterNames.Display(reading.Parameter) + " " + Num(reading.Value) + " " + reading.Unit
             + " (spec " + Num(reading.SpecMinimum) + "-" + Num(reading.SpecMaximum) + ")."
             + applied;
     }
