@@ -21,7 +21,7 @@ After a live run (an injected chamber-pressure oscillation on D-01-A), the owner
 - Agent steps open and close from the whole row, with a chevron on the left, instead of a "Details" link.
 - The evidence pack states the signal shape read from the data since the first rule break (oscillation, step,
   gradual drift, intermittent spikes), and the resolution prompt (1.5.2) must use it. An oscillation or a step is
-  never described as a gradual rise. Eval case OSC-01 and unit tests cover it.
+  never described as a gradual rise. An eval case for an oscillation and unit tests cover it.
 - Supplier and material words in AI text (silane, supplier notice, material lot, certificate of analysis, precursor)
   link to the glossary.
 
