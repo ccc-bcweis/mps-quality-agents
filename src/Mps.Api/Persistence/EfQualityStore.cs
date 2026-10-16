@@ -75,7 +75,25 @@ public sealed class EfQualityStore :
             Rule = alert.Rule,
             RaisedAt = ToUtc(alert.RaisedAt),
             CorrelationId = alert.CorrelationId,
+            LastSeenAt = ToUtc(alert.LastSeenAt),
+            Occurrences = alert.Occurrences,
         });
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task UpdateAsync(Alert alert, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(alert);
+        var row = await _db.Alerts.SingleOrDefaultAsync(item => item.Id == alert.Id.Value, cancellationToken).ConfigureAwait(false);
+        if (row is null)
+        {
+            return;
+        }
+
+        row.Rule = alert.Rule;
+        row.Severity = alert.Severity.ToString();
+        row.LastSeenAt = ToUtc(alert.LastSeenAt);
+        row.Occurrences = alert.Occurrences;
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -556,6 +574,7 @@ public sealed class EfQualityStore :
             row.Rule,
             FromUtc(row.RaisedAt),
             row.CorrelationId);
+        alert.Restore(row.LastSeenAt is { } seen ? FromUtc(seen) : null, row.Occurrences);
         if (row.ClearedAt is { } cleared)
         {
             alert.Clear(FromUtc(cleared));

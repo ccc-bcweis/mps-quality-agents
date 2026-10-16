@@ -49,6 +49,10 @@ public sealed class AlertRow
     public string CorrelationId { get; set; } = string.Empty;
 
     public DateTime? ClearedAt { get; set; }
+
+    public DateTime? LastSeenAt { get; set; }
+
+    public int Occurrences { get; set; } = 1;
 }
 
 public sealed class IncidentRow

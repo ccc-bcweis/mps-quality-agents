@@ -66,6 +66,8 @@ public sealed class Alert
         Rule = RequiredText.Value(rule, "SPC rule is required.");
         RaisedAt = raisedAt;
         CorrelationId = RequiredText.Value(correlationId, "Correlation id is required.");
+        LastSeenAt = raisedAt;
+        Occurrences = 1;
     }
 
     public AlertId Id { get; }
@@ -76,11 +78,19 @@ public sealed class Alert
 
     public string Parameter { get; }
 
-    public Severity Severity { get; }
+    /// <summary>Peak severity while the alert has been active.</summary>
+    public Severity Severity { get; private set; }
 
-    public string Rule { get; }
+    /// <summary>Every rule that fired on this signal while active, joined with '+', in first-seen order.</summary>
+    public string Rule { get; private set; }
 
     public DateTimeOffset RaisedAt { get; }
+
+    /// <summary>Time of the newest violation folded into this alert.</summary>
+    public DateTimeOffset LastSeenAt { get; private set; }
+
+    /// <summary>How many evaluations found violations while this alert was active.</summary>
+    public int Occurrences { get; private set; }
 
     public string CorrelationId { get; }
 
@@ -90,6 +100,49 @@ public sealed class Alert
     public bool IsActive => ClearedAt is null;
 
     public string Status => IsActive ? "active" : "cleared";
+
+    /// <summary>
+    /// Folds a later violation on the same signal into this active alert: rules are appended, severity keeps its peak,
+    /// and the last-seen time moves forward. Returns true when the severity rose (watch to alarm).
+    /// </summary>
+    public bool Update(string rule, Severity severity, DateTimeOffset at)
+    {
+        if (!IsActive)
+        {
+            throw new DomainRuleException("A cleared alert cannot be updated. Raise a new alert.");
+        }
+
+        var rules = Rule.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        foreach (var id in RequiredText.Value(rule, "SPC rule is required.").Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (!rules.Contains(id, StringComparer.Ordinal))
+            {
+                rules.Add(id);
+            }
+        }
+
+        Rule = string.Join('+', rules);
+        var escalated = severity > Severity;
+        if (escalated)
+        {
+            Severity = severity;
+        }
+
+        if (at > LastSeenAt)
+        {
+            LastSeenAt = at;
+        }
+
+        Occurrences++;
+        return escalated;
+    }
+
+    /// <summary>Restores tracking fields from storage.</summary>
+    public void Restore(DateTimeOffset? lastSeenAt, int occurrences)
+    {
+        LastSeenAt = lastSeenAt is { } seen && seen > RaisedAt ? seen : RaisedAt;
+        Occurrences = occurrences < 1 ? 1 : occurrences;
+    }
 
     public void Clear(DateTimeOffset at)
     {

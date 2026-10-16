@@ -103,23 +103,82 @@ public sealed class SpcAlertServiceTests
     }
 
     [Fact]
-    public async Task AnExcursionAfterTheDebounceWindowOpensAnotherAlert()
+    public async Task ALaterExcursionWhileStillActiveUpdatesTheSameAlert()
     {
         var fixture = new Fixture();
-        var firstSample = SpcSeries.Sample(4d);
-        var later = new SpcSample(
-            SpcSeries.Tool,
-            "A",
-            "escTemperature",
-            SpcSeries.Unit,
-            SpcSeries.Shifted(TimeSpan.FromMinutes(10), 4d));
+        await fixture.Service.RaiseAsync(SpcSeries.Sample(4d), CancellationToken.None);
+        var later = new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, SpcSeries.Shifted(TimeSpan.FromMinutes(10), 4d));
 
-        await fixture.Service.RaiseAsync(firstSample, CancellationToken.None);
         var second = await fixture.Service.RaiseAsync(later, CancellationToken.None);
 
-        second.Debounced.Should().BeFalse();
-        second.Alert.Should().NotBeNull();
+        second.Debounced.Should().BeTrue();
+        var alert = fixture.Alerts.Alerts.Should().ContainSingle().Subject;
+        alert.LastSeenAt.Should().Be(SpcSeries.Start.AddMinutes(10));
+        alert.Occurrences.Should().Be(2);
+        fixture.Ticketing.Tickets.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task ASustainedStepForSeventyMinutesKeepsExactlyOneAlertPerSignal()
+    {
+        // SC-3: CF4 flow steps down and stays down. 15-second samples; the publisher sends the last 20 points each tick.
+        var fixture = new Fixture();
+        var points = new List<TelemetryPoint>();
+        for (var index = 0; index < 20; index++)
+        {
+            points.Add(new TelemetryPoint(SpcSeries.Start.AddSeconds(15 * index), index % 2 == 0 ? 0.1d : -0.1d));
+        }
+
+        for (var index = 20; index < 20 + (70 * 4); index++)
+        {
+            points.Add(new TelemetryPoint(SpcSeries.Start.AddSeconds(15 * index), -4d + (index % 2 == 0 ? 0.2d : -0.2d)));
+            await fixture.Service.RaiseAsync(new SpcSample(SpcSeries.Tool, "A", "cf4Flow", SpcSeries.Unit, points.Skip(points.Count - 20).ToArray()), CancellationToken.None);
+        }
+
+        var alert = fixture.Alerts.Alerts.Should().ContainSingle("one signal in one sustained condition is one alert").Subject;
+        alert.IsActive.Should().BeTrue();
+        alert.Severity.Should().BeOneOf(Severity.High, Severity.Critical);
+        alert.LastSeenAt.Should().BeAfter(alert.RaisedAt.AddMinutes(60));
+        alert.Occurrences.Should().BeGreaterThan(1);
+        alert.Rule.Split('+').Should().OnlyHaveUniqueItems();
+        fixture.Ticketing.Tickets.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task AWatchThatEscalatesToAlarmUpgradesTheSameAlertAndOpensTheTicket()
+    {
+        var fixture = new Fixture();
+        var watch = await fixture.Service.RaiseAsync(SpcSeries.Sample(0d, 0.1d, 0.2d, 0.3d, 0.4d, 0.5d), CancellationToken.None);
+        watch.Alert!.Severity.Should().Be(Severity.Low);
+        fixture.Ticketing.Tickets.Should().BeEmpty();
+
+        var alarm = await fixture.Service.RaiseAsync(
+            new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, SpcSeries.Values(0d, 0.1d, 0.2d, 0.3d, 0.4d, 0.5d, 4.5d)),
+            CancellationToken.None);
+
+        var alert = fixture.Alerts.Alerts.Should().ContainSingle().Subject;
+        alert.Id.Should().Be(watch.Alert.Id);
+        alert.Severity.Should().BeOneOf(Severity.High, Severity.Critical);
+        alert.Rule.Should().StartWith(SpcRuleNames.NelsonSixRising).And.Contain("western-electric-1");
+        alarm.Ticket.Should().NotBeNull("an escalation to alarm opens the ticket, as a new alarm would");
+        fixture.Ticketing.Tickets.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task AClearFollowedByANewViolationRaisesASecondAlert()
+    {
+        var fixture = new Fixture();
+        await fixture.Service.RaiseAsync(SpcSeries.Sample(0d, 4d), CancellationToken.None);
+        var nominal = SpcSeries.Shifted(TimeSpan.FromMinutes(2), 0d, 0.1d, -0.2d, 0.3d, 0d, 0.1d, -0.1d, 0.2d);
+        await fixture.Service.RaiseAsync(new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, nominal), CancellationToken.None);
+        fixture.Alerts.Alerts.Single().IsActive.Should().BeFalse();
+
+        var again = nominal.Concat(SpcSeries.Shifted(TimeSpan.FromMinutes(30), 4.2d)).ToArray();
+        var outcome = await fixture.Service.RaiseAsync(new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, again), CancellationToken.None);
+
+        outcome.Alert.Should().NotBeNull();
         fixture.Alerts.Alerts.Should().HaveCount(2);
+        fixture.Alerts.Alerts.Count(item => item.IsActive).Should().Be(1);
     }
 
     [Fact]

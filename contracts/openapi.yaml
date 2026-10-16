@@ -1166,6 +1166,15 @@ components:
           type: string
           enum: [active, cleared]
           description: Active until the signal stays in control for 8 readings in a row.
+        lastSeenAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Newest violation on this signal folded into the alert. One active alert per signal; later violations update it."
+        occurrences:
+          type: integer
+          minimum: 1
+          description: "Evaluations that found violations while the alert was active."
         clearedAt:
           type: string
           format: date-time

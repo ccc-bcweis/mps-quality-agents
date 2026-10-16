@@ -7,6 +7,7 @@ using Mps.Application.Notifications;
 using Mps.Application.Persistence;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
+using Mps.Domain.Telemetry;
 
 namespace Mps.Application.Spc;
 
@@ -75,7 +76,8 @@ public sealed class SpcAlertService
         // (and may since have cleared); a later window that still contains them must not raise them again.
         if (history.Count > 0)
         {
-            var newest = history.Max(alert => alert.RaisedAt);
+            // The cutoff is the newest violation already folded into an alert (last seen), or its clear time.
+            var newest = history.Max(alert => alert.ClearedAt is { } cleared && cleared > alert.LastSeenAt ? cleared : alert.LastSeenAt);
             violations = violations.Where(violation => violation.At > newest).ToArray();
             if (violations.Count == 0)
             {
@@ -86,6 +88,25 @@ public sealed class SpcAlertService
 
         var at = violations.Max(violation => violation.At);
         var severity = WesternElectricEvaluator.Highest(violations);
+
+        // One active alert per signal (tool, chamber, parameter). While it is active, new violations update it in place.
+        // A new alert is raised only after the previous one cleared.
+        var active = history.Where(item => item.IsActive).OrderByDescending(item => item.RaisedAt).FirstOrDefault();
+        if (active is not null)
+        {
+            var escalated = active.Update(WesternElectricEvaluator.JoinRules(violations), severity, at);
+            await _alerts.UpdateAsync(active, cancellationToken).ConfigureAwait(false);
+            await _notifier.AlertRaisedAsync(active, cancellationToken).ConfigureAwait(false);
+            if (!escalated)
+            {
+                return new SpcAlertOutcome(violations, active, null, null, debounced: true);
+            }
+
+            // Watch to alarm: same alert, upgraded. The rule engine decides on a ticket as it does for a new alarm.
+            return await DecideAsync(sample, violations, active, active.Rule, active.Severity, at, active.CorrelationId, history.Count - 1, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         if (SpcDebounce.ShouldSuppress(history, sample.ToolId, sample.ChamberId, sample.Parameter, at, _debounce, severity))
         {
             return new SpcAlertOutcome(violations, null, null, null, debounced: true);
@@ -105,14 +126,27 @@ public sealed class SpcAlertService
             correlationId);
         await _alerts.AddAsync(alert, cancellationToken).ConfigureAwait(false);
         await _notifier.AlertRaisedAsync(alert, cancellationToken).ConfigureAwait(false);
+        return await DecideAsync(sample, violations, alert, rule, severity, at, correlationId, history.Count, cancellationToken).ConfigureAwait(false);
+    }
 
+    private async Task<SpcAlertOutcome> DecideAsync(
+        SpcSample sample,
+        IReadOnlyList<SpcViolation> violations,
+        Alert alert,
+        string rule,
+        Severity severity,
+        DateTimeOffset at,
+        string correlationId,
+        int repeatCount,
+        CancellationToken cancellationToken)
+    {
         var decision = _rules.Evaluate(new RuleContext
         {
             AlertRuleId = rule,
             Severity = severity,
             ParameterId = sample.Parameter,
             ToolId = sample.ToolId.ToString(),
-            RepeatCount = history.Count,
+            RepeatCount = repeatCount,
             Channel = IncidentChannel.IotSpcAlert.ToString(),
         });
         if (!decision.OpensTicket)
@@ -134,7 +168,7 @@ public sealed class SpcAlertService
                 correlationId,
                 at,
                 alertRuleId: rule,
-                repeatCount: history.Count),
+                repeatCount: repeatCount),
             cancellationToken).ConfigureAwait(false);
         return new SpcAlertOutcome(violations, alert, intake.Incident, intake.Ticket, debounced: false, decision);
     }

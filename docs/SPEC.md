@@ -78,7 +78,7 @@ The same demo seed (`Mps:Demo:Seed`, default 4242) rebuilds tool positions, tele
 - **Rules engine behavior added Oct 15-16 (#160-#169):**
   - **Counters vs measurements.** Cumulative counters (for example RF-hours, wafer count) are charted but have no SPC limits; every charted measurement is evaluated (`SpcCoverage`).
   - **One tool status.** Tool, Sites, Production line and Why panel all read the worst *active* alert (`ToolAlertStatus`): High or Critical is alarm, anything else is watch, no active alert is nominal. A cleared alert is history only.
-  - **Escalation.** A watch alert on a drifting signal stays active and escalates to alarm; debounce counts only active alerts of equal or higher severity, so it never hides an escalation (SC-4).
+  - **One active alert per signal (#174).** While an alert on a tool, chamber and parameter is active, new violations update it in place: rules are appended, severity keeps its peak, and the last-seen time and check count move forward. A new alert is raised only after the previous one cleared. A watch that escalates to alarm upgrades the same alert, and the rules engine then opens the ticket as it would for a new alarm (SC-4).
   - **Every point is checked.** The publisher evaluates every point since the last check, not only the newest, and a point raises an alert only once.
   - **Auto-clear.** An alert clears after 8 readings in a row within ±2σ with no Western Electric violation; CAPA containment removes the fault so this happens on its own (ADR-012).
   - **Manual readings are samples.** A bench reading enters through the same ingest function as sensor telemetry (ADR-013). The badge, chart marker and evidence link are display only and follow the reading's alert while it is active.

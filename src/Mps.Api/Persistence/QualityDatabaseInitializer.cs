@@ -6,6 +6,7 @@ using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 
 using Mps.Api.Fleet;
+using Mps.Domain.Incidents;
 
 namespace Mps.Api.Persistence;
 
@@ -33,6 +34,7 @@ public sealed class QualityDatabaseInitializer : IHostedService
         }
 
         await EnsureInvestigationSequenceAsync(db, cancellationToken).ConfigureAwait(false);
+        await EnsureAlertTrackingAsync(db, cancellationToken).ConfigureAwait(false);
         await EnsureAlertStatusColumnAsync(db, cancellationToken).ConfigureAwait(false);
         await SeedToolsAsync(db, cancellationToken).ConfigureAwait(false);
 
@@ -134,6 +136,79 @@ public sealed class QualityDatabaseInitializer : IHostedService
             {
                 await connection.CloseAsync().ConfigureAwait(false);
             }
+        }
+    }
+
+    /// <summary>
+    /// Adds LastSeenAt and Occurrences to an Alerts table from an earlier run, then folds duplicate active alerts:
+    /// for each signal only the oldest active alert stays active; later duplicates are merged into it and closed.
+    /// </summary>
+    private static async Task EnsureAlertTrackingAsync(QualityDbContext db, CancellationToken cancellationToken)
+    {
+        var connection = db.Database.GetDbConnection();
+        var openedHere = connection.State != ConnectionState.Open;
+        if (openedHere)
+        {
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        try
+        {
+            foreach (var (column, ddl) in new[]
+            {
+                ("LastSeenAt", "ALTER TABLE \"Alerts\" ADD COLUMN \"LastSeenAt\" TEXT NULL;"),
+                ("Occurrences", "ALTER TABLE \"Alerts\" ADD COLUMN \"Occurrences\" INTEGER NOT NULL DEFAULT 1;"),
+            })
+            {
+                await using var check = connection.CreateCommand();
+                check.CommandText = "SELECT COUNT(*) FROM pragma_table_info('Alerts') WHERE name = '" + column + "';";
+                if (Convert.ToInt64(await check.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture) == 0)
+                {
+                    await using var alter = connection.CreateCommand();
+                    alter.CommandText = ddl;
+                    await alter.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                }
+            }
+        }
+        finally
+        {
+            if (openedHere)
+            {
+                await connection.CloseAsync().ConfigureAwait(false);
+            }
+        }
+
+        var active = await db.Alerts.Where(row => row.ClearedAt == null).ToListAsync(cancellationToken).ConfigureAwait(false);
+        var changed = false;
+        foreach (var signal in active.GroupBy(row => (row.ToolId, row.ChamberId, row.Parameter)).Where(group => group.Count() > 1))
+        {
+            var ordered = signal.OrderBy(row => row.RaisedAt).ToArray();
+            var keep = ordered[0];
+            foreach (var duplicate in ordered.Skip(1))
+            {
+                var rules = keep.Rule.Split('+').ToList();
+                rules.AddRange(duplicate.Rule.Split('+').Where(id => !rules.Contains(id)));
+                keep.Rule = string.Join('+', rules);
+                if (Enum.Parse<Severity>(duplicate.Severity) > Enum.Parse<Severity>(keep.Severity))
+                {
+                    keep.Severity = duplicate.Severity;
+                }
+
+                var seen = duplicate.LastSeenAt ?? duplicate.RaisedAt;
+                if (seen > (keep.LastSeenAt ?? keep.RaisedAt))
+                {
+                    keep.LastSeenAt = seen;
+                }
+
+                keep.Occurrences += Math.Max(1, duplicate.Occurrences);
+                db.Alerts.Remove(duplicate);
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 

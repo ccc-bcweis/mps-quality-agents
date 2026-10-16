@@ -38,7 +38,9 @@ public static class ContractMapper
             alert.CorrelationId,
             SiteForTool(alert.ToolId.ToString()),
             alert.Status,
-            alert.ClearedAt);
+            alert.ClearedAt,
+            alert.LastSeenAt,
+            alert.Occurrences);
 
     public static TicketResponse ToResponse(Ticket ticket) =>
         new(ticket.Id.Value, ticket.Number, ticket.IncidentId.Value, ticket.ToolId.ToString(), ticket.Title, ticket.OpenedAt, SiteForTool(ticket.ToolId.ToString()));

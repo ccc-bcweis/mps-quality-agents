@@ -80,8 +80,44 @@ export const RULE_LABEL: Record<string, string> = {
   manualMeasurement: "Manual measurement outside the printed spec",
 };
 
+const WE_NUMBER: Record<string, number> = {
+  westernElectric1: 1, westernElectric2: 2, westernElectric3: 3, westernElectric4: 4,
+  "western-electric-1": 1, "western-electric-2": 2, "western-electric-3": 3, "western-electric-4": 4,
+};
+const NELSON_IDS = new Set(["nelsonTrend", "nelson-6-rising"]);
+const WINDOW_IDS = new Set(["specWindow", "window"]);
+
+/** "1-4", "1 and 3", "1, 2 and 4": consecutive numbers collapse into a range. */
+function numberList(numbers: number[]): string {
+  const sorted = [...new Set(numbers)].sort((a, b) => a - b);
+  const runs: string[] = [];
+  for (let i = 0; i < sorted.length; ) {
+    let j = i;
+    while (j + 1 < sorted.length && sorted[j + 1] === sorted[j] + 1) j++;
+    runs.push(j - i >= 2 ? `${sorted[i]}-${sorted[j]}` : sorted.slice(i, j + 1).join(", "));
+    i = j + 1;
+  }
+  const parts = runs.join(", ").split(", ");
+  return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0];
+}
+
+/**
+ * Plain words for the rule or rules that fired. One rule keeps its full sentence. Several rules
+ * (an alert that kept firing, ids joined with "+") read as one phrase, for example
+ * "Western Electric rules 1-4 and Nelson rule 6 (rising trend)".
+ */
 export function ruleLabel(rule: string): string {
-  return RULE_LABEL[rule] ?? rule;
+  const ids = [...new Set(rule.split("+").map((id) => id.trim()).filter(Boolean))];
+  if (ids.length <= 1) return RULE_LABEL[ids[0] ?? rule] ?? rule;
+  const we = ids.filter((id) => id in WE_NUMBER).map((id) => WE_NUMBER[id]);
+  const phrases: string[] = [];
+  if (we.length > 0) phrases.push(`Western Electric ${we.length > 1 ? "rules" : "rule"} ${numberList(we)}`);
+  if (ids.some((id) => NELSON_IDS.has(id))) phrases.push("Nelson rule 6 (rising trend)");
+  if (ids.some((id) => WINDOW_IDS.has(id))) phrases.push("reading outside the spec window");
+  for (const id of ids) {
+    if (!(id in WE_NUMBER) && !NELSON_IDS.has(id) && !WINDOW_IDS.has(id)) phrases.push(RULE_LABEL[id] ?? id);
+  }
+  return phrases.length > 1 ? `${phrases.slice(0, -1).join(", ")} and ${phrases[phrases.length - 1]}` : phrases[0];
 }
 
 export type Tone = "nominal" | "warn" | "alarm" | "ok" | "ai";
