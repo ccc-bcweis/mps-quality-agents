@@ -35,7 +35,13 @@ public sealed record MetricsRollup(
     double? LatencyP95Ms,
     double? CostPerInvestigationUsd,
     double SpendTodayUsd,
-    double SpendCapUsd);
+    double SpendCapUsd,
+    int SuccessfulToday = 0)
+{
+    /// <summary>Spend divided by investigations that succeeded today; null (shown as n/a) when none succeeded.</summary>
+    public static double? CostPerSuccess(double spendTodayUsd, int successfulToday) =>
+        successfulToday <= 0 ? null : spendTodayUsd / successfulToday;
+}
 
 public sealed class MetricsPolicy
 {
@@ -124,6 +130,7 @@ public static class MetricsCalculator
             : successful.Sum(group => group.Sum(item => item.CostUsd)) / successful.Length;
         var today = now.UtcDateTime.Date;
         var spend = observations.Where(item => item.RecordedAt.UtcDateTime.Date == today).Sum(item => item.CostUsd);
+        var successfulToday = successful.Count(group => group.Any(item => item.Succeeded && item.RecordedAt.UtcDateTime.Date == today));
         return new MetricsRollup(
             mode,
             completion,
@@ -133,7 +140,8 @@ public static class MetricsCalculator
             NearestRank(latencies, 0.95d),
             costPer,
             spend,
-            spendCapUsd);
+            spendCapUsd,
+            successfulToday);
     }
 }
 

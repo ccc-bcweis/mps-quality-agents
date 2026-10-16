@@ -689,6 +689,7 @@ public static class QualityEndpoints
                 policy.SpendCapUsd,
                 ContractMapper.ModeFrom(configuration["LLM_MODE"]),
                 cancellationToken).ConfigureAwait(false);
+            var spendToday = await LiveSpendAsync(services, time, rollup.SpendTodayUsd, cancellationToken).ConfigureAwait(false);
             return Results.Ok(new MetricsResponse(
                 rollup.Mode,
                 rollup.CompletionRate,
@@ -696,8 +697,8 @@ public static class QualityEndpoints
                 rollup.CategoryAccuracy,
                 rollup.ToolFailureCount,
                 rollup.LatencyP95Ms,
-                rollup.CostPerInvestigationUsd,
-                await LiveSpendAsync(services, time, rollup.SpendTodayUsd, cancellationToken).ConfigureAwait(false),
+                MetricsRollup.CostPerSuccess(spendToday, rollup.SuccessfulToday),
+                spendToday,
                 rollup.SpendCapUsd));
         });
     }

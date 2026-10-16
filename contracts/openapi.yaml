@@ -1951,6 +1951,7 @@ components:
         costPerInvestigationUsd:
           type: number
           nullable: true
+          description: "Spend today divided by investigations that succeeded today; null (shown as n/a) when none succeeded."
         spendTodayUsd:
           type: number
         spendCapUsd:
