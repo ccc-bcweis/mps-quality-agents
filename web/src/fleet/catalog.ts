@@ -180,7 +180,7 @@ export const stories: Record<string, ToolStory> = {
   },
 };
 
-export function storyFor(tool: Tool, alerts: { toolId: string }[] = []): ToolStory {
+export function storyFor(tool: Tool, alerts: { toolId: string; status?: string }[] = []): ToolStory {
   const base = stories[tool.id] ?? {
     status: "nominal" as const,
     recipe: "—",
@@ -191,7 +191,8 @@ export function storyFor(tool: Tool, alerts: { toolId: string }[] = []): ToolSto
     spark: nominalSpark,
     chart: { parameter: "value", label: "Signal", unit: "", mean: 0, sigma: 1, shape: "nominal" as const },
   };
-  if (!alerts.some((alert) => alert.toolId === tool.id)) return base;
+  // Only an active alert puts the tool in alarm; a cleared alert is history, the same rule as the tool status.
+  if (!alerts.some((alert) => alert.toolId === tool.id && alert.status !== "cleared")) return base;
   return (
     faultStories[tool.id] ?? {
       ...base,
