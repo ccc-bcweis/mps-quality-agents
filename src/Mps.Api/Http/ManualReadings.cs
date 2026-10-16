@@ -10,16 +10,36 @@ namespace Mps.Api.Http;
 /// <summary>Shapes confirmed bench readings for the schematic tile, the SPC chart marker, the alert source, and linked records.</summary>
 public static class ManualReadings
 {
-    public static ManualReadingResponse ToResponse(ManualMeasurement item, PlantSimulation plant)
+    /// <summary>
+    /// The reading's alert is whatever alert the generic rules raised on its series at or after the observed time.
+    /// The reading is active only while that alert is active, so the tile and marker follow alert status (single source).
+    /// </summary>
+    public static ManualReadingResponse ToResponse(
+        ManualMeasurement item,
+        PlantSimulation plant,
+        IReadOnlyList<Mps.Domain.Incidents.Alert> alerts,
+        IReadOnlyList<Mps.Application.Persistence.StoredIncident> incidents)
     {
         ArgumentNullException.ThrowIfNull(item);
         ArgumentNullException.ThrowIfNull(plant);
+        ArgumentNullException.ThrowIfNull(alerts);
+        ArgumentNullException.ThrowIfNull(incidents);
         var reading = item.Reading ?? throw new ArgumentException("The measurement has no reading.", nameof(item));
         var catalog = PrintoutReading.CatalogParameter(reading.ToolId, reading.Parameter);
+        var alert = alerts
+            .Where(row => string.Equals(row.ToolId.ToString(), reading.ToolId, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(row.Parameter, catalog, StringComparison.Ordinal)
+                && (reading.ChamberId is null || row.ChamberId is null || string.Equals(row.ChamberId, reading.ChamberId, StringComparison.OrdinalIgnoreCase))
+                && row.RaisedAt >= reading.ObservedAt)
+            .OrderBy(row => row.RaisedAt)
+            .FirstOrDefault();
+        var incident = alert is null
+            ? null
+            : incidents.FirstOrDefault(row => string.Equals(row.Incident.CorrelationId, alert.CorrelationId, StringComparison.Ordinal));
         return new ManualReadingResponse(
             item.Evidence.Id.Value,
-            item.IncidentId,
-            item.AlertId,
+            incident?.Incident.Id.Value,
+            alert?.Id.Value,
             reading.ToolId,
             LiveResponses.SiteOf(plant, reading.ToolId),
             reading.ChamberId,
@@ -36,7 +56,8 @@ public static class ManualReadings
             reading.OperatorInitials,
             item.FileName,
             item.FileId is null ? null : $"/api/manual-readings/{item.Evidence.Id.Value}/file",
-            Source(reading, item.FileName));
+            Source(reading, item.FileName),
+            alert?.IsActive ?? false);
     }
 
     /// <summary>True when the observed time is before the oldest point the chart window holds for that series.</summary>

@@ -68,9 +68,23 @@ public sealed class SpcAlertService
             return new SpcAlertOutcome(violations, null, null, null, debounced: false);
         }
 
-        var at = violations.Max(violation => violation.At);
         var history = await _alerts.ListBySignalAsync(sample.ToolId, sample.Parameter, sample.ChamberId, cancellationToken)
             .ConfigureAwait(false);
+
+        // A point alerts once. Violations that end at or before the newest alert on this signal were already raised
+        // (and may since have cleared); a later window that still contains them must not raise them again.
+        if (history.Count > 0)
+        {
+            var newest = history.Max(alert => alert.RaisedAt);
+            violations = violations.Where(violation => violation.At > newest).ToArray();
+            if (violations.Count == 0)
+            {
+                await ClearRecoveredAsync(sample, cancellationToken).ConfigureAwait(false);
+                return new SpcAlertOutcome(violations, null, null, null, debounced: true);
+            }
+        }
+
+        var at = violations.Max(violation => violation.At);
         var severity = WesternElectricEvaluator.Highest(violations);
         if (SpcDebounce.ShouldSuppress(history, sample.ToolId, sample.ChamberId, sample.Parameter, at, _debounce, severity))
         {

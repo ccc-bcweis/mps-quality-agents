@@ -32,23 +32,18 @@ public sealed class PrintoutEndpointTests
 
         var confirmed = await client.PostAsJsonAsync("/api/printouts/confirm", ConfirmBody(inspection));
         var body = await confirmed.Content.ReadFromJsonAsync<JsonElement>(Json);
-        var incidents = await client.GetFromJsonAsync<JsonElement>("/api/incidents");
         var alerts = await client.GetFromJsonAsync<JsonElement>("/api/alerts");
-        var incidentId = body.GetProperty("incidentId").GetGuid();
-        var started = await client.PostAsync("/api/incidents/" + incidentId + "/investigations", null);
-        var investigation = await started.Content.ReadFromJsonAsync<JsonElement>(Json);
+        var readings = await client.GetFromJsonAsync<JsonElement>("/api/manual-readings");
+        var runtime = factory.Services.GetRequiredService<DemoRuntime>();
 
         confirmed.StatusCode.Should().Be(HttpStatusCode.OK);
         body.GetProperty("catalogParameter").GetString().Should().Be("rfSourcePower");
         body.GetProperty("printedParameter").GetString().Should().Be("rfPower");
         body.GetProperty("appliedToSimulation").GetBoolean().Should().BeTrue();
-        body.GetProperty("faultId").GetGuid().Should().NotBeEmpty();
-        incidents.EnumerateArray().Should().ContainSingle();
-        incidents[0].GetProperty("summary").GetString().Should().StartWith("Manual measurement");
-        incidents[0].GetProperty("parameter").GetString().Should().Be("rfSourcePower");
-        alerts.EnumerateArray().Should().Contain(alert => alert.GetProperty("rule").GetString() == "manualMeasurement");
-        started.StatusCode.Should().Be(HttpStatusCode.Created);
-        investigation.GetProperty("evidence").EnumerateArray().Should().Contain(item => item.GetProperty("source").GetString() == "manualMeasurement");
+        body.GetProperty("faultId").ValueKind.Should().Be(JsonValueKind.Null);
+        runtime.Simulator.ActiveFaults.Should().BeEmpty("a printout is a sample, not a fault");
+        alerts.EnumerateArray().Should().NotContain(alert => alert.GetProperty("rule").GetString() == "manualMeasurement");
+        readings.EnumerateArray().Should().ContainSingle(item => item.GetProperty("parameter").GetString() == "rfSourcePower");
     }
 
     [Theory]
@@ -80,77 +75,16 @@ public sealed class PrintoutEndpointTests
         var client = factory.CreateClient();
 
         var response = await client.PostAsync("/api/injector/scenarios/SC-6", null);
-        var incidents = await client.GetFromJsonAsync<JsonElement>("/api/incidents");
         var alerts = await client.GetFromJsonAsync<JsonElement>("/api/alerts");
+        var readings = await client.GetFromJsonAsync<JsonElement>("/api/manual-readings");
         var runtime = factory.Services.GetRequiredService<DemoRuntime>();
 
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
-        incidents.EnumerateArray().Should().ContainSingle();
-        incidents[0].GetProperty("summary").GetString().Should().StartWith("Manual measurement");
-        alerts.EnumerateArray().Should().ContainSingle(alert => alert.GetProperty("rule").GetString() == "manualMeasurement");
+        alerts.EnumerateArray().Should().NotContain(alert => alert.GetProperty("rule").GetString() == "manualMeasurement");
+        readings.EnumerateArray().Should().ContainSingle();
         runtime.Simulator.ActiveFaults.Should().ContainSingle();
         runtime.Simulator.ActiveFaults[0].Parameter.Should().Be("rfSourcePower");
         runtime.Simulator.ActiveFaults[0].Shape.Should().Be(FaultShape.Oscillation);
-    }
-
-    [Theory]
-    [InlineData("oscilloscope-e01.pdf", "application/pdf", "E-01")]
-    [InlineData("rf-power-meter-e02.pdf", "application/pdf", "E-02")]
-    [InlineData("particle-counter-d01.pdf", "application/pdf", "D-01")]
-    [InlineData("thermocouple-logger-e01.pdf", "application/pdf", "E-01")]
-    public async Task EverySamplePrintoutIsOutOfSpecAndConfirmRaisesAnAlert(string fileName, string mediaType, string toolId)
-    {
-        await using var factory = new ApiFactory();
-        var client = factory.CreateClient();
-        var inspection = await InspectAsync(client, fileName, mediaType);
-        var confirmed = await client.PostAsJsonAsync("/api/printouts/confirm", ConfirmBody(inspection));
-        var body = await confirmed.Content.ReadFromJsonAsync<JsonElement>(Json);
-        var alerts = await client.GetFromJsonAsync<JsonElement>("/api/alerts");
-
-        inspection.GetProperty("toolId").GetString().Should().Be(toolId);
-        inspection.GetProperty("outOfSpec").GetBoolean().Should().BeTrue();
-        confirmed.StatusCode.Should().Be(HttpStatusCode.OK);
-        body.GetProperty("appliedToSimulation").GetBoolean().Should().BeTrue();
-        alerts.EnumerateArray().Should().Contain(alert => alert.GetProperty("toolId").GetString() == toolId);
-    }
-
-    [Fact]
-    public async Task ANowCorrectedPrintoutKeepsThePrintedTimeAndShowsAsAManualReadingWithItsFileAndAlert()
-    {
-        await using var factory = new ApiFactory();
-        var client = factory.CreateClient();
-        var inspection = await InspectAsync(client, "thermocouple-logger-e01.pdf", "application/pdf");
-        var printed = inspection.GetProperty("observedAt").GetDateTimeOffset();
-        var now = new DateTimeOffset(2026, 10, 15, 23, 0, 0, TimeSpan.Zero);
-        var fileId = inspection.GetProperty("fileId").GetGuid();
-
-        var confirmed = await client.PostAsJsonAsync("/api/printouts/confirm", Corrected(inspection, now, printed, fileId));
-        var body = await confirmed.Content.ReadFromJsonAsync<JsonElement>(Json);
-        var rows = await client.GetFromJsonAsync<JsonElement>("/api/manual-readings?toolId=E-01");
-        var row = rows.EnumerateArray().Single();
-
-        confirmed.StatusCode.Should().Be(HttpStatusCode.OK);
-        row.GetProperty("observedAt").GetDateTimeOffset().Should().Be(now);
-        row.GetProperty("printedObservedAt").GetDateTimeOffset().Should().Be(printed);
-        row.GetProperty("parameter").GetString().Should().Be("escTemperature");
-        row.GetProperty("value").GetDouble().Should().Be(68d);
-        row.GetProperty("outOfSpec").GetBoolean().Should().BeTrue();
-        row.GetProperty("siteId").GetString().Should().Be("northwater");
-        row.GetProperty("alertId").GetGuid().Should().Be(body.GetProperty("alertId").GetGuid());
-        row.GetProperty("source").GetString().Should().Contain("thermocouple logger").And.Contain("thermocouple-logger-e01.pdf").And.Contain("out of spec");
-        var file = await client.GetAsync(row.GetProperty("fileUrl").GetString());
-        file.StatusCode.Should().Be(HttpStatusCode.OK);
-        file.Content.Headers.ContentType!.MediaType.Should().Be("application/pdf");
-
-        var alert = (await client.GetFromJsonAsync<JsonElement>("/api/alerts")).EnumerateArray()
-            .Single(item => item.GetProperty("id").GetGuid() == body.GetProperty("alertId").GetGuid());
-        alert.GetProperty("severity").GetString().Should().Be("high", "a reading outside the printed spec is an alarm, not a watch");
-        var tool = await client.GetFromJsonAsync<JsonElement>("/api/tools/E-01/live");
-        tool.GetProperty("status").GetString().Should().Be("alarm");
-        var audit = await client.GetFromJsonAsync<JsonElement>("/api/audit");
-        audit.GetProperty("entries").EnumerateArray().Should().Contain(entry =>
-            entry.GetProperty("kind").GetString() == "manualReading"
-            && entry.GetProperty("summary").GetString()!.Contains("corrected by the user from the printed", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -168,7 +102,9 @@ public sealed class PrintoutEndpointTests
         Mps.Api.Http.ManualReadings.OlderThanWindow(plant, "E-01", "E-01-A", "escTemperature", first.AddMinutes(1)).Should().BeFalse();
     }
 
-    private static object Corrected(JsonElement inspection, DateTimeOffset observedAt, DateTimeOffset printed, Guid fileId)
+
+
+    private static object Corrected(JsonElement inspection, DateTimeOffset observedAt, DateTimeOffset printed, Guid fileId, double? value = null)
     {
         return new
         {

@@ -546,11 +546,13 @@ public static class QualityEndpoints
             var confirmed = await intake.ConfirmAsync(reading, stored is null ? null : body.FileId, stored?.FileName, cancellationToken).ConfigureAwait(false);
             return Results.Ok(confirmed);
         });
-        app.MapGet("/api/manual-readings", (string? toolId, string? siteId, IManualMeasurementLog measurements, PlantSimulation plant) =>
+        app.MapGet("/api/manual-readings", async (string? toolId, string? siteId, IManualMeasurementLog measurements, PlantSimulation plant, IAlertLog alerts, IIncidentLog incidents, CancellationToken cancellationToken) =>
         {
+            var alertRows = await alerts.ListAsync(null, cancellationToken).ConfigureAwait(false);
+            var incidentRows = await incidents.ListAsync(cancellationToken).ConfigureAwait(false);
             var rows = (string.IsNullOrWhiteSpace(toolId) ? measurements.All() : measurements.ForTool(toolId.Trim()))
                 .Where(item => item.Reading is not null)
-                .Select(item => ManualReadings.ToResponse(item, plant))
+                .Select(item => ManualReadings.ToResponse(item, plant, alertRows, incidentRows))
                 .Where(row => MatchesSite(siteId, row.SiteId))
                 .OrderByDescending(row => row.ObservedAt)
                 .ToArray();

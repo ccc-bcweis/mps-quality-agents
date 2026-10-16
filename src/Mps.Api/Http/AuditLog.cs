@@ -54,7 +54,7 @@ public static class AuditLog
                 measurement.Evidence.ObservedAt,
                 0,
                 "manualReading",
-                ManualReadings.Source(reading, measurement.FileName) + corrected,
+                ManualReadings.Source(reading, measurement.FileName) + corrected + " Ingested as a manual sample for the rules engine.",
                 null,
                 reading.ToolId,
                 null,
