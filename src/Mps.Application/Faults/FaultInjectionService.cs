@@ -120,6 +120,15 @@ public sealed class FaultInjectionService : IFaultInjectionService
             confounderIds = written.RecordIds;
         }
 
+        // Ground truth (SPEC 2.1): the real cause as business records the agents read. Scripted scenarios bring their own.
+        IReadOnlyList<string> causeIds = [];
+        if (!request.Scripted && _confounders is not null)
+        {
+            var cause = GroundTruthFactory.For(request.RootCauseCategory, toolId, string.IsNullOrWhiteSpace(request.ChamberId) ? null : request.ChamberId.Trim(), request.Parameter.Trim(), faultId, now);
+            _confounders.AddCause(cause);
+            causeIds = cause.RecordIds;
+        }
+
         if (request.PublishCommand && _events is not null)
         {
             var eventId = await _events.PublishAsync(
@@ -145,6 +154,7 @@ public sealed class FaultInjectionService : IFaultInjectionService
                         durationMinutes = request.DurationMinutes is > 0 ? request.DurationMinutes : null,
                         confounders = request.Confounders,
                         confounderRecordIds = confounderIds,
+                        causeRecordIds = causeIds,
                         body = new { faultId, correlationId },
                     }),
                 cancellationToken).ConfigureAwait(false);

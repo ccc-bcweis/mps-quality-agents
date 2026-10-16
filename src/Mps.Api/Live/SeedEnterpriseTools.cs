@@ -129,7 +129,7 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
     public Task<IReadOnlyList<CalibrationRecord>> GetCalibrationsAsync(ToolId toolId, CancellationToken cancellationToken) =>
         Done(Merge(
             (_seed.Calibrations ?? []).Where(record => record.ToolId == toolId),
-            (Overlay?.Calibrations ?? []).Where(record => record.ToolId == toolId),
+            (Overlay?.Calibrations ?? []).Where(record => record.ToolId == toolId).Concat(_confounders?.Calibrations(toolId.Value) ?? []),
             record => record.CalibrationId));
 
     /// <summary>The staged scenario's own records, or null when no scripted scenario is active.</summary>
