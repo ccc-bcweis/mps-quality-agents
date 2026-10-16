@@ -50,12 +50,16 @@ public static class QualityEndpoints
 
             return Results.Ok(SiteResponses.ToComparison(SiteComparison.Compare(world, parsed)));
         });
-        app.MapGet("/api/sites/{siteId}", (string siteId, SiteWorld world, PlantSimulation plant) =>
+        app.MapGet("/api/sites/{siteId}", async (string siteId, SiteWorld world, IAlertLog alerts, CancellationToken cancellationToken) =>
         {
             var site = world.Find(siteId);
-            return site is null
-                ? Results.NotFound()
-                : Results.Ok(SiteResponses.ToDetail(site, toolId => LiveResponses.ToolStatus(plant, toolId)));
+            if (site is null)
+            {
+                return Results.NotFound();
+            }
+
+            var status = ToolAlertStatus.ByTool(await alerts.ListAsync(null, cancellationToken).ConfigureAwait(false));
+            return Results.Ok(SiteResponses.ToDetail(site, toolId => ToolAlertStatus.Of(status, toolId)));
         });
         app.MapGet("/api/tools", (string? siteId, PlantSimulation plant) =>
         {
@@ -73,13 +77,22 @@ public static class QualityEndpoints
                 ? Results.NotFound()
                 : Results.Ok(ContractMapper.ToResponse(tool));
         });
-        app.MapGet("/api/fleet/live", (PlantSimulation plant, ConsoleDataMode mode) =>
-            Results.Ok(mode.IsReplay ? ReplayProjection.Fleet(mode.Messages) : LiveResponses.Fleet(plant)));
-        app.MapGet("/api/tools/{toolId}/live", (string toolId, PlantSimulation plant, ConsoleDataMode mode) =>
+        app.MapGet("/api/fleet/live", async (PlantSimulation plant, ConsoleDataMode mode, IAlertLog alerts, CancellationToken cancellationToken) =>
+        {
+            if (mode.IsReplay)
+            {
+                return Results.Ok(ReplayProjection.Fleet(mode.Messages));
+            }
+
+            var status = ToolAlertStatus.ByTool(await alerts.ListAsync(null, cancellationToken).ConfigureAwait(false));
+            return Results.Ok(LiveResponses.Fleet(plant, status));
+        });
+        app.MapGet("/api/tools/{toolId}/live", async (string toolId, PlantSimulation plant, ConsoleDataMode mode, IAlertLog alerts, CancellationToken cancellationToken) =>
         {
             if (!mode.IsReplay)
             {
-                var live = LiveResponses.Tool(plant, toolId);
+                var status = ToolAlertStatus.ByTool(await alerts.ListAsync(null, cancellationToken).ConfigureAwait(false));
+                var live = LiveResponses.Tool(plant, toolId, status);
                 return live is null ? Results.NotFound() : Results.Ok(live);
             }
 

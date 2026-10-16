@@ -10,7 +10,7 @@ namespace Mps.Api.Http;
 /// <summary>Shapes the decimated simulator log into the payloads the console polls.</summary>
 public static class LiveResponses
 {
-    public static FleetLiveResponse Fleet(PlantSimulation plant)
+    public static FleetLiveResponse Fleet(PlantSimulation plant, IReadOnlyDictionary<string, string>? alertStatus = null)
     {
         ArgumentNullException.ThrowIfNull(plant);
         var readings = plant.Log.Snapshot();
@@ -21,23 +21,13 @@ public static class LiveResponses
 
         var tools = readings
             .GroupBy(reading => reading.ToolId, StringComparer.Ordinal)
-            .Select(group => ToolRow(plant, group.Key, group.ToArray()))
+            .Select(group => ToolRow(plant, group.Key, group.ToArray(), alertStatus))
             .OrderBy(tool => tool.ToolId, StringComparer.Ordinal)
             .ToArray();
         return new FleetLiveResponse(plant.SimulatedNow, tools);
     }
 
-    /// <summary>
-    /// The one tool status every view reads: Sites, Production line tiles and the tool page.
-    /// Worst live reading against its operating window; nominal when the tool has no readings yet.
-    /// </summary>
-    public static string ToolStatus(PlantSimulation plant, string toolId)
-    {
-        ArgumentNullException.ThrowIfNull(plant);
-        return MapAll(plant, plant.Log.SnapshotForTool(toolId)).Status;
-    }
-
-    public static ToolLiveResponse? Tool(PlantSimulation plant, string toolId)
+    public static ToolLiveResponse? Tool(PlantSimulation plant, string toolId, IReadOnlyDictionary<string, string>? alertStatus = null)
     {
         ArgumentNullException.ThrowIfNull(plant);
         if (string.IsNullOrWhiteSpace(toolId) || plant.FindTool(toolId) is null)
@@ -63,13 +53,13 @@ public static class LiveResponses
                     window is null ? null : Math.Max(window.Sigma, 1e-6));
             })
             .ToArray();
-        return new ToolLiveResponse(toolId, SiteOf(plant, toolId), plant.SimulatedNow, mapped.Status, mapped.Readings, series);
+        return new ToolLiveResponse(toolId, SiteOf(plant, toolId), plant.SimulatedNow, alertStatus is null ? mapped.Status : ToolAlertStatus.Of(alertStatus, toolId), mapped.Readings, series);
     }
 
-    private static FleetLiveToolResponse ToolRow(PlantSimulation plant, string toolId, IReadOnlyList<LiveReading> readings)
+    private static FleetLiveToolResponse ToolRow(PlantSimulation plant, string toolId, IReadOnlyList<LiveReading> readings, IReadOnlyDictionary<string, string>? alertStatus)
     {
         var mapped = MapAll(plant, readings);
-        return new FleetLiveToolResponse(toolId, SiteOf(plant, toolId), mapped.Status, mapped.Readings);
+        return new FleetLiveToolResponse(toolId, SiteOf(plant, toolId), alertStatus is null ? mapped.Status : ToolAlertStatus.Of(alertStatus, toolId), mapped.Readings);
     }
 
     private static (string Status, LiveReadingResponse[] Readings) MapAll(PlantSimulation plant, IReadOnlyList<LiveReading> readings)

@@ -8,6 +8,7 @@ using Mps.Application.Tests.Metadata;
 using Mps.Domain.Equipment;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
+using Mps.Domain.Telemetry;
 
 namespace Mps.Application.Tests.Spc;
 
@@ -154,6 +155,57 @@ public sealed class SpcAlertServiceTests
         alert.IsActive.Should().BeFalse();
         alert.Status.Should().Be("cleared");
         alert.ClearedAt.Should().Be(SpcSeries.Start.AddMinutes(9));
+    }
+
+    [Fact]
+    public async Task SlowDriftLikeSc4At10xStaysActiveEscalatesToAlarmAndOpensATicket()
+    {
+        // SC-4: etch rate ramps down about 3.5 sigma, 15-second samples, the publisher sends the last 20 points each tick.
+        var fixture = new Fixture();
+        var values = new List<double>();
+        for (var index = 0; index < 120; index++)
+        {
+            var ramp = -3.5d * Math.Min(1d, index / 90d);
+            values.Add(ramp + (index % 2 == 0 ? 0.15d : -0.15d));
+        }
+
+        var raisedAny = false;
+        for (var count = 1; count <= values.Count; count++)
+        {
+            var points = values.Take(count).Select((value, index) => new TelemetryPoint(SpcSeries.Start.AddSeconds(15 * index), value)).ToArray();
+            var sample = new SpcSample(SpcSeries.Tool, "A", "etchRate", SpcSeries.Unit, points.Skip(Math.Max(0, points.Length - 20)).ToArray());
+            await fixture.Service.RaiseAsync(sample, CancellationToken.None);
+            raisedAny |= fixture.Alerts.Alerts.Count > 0;
+            if (raisedAny)
+            {
+                fixture.Alerts.Alerts.Should().Contain(alert => alert.IsActive, $"the drift is still out of control at point {count}");
+                fixture.Alerts.Alerts.Should().OnlyContain(alert => alert.IsActive, $"nothing clears mid-drift (point {count})");
+            }
+        }
+
+        fixture.Alerts.Alerts.Should().Contain(alert => alert.Severity >= Severity.High, "crossing 3 sigma escalates the watch to an alarm");
+        (await fixture.Incidents.ListAsync(CancellationToken.None)).Should().NotBeEmpty("an alarm opens an incident for investigation");
+        fixture.Ticketing.Tickets.Should().NotBeEmpty("an alarm opens a ticket");
+
+        // The fault ends: back to center with noise for a sustained run, then every alert clears.
+        for (var index = 0; index < 20; index++)
+        {
+            values.Add(index % 2 == 0 ? 0.2d : -0.2d);
+        }
+
+        var all = values.Select((value, index) => new TelemetryPoint(SpcSeries.Start.AddSeconds(15 * index), value)).ToArray();
+        await fixture.Service.RaiseAsync(new SpcSample(SpcSeries.Tool, "A", "etchRate", SpcSeries.Unit, all.Skip(all.Length - 20).ToArray()), CancellationToken.None);
+        fixture.Alerts.Alerts.Should().OnlyContain(alert => !alert.IsActive);
+    }
+
+    [Fact]
+    public async Task EightReadingsOnOneSideInsideTwoSigmaDoNotClearAnAlert()
+    {
+        var fixture = new Fixture();
+        await fixture.Service.RaiseAsync(SpcSeries.Sample(0d, 4d), CancellationToken.None);
+        var oneSide = new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, SpcSeries.Shifted(TimeSpan.FromMinutes(2), -0.5d, -0.6d, -0.4d, -0.7d, -0.5d, -0.6d, -0.8d, -0.5d, -0.6d));
+        await fixture.Service.ClearRecoveredAsync(oneSide, CancellationToken.None);
+        fixture.Alerts.Alerts.Should().Contain(alert => alert.IsActive);
     }
 
     private sealed class Fixture
