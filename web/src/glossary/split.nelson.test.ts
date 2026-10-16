@@ -17,3 +17,11 @@ describe("plain rule names link to the glossary", () => {
     expect(samplesOutOfLimits(12)).toBe("12 samples out of limits");
   });
 });
+
+import { plainParameters } from "../sites/parameters";
+describe("parameter ids in text", () => {
+  it("become display names", () => {
+    expect(plainParameters("The cf4Flow shift on E-01 and o2Flow")).toBe("The CF4 flow shift on E-01 and O2 flow");
+    expect(plainParameters("E-01-A-MFC-CF4 stays")).toBe("E-01-A-MFC-CF4 stays");
+  });
+});

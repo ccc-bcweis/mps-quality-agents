@@ -54,7 +54,7 @@ public sealed class FakeInvestigationWorkflow : IInvestigationWorkflow
                 evidenceId,
                 EvidenceSource.Spc,
                 "SPC stand-in",
-                "Deterministic stand-in until the agent workflow is connected.",
+                "Placeholder until the investigation agent is connected.",
                 _time.GetUtcNow(),
                 null,
                 null),
@@ -70,7 +70,7 @@ public sealed class FakeInvestigationWorkflow : IInvestigationWorkflow
         var hypothesis = new Hypothesis(
             HypothesisId.New(),
             RootCauseCategory.ProcessDrift,
-            "Deterministic stand-in. The agent workflow has not ranked a cause.",
+            "Placeholder. The investigation agent has not ranked a cause yet.",
             0.5d,
             [evidenceId],
             ["No confounder was evaluated by the stand-in."],

@@ -14,6 +14,7 @@ import { MISSING_ALERT, visibleProblem } from "../history/copy";
 import { byNewestTime, toolPlainName } from "../history/order";
 import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
+import { parameterLabel } from "../sites/parameters";
 
 /** "1 sample out of limits", "12 samples out of limits". Counts distinct readings, not rule checks. */
 export function samplesOutOfLimits(count: number): string {
@@ -141,7 +142,7 @@ export function AlertsPage() {
               : "Active until 8 readings in a row are back in control"}
           </p>
           <p className="mt-2">
-            <Explain text={ruleLabel(selected.rule)} /> · {selected.parameter}
+            <Explain text={ruleLabel(selected.rule)} /> · {parameterLabel(selected.parameter)}
           </p>
           {(() => {
             const reading = manual.find((row) => row.alertId === selected.id);
