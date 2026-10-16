@@ -28,6 +28,6 @@ describe("parameter ids in text", () => {
 
 describe("misleading records glossary entry", () => {
   it("explains the injector switch", () => {
-    expect(lookupTerm("misleading records (to rule out)")?.plainDefinition).toMatch(/not the cause/);
+    expect(lookupTerm("misleading records (to rule out)")?.definition).toMatch(/not the cause/);
   });
 });
