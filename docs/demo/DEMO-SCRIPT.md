@@ -4,6 +4,16 @@ Prepared by StatusNeo. About 20 minutes plus questions. Every company, plant, to
 
 Copyright (c) 2026 Bryan C. Weis and Common Consulting Company. MIT.
 
+## The three brief scenarios
+
+| Brief | In this script | Reproduce |
+|---|---|---|
+| S1: a part change drives a drift | Section 3, SC-1 (ECO-4471 on E-02) | Reset, scenario picker SC-1, Run scenario |
+| S2: a manual bench reading is out of spec | Section 5 (thermocouple printout on E-01) | Tickets > Upload telemetry, `data/samples/thermocouple-logger-e01.png` |
+| S3: one supplier lot hits two plants | Section 6, SC-5 (lot MX4419) | Reset, scenario picker SC-5, Run scenario |
+
+Seed 4242 makes each run the same; see `REPRODUCIBILITY.md`.
+
 ## Before you start (5 minutes before)
 
 1. Open the hosted app and sign in. Check the harness bar shows **AI engine: Replay**.

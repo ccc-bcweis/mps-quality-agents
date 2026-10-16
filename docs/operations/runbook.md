@@ -49,6 +49,15 @@ Who uses this: the person running the hosted demo in `rg-mps-demo`. Times are th
 - Prompt or model regression: prompts and model versions are versioned; roll back the prompt version without an app rollback.
 - Full rebuild: re-run Bicep and `deploy.yml`.
 
+## Disaster recovery
+
+| Item | Demo | Production target |
+|---|---|---|
+| Data | SQLite on the app volume; a deploy or revision reset rebuilds from seed 4242 | Azure SQL point-in-time restore (7-35 days) and geo-replica |
+| Region | Single region (eastus2) | Paired-region failover; RPO 15 min, RTO 1 h |
+| Rebuild | Bicep plus `deploy.yml`, about 15 minutes | Same IaC, plus a tested failover drill per quarter |
+| Spend cap | Resets daily (UTC); over cap falls back to replay | Same; plus an Azure budget alert |
+
 ## Teardown
 
 Delete the resource group `rg-mps-demo` after the review. Nothing else holds data.
