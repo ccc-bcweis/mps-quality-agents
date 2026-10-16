@@ -16,7 +16,13 @@ namespace Mps.Api.Http;
 /// </summary>
 public static class AuditLog
 {
-    public static async Task<AuditLogResponse> ReadAsync(QualityDbContext db, CancellationToken cancellationToken)
+    public static async Task<AuditLogResponse> ReadAsync(QualityDbContext db, CancellationToken cancellationToken) =>
+        await ReadAsync(db, null, cancellationToken).ConfigureAwait(false);
+
+    public static async Task<AuditLogResponse> ReadAsync(
+        QualityDbContext db,
+        Mps.Application.Printouts.IManualMeasurementLog? measurements,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(db);
         var faults = await db.Faults.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
@@ -28,6 +34,32 @@ public static class AuditLog
         var capas = await db.Capas.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
         var incidentById = incidents.ToDictionary(row => row.Id);
         var events = new List<AuditStamp>();
+
+        foreach (var measurement in measurements?.All() ?? [])
+        {
+            var reading = measurement.Reading;
+            if (reading is null)
+            {
+                continue;
+            }
+
+            var corrected = reading.CorrectedFrom is { } printed
+                ? " Observed time corrected by the user from the printed "
+                    + printed.ToUniversalTime().ToString("yyyy-MM-dd HH:mm 'UTC'", System.Globalization.CultureInfo.InvariantCulture)
+                    + " to "
+                    + reading.ObservedAt.ToUniversalTime().ToString("yyyy-MM-dd HH:mm 'UTC'", System.Globalization.CultureInfo.InvariantCulture)
+                    + "."
+                : string.Empty;
+            events.Add(new AuditStamp(
+                measurement.Evidence.ObservedAt,
+                0,
+                "manualReading",
+                ManualReadings.Source(reading, measurement.FileName) + corrected,
+                null,
+                reading.ToolId,
+                null,
+                measurement.Evidence.Id.Value.ToString("D")));
+        }
 
         foreach (var fault in faults)
         {
