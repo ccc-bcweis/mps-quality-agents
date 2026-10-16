@@ -1,7 +1,7 @@
 {
   "mode": "replay",
-  "cases": 24,
-  "passed": 24,
+  "cases": 25,
+  "passed": 25,
   "taskCompletion": 1,
   "categoryAccuracy": 1,
   "safeEscalation": 1,
@@ -163,6 +163,15 @@
     {
       "id": "MIS-03",
       "group": "missingEvidence",
+      "expectedBehavior": "escalate",
+      "expectedCategory": null,
+      "actualBehavior": "escalate",
+      "actualCategory": null,
+      "passed": true
+    },
+    {
+      "id": "OSC-01",
+      "group": "signalShape",
       "expectedBehavior": "escalate",
       "expectedCategory": null,
       "actualBehavior": "escalate",

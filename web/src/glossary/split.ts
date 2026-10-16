@@ -31,7 +31,30 @@ function patternFor(terms: GlossaryTerm[]): RegExp | null {
   return cachedPattern;
 }
 
+/** Plain-word terms that AI text links too (supplier and material words), matched case-insensitively. */
+export const PLAIN_LINKED = ["certificate of analysis", "supplier notice", "material lot", "silane", "precursor"];
+
+function splitPlain(text: string, terms: GlossaryTerm[]): GlossaryPart[] {
+  const known = PLAIN_LINKED.filter((word) => terms.some((term) => term.term.toLowerCase() === word));
+  if (known.length === 0) return [{ kind: "text", text }];
+  const pattern = new RegExp(`(?<![A-Za-z0-9-])(?:${known.map(escapeRegExp).join("|")})s?(?![A-Za-z0-9-])`, "gi");
+  const parts: GlossaryPart[] = [];
+  let cursor = 0;
+  for (const match of text.matchAll(pattern)) {
+    const index = match.index ?? 0;
+    if (index > cursor) parts.push({ kind: "text", text: text.slice(cursor, index) });
+    parts.push({ kind: "term", term: match[0] });
+    cursor = index + match[0].length;
+  }
+  if (cursor < text.length) parts.push({ kind: "text", text: text.slice(cursor) });
+  return parts.length === 0 ? [{ kind: "text", text }] : parts;
+}
+
 export function splitGlossary(text: string, terms: GlossaryTerm[] = glossaryTerms): GlossaryPart[] {
+  return splitAcronyms(text, terms).flatMap((part) => (part.kind === "text" ? splitPlain(part.text, terms) : [part]));
+}
+
+function splitAcronyms(text: string, terms: GlossaryTerm[]): GlossaryPart[] {
   const pattern = patternFor(terms);
   if (!pattern) return [{ kind: "text", text }];
   pattern.lastIndex = 0;

@@ -43,6 +43,13 @@ public static class SignalShapeClassifier
             return SignalShape.Step;
         }
 
+        // A noisy oscillation rarely repeats exact extremes, but it swings back and forth with a period:
+        // the autocorrelation turns clearly negative at half a period and clearly positive again at a full one.
+        if (IsPeriodic(values))
+        {
+            return SignalShape.Oscillation;
+        }
+
         if (IsIntermittent(values, range))
         {
             return SignalShape.Intermittent;
@@ -257,5 +264,61 @@ public static class SignalShapeClassifier
     private static double Range(IReadOnlyList<double> values)
     {
         return values.Max() - values.Min();
+    }
+
+    private static bool IsPeriodic(IReadOnlyList<double> values)
+    {
+        if (values.Count < 16)
+        {
+            return false;
+        }
+
+        var mean = values.Average();
+        var variance = values.Sum(value => (value - mean) * (value - mean));
+        if (variance <= 0d)
+        {
+            return false;
+        }
+
+        double Acf(int lag)
+        {
+            var sum = 0d;
+            for (var i = lag; i < values.Count; i++)
+            {
+                sum += (values[i] - mean) * (values[i - lag] - mean);
+            }
+
+            return sum / variance;
+        }
+
+        // Find the deepest dip, then require a clear peak again near twice that lag (one full period).
+        var dipLag = 0;
+        var dip = 0d;
+        for (var lag = 1; lag <= values.Count / 3; lag++)
+        {
+            var acf = Acf(lag);
+            if (acf < dip)
+            {
+                dip = acf;
+                dipLag = lag;
+            }
+        }
+
+        if (dipLag < 2 || dip > -0.45d)
+        {
+            return false;
+        }
+
+        var low = (int)Math.Floor(dipLag * 1.6d);
+        var high = Math.Min(values.Count / 2, (int)Math.Ceiling(dipLag * 2.4d));
+        for (var lag = low; lag <= high; lag++)
+        {
+            if (Acf(lag) > 0.3d)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

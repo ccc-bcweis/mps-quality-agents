@@ -17,3 +17,4 @@ Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 | [ADR-011](ADR-011-join-links-and-access.md) | One role, Microsoft sign-in, join links | Accepted |
 | [ADR-012](ADR-012-case-lifecycle-and-alert-clearing.md) | Case lifecycle, alert clearing and stopping a scenario | Accepted |
 | [ADR-013](ADR-013-manual-readings-as-samples.md) | Manual readings are samples, not a workflow | Accepted |
+| [ADR-014](ADR-014-decision-on-investigation.md) | The human decision sits on the Investigation page | Accepted |

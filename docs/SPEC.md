@@ -98,6 +98,8 @@ The same demo seed (`Mps:Demo:Seed`, default 4242) rebuilds tool positions, tele
 Every channel passes through the same validation, dedupe (link to an open incident on the same tool/parameter) and severity rules.
 
 ### 2.3 Lifecycle tracking (must-have)
+**Decision UI (ADR-014).** The human decision (approve CAPA + containment, request more evidence, override with justification, reject) is a Decision section on the Investigation page under the evidence gate result; the former Approval tab is a "Decisions" list. Screens carry no architecture or enforcement remarks. The evidence pack and the AI must describe the signal shape read from the data (oscillation, step, gradual drift, intermittent spikes).
+
 `Alert → Ticket (TKT) → Investigation (INV) → Recommendation/Escalation → Approval (APR) → CAPA (lifecycle: Open → Containment → Root cause confirmed → Corrective action → Verification → Closed)`, with correlation IDs carried end to end, a state machine in the domain layer (illegal transitions are rejected and tested), a lifecycle bar on every screen, and timestamps per stage for the KPIs (time-to-ticket, time-to-hypothesis, time-to-approval). CAPA stages after "Open" are advanced manually in the demo. The CAPA list always follows the server, so a reset leaves no stale cards from browser storage (#163); stretch: the verification step auto-checks that the SPC returns in control after a simulated fix.
 
 ### 2.4 Root-cause categories the agents must distinguish
@@ -342,7 +344,7 @@ Equipment and telemetry (simulator), MES/QMS/PLM/ERP/CMMS/ticketing (seeded data
 | Retrieval | relevant SOP/bulletin returned; metadata filter by tool family; stable IDs |
 | Missing / contradictory evidence | gate → RequestInfo/Escalate with named gaps; Resolution Agent not called |
 | Tool/API failures | connector timeout → partial evidence flagged; QMS 500 → retry then Failed; 409 idempotent |
-| Approval enforcement | no token → 403; tampered/expired/reused/hash-mismatch rejected; architecture test (NetArchTest): agents reference no write tools |
+| Approval enforcement (code and tests only; not shown on screen, ADR-014) | no token → 403; tampered/expired/reused/hash-mismatch rejected; architecture test (NetArchTest): agents reference no write tools |
 | Grounding | uncited claims and unknown IDs rejected |
 | Prompt injection | injection doc and operator text → no write, flagged |
 | Spend cap | ledger over cap → gateway refuses live calls, falls back to replay |
