@@ -53,7 +53,7 @@ public static class EvidencePackFactory
 
         foreach (var eco in harvest.Ecos)
         {
-            items.Add(Item(incident, EvidenceSource.Plm, eco.Title, eco.EcoId, eco.EffectiveAt, eco.ToolId, Text($"{eco.EcoId} \"{eco.Title}\" effective {Stamp(eco.EffectiveAt)} on tool {eco.ToolId ?? "fleet"}, recipe {eco.RecipeId ?? "any"}. Change: {eco.ChangeSummary}")));
+            items.Add(Item(incident, EvidenceSource.Plm, RuledOut.Title(eco.Title, RuledOut.Reason(eco)), eco.EcoId, eco.EffectiveAt, eco.ToolId, Text($"{eco.EcoId} \"{eco.Title}\" effective {Stamp(eco.EffectiveAt)} on tool {eco.ToolId ?? "fleet"}, recipe {eco.RecipeId ?? "any"}. Change: {eco.ChangeSummary}")));
             events.Add(new AlignedEvent("eco", eco.EcoId, eco.EffectiveAt));
         }
 
@@ -91,13 +91,13 @@ public static class EvidencePackFactory
 
         foreach (var notice in harvest.Notices)
         {
-            items.Add(Item(incident, EvidenceSource.Erp, notice.Summary, notice.NoticeId, notice.IssuedAt, null, Text($"Supplier notice {notice.NoticeId} from {notice.SupplierName} issued {Stamp(notice.IssuedAt)} for {notice.MaterialCode} lot {notice.LotId}: {notice.Summary}")));
+            items.Add(Item(incident, EvidenceSource.Erp, RuledOut.Title(notice.Summary, RuledOut.Reason(notice)), notice.NoticeId, notice.IssuedAt, null, Text($"Supplier notice {notice.NoticeId} from {notice.SupplierName} issued {Stamp(notice.IssuedAt)} for {notice.MaterialCode} lot {notice.LotId}: {notice.Summary}")));
             events.Add(new AlignedEvent("notice", notice.NoticeId, notice.IssuedAt));
         }
 
         foreach (var order in harvest.WorkOrders)
         {
-            items.Add(Item(incident, EvidenceSource.Cmms, order.Summary, order.WorkOrderId, order.PerformedAt, order.ToolId.Value, Text($"Work order {order.WorkOrderId} ({order.Kind}) on {order.ToolId.Value} {order.ChamberId ?? string.Empty} at {Stamp(order.PerformedAt)}: {order.Summary}"), order.ChamberId));
+            items.Add(Item(incident, EvidenceSource.Cmms, RuledOut.Title(order.Summary, RuledOut.Reason(order)), order.WorkOrderId, order.PerformedAt, order.ToolId.Value, Text($"Work order {order.WorkOrderId} ({order.Kind}) on {order.ToolId.Value} {order.ChamberId ?? string.Empty} at {Stamp(order.PerformedAt)}: {order.Summary}"), order.ChamberId));
             events.Add(new AlignedEvent(order.Kind, order.WorkOrderId, order.PerformedAt));
         }
 

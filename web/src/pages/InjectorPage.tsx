@@ -5,6 +5,7 @@ import { api, ApiProblem } from "../api/client";
 import { CATEGORY_LABEL } from "../api/labels";
 import type { FaultInjectionRequest, FaultShape, RootCauseCategory, Tool } from "../api/types";
 import { Explain } from "../components/Explain";
+import { Term } from "../components/Term";
 import { btnPrimary, field, panel } from "../components/ui";
 import { PLANTS } from "../sites/selection";
 import { sensorOptionLabel, sensorParameter, sensorsFor } from "../fleet/sensorOptions";
@@ -160,10 +161,10 @@ export function InjectorPage() {
             </select>
           </label>
           <label className="mb-3 block text-mps-label text-mps-muted">
-            Confounders
-            <select className={field} value={confounders ? "on" : "off"} onChange={(event) => setConfounders(event.target.value === "on")}>
-              <option value="on">on</option>
-              <option value="off">off</option>
+            <Term id="misleading records (to rule out)">Add misleading records (to rule out)</Term>
+            <select className={field} aria-label="Add misleading records (to rule out)" value={confounders ? "on" : "off"} onChange={(event) => setConfounders(event.target.value === "on")}>
+              <option value="on">Yes: also write 1-2 records that look related but are not the cause</option>
+              <option value="off">No: only the fault</option>
             </select>
           </label>
           <label className="mb-3 block text-mps-label text-mps-muted">

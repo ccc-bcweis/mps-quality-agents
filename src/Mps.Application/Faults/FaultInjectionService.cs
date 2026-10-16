@@ -49,6 +49,7 @@ public sealed class FaultInjectionService : IFaultInjectionService
     private readonly TimeProvider _time;
     private readonly ILifecycleEventSink? _events;
     private readonly ICascadeDirectory? _cascade;
+    private readonly ConfounderBoard? _confounders;
 
     public FaultInjectionService(
         IFleetCatalog fleet,
@@ -56,7 +57,8 @@ public sealed class FaultInjectionService : IFaultInjectionService
         IQualityNotifier notifier,
         TimeProvider time,
         ILifecycleEventSink? events = null,
-        ICascadeDirectory? cascade = null)
+        ICascadeDirectory? cascade = null,
+        ConfounderBoard? confounders = null)
     {
         ArgumentNullException.ThrowIfNull(fleet);
         ArgumentNullException.ThrowIfNull(faults);
@@ -68,6 +70,7 @@ public sealed class FaultInjectionService : IFaultInjectionService
         _time = time;
         _events = events;
         _cascade = cascade;
+        _confounders = confounders;
     }
 
     public async Task<FaultAccepted> InjectAsync(FaultInjectionRequest request, CancellationToken cancellationToken)
@@ -107,6 +110,16 @@ public sealed class FaultInjectionService : IFaultInjectionService
         var shape = request.Shape.Trim().ToLowerInvariant();
         var category = ToCamelCase(request.RootCauseCategory.ToString());
         var parent = CommandAmbient.EventId;
+
+        // Misleading records (to rule out). Scripted scenarios carry their own confounders in their evidence files.
+        IReadOnlyList<string> confounderIds = [];
+        if (request.Confounders && !request.Scripted && _confounders is not null)
+        {
+            var written = ConfounderFactory.For(request.RootCauseCategory, toolId, string.IsNullOrWhiteSpace(request.ChamberId) ? null : request.ChamberId.Trim(), faultId, now);
+            _confounders.Add(written);
+            confounderIds = written.RecordIds;
+        }
+
         if (request.PublishCommand && _events is not null)
         {
             var eventId = await _events.PublishAsync(
@@ -130,6 +143,8 @@ public sealed class FaultInjectionService : IFaultInjectionService
                         rootCauseCategory = category,
                         scripted = request.Scripted,
                         durationMinutes = request.DurationMinutes is > 0 ? request.DurationMinutes : null,
+                        confounders = request.Confounders,
+                        confounderRecordIds = confounderIds,
                         body = new { faultId, correlationId },
                     }),
                 cancellationToken).ConfigureAwait(false);

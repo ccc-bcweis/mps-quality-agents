@@ -33,6 +33,14 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
     private readonly Dictionary<string, HashSet<string>> _materialTools = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Seed> _overlays = new(StringComparer.OrdinalIgnoreCase);
     private readonly ScenarioEvidenceBoard? _board;
+    private Mps.Application.Faults.ConfounderBoard? _confounders;
+
+    /// <summary>Serves misleading records written by the fault injector next to the seed.</summary>
+    public SeedEnterpriseTools WithConfounders(Mps.Application.Faults.ConfounderBoard? confounders)
+    {
+        _confounders = confounders;
+        return this;
+    }
 
     public SeedEnterpriseTools(string seedPath, string? scenarioEvidencePath = null, ScenarioEvidenceBoard? board = null)
         : this(seedPath)
@@ -85,7 +93,7 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
     public Task<IReadOnlyList<EcoRecord>> GetEcosAsync(ToolId toolId, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken) =>
         Done(Merge(
             (_seed.Ecos ?? []).Where(eco => eco.ToolId == toolId.Value && In(eco.EffectiveAt, from.Add(-ChangeLookback), until)),
-            (Overlay?.Ecos ?? []).Where(eco => eco.ToolId == toolId.Value),
+            (Overlay?.Ecos ?? []).Where(eco => eco.ToolId == toolId.Value).Concat(_confounders?.Ecos(toolId.Value) ?? []),
             eco => eco.EcoId));
 
     public Task<ConfigRevision> GetConfigAsync(ToolId toolId, CancellationToken cancellationToken)
@@ -101,20 +109,21 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
         Done(Merge(
             (_seed.MaterialLots ?? []).Where(lot =>
                 _materialTools.TryGetValue(lot.LotId, out var tools) && tools.Contains(toolId.Value) && In(lot.ReceivedAt, from.AddDays(-60), until)),
-            (Overlay?.MaterialLots ?? []).Where(lot => (Overlay?.MaterialUses ?? []).Any(use => use.LotId == lot.LotId && use.ToolId == toolId.Value)),
+            (Overlay?.MaterialLots ?? []).Where(lot => (Overlay?.MaterialUses ?? []).Any(use => use.LotId == lot.LotId && use.ToolId == toolId.Value))
+                .Concat(_confounders?.MaterialLots(toolId.Value) ?? []),
             lot => lot.LotId));
 
     public Task<IReadOnlyList<SupplierNotice>> GetSupplierNoticesAsync(string? materialCode, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken) =>
         Done(Merge(
             (_seed.Notices ?? []).Where(notice =>
                 (string.IsNullOrWhiteSpace(materialCode) || notice.MaterialCode == materialCode) && In(notice.IssuedAt, from.AddDays(-60), until)),
-            (Overlay?.Notices ?? []).Where(notice => string.IsNullOrWhiteSpace(materialCode) || notice.MaterialCode == materialCode),
+            (Overlay?.Notices ?? []).Concat(_confounders?.Notices ?? []).Where(notice => string.IsNullOrWhiteSpace(materialCode) || notice.MaterialCode == materialCode),
             notice => notice.NoticeId));
 
     public Task<IReadOnlyList<WorkOrder>> GetWorkOrdersAsync(ToolId toolId, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken) =>
         Done(Merge(
             (_seed.WorkOrders ?? []).Where(order => order.ToolId == toolId && In(order.PerformedAt, from.Add(-ChangeLookback), until)),
-            (Overlay?.WorkOrders ?? []).Where(order => order.ToolId == toolId),
+            (Overlay?.WorkOrders ?? []).Where(order => order.ToolId == toolId).Concat(_confounders?.WorkOrders(toolId.Value) ?? []),
             order => order.WorkOrderId));
 
     public Task<IReadOnlyList<CalibrationRecord>> GetCalibrationsAsync(ToolId toolId, CancellationToken cancellationToken) =>

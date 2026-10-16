@@ -231,7 +231,7 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
             accepted.Cause,
             accepted.Confidence.Value,
             accepted.EvidenceIds,
-            accepted.CounterEvidence,
+            WithRuledOut(accepted.CounterEvidence, RuledOut.All(gathered.Pack)),
             accepted.Actions);
         session.ClearHypotheses();
         session.AddHypothesis(hypothesis);
@@ -353,4 +353,20 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
     }
 
     private readonly record struct ObservedRun(ExternalRequest? Request, CheckpointInfo? Checkpoint, string EventNames);
+
+    /// <summary>Adds every record the pack itself rules out, unless the claim already names it.</summary>
+    public static IReadOnlyList<string> WithRuledOut(IReadOnlyList<string> counters, IReadOnlyList<string> ruledOut)
+    {
+        var merged = counters.ToList();
+        foreach (var sentence in ruledOut)
+        {
+            var id = sentence.Split(' ').FirstOrDefault(word => word.Contains('-', StringComparison.Ordinal))?.Trim('(', ')', '.');
+            if (id is null || !merged.Any(counter => counter.Contains(id, StringComparison.OrdinalIgnoreCase)))
+            {
+                merged.Add(sentence);
+            }
+        }
+
+        return merged;
+    }
 }
