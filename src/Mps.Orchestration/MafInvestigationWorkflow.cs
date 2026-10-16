@@ -223,6 +223,14 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
             return false;
         }
 
+        if (CauseGuard.Check(accepted.Cause, gathered.Pack) is { } guarded)
+        {
+            session.Stage = InvestigationStage.Escalated;
+            session.EscalationReason = guarded;
+            session.ClearHypotheses();
+            return false;
+        }
+
         session.ReplaceExplanations(MergeExplanations(gathered.Pack.Explanations, accepted.Explanations));
         session.ReplaceMatrix(accepted.EvidenceMatrix);
         var hypothesis = new Hypothesis(
@@ -231,7 +239,7 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
             accepted.Cause,
             accepted.Confidence.Value,
             accepted.EvidenceIds,
-            WithRuledOut(accepted.CounterEvidence, RuledOut.All(gathered.Pack)),
+            WithRuledOut(Readable(accepted.CounterEvidence, gathered.Pack.Items), RuledOut.All(gathered.Pack)),
             accepted.Actions);
         session.ClearHypotheses();
         session.AddHypothesis(hypothesis);
@@ -368,5 +376,20 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
         }
 
         return merged;
+    }
+
+    /// <summary>The AI sometimes lists bare evidence ids as counter-evidence; show the record title instead.</summary>
+    public static IReadOnlyList<string> Readable(IReadOnlyList<string> counters, IReadOnlyList<Mps.Domain.Evidence.EvidenceItem> items)
+    {
+        ArgumentNullException.ThrowIfNull(counters);
+        ArgumentNullException.ThrowIfNull(items);
+        return counters
+            .Select(counter => Guid.TryParse(counter.Trim(), out var id)
+                ? items.FirstOrDefault(item => item.Id.Value == id)?.Title
+                : counter)
+            .OfType<string>()
+            .Where(counter => counter.Length > 0)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
     }
 }

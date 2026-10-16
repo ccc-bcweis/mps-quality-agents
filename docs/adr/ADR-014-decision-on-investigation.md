@@ -25,5 +25,10 @@ After a live run (an injected chamber-pressure oscillation on D-01-A), the owner
 - Supplier and material words in AI text (silane, supplier notice, material lot, certificate of analysis, precursor)
   link to the glossary.
 
+- A code check runs after grounding (CauseGuard): a cause that names a record which rules itself out, or describes a
+  shape the readings do not show, escalates to a person with a plain reason. When the readings have no clear shape
+  yet, the reason says to request more evidence once more readings are in. Bare evidence ids in the AI's
+  counter-evidence are shown as record titles.
+
 ## Consequences
 One page holds evidence, causes and the decision. The enforcement behavior is unchanged and still tested.
