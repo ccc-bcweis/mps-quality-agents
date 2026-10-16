@@ -37,6 +37,9 @@ public interface IDocumentIntake
         CancellationToken cancellationToken);
 
     Task<PrintoutConfirmation> ConfirmAsync(PrintoutReading reading, CancellationToken cancellationToken);
+
+    Task<PrintoutConfirmation> ConfirmAsync(PrintoutReading reading, Guid? fileId, string? fileName, CancellationToken cancellationToken) =>
+        ConfirmAsync(reading, cancellationToken);
 }
 
 /// <summary>
@@ -117,7 +120,10 @@ public sealed class DocumentIntakeService : IDocumentIntake
         return new PrintoutInspection(model, "model");
     }
 
-    public async Task<PrintoutConfirmation> ConfirmAsync(PrintoutReading reading, CancellationToken cancellationToken)
+    public Task<PrintoutConfirmation> ConfirmAsync(PrintoutReading reading, CancellationToken cancellationToken) =>
+        ConfirmAsync(reading, null, null, cancellationToken);
+
+    public async Task<PrintoutConfirmation> ConfirmAsync(PrintoutReading reading, Guid? fileId, string? fileName, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(reading);
         var catalogParameter = PrintoutReading.CatalogParameter(reading.ToolId, reading.Parameter);
@@ -188,7 +194,13 @@ public sealed class DocumentIntakeService : IDocumentIntake
             "printout:" + reading.ToolId + ":" + catalogParameter);
         evidence = await StampDocumentAsync(evidence, reading, catalogParameter, intake.Incident.CorrelationId, cancellationToken)
             .ConfigureAwait(false);
-        _measurements.Add(new ManualMeasurement(evidence, intake.Incident.Id.Value));
+        _measurements.Add(new ManualMeasurement(evidence, intake.Incident.Id.Value)
+        {
+            Reading = reading,
+            AlertId = alert?.Id.Value,
+            FileId = fileId,
+            FileName = fileName,
+        });
 
         if (!reading.OutOfSpec || alert is null || faultId is null)
         {
@@ -275,6 +287,11 @@ public sealed class DocumentIntakeService : IDocumentIntake
                     low = reading.SpecMinimum,
                     high = reading.SpecMaximum,
                     evidenceId = evidence.Id.Value,
+                    observedAt = reading.ObservedAt,
+                    printedObservedAt = reading.CorrectedFrom,
+                    why = reading.CorrectedFrom is { } printed
+                        ? "Observed time corrected by the user from " + Stamp(printed) + " to " + Stamp(reading.ObservedAt) + "."
+                        : null,
                 }),
             cancellationToken).ConfigureAwait(false);
         return evidence.WithSourceEventIds([eventId]);
@@ -334,12 +351,17 @@ public sealed class DocumentIntakeService : IDocumentIntake
     {
         var shape = reading.Shape is null ? string.Empty : " Shape " + reading.Shape + ".";
         var initials = reading.OperatorInitials is null ? string.Empty : " Operator " + reading.OperatorInitials + ".";
+        var observed = " Observed " + Stamp(reading.ObservedAt) + "."
+            + (reading.CorrectedFrom is { } printed ? " Corrected by the user from the printed " + Stamp(printed) + "." : string.Empty);
         return reading.Parameter + " " + Num(reading.Value) + " " + reading.Unit
             + ", spec " + Num(reading.SpecMinimum) + "-" + Num(reading.SpecMaximum)
             + ", catalog " + catalogParameter + "."
             + shape
-            + initials;
+            + initials
+            + observed;
     }
+
+    private static string Stamp(DateTimeOffset value) => value.ToUniversalTime().ToString("yyyy-MM-dd HH:mm 'UTC'", CultureInfo.InvariantCulture);
 
     private static string Num(double value) => value.ToString("0.###", CultureInfo.InvariantCulture);
 }

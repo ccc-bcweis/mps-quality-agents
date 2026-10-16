@@ -460,7 +460,7 @@ public static class QualityEndpoints
                 cancellationToken).ConfigureAwait(false);
             return Results.Ok(new ReplayCaptureResponse(scenario.Id, count));
         });
-        app.MapPost("/api/printouts/inspect", async (HttpRequest request, IDocumentIntake intake, CancellationToken cancellationToken) =>
+        app.MapPost("/api/printouts/inspect", async (HttpRequest request, IDocumentIntake intake, Mps.Api.Printouts.PrintoutFileStore files, CancellationToken cancellationToken) =>
         {
             if (!request.HasFormContentType)
             {
@@ -477,8 +477,10 @@ public static class QualityEndpoints
             await using var stream = file.OpenReadStream();
             using var buffer = new MemoryStream();
             await stream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
-            var inspection = await intake.InspectAsync(buffer.ToArray(), file.ContentType, file.FileName, cancellationToken).ConfigureAwait(false);
+            var bytes = buffer.ToArray();
+            var inspection = await intake.InspectAsync(bytes, file.ContentType, file.FileName, cancellationToken).ConfigureAwait(false);
             var reading = inspection.Reading;
+            var fileId = files.Add(bytes, file.ContentType, file.FileName);
             return Results.Ok(new PrintoutInspectionResponse(
                 reading.ToolId,
                 reading.ChamberId,
@@ -492,11 +494,13 @@ public static class QualityEndpoints
                 reading.Shape,
                 reading.OperatorInitials,
                 inspection.ParseMethod,
-                reading.OutOfSpec));
+                reading.OutOfSpec,
+                fileId));
         });
         app.MapPost("/api/printouts/confirm", async (
             PrintoutConfirmBody? body,
             IDocumentIntake intake,
+            Mps.Api.Printouts.PrintoutFileStore files,
             CommandGateway commands,
             HttpContext http,
             IConfiguration configuration,
@@ -528,15 +532,35 @@ public static class QualityEndpoints
                     body.SpecMinimum.Value,
                     body.SpecMaximum.Value,
                     body.Shape,
-                    body.OperatorInitials);
+                    body.OperatorInitials)
+                {
+                    PrintedObservedAt = body.PrintedObservedAt,
+                };
             }
             catch (ArgumentException exception)
             {
                 throw new IntakeValidationException(exception.Message);
             }
 
-            var confirmed = await intake.ConfirmAsync(reading, cancellationToken).ConfigureAwait(false);
+            var stored = body.FileId is { } id ? files.Find(id) : null;
+            var confirmed = await intake.ConfirmAsync(reading, stored is null ? null : body.FileId, stored?.FileName, cancellationToken).ConfigureAwait(false);
             return Results.Ok(confirmed);
+        });
+        app.MapGet("/api/manual-readings", (string? toolId, string? siteId, IManualMeasurementLog measurements, PlantSimulation plant) =>
+        {
+            var rows = (string.IsNullOrWhiteSpace(toolId) ? measurements.All() : measurements.ForTool(toolId.Trim()))
+                .Where(item => item.Reading is not null)
+                .Select(item => ManualReadings.ToResponse(item, plant))
+                .Where(row => MatchesSite(siteId, row.SiteId))
+                .OrderByDescending(row => row.ObservedAt)
+                .ToArray();
+            return Results.Ok(rows);
+        });
+        app.MapGet("/api/manual-readings/{evidenceId:guid}/file", (Guid evidenceId, IManualMeasurementLog measurements, Mps.Api.Printouts.PrintoutFileStore files) =>
+        {
+            var item = measurements.All().FirstOrDefault(row => row.Evidence.Id.Value == evidenceId);
+            var file = item?.FileId is { } id ? files.Find(id) : null;
+            return file is null ? Results.NotFound() : Results.File(file.Bytes, file.ContentType, file.FileName);
         });
         app.MapGet("/api/injector/scenarios", (ScenarioCardCatalog cards) =>
         {

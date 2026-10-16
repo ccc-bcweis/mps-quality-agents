@@ -73,7 +73,7 @@ public static class LiveResponses
         return (status, mapped);
     }
 
-    private static string SiteOf(PlantSimulation plant, string toolId) =>
+    public static string SiteOf(PlantSimulation plant, string toolId) =>
         plant.FindTool(toolId)?.SiteId ?? SiteIds.ForTool(toolId);
 
     private static LiveReadingResponse Map(PlantSimulation plant, LiveReading reading)

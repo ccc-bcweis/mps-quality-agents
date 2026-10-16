@@ -90,6 +90,12 @@ public sealed class PrintoutReading
 
     public DateTimeOffset ObservedAt { get; }
 
+    /// <summary>The time printed on the sheet when the user replaced it (the Now button); null when unchanged.</summary>
+    public DateTimeOffset? PrintedObservedAt { get; init; }
+
+    /// <summary>The printed time, kept for the audit trail, when it differs from <see cref="ObservedAt"/>.</summary>
+    public DateTimeOffset? CorrectedFrom => PrintedObservedAt is { } printed && printed != ObservedAt ? printed : null;
+
     public string Instrument { get; }
 
     public string Parameter { get; }
