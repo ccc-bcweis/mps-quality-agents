@@ -215,7 +215,8 @@ public sealed record ToolLiveResponse(
 
 public sealed record LiveReadingResponse(string SensorId, string Parameter, string ChamberId, string Unit, DateTimeOffset At, double Value, string Status);
 
-public sealed record LiveSeriesResponse(string Parameter, string ChamberId, IReadOnlyList<LivePointResponse> Points);
+/// <summary>One live series. Center and Sigma are the limits the rules engine checks; null when the series has none.</summary>
+public sealed record LiveSeriesResponse(string Parameter, string ChamberId, IReadOnlyList<LivePointResponse> Points, double? Center = null, double? Sigma = null);
 
 public sealed record LivePointResponse(DateTimeOffset At, double Value);
 

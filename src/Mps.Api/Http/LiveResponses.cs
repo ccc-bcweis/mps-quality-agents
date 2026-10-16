@@ -40,12 +40,18 @@ public static class LiveResponses
         var series = readings
             .OrderBy(reading => reading.Parameter, StringComparer.Ordinal)
             .ThenBy(reading => reading.ChamberId, StringComparer.Ordinal)
-            .Select(reading => new LiveSeriesResponse(
-                reading.Parameter,
-                reading.ChamberId,
-                plant.Log.Window(toolId, reading.ChamberId, reading.Parameter)
-                    .Select(point => new LivePointResponse(point.At, point.Value))
-                    .ToArray()))
+            .Select(reading =>
+            {
+                var window = IsCounter(reading.Parameter, reading.SensorId) ? null : plant.WindowAt(toolId, reading.Parameter, reading.At);
+                return new LiveSeriesResponse(
+                    reading.Parameter,
+                    reading.ChamberId,
+                    plant.Log.Window(toolId, reading.ChamberId, reading.Parameter)
+                        .Select(point => new LivePointResponse(point.At, point.Value))
+                        .ToArray(),
+                    window?.Nominal,
+                    window is null ? null : Math.Max(window.Sigma, 1e-6));
+            })
             .ToArray();
         return new ToolLiveResponse(toolId, SiteOf(plant, toolId), plant.SimulatedNow, mapped.Status, mapped.Readings, series);
     }

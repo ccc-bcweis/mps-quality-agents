@@ -2,7 +2,7 @@
 import { CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { mpsColor } from "../brand/colors";
 import { Term } from "./Term";
-import { bandFromEarly, buildSeries, limits, seedFrom, violatesWesternElectric1, violatesWesternElectric2, type SeriesShape, type SpcPoint } from "../spc/series";
+import { buildSeries, limits, seedFrom, violatesWesternElectric1, violatesWesternElectric2, type SeriesShape, type SpcPoint } from "../spc/series";
 
 export function SpcChart({
   seedKey,
@@ -13,6 +13,7 @@ export function SpcChart({
   shape,
   endValue,
   points: livePoints,
+  cumulative = false,
 }: {
   seedKey: string;
   label: string;
@@ -23,10 +24,14 @@ export function SpcChart({
   endValue?: number;
   /** Live samples from the plant tick. When absent, the chart draws the frozen teaching series. */
   points?: SpcPoint[];
+  /** A running count. Drawn as a trend with no SPC limits or rule checks. */
+  cumulative?: boolean;
 }) {
   const points = livePoints && livePoints.length > 0 ? livePoints : buildSeries({ seed: seedFrom(seedKey), mean, sigma, shape, endValue });
   const values = points.map((point) => point.value);
-  const center = livePoints && livePoints.length > 0 ? bandFromEarly(values, mean, sigma) : { mean, sigma };
+  // Limits come from the parameter's own window, the same ones the server's rules check, so a point drawn past the
+  // UCL is a point the rules engine also sees past 3 sigma.
+  const center = { mean, sigma };
   const band = limits(center.mean, center.sigma);
   const rule1 = violatesWesternElectric1(values, center.mean, center.sigma);
   const rule2 = violatesWesternElectric2(values, center.mean, center.sigma);
@@ -35,6 +40,24 @@ export function SpcChart({
     : rule2
       ? "Western Electric rule 2: two of three points are beyond 2 sigma."
       : "Western Electric rules 1 and 2 are clear on this series.";
+  if (cumulative) {
+    const trendCaption = `Trend of ${label}, a running count in ${unit}. Counts climb by design, so they have no SPC limits. The rate is charted with limits as run rate.`;
+    return (
+      <figure aria-label={trendCaption} className="w-full">
+        <div aria-hidden="true" className="h-[240px] w-full">
+          <ResponsiveContainer width="100%" height={240} initialDimension={{ width: 720, height: 240 }}>
+            <ComposedChart data={points} margin={{ top: 16, right: 56, bottom: 8, left: 8 }}>
+              <CartesianGrid stroke={mpsColor.line} strokeDasharray="3 3" />
+              <XAxis dataKey="index" tick={{ fill: mpsColor.muted, fontSize: 10 }} stroke={mpsColor.line} />
+              <YAxis tick={{ fill: mpsColor.muted, fontSize: 10 }} stroke={mpsColor.line} width={64} label={{ value: unit, angle: -90, position: "insideLeft", fill: mpsColor.muted, fontSize: 10 }} />
+              <Line type="stepAfter" dataKey="value" stroke={mpsColor.secondary} strokeWidth={1.4} dot={false} isAnimationActive={false} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+        <figcaption className="mt-2 text-mps-micro text-mps-muted">Running count. No SPC limits; see run rate for the charted rate.</figcaption>
+      </figure>
+    );
+  }
   const caption = `SPC chart of ${label}. Mean ${center.mean.toFixed(2)} ${unit}, sigma ${center.sigma.toFixed(2)}. ${finding} Client check on the drawn series.`;
 
   return (
