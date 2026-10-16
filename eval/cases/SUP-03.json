@@ -1,0 +1,51 @@
+{
+  "id": "SUP-03",
+  "group": "supplyChainMaterial",
+  "groundTruth": null,
+  "expected": {
+    "behavior": "recommend",
+    "category": "supplyChainMaterial",
+    "forbiddenInCause": [
+      "ECO-4471"
+    ]
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "E-01",
+    "signalShape": "step",
+    "lotIds": [
+      "PL-2044"
+    ],
+    "noticeIds": [
+      "SN-PL-2044"
+    ],
+    "lotEvidenceIds": [
+      "00000000-0000-0000-0000-000000000302"
+    ],
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000312"
+    ],
+    "notes": [
+      {
+        "id": "00000000-0000-0000-0000-000000000302",
+        "externalRef": "SN-PL-2044",
+        "title": "Lot PL-2044 certificate is out of spec",
+        "detail": "Lot PL-2044 went into service on E-01 and E-02. The certificate is out of specification.",
+        "source": "enterprise"
+      },
+      {
+        "id": "00000000-0000-0000-0000-000000000322",
+        "externalRef": "ECO-4471",
+        "title": "ECO-4471 revision",
+        "detail": "ECO-4471 hardware revision. Setpoints are unchanged.",
+        "source": "enterprise"
+      }
+    ],
+    "ecoIds": [
+      "ECO-4471"
+    ],
+    "ecoEvidenceIds": [
+      "00000000-0000-0000-0000-000000000322"
+    ]
+  }
+}

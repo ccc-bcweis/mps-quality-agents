@@ -1,0 +1,52 @@
+{
+  "id": "CON-01",
+  "group": "contradictoryEvidence",
+  "groundTruth": "FLT-CONTRA-D01",
+  "expected": {
+    "behavior": "escalate",
+    "category": null,
+    "forbiddenInCause": []
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "D-01",
+    "signalShape": "step",
+    "ecoIds": [
+      "ECO-4512"
+    ],
+    "ecoEvidenceIds": [
+      "00000000-0000-0000-0000-000000000600"
+    ],
+    "overdueInstruments": [
+      "Baratron manometer"
+    ],
+    "overdueEvidenceIds": [
+      "00000000-0000-0000-0000-000000000610"
+    ],
+    "lotIds": [
+      "CF4-031"
+    ],
+    "noticeIds": [
+      "SN-CF4-031"
+    ],
+    "lotEvidenceIds": [
+      "00000000-0000-0000-0000-000000000620"
+    ],
+    "notes": [
+      {
+        "id": "00000000-0000-0000-0000-000000000600",
+        "externalRef": "ECO-4512",
+        "title": "Showerhead revision",
+        "detail": "Showerhead revision on D-01. Setpoints changed.",
+        "source": "enterprise"
+      },
+      {
+        "id": "00000000-0000-0000-0000-000000000620",
+        "externalRef": "SN-CF4-031",
+        "title": "Lot CF4-031 certificate is out of spec",
+        "detail": "Lot CF4-031 is out of specification; in service on D-01.",
+        "source": "enterprise"
+      }
+    ]
+  }
+}

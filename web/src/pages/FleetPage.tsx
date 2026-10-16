@@ -88,7 +88,7 @@ export function FleetPage() {
   const bays = [...new Set(rows.map((tool) => tool.bay))];
   const families = new Set(rows.map((tool) => tool.family)).size;
   // Same rows the Alerts page lists for this plant, so the button and the page always agree.
-  const openAlerts = new Set(visibleAlerts.map((alert) => alert.correlationId)).size;
+  const openAlerts = visibleAlerts.filter((alert) => alert.status !== "cleared").length;
 
   return (
     <div>

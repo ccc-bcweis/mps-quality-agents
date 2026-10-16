@@ -1,0 +1,41 @@
+{
+  "id": "SUP-02",
+  "group": "supplyChainMaterial",
+  "groundTruth": "FLT-SC5-MX4419",
+  "expected": {
+    "behavior": "recommend",
+    "category": "supplyChainMaterial",
+    "forbiddenInCause": [
+      "WO-PM-D03-4419"
+    ]
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "D-03",
+    "signalShape": "step",
+    "lotIds": [
+      "MX4419"
+    ],
+    "noticeIds": [
+      "SN-MX4419"
+    ],
+    "lotEvidenceIds": [
+      "00000000-0000-0000-0000-000000000301"
+    ],
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000311"
+    ],
+    "notes": [
+      {
+        "id": "00000000-0000-0000-0000-000000000301",
+        "externalRef": "SN-MX4419",
+        "title": "Lot MX4419 certificate is out of spec",
+        "detail": "Lot MX4419 went into service on D-03 and I-D-01. The certificate is out of specification.",
+        "source": "enterprise"
+      }
+    ],
+    "pmSummaries": [
+      "WO-PM-D03-4419 PM closed; no parts changed."
+    ]
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "id": "SUP-01",
+  "group": "supplyChainMaterial",
+  "groundTruth": "FLT-GAS-NF3317",
+  "expected": {
+    "behavior": "recommend",
+    "category": "supplyChainMaterial",
+    "forbiddenInCause": [
+      "ECO-4502"
+    ]
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "E-01",
+    "signalShape": "step",
+    "lotIds": [
+      "NF-3317"
+    ],
+    "noticeIds": [
+      "SN-NF-3317"
+    ],
+    "lotEvidenceIds": [
+      "00000000-0000-0000-0000-000000000300"
+    ],
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000310"
+    ],
+    "notes": [
+      {
+        "id": "00000000-0000-0000-0000-000000000300",
+        "externalRef": "SN-NF-3317",
+        "title": "Lot NF-3317 certificate is out of spec",
+        "detail": "Lot NF-3317 went into service on E-01 and E-02. The certificate is out of specification.",
+        "source": "enterprise"
+      },
+      {
+        "id": "00000000-0000-0000-0000-000000000320",
+        "externalRef": "ECO-4502",
+        "title": "ECO-4502 revision",
+        "detail": "ECO-4502 hardware revision. Setpoints are unchanged.",
+        "source": "enterprise"
+      }
+    ],
+    "ecoIds": [
+      "ECO-4502"
+    ],
+    "ecoEvidenceIds": [
+      "00000000-0000-0000-0000-000000000320"
+    ]
+  }
+}

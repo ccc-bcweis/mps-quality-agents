@@ -1,0 +1,21 @@
+{
+  "id": "DRF-01",
+  "group": "processDrift",
+  "groundTruth": "FLT-DRIFT-E01",
+  "expected": {
+    "behavior": "recommend",
+    "category": "processDrift",
+    "forbiddenInCause": []
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "E-01",
+    "signalShape": "ramp",
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000400"
+    ],
+    "pmSummaries": [
+      "WO-CLN-E01-220 chamber clean; seasoning in progress."
+    ]
+  }
+}

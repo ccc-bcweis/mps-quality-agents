@@ -49,7 +49,7 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         before.GetProperty("mode").GetString().Should().Be("replay");
         before.GetProperty("completionRate").GetDouble().Should().Be(0d);
         before.GetProperty("groundingScore").GetDouble().Should().Be(1d);
-        before.GetProperty("categoryAccuracy").ValueKind.Should().Be(JsonValueKind.Null);
+        before.GetProperty("categoryAccuracy").GetDouble().Should().BeInRange(0d, 1d, "the replay eval report ships with the build");
         before.GetProperty("toolFailureCount").GetInt32().Should().Be(0);
         before.GetProperty("latencyP95Ms").GetDouble().Should().BeGreaterThanOrEqualTo(0d);
         before.GetProperty("costPerInvestigationUsd").ValueKind.Should().Be(JsonValueKind.Null);
@@ -58,7 +58,7 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         approved.StatusCode.Should().Be(HttpStatusCode.OK);
         after.GetProperty("completionRate").GetDouble().Should().Be(1d);
         after.GetProperty("costPerInvestigationUsd").GetDouble().Should().Be(0d);
-        after.GetProperty("categoryAccuracy").ValueKind.Should().Be(JsonValueKind.Null);
+        after.GetProperty("categoryAccuracy").GetDouble().Should().BeInRange(0d, 1d);
     }
 
     [Fact]

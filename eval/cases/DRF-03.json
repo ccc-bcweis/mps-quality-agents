@@ -1,0 +1,38 @@
+{
+  "id": "DRF-03",
+  "group": "processDrift",
+  "groundTruth": null,
+  "expected": {
+    "behavior": "recommend",
+    "category": "processDrift",
+    "forbiddenInCause": [
+      "ECO-4502"
+    ]
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "E-01",
+    "signalShape": "ramp",
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000402"
+    ],
+    "pmSummaries": [
+      "Chamber clean closed; seasoning wafers run."
+    ],
+    "ecoIds": [
+      "ECO-4502"
+    ],
+    "ecoEvidenceIds": [
+      "00000000-0000-0000-0000-000000000420"
+    ],
+    "notes": [
+      {
+        "id": "00000000-0000-0000-0000-000000000420",
+        "externalRef": "ECO-4502",
+        "title": "Liner part-number note",
+        "detail": "Document-only change: drawing note updated. No hardware or recipe change.",
+        "source": "enterprise"
+      }
+    ]
+  }
+}

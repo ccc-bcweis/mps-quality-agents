@@ -1,0 +1,36 @@
+{
+  "id": "SUP-04",
+  "group": "supplyChainMaterial",
+  "groundTruth": null,
+  "expected": {
+    "behavior": "recommend",
+    "category": "supplyChainMaterial",
+    "forbiddenInCause": []
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "E-01",
+    "signalShape": "step",
+    "lotIds": [
+      "CF4-022"
+    ],
+    "noticeIds": [
+      "SN-CF4-022"
+    ],
+    "lotEvidenceIds": [
+      "00000000-0000-0000-0000-000000000303"
+    ],
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000313"
+    ],
+    "notes": [
+      {
+        "id": "00000000-0000-0000-0000-000000000303",
+        "externalRef": "SN-CF4-022",
+        "title": "Lot CF4-022 certificate is out of spec",
+        "detail": "Lot CF4-022 went into service on E-01 and E-02. The certificate is out of specification.",
+        "source": "enterprise"
+      }
+    ]
+  }
+}

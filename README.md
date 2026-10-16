@@ -13,6 +13,9 @@ All companies, equipment, people and data in this repo are **fictional and synth
 ## Plan
 - [docs/SPEC.md](docs/SPEC.md): design specification (POV, demo, architecture, code, tests, eval)
 - [docs/PLAN.md](docs/PLAN.md): execution plan (modules, lanes/agents, phases and gates, test strategy, eval and security, synthetic data, deck)
+- [docs/demo/DEMO-SCRIPT.md](docs/demo/DEMO-SCRIPT.md): presenter demo script
+- [docs/operations/runbook.md](docs/operations/runbook.md): deploy, smoke, reset, rollback, teardown
+- [eval/README.md](eval/README.md): replay eval (24 cases, CI gate)
 
 ## Planned stack
 .NET 8 / C#, Microsoft Agent Framework (with a LangGraph-compatible adapter), React + TypeScript, Azure (Container Apps, Azure OpenAI, Entra ID, Key Vault, App Insights), promptfoo + Microsoft.Extensions.AI.Evaluation, Stryker.NET, OWASP ZAP.

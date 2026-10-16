@@ -33,6 +33,9 @@ jobs:
       - name: Test
         run: dotnet test MPS.sln --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory coverage --settings coverlet.runsettings
 
+      - name: Eval (replay mode, gates)
+        run: dotnet run --project eval/Eval.Runner --configuration Release --no-build -- eval/cases "$RUNNER_TEMP/eval-latest.json"
+
       - name: Coverage report
         run: |
           dotnet tool install --tool-path "$RUNNER_TEMP/tools" dotnet-reportgenerator-globaltool --version 5.5.11

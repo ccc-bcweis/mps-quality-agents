@@ -95,6 +95,20 @@ public sealed class MetricsCalculatorTests
         GroundingScore.For(evidence, []).Should().Be(1d);
     }
 
+    [Fact]
+    public void CostPerSuccessDividesSpendBySuccessfulInvestigationsAndIsNullWithNone()
+    {
+        var a = Guid.NewGuid();
+        var b = Guid.NewGuid();
+        var rollup = MetricsCalculator.Compute(
+            [Sample(a, Today, true, true, 1d, 0, 10d, 0d), Sample(b, Today, true, false, 1d, 0, 10d, 0d)],
+            Today, 2d, "live");
+        rollup.SuccessfulToday.Should().Be(1);
+        MetricsRollup.CostPerSuccess(0.5d, rollup.SuccessfulToday).Should().Be(0.5d);
+        MetricsRollup.CostPerSuccess(0.5d, 0).Should().BeNull();
+        MetricsCalculator.Compute([], Today, 2d, "live").CostPerInvestigationUsd.Should().BeNull();
+    }
+
     private static InvestigationObservation Sample(
         Guid id,
         DateTimeOffset at,

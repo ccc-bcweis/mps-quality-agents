@@ -13,5 +13,9 @@ public sealed class MpsApiFactory : WebApplicationFactory<ApiHostMarker>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment(Environments.Development);
+        // Each fixture gets its own SQLite folder so open hosts never share a database file.
+        builder.UseSetting("Mps:DataDirectory", Path.Combine(Path.GetTempPath(), "mps-it-" + Guid.NewGuid().ToString("N")));
+        builder.UseSetting("Mps:Simulation:RealTime", "false");
+        builder.UseSetting("Mps:Simulation:PrimeSeconds", "0");
     }
 }

@@ -1,0 +1,43 @@
+{
+  "id": "CAL-04",
+  "group": "equipmentCalibrationOrAlignment",
+  "groundTruth": null,
+  "expected": {
+    "behavior": "recommend",
+    "category": "equipmentCalibrationOrAlignment",
+    "forbiddenInCause": []
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "D-03",
+    "signalShape": "step",
+    "overdueInstruments": [
+      "Baratron manometer"
+    ],
+    "overdueEvidenceIds": [
+      "00000000-0000-0000-0000-000000000203"
+    ],
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000213"
+    ],
+    "notes": [
+      {
+        "id": "00000000-0000-0000-0000-000000000203",
+        "externalRef": "CAL-D-03",
+        "title": "Baratron manometer calibration overdue",
+        "detail": "Calibration of Baratron manometer on D-03 is 21 days overdue.",
+        "source": "enterprise"
+      },
+      {
+        "id": "00000000-0000-0000-0000-000000000223",
+        "externalRef": "CF4-014",
+        "title": "Lot CF4-014",
+        "detail": "Material lot CF4-014 received; supplier notice none; certificate in spec.",
+        "source": "enterprise"
+      }
+    ],
+    "lotIds": [
+      "CF4-014"
+    ]
+  }
+}

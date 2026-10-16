@@ -60,7 +60,7 @@ jobs:
         run: dotnet tool restore
 
       # Measured on lane/5-qa on 2026-10-14: Domain score 27.68%, under the 60 break.
-      # The filter keeps solution mode on the domain tests. PendingLane tests are not in that set.
+      # The filter keeps solution mode on the domain tests.
       - name: Mutate Domain
         run: dotnet tool run dotnet-stryker -- --config-file stryker-config.json --skip-version-check --output StrykerOutput/domain
 

@@ -30,7 +30,7 @@ export function MetricsPage() {
         <Stat label="Grounding" value={metricText(metrics?.groundingScore === null || metrics?.groundingScore === undefined ? null : metrics.groundingScore * 100, 0, "%")} note="citation precision" />
         <Stat label="Category acc." value={metricText(metrics?.categoryAccuracy === null || metrics?.categoryAccuracy === undefined ? null : metrics.categoryAccuracy * 100, 0, "%")} note="top-1" />
         <Stat label="p95" value={metrics?.latencyP95Ms === null || metrics?.latencyP95Ms === undefined ? "—" : `${metrics.latencyP95Ms} ms`} note="investigation" />
-        <Stat label="Cost / success" value={metrics?.costPerInvestigationUsd === null || metrics?.costPerInvestigationUsd === undefined ? "—" : formatUsd(metrics.costPerInvestigationUsd)} note="unit cost" />
+        <Stat label="Cost / success" value={metrics?.costPerInvestigationUsd === null || metrics?.costPerInvestigationUsd === undefined ? "n/a" : formatUsd(metrics.costPerInvestigationUsd)} note="spend ÷ successful investigations today" />
       </div>
       <div className="mt-3 grid gap-3 lg:grid-cols-2">
         <section className={panel}>

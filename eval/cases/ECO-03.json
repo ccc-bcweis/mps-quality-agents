@@ -1,0 +1,33 @@
+{
+  "id": "ECO-03",
+  "group": "engineeringChange",
+  "groundTruth": null,
+  "expected": {
+    "behavior": "recommend",
+    "category": "engineeringChange",
+    "forbiddenInCause": []
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "E-01",
+    "signalShape": "step",
+    "ecoIds": [
+      "ECO-4480"
+    ],
+    "ecoEvidenceIds": [
+      "00000000-0000-0000-0000-000000000102"
+    ],
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000112"
+    ],
+    "notes": [
+      {
+        "id": "00000000-0000-0000-0000-000000000102",
+        "externalRef": "ECO-4480",
+        "title": "Edge ring revision on E-01",
+        "detail": "Replace the chamber A edge ring on E-01. Recipe setpoints are unchanged.",
+        "source": "enterprise"
+      }
+    ]
+  }
+}

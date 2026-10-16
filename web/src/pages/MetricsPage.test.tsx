@@ -9,6 +9,7 @@ describe("metrics", () => {
     expect(await screen.findByRole("heading", { name: "Metrics / eval" })).toBeInTheDocument();
     expect(screen.getAllByText("100% hard gate").length).toBeGreaterThan(0);
     expect(screen.getAllByText("—").length).toBeGreaterThan(0);
+    expect(screen.getByText("n/a")).toBeInTheDocument();
     expect(screen.getByText(/illustrative layout only/i)).toBeInTheDocument();
   });
 });

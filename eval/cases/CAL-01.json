@@ -1,0 +1,43 @@
+{
+  "id": "CAL-01",
+  "group": "equipmentCalibrationOrAlignment",
+  "groundTruth": "FLT-CAL-S02",
+  "expected": {
+    "behavior": "recommend",
+    "category": "equipmentCalibrationOrAlignment",
+    "forbiddenInCause": []
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "S-02",
+    "signalShape": "step",
+    "overdueInstruments": [
+      "O2 MFC"
+    ],
+    "overdueEvidenceIds": [
+      "00000000-0000-0000-0000-000000000200"
+    ],
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000210"
+    ],
+    "notes": [
+      {
+        "id": "00000000-0000-0000-0000-000000000200",
+        "externalRef": "CAL-S-02",
+        "title": "O2 MFC calibration overdue",
+        "detail": "Calibration of O2 MFC on S-02 is 21 days overdue.",
+        "source": "enterprise"
+      },
+      {
+        "id": "00000000-0000-0000-0000-000000000220",
+        "externalRef": "N2H2-190",
+        "title": "Lot N2H2-190",
+        "detail": "Material lot N2H2-190 received; supplier notice none; certificate in spec.",
+        "source": "enterprise"
+      }
+    ],
+    "lotIds": [
+      "N2H2-190"
+    ]
+  }
+}
