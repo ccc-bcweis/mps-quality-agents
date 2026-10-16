@@ -86,7 +86,10 @@ public sealed partial class StreamSpcPublisher
                 continue;
             }
 
-            await InvestigateAsync(outcome.Incident.Id).ConfigureAwait(false);
+            // Run it off the stream: the investigation may wait for more readings to classify the shape,
+            // and those readings come from this stream.
+            var incidentId = outcome.Incident.Id;
+            _pending.Enqueue(Task.Run(() => InvestigateAsync(incidentId), CancellationToken.None));
         }
     }
 
