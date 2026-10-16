@@ -72,7 +72,11 @@ public sealed record EvidenceResponse(
     double? SpecHigh = null,
     string? ToolName = null,
     string? ChamberName = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? SourceEventIds = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? SourceEventIds = null,
+    double? ControlLow = null,
+    double? ControlHigh = null,
+    double? Center = null,
+    string? LimitState = null);
 
 public sealed record EvidenceMatrixResponse(
     RootCauseCategory Category,
@@ -215,7 +219,24 @@ public sealed record ToolLiveResponse(
     IReadOnlyList<LiveReadingResponse> Readings,
     IReadOnlyList<LiveSeriesResponse> Series);
 
-public sealed record LiveReadingResponse(string SensorId, string Parameter, string ChamberId, string Unit, DateTimeOffset At, double Value, string Status);
+/// <summary>
+/// One live reading with the recipe-step window it is judged against. Spec is the recipe minimum and maximum; control
+/// limits are the nominal plus or minus three sigma. LimitState is outOfSpec, outOfControl or inControl, or null without a window.
+/// </summary>
+public sealed record LiveReadingResponse(
+    string SensorId,
+    string Parameter,
+    string ChamberId,
+    string Unit,
+    DateTimeOffset At,
+    double Value,
+    string Status,
+    double? SpecLow = null,
+    double? SpecHigh = null,
+    double? Center = null,
+    double? ControlLow = null,
+    double? ControlHigh = null,
+    string? LimitState = null);
 
 /// <summary>One live series. Center and Sigma are the limits the rules engine checks; null when the series has none.</summary>
 public sealed record LiveSeriesResponse(string Parameter, string ChamberId, IReadOnlyList<LivePointResponse> Points, double? Center = null, double? Sigma = null);

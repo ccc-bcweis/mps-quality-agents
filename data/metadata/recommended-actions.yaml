@@ -1,0 +1,16 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Fallback recommended actions per root-cause class. Used only when the resolution agent returns a cause without a
+# containment or a preventive action. {record} is the first cited business record (ECO, calibration, lot, work order),
+# {tool} the affected tool. Every sufficient investigation shows at least one of each.
+engineeringChange:
+  containment: "Hold {tool} and roll back the change in {record} to the previous approved revision until engineering clears it."
+  preventive: "Open an engineering review of {record} and update the change record with a qualification run before release."
+equipmentCalibrationOrAlignment:
+  containment: "Hold {tool} until the instrument named in {record} is recalibrated and its readings match a reference."
+  preventive: "Bring {record} back in date and add an overdue-calibration check to the tool start-up list."
+supplyChainMaterial:
+  containment: "Quarantine the material in {record} and switch {tool} to an in-spec lot."
+  preventive: "Raise a supplier corrective action for {record} and tighten incoming inspection for that material."
+processDrift:
+  containment: "Hold {tool} and run the chamber recovery in {record} before more wafers run."
+  preventive: "Shorten the clean or service interval named in {record} and add a drift alarm on the parameter."

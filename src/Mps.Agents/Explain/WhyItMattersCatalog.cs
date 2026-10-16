@@ -74,7 +74,8 @@ public sealed class WhyItMattersCatalog
     public CitedEvidence ExplainItem(EvidenceItem item)
     {
         ArgumentNullException.ThrowIfNull(item);
-        return Explain(item.Id, Wire(item.Source), ParameterOf(item), item.Title, item.ExternalRef, preferredSignalId: null);
+        var cited = Explain(item.Id, Wire(item.Source), ParameterOf(item), item.Title, item.ExternalRef, preferredSignalId: null);
+        return LimitSentence(item) is { } measured ? new CitedEvidence(cited.EvidenceId, measured, cited.SignalId) : cited;
     }
 
     public string? SignalIdFor(EvidenceItem item)
@@ -245,45 +246,34 @@ public sealed class WhyItMattersCatalog
         return null;
     }
 
+    /// <summary>
+    /// The sentence for a sensor reading, from its own numbers: out of spec when the value is outside the recipe spec,
+    /// out of control when it is inside spec but a control rule broke. Null when the pack stored no limits.
+    /// </summary>
+    public static string? LimitSentence(EvidenceItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        if (item.Source is not (EvidenceSource.Telemetry or EvidenceSource.Spc) || item.Reading is not { } reading)
+        {
+            return null;
+        }
+
+        var state = LimitState.Of(reading.Value, reading.SpecLow, reading.SpecHigh, reading.ControlLow, reading.ControlHigh, reading.Center is not null);
+        var latest = item.Source == EvidenceSource.Telemetry ? "The latest reading" : "This reading";
+        return state switch
+        {
+            LimitState.OutOfSpec => latest + " is outside its recipe spec, so it is out of spec and can change the result on the wafer.",
+            LimitState.OutOfControl => latest + " is still inside its recipe spec but broke a control rule, so it is out of control: statistically unusual, not a spec violation.",
+            LimitState.InControl => latest + " is inside its recipe spec and its control limits.",
+            _ => null,
+        };
+    }
+
+    /// <summary>Used only when the pack stored no limits, so it names no limit and claims no direction.</summary>
     private static string SensorSentence(string? parameter)
     {
-        var key = Normalize(parameter);
-        if (key.Contains("temp", StringComparison.Ordinal) || key.Contains("esc", StringComparison.Ordinal))
-        {
-            return "Chuck temperature moved outside the recipe window, which can change etch depth.";
-        }
-
-        if (key.Contains("press", StringComparison.Ordinal))
-        {
-            return "Chamber pressure left its recipe window, which can change the etch rate and the film result.";
-        }
-
-        if (key.Contains("vibrat", StringComparison.Ordinal))
-        {
-            return "Vibration rose above its normal limit, which can scratch a wafer or shift alignment.";
-        }
-
-        if (key.Contains("particle", StringComparison.Ordinal))
-        {
-            return "Particle count rose above the recipe limit, which can leave defects on the wafer.";
-        }
-
-        if (key.Contains("flow", StringComparison.Ordinal) || key.Contains("gas", StringComparison.Ordinal))
-        {
-            return "A gas flow left its recipe window, which can change the chemistry inside the chamber.";
-        }
-
-        if (key.Contains("power", StringComparison.Ordinal) || key.Contains("radio", StringComparison.Ordinal))
-        {
-            return "Radio-frequency power left its recipe window, which can change how the plasma removes material.";
-        }
-
-        if (key.Contains("etch", StringComparison.Ordinal))
-        {
-            return "Etch rate left its recipe window, which can change how much material is removed.";
-        }
-
-        return "This sensor left its normal range, which can change the result on the wafer.";
+        _ = parameter;
+        return "This sensor's readings are part of the signal under investigation; open them to compare against the recipe spec.";
     }
 
     private static string SourceSentence(EvidenceSource source, string? title, string? externalRef)
@@ -315,8 +305,14 @@ public sealed class WhyItMattersCatalog
         return data is null ? Empty : Load(data);
     }
 
-    private static string? FindDataDirectory()
+    internal static string? FindDataDirectory()
     {
+        var configured = Environment.GetEnvironmentVariable("Mps__DataDirectory");
+        if (!string.IsNullOrWhiteSpace(configured) && Directory.Exists(Path.Combine(configured, "metadata")))
+        {
+            return configured;
+        }
+
         var seeds = new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
         foreach (var seed in seeds)
         {
@@ -329,7 +325,7 @@ public sealed class WhyItMattersCatalog
             while (dir is not null)
             {
                 var candidate = Path.Combine(dir.FullName, "data");
-                if (Directory.Exists(candidate))
+                if (Directory.Exists(Path.Combine(candidate, "metadata")))
                 {
                     return candidate;
                 }

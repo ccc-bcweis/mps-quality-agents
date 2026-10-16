@@ -74,7 +74,7 @@ public sealed class FakeInvestigationWorkflow : IInvestigationWorkflow
             0.5d,
             [evidenceId],
             ["No confounder was evaluated by the stand-in."],
-            ["Hold the affected lot and confirm the signal with a process engineer."]);
+            ["Containment: Hold the affected lot and confirm the signal with a process engineer.", "Preventive: Review the cited record with engineering before the tool runs again."]);
         var snapshot = new InvestigationSnapshot(
             InvestigationId.New(),
             incidentId,

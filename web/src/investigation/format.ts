@@ -105,6 +105,17 @@ export function plainNarrative(text: string): string {
     .trim();
 }
 
+/** Plain wording for a finding or action: like plainNarrative, but keeps business record ids (ECO-4471) a reader must check. */
+export function plainFinding(text: string): string {
+  return text
+    .replace(GUID, "")
+    .replace(STAMP, "")
+    .replace(TOOL_ID, (_match, letter: string, num: string) => `${FAMILY[letter] ?? "Tool"} tool ${letter}-${num}`)
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([.,;:])/g, "$1")
+    .trim();
+}
+
 export function oneSentence(text: string): string {
   const cleaned = plainNarrative(text);
   const sentence = cleaned.split(/(?<=[.!?])\s/)[0] ?? cleaned;
@@ -129,7 +140,7 @@ export function whatItShows(item: EvidenceItem): string {
   return oneSentence(item.excerpt || item.title) || "Recorded evidence";
 }
 
-export function valueVsSpec(item: Pick<EvidenceItem, "value" | "unit" | "specLow" | "specHigh" | "excerpt">): string {
+export function valueVsSpec(item: Pick<EvidenceItem, "value" | "unit" | "specLow" | "specHigh" | "excerpt" | "controlLow" | "controlHigh">): string {
   const parsed = parseReading(item.excerpt);
   const value = item.value ?? parsed.value;
   if (value == null || !Number.isFinite(value)) return "—";
@@ -137,9 +148,13 @@ export function valueVsSpec(item: Pick<EvidenceItem, "value" | "unit" | "specLow
   const low = item.specLow ?? parsed.low;
   const high = item.specHigh ?? parsed.high;
   const valueText = unit ? `${formatMeasure(value)} ${unit}` : formatMeasure(value);
-  if (low == null || high == null) return valueText;
+  const control =
+    item.controlLow != null && item.controlHigh != null
+      ? `, control limits ${formatMeasure(item.controlLow)}-${formatMeasure(item.controlHigh)}${unit ? ` ${unit}` : ""}`
+      : "";
+  if (low == null || high == null) return valueText + control;
   const spec = `${formatMeasure(low)}-${formatMeasure(high)}`;
-  return unit ? `${valueText}, spec ${spec} ${unit}` : `${valueText}, spec ${spec}`;
+  return (unit ? `${valueText}, recipe spec ${spec} ${unit}` : `${valueText}, recipe spec ${spec}`) + control;
 }
 
 export function readableExcerpt(text: string, timeZone?: string): string {

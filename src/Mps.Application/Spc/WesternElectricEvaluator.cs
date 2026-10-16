@@ -54,7 +54,7 @@ public static class WesternElectricEvaluator
                     chamberId,
                     parameterName,
                     point,
-                    baseline.Sigma,
+                    baseline,
                     Severity.High);
             }
 
@@ -66,7 +66,7 @@ public static class WesternElectricEvaluator
                     chamberId,
                     parameterName,
                     point,
-                    baseline.Sigma,
+                    baseline,
                     Math.Abs(z) >= 4d ? Severity.Critical : Severity.High);
             }
 
@@ -78,7 +78,7 @@ public static class WesternElectricEvaluator
                     chamberId,
                     parameterName,
                     point,
-                    baseline.Sigma,
+                    baseline,
                     Severity.High);
             }
 
@@ -90,7 +90,7 @@ public static class WesternElectricEvaluator
                     chamberId,
                     parameterName,
                     point,
-                    baseline.Sigma,
+                    baseline,
                     Severity.Medium);
             }
 
@@ -102,7 +102,7 @@ public static class WesternElectricEvaluator
                     chamberId,
                     parameterName,
                     point,
-                    baseline.Sigma,
+                    baseline,
                     Severity.Medium);
             }
 
@@ -114,7 +114,7 @@ public static class WesternElectricEvaluator
                     chamberId,
                     parameterName,
                     point,
-                    baseline.Sigma,
+                    baseline,
                     Severity.Low);
             }
         }
@@ -235,10 +235,15 @@ public static class WesternElectricEvaluator
         string? chamberId,
         string parameter,
         TelemetryPoint point,
-        double sigma,
+        ControlBaseline baseline,
         Severity severity)
     {
-        return new SpcViolation(rule, toolId, chamberId, parameter, point.At, point.Value, sigma, severity);
+        return new SpcViolation(rule, toolId, chamberId, parameter, point.At, point.Value, baseline.Sigma, severity)
+        {
+            Center = baseline.Center,
+            LowerSpec = baseline.LowerSpec,
+            UpperSpec = baseline.UpperSpec,
+        };
     }
 
     private static void Add(List<SpcViolation> violations, SpcViolation? violation)

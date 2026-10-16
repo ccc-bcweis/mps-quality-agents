@@ -19,7 +19,8 @@ describe("investigation", () => {
     expect(pack).toHaveTextContent("Product records");
     expect(pack).toHaveTextContent("The part change was in place before the wobble started.");
     expect(pack).toHaveTextContent("Etch tool E-02, Chamber B");
-    expect(pack).toHaveTextContent("53.1 °C, spec 40-60 °C");
+    expect(pack).toHaveTextContent("53.1 °C, recipe spec 48-56 °C, control limits 48-56 °C");
+    expect(pack).toHaveTextContent("In spec, out of control");
     expect(screen.getAllByText("Edge ring revision C changed the thermal path.").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/A preventive maintenance was performed the same week/).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Rules").length).toBeGreaterThan(0);
@@ -46,13 +47,18 @@ describe("investigation", () => {
     expect(screen.getByRole("table", { name: "Evidence pack" })).toHaveTextContent(
       "MES says a different revision, so the cause cannot be named.",
     );
-    expect(screen.getByRole("table", { name: "Evidence pack" })).toHaveTextContent("6.52 Torr, spec 2-6 Torr");
+    expect(screen.getByRole("table", { name: "Evidence pack" })).toHaveTextContent("6.52 Torr, recipe spec 2-6 Torr");
     expect(screen.getByRole("table", { name: "Root-cause evidence matrix" })).toHaveTextContent("rules out");
   });
 
   it("puts the decision on the investigation page, without architecture remarks or the enforcement table", async () => {
     renderConsole(`/investigations/${S1_INVESTIGATION_ID}`);
     const decision = await screen.findByRole("region", { name: "Decision" });
+    const recommended = within(decision).getByTestId("recommended-action");
+    expect(recommended).toHaveTextContent("Recommended action");
+    expect(recommended).toHaveTextContent(/Containment:.*roll back to edge ring revision B/);
+    expect(recommended).toHaveTextContent(/Preventive:.*ECO-4471/);
+    expect(recommended.compareDocumentPosition(within(decision).getByRole("button", { name: "Reject" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(within(decision).getByRole("button", { name: "Approve CAPA + containment" })).toBeInTheDocument();
     expect(within(decision).getByRole("button", { name: "Request more evidence" })).toBeInTheDocument();
     expect(within(decision).getByRole("button", { name: "Reject" })).toBeInTheDocument();

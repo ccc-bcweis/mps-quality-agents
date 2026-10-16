@@ -1,20 +1,16 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
-using Microsoft.EntityFrameworkCore;
-
-using Mps.Api.Persistence;
 using Mps.Application.Persistence;
 using Mps.Application.Tools;
 using Mps.Domain.Identity;
 using Mps.Domain.Impact;
 using Mps.Domain.Telemetry;
-using Mps.Simulator.Fleet;
 
 namespace Mps.Api.Live;
 
 /// <summary>
 /// Telemetry, SPC and impact tools for the hosted demo. When the plant simulator has samples, the agent
-/// reads that stream. Otherwise the tool falls back to a deterministic baseline with the injected fault overlaid.
+/// reads that stream. Without samples it returns no readings and no violations; it never reads the injected fault record.
 /// </summary>
 public sealed class DemoSignalTools : ITelemetryTool, ISpcTool, IImpactScopeTool
 {
@@ -35,71 +31,23 @@ public sealed class DemoSignalTools : ITelemetryTool, ISpcTool, IImpactScopeTool
         _plant = plant;
     }
 
-    public async Task<TelemetryWindow> GetWindowAsync(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
+    public Task<TelemetryWindow> GetWindowAsync(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
     {
         var live = LivePoints(toolId, parameter, from, until);
-        if (live.Count > 0)
+        if (live.Count == 0)
         {
-            var start = live.Min(point => point.At);
-            var end = live.Max(point => point.At);
-            if (from < start)
-            {
-                start = from;
-            }
-
-            if (until > end)
-            {
-                end = until;
-            }
-
-            return new TelemetryWindow(toolId, parameter, start, end, live);
+            return Task.FromResult(new TelemetryWindow(toolId, parameter, from, until < from ? from : until, []));
         }
 
-        using var scope = _scopes.CreateScope();
-        var (mean, sigma) = await LimitsAsync(scope, toolId, parameter, cancellationToken).ConfigureAwait(false);
-        var faults = await FaultsAsync(scope, toolId, parameter, cancellationToken).ConfigureAwait(false);
-        var points = new List<TelemetryPoint>();
-        var cursor = until - from > TimeSpan.FromDays(2) ? until.AddDays(-2) : from;
-        var index = 0;
-        for (var at = cursor; at <= until; at += Step, index++)
-        {
-            var wobble = Math.Sin(index * 0.7) * 0.35 * sigma;
-            var value = mean + wobble;
-            foreach (var fault in faults.Where(item => item.AcceptedAt <= at))
-            {
-                value += Overlay(fault, at, sigma, index);
-            }
-
-            points.Add(new TelemetryPoint(at, Math.Round(value, 4)));
-        }
-
-        return new TelemetryWindow(toolId, parameter, from, until, points);
+        var start = live.Min(point => point.At);
+        var end = live.Max(point => point.At);
+        return Task.FromResult(new TelemetryWindow(toolId, parameter, from < start ? from : start, end, live));
     }
 
-    public async Task<IReadOnlyList<SpcViolation>> GetViolationsAsync(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
+    public Task<IReadOnlyList<SpcViolation>> GetViolationsAsync(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
     {
-        if (_plant is not null)
-        {
-            var live = _plant.Evaluate(toolId.Value, parameter, from, until);
-            if (live.Count > 0)
-            {
-                return live;
-            }
-        }
-
-        using var scope = _scopes.CreateScope();
-        var alerts = await scope.ServiceProvider.GetRequiredService<IAlertLog>().ListAsync(toolId, cancellationToken).ConfigureAwait(false);
-        var (mean, sigma) = await LimitsAsync(scope, toolId, parameter, cancellationToken).ConfigureAwait(false);
-        var faults = await FaultsAsync(scope, toolId, parameter, cancellationToken).ConfigureAwait(false);
-        return alerts
-            .Where(alert => string.Equals(alert.Parameter, parameter, StringComparison.OrdinalIgnoreCase)
-                && alert.RaisedAt >= from && alert.RaisedAt <= until)
-            .Select(alert =>
-            {
-                var magnitude = faults.LastOrDefault(item => item.AcceptedAt <= alert.RaisedAt)?.Magnitude ?? 3.5d;
-                return new SpcViolation(alert.Rule, toolId, alert.ChamberId, alert.Parameter, alert.RaisedAt, mean + (magnitude * sigma), sigma, alert.Severity);
-            })
-            .ToArray();
+        IReadOnlyList<SpcViolation> live = _plant is null ? [] : _plant.Evaluate(toolId.Value, parameter, from, until);
+        return Task.FromResult(live);
     }
 
     private IReadOnlyList<TelemetryPoint> LivePoints(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until)
@@ -125,47 +73,16 @@ public sealed class DemoSignalTools : ITelemetryTool, ISpcTool, IImpactScopeTool
         }
 
         using var scope = _scopes.CreateScope();
-        var faults = await FaultsAsync(scope, toolId, parameter, cancellationToken).ConfigureAwait(false);
-        var fault = faults.LastOrDefault();
-        if (fault?.ChamberId is { Length: > 0 } chamber)
+        var alerts = await scope.ServiceProvider.GetRequiredService<IAlertLog>().ListAsync(toolId, cancellationToken).ConfigureAwait(false);
+        var latest = alerts
+            .Where(alert => string.Equals(alert.Parameter, parameter, StringComparison.OrdinalIgnoreCase) && alert.RaisedAt <= until)
+            .OrderBy(alert => alert.RaisedAt)
+            .LastOrDefault();
+        if (latest?.ChamberId is { Length: > 0 } chamber)
         {
-            return new ImpactScope(ImpactScopeKind.Chamber, toolId.Value + "/" + chamber, fault.AcceptedAt, "The shift starts when the fault was injected on this chamber only.");
+            return new ImpactScope(ImpactScopeKind.Chamber, toolId.Value + "/" + chamber, latest.RaisedAt, "The alarm on this parameter is on this chamber only.");
         }
 
-        return new ImpactScope(ImpactScopeKind.Tool, toolId.Value, fault?.AcceptedAt, fault is null ? "No injected fault was found for this parameter." : "The shift is visible on the tool.");
-    }
-
-    private static double Overlay(FaultRow fault, DateTimeOffset at, double sigma, int index)
-    {
-        var size = fault.Magnitude * sigma;
-        var hours = (at - fault.AcceptedAt).TotalHours;
-        return fault.Shape switch
-        {
-            "ramp" => size * Math.Min(1d, hours / 6d),
-            "oscillation" => size * Math.Sin(index * 1.3),
-            "intermittent" => index % 3 == 0 ? size : 0d,
-            _ => size,
-        };
-    }
-
-    private static async Task<(double Mean, double Sigma)> LimitsAsync(IServiceScope scope, ToolId toolId, string parameter, CancellationToken cancellationToken)
-    {
-        var tool = await scope.ServiceProvider.GetRequiredService<IFleetCatalog>().FindAsync(toolId, cancellationToken).ConfigureAwait(false);
-        if (tool is not null && FamilyParameterCatalog.For(tool.Family).TryGetValue(parameter, out var limit))
-        {
-            var mean = (limit.Minimum + limit.Maximum) / 2d;
-            return (mean, Math.Max((limit.Maximum - limit.Minimum) / 6d, 1e-6));
-        }
-
-        return (100d, 2d);
-    }
-
-    private static async Task<List<FaultRow>> FaultsAsync(IServiceScope scope, ToolId toolId, string parameter, CancellationToken cancellationToken)
-    {
-        var db = scope.ServiceProvider.GetRequiredService<QualityDbContext>();
-        var rows = await db.Faults.AsNoTracking()
-            .Where(row => row.ToolId == toolId.Value && row.Parameter == parameter)
-            .ToListAsync(cancellationToken).ConfigureAwait(false);
-        return rows.OrderBy(row => row.AcceptedAt).ToList();
+        return new ImpactScope(ImpactScopeKind.Tool, toolId.Value, latest?.RaisedAt, latest is null ? "No alarm was found for this parameter." : "The alarm is on the tool.");
     }
 }

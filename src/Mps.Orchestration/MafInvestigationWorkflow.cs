@@ -240,10 +240,14 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
             accepted.Confidence.Value,
             accepted.EvidenceIds,
             WithRuledOut(Readable(accepted.CounterEvidence, gathered.Pack.Items), RuledOut.All(gathered.Pack)),
-            accepted.Actions);
+            Mps.Agents.Resolution.RecommendedActions.Complete(
+                accepted.Category.Value,
+                accepted.Actions,
+                gathered.Pack.Items.Where(item => accepted.EvidenceIds.Contains(item.Id)).ToArray(),
+                incident.ToolId.Value));
         session.ClearHypotheses();
         session.AddHypothesis(hypothesis);
-        session.ProposedSummary = ProposedSummary(accepted);
+        session.ProposedSummary = hypothesis.Actions.Count > 0 ? string.Join("; ", hypothesis.Actions) : ProposedSummary(accepted);
         session.Stage = InvestigationStage.AwaitingApproval;
         return true;
     }

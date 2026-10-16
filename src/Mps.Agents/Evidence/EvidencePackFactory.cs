@@ -34,7 +34,7 @@ public static class EvidencePackFactory
                 violation.Parameter,
                 violation.At.ToString("O", CultureInfo.InvariantCulture),
                 violation.Rule);
-            items.Add(Item(incident, EvidenceSource.Spc, Mps.Application.Spc.SpcRuleNames.Plain(violation.Rule) + " on " + Mps.Domain.Telemetry.ParameterNames.Display(violation.Parameter), reference, violation.At, violation.ToolId.Value, Text($"{Mps.Application.Spc.SpcRuleNames.Plain(violation.Rule)} broke on {violation.ToolId.Value} {violation.ChamberId ?? string.Empty} {Mps.Domain.Telemetry.ParameterNames.Display(violation.Parameter)} at {Stamp(violation.At)}: value {Num(violation.Value)} (one sigma is {Num(violation.Sigma)}), severity {violation.Severity}."), violation.ChamberId, violation.Value));
+            items.Add(Item(incident, EvidenceSource.Spc, Mps.Application.Spc.SpcRuleNames.Plain(violation.Rule) + " on " + Mps.Domain.Telemetry.ParameterNames.Display(violation.Parameter), reference, violation.At, violation.ToolId.Value, Text($"{Mps.Application.Spc.SpcRuleNames.Plain(violation.Rule)} broke on {violation.ToolId.Value} {violation.ChamberId ?? string.Empty} {Mps.Domain.Telemetry.ParameterNames.Display(violation.Parameter)} at {Stamp(violation.At)}: value {Num(violation.Value)} (one sigma is {Num(violation.Sigma)}){LimitsText(violation)}, severity {violation.Severity}."), violation.ChamberId, violation.Value, Limits.From(violation)));
             observations.Add(new ImpactObservation(violation.ToolId.Value, violation.ChamberId, null, null));
         }
 
@@ -49,7 +49,9 @@ public static class EvidencePackFactory
                 window.Parameter,
                 window.From.ToString("O", CultureInfo.InvariantCulture));
             var latest = window.Points.Count == 0 ? (double?)null : window.Points[^1].Value;
-            items.Add(Item(incident, EvidenceSource.Telemetry, Mps.Domain.Telemetry.ParameterNames.Display(window.Parameter) + " readings", reference, window.To, window.ToolId.Value, DescribeWindow(window, shape), incident.ChamberId, latest));
+            var lastAt = window.Points.Count == 0 ? window.To : window.Points[^1].At;
+            var judged = harvest.Violations.LastOrDefault(item => string.Equals(item.Parameter, window.Parameter, StringComparison.Ordinal));
+            items.Add(Item(incident, EvidenceSource.Telemetry, Mps.Domain.Telemetry.ParameterNames.Display(window.Parameter) + " readings", reference, lastAt, window.ToolId.Value, DescribeWindow(window, shape), incident.ChamberId, latest, judged is null ? null : Limits.From(judged)));
         }
 
         foreach (var eco in harvest.Ecos)
@@ -146,7 +148,8 @@ public static class EvidencePackFactory
         string? toolId,
         string? excerpt = null,
         string? chamberId = null,
-        double? value = null)
+        double? value = null,
+        Limits? limits = null)
     {
         var chamber = !string.IsNullOrWhiteSpace(chamberId)
             ? chamberId
@@ -154,6 +157,11 @@ public static class EvidencePackFactory
                 ? incident.ChamberId
                 : null;
         var reading = EvidenceReading.Place(toolId, chamber, value);
+        if (limits is { } known)
+        {
+            reading = reading with { SpecLow = known.SpecLow, SpecHigh = known.SpecHigh, Center = known.Center, Sigma = known.Sigma };
+        }
+
         return new EvidenceItem(
             EvidenceIds.Create(source, externalRef),
             source,
@@ -163,6 +171,30 @@ public static class EvidencePackFactory
             toolId,
             externalRef,
             reading.IsEmpty ? null : reading);
+    }
+
+    /// <summary>The recipe spec and control-chart centre and sigma a rule was judged against.</summary>
+    private readonly record struct Limits(double? SpecLow, double? SpecHigh, double? Center, double? Sigma)
+    {
+        public static Limits From(Mps.Domain.Telemetry.SpcViolation violation) =>
+            new(violation.LowerSpec, violation.UpperSpec, violation.Center, violation.Center is null ? null : violation.Sigma);
+    }
+
+    /// <summary>"; recipe spec 46-54, control limits 46-54 (centre 50)": the numbers the rule was judged against, when known.</summary>
+    private static string LimitsText(Mps.Domain.Telemetry.SpcViolation violation)
+    {
+        var text = string.Empty;
+        if (violation.LowerSpec is not null || violation.UpperSpec is not null)
+        {
+            text += "; recipe spec " + (violation.LowerSpec is double low ? Num(low) : "none") + " to " + (violation.UpperSpec is double high ? Num(high) : "none");
+        }
+
+        if (violation.Center is double center)
+        {
+            text += "; control limits " + Num(center - (3d * violation.Sigma)) + " to " + Num(center + (3d * violation.Sigma)) + " (centre " + Num(center) + ")";
+        }
+
+        return text;
     }
 
     private static string Text(FormattableString value) => System.Text.RegularExpressions.Regex.Replace(value.ToString(CultureInfo.InvariantCulture), @"\s+", " ").Trim();

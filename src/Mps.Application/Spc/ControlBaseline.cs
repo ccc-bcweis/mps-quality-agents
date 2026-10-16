@@ -43,6 +43,9 @@ public sealed class ControlBaseline
         UpperSpec = upperSpec;
     }
 
+    /// <summary>The standard-score chart (centre zero, one sigma) for readings already expressed in sigmas; it has no spec.</summary>
+    public static ControlBaseline StandardScore { get; } = new(0d, 1d, null, null);
+
     public double Center { get; }
 
     public double Sigma { get; }

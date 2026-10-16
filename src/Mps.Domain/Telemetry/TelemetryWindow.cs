@@ -109,4 +109,13 @@ public sealed record SpcViolation
     public double Sigma { get; }
 
     public Severity Severity { get; }
+
+    /// <summary>Control-chart centre the rule was judged against (recipe nominal). Empty when the source did not say.</summary>
+    public double? Center { get; init; }
+
+    /// <summary>Recipe spec low at the reading, from the recipe step window. Empty when the source did not say.</summary>
+    public double? LowerSpec { get; init; }
+
+    /// <summary>Recipe spec high at the reading, from the recipe step window. Empty when the source did not say.</summary>
+    public double? UpperSpec { get; init; }
 }

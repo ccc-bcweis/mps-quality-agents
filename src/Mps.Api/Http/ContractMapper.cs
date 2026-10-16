@@ -95,7 +95,11 @@ public static class ContractMapper
                     reading.SpecHigh,
                     reading.ToolName,
                     reading.ChamberName,
-                    item.SourceEventIds.Count == 0 ? null : item.SourceEventIds);
+                    item.SourceEventIds.Count == 0 ? null : item.SourceEventIds,
+                    reading.ControlLow,
+                    reading.ControlHigh,
+                    reading.Center,
+                    LimitState.Of(reading.Value, reading.SpecLow, reading.SpecHigh, reading.ControlLow, reading.ControlHigh, reading.Center is not null));
             }).ToArray(),
             snapshot.Hypotheses.Select(item => new HypothesisResponse(
                 item.Id.Value,
@@ -151,7 +155,8 @@ public static class ContractMapper
     }
 
     /// <summary>
-    /// Fills unit and spec from the family catalog when the pack only stored the measured value.
+    /// Fills only the unit from the family catalog when the pack did not store one. Spec and control limits come from
+    /// the recipe step window the reading was judged against, stored on the pack; a family envelope is never shown as a spec.
     /// </summary>
     internal static EvidenceReading CompleteReading(EvidenceItem item)
     {
@@ -164,8 +169,6 @@ public static class ContractMapper
             && FamilyParameterCatalog.For(family).TryGetValue(parameter, out var limit))
         {
             unit ??= limit.Unit;
-            specLow ??= limit.Minimum;
-            specHigh ??= limit.Maximum;
         }
 
         return new EvidenceReading(
@@ -174,7 +177,9 @@ public static class ContractMapper
             specLow,
             specHigh,
             reading?.ToolName ?? PlainEquipment.ToolName(item.ToolId),
-            reading?.ChamberName);
+            reading?.ChamberName,
+            reading?.Center,
+            reading?.Sigma);
     }
 
     private static string? ParameterFrom(EvidenceItem item)

@@ -55,7 +55,7 @@ public sealed class ScenarioTrigger
         }
 
         _context.Set(scenario.Id);
-        _board?.Activate(scenario.Id);
+        _board?.Activate(scenario.Id, _plant.SimulatedNow);
         var opened = await OpenCommandAsync(scenario, cancellationToken).ConfigureAwait(false);
         using var command = CommandAmbient.Adopt(opened);
         try

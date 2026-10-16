@@ -687,6 +687,8 @@ public sealed class EfQualityStore :
             SpecHigh: item.Reading?.SpecHigh,
             ToolName: item.Reading?.ToolName,
             ChamberName: item.Reading?.ChamberName,
+            Center: item.Reading?.Center,
+            Sigma: item.Reading?.Sigma,
             SourceEventIds: item.SourceEventIds.Count == 0 ? null : item.SourceEventIds.ToArray());
 
     private static EvidenceItem ToEvidence(EvidenceDocument document)
@@ -697,8 +699,10 @@ public sealed class EfQualityStore :
             && document.SpecHigh is null
             && document.ToolName is null
             && document.ChamberName is null
+            && document.Center is null
+            && document.Sigma is null
             ? null
-            : new EvidenceReading(document.Value, document.Unit, document.SpecLow, document.SpecHigh, document.ToolName, document.ChamberName);
+            : new EvidenceReading(document.Value, document.Unit, document.SpecLow, document.SpecHigh, document.ToolName, document.ChamberName, document.Center, document.Sigma);
         return new EvidenceItem(
             new EvidenceId(document.Id),
             Enum.Parse<EvidenceSource>(document.Source),
@@ -759,7 +763,9 @@ public sealed class EfQualityStore :
         double? SpecHigh = null,
         string? ToolName = null,
         string? ChamberName = null,
-        IReadOnlyList<string>? SourceEventIds = null);
+        IReadOnlyList<string>? SourceEventIds = null,
+        double? Center = null,
+        double? Sigma = null);
 
     private sealed record MatrixDocument(string Category, Guid EvidenceId, string Stance, string? WhyItMatters);
 
