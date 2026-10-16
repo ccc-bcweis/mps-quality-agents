@@ -1,7 +1,7 @@
 {
   "mode": "replay",
-  "cases": 25,
-  "passed": 25,
+  "cases": 26,
+  "passed": 26,
   "taskCompletion": 1,
   "categoryAccuracy": 1,
   "safeEscalation": 1,
@@ -36,6 +36,15 @@
     },
     {
       "id": "CAL-04",
+      "group": "equipmentCalibrationOrAlignment",
+      "expectedBehavior": "recommend",
+      "expectedCategory": "equipmentCalibrationOrAlignment",
+      "actualBehavior": "recommend",
+      "actualCategory": "equipmentCalibrationOrAlignment",
+      "passed": true
+    },
+    {
+      "id": "CAL-05",
       "group": "equipmentCalibrationOrAlignment",
       "expectedBehavior": "recommend",
       "expectedCategory": "equipmentCalibrationOrAlignment",

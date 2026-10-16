@@ -41,13 +41,32 @@ public sealed class DemoSignalTools : ITelemetryTool, ISpcTool, IImpactScopeTool
 
         var start = live.Min(point => point.At);
         var end = live.Max(point => point.At);
-        return Task.FromResult(new TelemetryWindow(toolId, parameter, from < start ? from : start, end, live));
+        return Task.FromResult(new TelemetryWindow(toolId, parameter, from < start ? from : start, end, live) { Nominals = NominalsFor(toolId, parameter, live) });
     }
 
     public Task<IReadOnlyList<SpcViolation>> GetViolationsAsync(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
     {
         IReadOnlyList<SpcViolation> live = _plant is null ? [] : _plant.Evaluate(toolId.Value, parameter, from, until);
         return Task.FromResult(live);
+    }
+
+    /// <summary>The recipe nominal at each reading's time, carried forward where a step has no window. Null when none is known.</summary>
+    private double[]? NominalsFor(ToolId toolId, string parameter, IReadOnlyList<TelemetryPoint> points)
+    {
+        if (_plant is null)
+        {
+            return null;
+        }
+
+        var result = new double[points.Count];
+        double? last = null;
+        for (var index = 0; index < points.Count; index++)
+        {
+            last = _plant.WindowAt(toolId.Value, parameter, points[index].At)?.Nominal ?? last;
+            result[index] = last ?? double.NaN;
+        }
+
+        return last is null ? null : result.Select(value => double.IsNaN(value) ? last.Value : value).ToArray();
     }
 
     private IReadOnlyList<TelemetryPoint> LivePoints(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until)

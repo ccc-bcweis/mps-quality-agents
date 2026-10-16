@@ -79,6 +79,7 @@ public static class ContractMapper
             {
                 notes.TryGetValue(item.Id.Value, out var note);
                 var reading = CompleteReading(item);
+                var (controlLow, controlHigh) = reading.ControlLimits(Mps.Application.Spc.SpcRuleSettings.Shared.ControlLimitSigma);
                 return new EvidenceResponse(
                     item.Id.Value,
                     item.Source,
@@ -96,10 +97,10 @@ public static class ContractMapper
                     reading.ToolName,
                     reading.ChamberName,
                     item.SourceEventIds.Count == 0 ? null : item.SourceEventIds,
-                    reading.ControlLow,
-                    reading.ControlHigh,
+                    controlLow,
+                    controlHigh,
                     reading.Center,
-                    LimitState.Of(reading.Value, reading.SpecLow, reading.SpecHigh, reading.ControlLow, reading.ControlHigh, reading.Center is not null));
+                    LimitState.Of(reading.Value, reading.SpecLow, reading.SpecHigh, controlLow, controlHigh, reading.Center is not null));
             }).ToArray(),
             snapshot.Hypotheses.Select(item => new HypothesisResponse(
                 item.Id.Value,

@@ -5,24 +5,7 @@ import type { ToolStory, WindowRow } from "../fleet/catalog";
 import { formatValue, type SensorStatus } from "../fleet/telemetry";
 import type { SpcPoint } from "../spc/series";
 import { LIMIT_LABEL, limitTone, rangeLabel } from "../investigation/limits";
-import { unitLabel } from "../sites/parameters";
-
-const PARAMETER_LABEL: Record<string, string> = {
-  chamberPressure: "Chamber pressure",
-  escTemperature: "Chuck temperature",
-  filmThickness: "Film thickness",
-  vibrationRms: "Pump vibration",
-  rfBiasPower: "Bias power",
-  rfPower: "Power",
-  etchRate: "Etch rate",
-  cf4Flow: "Gas flow",
-  heaterTemperature: "Heater",
-  temperature: "Temperature",
-  bathTemperature: "Bath",
-  sourceRf: "Source power",
-  biasRf: "Bias power",
-  particles: "Particles",
-};
+import { PARAMETER_LABEL, unitLabel } from "../sites/parameters";
 
 // Keys are the lower-cased parts of a sensor id.
 const SENSOR_WORDS: Record<string, string> = {

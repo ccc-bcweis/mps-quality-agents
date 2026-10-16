@@ -16,7 +16,9 @@ public static class SiteComparison
 {
     public const double SpreadRatio = 1.5d;
 
-    public static FamilyComparison Compare(SiteWorld world, ToolFamily family)
+    /// <param name="controlSigma">Control-limit width in sigma, from data/metadata/spc-rules.yaml.</param>
+    /// <param name="apartSigma">How many sigma apart a site mean must be to be flagged (the watch level).</param>
+    public static FamilyComparison Compare(SiteWorld world, ToolFamily family, double controlSigma, double apartSigma)
     {
         ArgumentNullException.ThrowIfNull(world);
         var reference = world.Sites.FirstOrDefault(site => site.Id == SiteIds.Northwater) ?? world.Sites[0];
@@ -39,7 +41,7 @@ public static class SiteComparison
                 double alarms = 0;
                 foreach (var tool in tools)
                 {
-                    var sample = Sample(world.Seed, site, tool, name, limit);
+                    var sample = Sample(world.Seed, site, tool, name, limit, controlSigma);
                     mean += sample.Mean;
                     sigma += sample.Sigma;
                     alarms += sample.AlarmRate;
@@ -66,7 +68,7 @@ public static class SiteComparison
             foreach (var row in rows)
             {
                 var site = world.Find(row.SiteId)!;
-                var meanApart = Math.Abs(row.Mean - baseline.Mean) > (2d * Math.Max(baseline.Sigma, 1e-6d));
+                var meanApart = Math.Abs(row.Mean - baseline.Mean) > (apartSigma * Math.Max(baseline.Sigma, 1e-6d));
                 var spreadApart = row.Sigma / Math.Max(baseline.Sigma, 1e-6d) > SpreadRatio;
                 var flagged = row.SiteId != reference.Id && (meanApart || spreadApart);
                 var reason = flagged ? Reason(site, reference, family, name, limit.Unit, row, baseline, meanApart, spreadApart) : null;
@@ -79,7 +81,7 @@ public static class SiteComparison
         return new FamilyComparison(family, reference.Id, parameters);
     }
 
-    private static (double Mean, double Sigma, double AlarmRate) Sample(int seed, SimulatedSite site, PlacedTool tool, string parameter, ParameterLimit limit)
+    private static (double Mean, double Sigma, double AlarmRate) Sample(int seed, SimulatedSite site, PlacedTool tool, string parameter, ParameterLimit limit, double controlSigma)
     {
         var behavior = site.Behavior.FirstOrDefault(item => item.Family == tool.Family && item.Parameter == parameter);
         var offset = behavior?.MeanOffset ?? 0d;
@@ -88,8 +90,8 @@ public static class SiteComparison
         var nominal = Nominal(tool, parameter, limit);
         var center = nominal + offset;
         var sampleSigma = baselineSigma * scale;
-        var low = nominal - (3d * baselineSigma);
-        var high = nominal + (3d * baselineSigma);
+        var low = nominal - (controlSigma * baselineSigma);
+        var high = nominal + (controlSigma * baselineSigma);
         var rng = SeededRng.Create(seed, site.Id + "|" + tool.Id + "|" + parameter);
         var values = new double[SitePlantGenerator.SampleCount];
         var alarms = 0;

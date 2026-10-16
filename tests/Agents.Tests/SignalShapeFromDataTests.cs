@@ -89,4 +89,36 @@ public sealed class SignalShapeFromDataTests
         var spikes = LiveB.Select((value, index) => index is 60 or 64 ? value + 1.5d : value).ToArray();
         SignalShapeClassifier.IsSwinging(spikes.Skip(spikes.Length - 24).ToArray(), spikes).Should().BeFalse();
     }
+
+    [Fact]
+    public void TheShapeIsReadAgainstTheRecipeNominalSoAStepChangeIsNotTheShape()
+    {
+        // D-01 chamber A: recipe nominal steps 3.5 -> 3.0 at reading 24, then the injected oscillation starts at 46.
+        var points = LiveA.Select((value, i) => new TelemetryPoint(Start.AddSeconds(15 * i), value)).ToArray();
+        var nominals = LiveA.Select((_, i) => i < 24 ? 3.5d : 3.0d).ToArray();
+        var window = new TelemetryWindow(new ToolId("D-01"), "chamberPressure", Start, points[^1].At, points) { Nominals = nominals };
+        SpcViolation[] violations = [new SpcViolation("western-electric-1", new ToolId("D-01"), "D-01-A", "chamberPressure", Start.AddSeconds(15 * 48), 4.458d, 0.25d, Severity.High)];
+
+        EvidencePackFactory.ShapeOf(window, violations).Should().Be(SignalShape.Oscillation);
+    }
+
+    [Fact]
+    public void ShapeWaitIsLoadedFromMetadata()
+    {
+        var wait = Mps.Agents.Investigation.ShapeWait.Load(Path.Combine(RepoRoot(), "data", "metadata", "investigation.yaml"));
+
+        wait.Attempts.Should().BeGreaterThan(0);
+        wait.Delay.Should().BePositive();
+    }
+
+    private static string RepoRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "MPS.sln")))
+        {
+            dir = dir.Parent;
+        }
+
+        return dir!.FullName;
+    }
 }

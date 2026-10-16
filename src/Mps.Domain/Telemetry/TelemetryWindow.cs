@@ -60,6 +60,12 @@ public sealed class TelemetryWindow
     public DateTimeOffset To { get; }
 
     public IReadOnlyList<TelemetryPoint> Points { get; }
+
+    /// <summary>
+    /// Recipe nominal at each point, from the recipe step running then (same order as <see cref="Points"/>). Empty when
+    /// the source does not know. Shape is judged on reading minus nominal, so a recipe step change is not a shape.
+    /// </summary>
+    public IReadOnlyList<double>? Nominals { get; init; }
 }
 
 public sealed record SpcViolation
