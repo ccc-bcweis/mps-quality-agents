@@ -118,6 +118,8 @@ public sealed class DemoResetService
             var baseline = hard
                 ? await HardAsync(cancellationToken).ConfigureAwait(false)
                 : await SoftAsync(cancellationToken).ConfigureAwait(false);
+            // A reset returns the plant to 1x with the default 15-second sample stride.
+            _plant.TrySetSpeed(1, 15);
             _progress.Complete(kind);
             succeeded = true;
             return baseline;
