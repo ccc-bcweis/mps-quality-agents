@@ -59,6 +59,19 @@ public sealed record TelemetryFrame
 
     public string RunId { get; }
 
+    /// <summary>Where the sample came from: <see cref="Sources.Sensor"/> (the tool) or <see cref="Sources.Manual"/> (a bench printout).</summary>
+    public string Source { get; init; } = Sources.Sensor;
+
+    /// <summary>The evidence item (printout) behind a manual sample.</summary>
+    public Guid? EvidenceId { get; init; }
+
+    public static class Sources
+    {
+        public const string Sensor = "sensor";
+
+        public const string Manual = "manual";
+    }
+
     public string LotId { get; }
 
     private static string Require(string value, string name)

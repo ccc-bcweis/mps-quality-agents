@@ -3,7 +3,7 @@
 namespace Mps.Simulator.Telemetry;
 
 /// <summary>One decimated sample kept for charts and SPC.</summary>
-public readonly record struct LivePoint(DateTimeOffset At, double Value);
+public readonly record struct LivePoint(DateTimeOffset At, double Value, string Source = TelemetryFrame.Sources.Sensor, Guid? EvidenceId = null);
 
 /// <summary>The newest sample of one series, including the sensor id the schematic uses.</summary>
 public sealed record LiveReading(
@@ -51,10 +51,30 @@ public sealed class LiveSeriesLog
                     _series.Add(key, buffer);
                 }
 
-                buffer.Enqueue(new LivePoint(frame.SimulatedAt, frame.Value));
+                var point = new LivePoint(frame.SimulatedAt, frame.Value, frame.Source, frame.EvidenceId);
+                if (buffer.Count > 0 && point.At < buffer.Last().At)
+                {
+                    // A late sample (a printout observed earlier) goes in time order, the same series as the sensor.
+                    var ordered = buffer.Append(point).OrderBy(item => item.At).ToArray();
+                    buffer.Clear();
+                    foreach (var item in ordered)
+                    {
+                        buffer.Enqueue(item);
+                    }
+                }
+                else
+                {
+                    buffer.Enqueue(point);
+                }
+
                 while (buffer.Count > _maxPoints)
                 {
                     buffer.Dequeue();
+                }
+
+                if (_latest.TryGetValue(key, out var newest) && newest.At > frame.SimulatedAt)
+                {
+                    continue;
                 }
 
                 _latest[key] = new LiveReading(

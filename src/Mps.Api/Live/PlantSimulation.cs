@@ -344,7 +344,24 @@ public sealed class PlantSimulation : Mps.Application.Lifecycle.IPlantFaultContr
 
     private void AppendUnlocked(TimeSpan simulatedElapsed)
     {
-        var frames = Runtime.Simulator.Advance(simulatedElapsed, EffectiveStride);
+        IngestUnlocked(Runtime.Simulator.Advance(simulatedElapsed, EffectiveStride));
+    }
+
+    /// <summary>
+    /// The one ingest path for samples, from the tool's sensors and from bench printouts alike. Everything after this
+    /// (charts, spec window, SPC and Western Electric rules, alerts, tickets, auto-clear) treats them the same.
+    /// </summary>
+    public void Ingest(IReadOnlyList<TelemetryFrame> frames)
+    {
+        ArgumentNullException.ThrowIfNull(frames);
+        lock (_gate)
+        {
+            IngestUnlocked(frames);
+        }
+    }
+
+    private void IngestUnlocked(IReadOnlyList<TelemetryFrame> frames)
+    {
         _log.Append(frames);
         _pending.AddRange(frames);
     }
