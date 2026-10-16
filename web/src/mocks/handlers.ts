@@ -561,6 +561,8 @@ export const handlers = [
     return HttpResponse.json(reading);
   }),
 
+  http.get("/api/manual-readings", () => HttpResponse.json([])),
+  http.get("/api/manual-readings/:evidenceId/file", () => new HttpResponse(null, { status: 404 })),
   http.post("/api/printouts/confirm", async ({ request }) => {
     const body = (await request.json()) as PrintoutConfirmRequest;
     const outOfSpec = body.value < body.specMinimum || body.value > body.specMaximum;

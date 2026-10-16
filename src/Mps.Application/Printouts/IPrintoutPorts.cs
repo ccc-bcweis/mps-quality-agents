@@ -42,5 +42,7 @@ public interface IManualMeasurementLog
 
     IReadOnlyList<ManualMeasurement> ForTool(string toolId);
 
+    IReadOnlyList<ManualMeasurement> All();
+
     void Clear();
 }

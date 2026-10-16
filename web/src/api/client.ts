@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import type {
+  ManualReading,
   JoinLink,
   JoinLinks,
   RedeemResult,
@@ -104,6 +105,8 @@ export const api = {
   listTools: (siteId?: string) => apiSend<Tool[]>(listPath("/api/tools", siteId)),
   getTool: (toolId: string) => apiSend<Tool>(`/api/tools/${encodeURIComponent(toolId)}`),
   listFleetLive: () => apiSend<FleetLive>("/api/fleet/live"),
+  listManualReadings: (toolId?: string) =>
+    apiSend<ManualReading[]>(toolId ? `/api/manual-readings?toolId=${encodeURIComponent(toolId)}` : "/api/manual-readings"),
   getToolLive: (toolId: string) => apiSend<ToolLive>(`/api/tools/${encodeURIComponent(toolId)}/live`),
   listAlerts: (toolId?: string, siteId?: string) => apiSend<Alert[]>(listPath("/api/alerts", siteId, { toolId })),
   listTickets: (siteId?: string) => apiSend<Ticket[]>(listPath("/api/tickets", siteId)),

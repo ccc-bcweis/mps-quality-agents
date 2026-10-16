@@ -262,7 +262,8 @@ public sealed record PrintoutInspectionResponse(
     string? Shape,
     string? OperatorInitials,
     string ParseMethod,
-    bool OutOfSpec);
+    bool OutOfSpec,
+    Guid? FileId = null);
 
 public sealed class PrintoutConfirmBody
 {
@@ -287,6 +288,34 @@ public sealed class PrintoutConfirmBody
     public string? Shape { get; set; }
 
     public string? OperatorInitials { get; set; }
+
+    /// <summary>The time printed on the sheet, sent when the user pressed Now so the audit trail keeps it.</summary>
+    public DateTimeOffset? PrintedObservedAt { get; set; }
+
+    /// <summary>The upload the inspect call kept, attached to the evidence.</summary>
+    public Guid? FileId { get; set; }
 }
+
+public sealed record ManualReadingResponse(
+    Guid EvidenceId,
+    Guid IncidentId,
+    Guid? AlertId,
+    string ToolId,
+    string SiteId,
+    string? ChamberId,
+    string Parameter,
+    string Instrument,
+    double Value,
+    string Unit,
+    double SpecMinimum,
+    double SpecMaximum,
+    bool OutOfSpec,
+    DateTimeOffset ObservedAt,
+    DateTimeOffset? PrintedObservedAt,
+    bool OlderThanWindow,
+    string? OperatorInitials,
+    string? FileName,
+    string? FileUrl,
+    string Source);
 
 public sealed record ReplayCaptureResponse(string ScenarioId, int MessageCount);

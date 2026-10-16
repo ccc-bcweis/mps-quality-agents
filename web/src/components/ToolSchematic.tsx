@@ -22,6 +22,8 @@ export type SchematicReading = {
   value: number;
   unit: string;
   status: SensorStatus;
+  /** Set when the value is a confirmed bench reading, not the tool's own sensor. */
+  manual?: { label: string; title: string };
 };
 import { PanelDrawing } from "./schematicArt";
 import { FAMILY_PROCESS } from "../api/labels";
@@ -79,13 +81,13 @@ function SensorButton({
   style?: CSSProperties;
   live?: SchematicReading;
 }) {
-  const reading = live ?? readingFor(sensor);
+  const reading: SchematicReading = live ?? readingFor(sensor);
   return (
     <button
       type="button"
       data-anchor={sensor.schematicAnchor}
       data-sensor-id={sensor.id}
-      title={`Sensor ${sensor.id}`}
+      title={reading.manual ? `Sensor ${sensor.id}. ${reading.manual.title}` : `Sensor ${sensor.id}`}
       data-status={reading.status}
       aria-pressed={selected}
       className={`flex min-w-0 flex-col justify-center rounded border bg-mps-panel/95 px-1.5 py-0.5 text-left text-[11px] leading-tight focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mps-nominal ${TONE[reading.status]} ${selected ? "ring-2 ring-mps-nominal" : ""} ${className}`}
@@ -98,6 +100,11 @@ function SensorButton({
       </span>
       <span className="block break-words font-mono text-[12px] leading-tight">
         {formatValue(reading.value, reading.unit)} <Unit unit={reading.unit} />
+        {reading.manual ? (
+          <span data-manual-badge="true" className="ml-1 rounded bg-mps-warn px-1 align-middle font-sans text-[10px] font-semibold uppercase text-mps-panel">
+            {reading.manual.label}
+          </span>
+        ) : null}
       </span>
       <span className="sr-only">{sensor.id}</span>
     </button>

@@ -26,6 +26,17 @@ public sealed class ManualMeasurement
     public EvidenceItem Evidence { get; }
 
     public Guid IncidentId { get; }
+
+    /// <summary>The confirmed reading, with its observed time and any correction.</summary>
+    public PrintoutReading? Reading { get; init; }
+
+    /// <summary>The alert an out-of-spec reading raised.</summary>
+    public Guid? AlertId { get; init; }
+
+    /// <summary>The uploaded printout file, when the console kept it.</summary>
+    public Guid? FileId { get; init; }
+
+    public string? FileName { get; init; }
 }
 
 public sealed class InMemoryManualMeasurementLog : IManualMeasurementLog
@@ -49,6 +60,14 @@ public sealed class InMemoryManualMeasurementLog : IManualMeasurementLog
             return _items
                 .Where(item => string.Equals(item.Evidence.ToolId, toolId, StringComparison.OrdinalIgnoreCase))
                 .ToArray();
+        }
+    }
+
+    public IReadOnlyList<ManualMeasurement> All()
+    {
+        lock (_gate)
+        {
+            return _items.ToArray();
         }
     }
 

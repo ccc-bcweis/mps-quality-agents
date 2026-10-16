@@ -137,6 +137,32 @@ export type PrintoutInspection = {
   operatorInitials?: string | null;
   parseMethod: "text" | "model";
   outOfSpec: boolean;
+  /** The upload the server kept; send it on confirm to attach the sheet as evidence. */
+  fileId?: string | null;
+};
+
+export type ManualReading = {
+  evidenceId: string;
+  incidentId: string;
+  alertId?: string | null;
+  toolId: string;
+  siteId: string;
+  chamberId?: string | null;
+  parameter: string;
+  instrument: string;
+  value: number;
+  unit: string;
+  specMinimum: number;
+  specMaximum: number;
+  outOfSpec: boolean;
+  observedAt: string;
+  /** The printed time when the user pressed Now. */
+  printedObservedAt?: string | null;
+  olderThanWindow: boolean;
+  operatorInitials?: string | null;
+  fileName?: string | null;
+  fileUrl?: string | null;
+  source: string;
 };
 
 export type PrintoutConfirmRequest = {
@@ -151,6 +177,9 @@ export type PrintoutConfirmRequest = {
   specMaximum: number;
   shape?: string | null;
   operatorInitials?: string | null;
+  /** The time printed on the sheet, kept for the audit trail when the user pressed Now. */
+  printedObservedAt?: string | null;
+  fileId?: string | null;
 };
 
 export type PrintoutConfirmation = {
