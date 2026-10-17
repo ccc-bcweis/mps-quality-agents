@@ -134,3 +134,8 @@ export function seriesLimits(live: ToolLive | null, parameter: string, chamberId
   if (!match || match.center == null || match.sigma == null || !(match.sigma > 0)) return undefined;
   return { mean: match.center, sigma: match.sigma };
 }
+
+/** The running recipe's readable name from the fleet data; the offline tile label only when there is no live API. */
+export function recipeLabel(live: { recipeName?: string | null } | null | undefined, offline: string | undefined): string {
+  return live?.recipeName ?? offline ?? "—";
+}

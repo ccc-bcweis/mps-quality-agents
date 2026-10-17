@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import type { ToolStory } from "../fleet/catalog";
 import type { FleetLiveTool, ToolLive } from "../api/types";
-import { seriesPoints, sparkLine, storyWithLive } from "./overlay";
+import { recipeLabel, seriesPoints, sparkLine, storyWithLive } from "./overlay";
 
 const story: ToolStory = {
   status: "nominal",
@@ -73,5 +73,13 @@ describe("live overlay", () => {
     ]);
     expect(seriesPoints(live, "escTemperature")).toBeUndefined();
     expect(seriesPoints(null, "etchRate")).toBeUndefined();
+  });
+});
+
+describe("recipeLabel", () => {
+  it("shows the readable recipe name from the live data, not a recipe id", () => {
+    expect(recipeLabel({ recipeName: "PECVD oxide" }, "DEP-SIO-2")).toBe("PECVD oxide");
+    expect(recipeLabel(undefined, "PECVD oxide")).toBe("PECVD oxide");
+    expect(recipeLabel(null, undefined)).toBe("—");
   });
 });

@@ -53,7 +53,10 @@ public static class LiveResponses
                     window is null ? null : Math.Max(window.Sigma, 1e-6));
             })
             .ToArray();
-        return new ToolLiveResponse(toolId, SiteOf(plant, toolId), plant.SimulatedNow, alertStatus is null ? mapped.Status : ToolAlertStatus.Of(alertStatus, toolId), mapped.Readings, series);
+        return new ToolLiveResponse(toolId, SiteOf(plant, toolId), plant.SimulatedNow, alertStatus is null ? mapped.Status : ToolAlertStatus.Of(alertStatus, toolId), mapped.Readings, series)
+        {
+            RecipeName = plant.RecipeNameAt(toolId, plant.SimulatedNow),
+        };
     }
 
     private static FleetLiveToolResponse ToolRow(PlantSimulation plant, string toolId, IReadOnlyList<LiveReading> readings, IReadOnlyDictionary<string, string>? alertStatus)

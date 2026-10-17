@@ -455,6 +455,8 @@ export type ToolLive = {
   status: LiveStatus;
   readings: LiveReading[];
   series: LiveSeries[];
+  /** Readable name of the running recipe, from the fleet data. */
+  recipeName?: string | null;
 };
 
 export type ScenarioTelemetryPoint = {
