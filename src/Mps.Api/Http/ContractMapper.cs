@@ -102,7 +102,8 @@ public static class ContractMapper
                     controlLow,
                     controlHigh,
                     reading.Center,
-                    LimitState.Of(reading.Value, reading.SpecLow, reading.SpecHigh, controlLow, controlHigh, reading.Center is not null));
+                    LimitState.Of(reading.Value, reading.SpecLow, reading.SpecHigh, controlLow, controlHigh, reading.Center is not null),
+                    item.SuppliedBy);
             }).ToArray(),
             snapshot.Hypotheses.Select(item => new HypothesisResponse(
                 item.Id.Value,
@@ -125,6 +126,8 @@ public static class ContractMapper
             Decision = snapshot.Decision is { } decision
                 ? new DecisionRecordResponse(decision.Kind, decision.Note, decision.DecidedBy, decision.DecidedAt)
                 : null,
+            Round = snapshot.Round,
+            MaxRounds = Mps.Application.Decisions.EvidenceRoundSettings.Shared.MaxRounds,
         };
     }
 

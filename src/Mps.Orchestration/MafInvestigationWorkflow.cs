@@ -62,8 +62,19 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
         _environment = InProcessExecution.Default.WithCheckpointing(checkpoints ?? CheckpointManager.CreateInMemory());
     }
 
-    public async Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken)
+    public Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken) =>
+        StartRoundAsync(incidentId, [], cancellationToken);
+
+    /// <summary>
+    /// Runs the graph for one round. A later round (the evidence loop) adds the user-provided records to the gathered
+    /// pack before the evidence gate, so the gate, the resolution, grounding, both guards and the single retry see them.
+    /// </summary>
+    public async Task<InvestigationSnapshot> StartRoundAsync(
+        IncidentId incidentId,
+        IReadOnlyList<Mps.Domain.Evidence.EvidenceItem> userEvidence,
+        CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(userEvidence);
         if (incidentId.IsEmpty)
         {
             throw new ArgumentException("Incident id is required.", nameof(incidentId));
@@ -71,6 +82,7 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
 
         var investigationId = InvestigationId.New();
         var session = _sessions.Create(investigationId, incidentId);
+        session.UserEvidence = userEvidence.ToArray();
         var workflow = BuildGraph();
         var input = incidentId.ToString() + "|" + investigationId.ToString();
         await using var run = await _environment
@@ -185,10 +197,12 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
             return false;
         }
 
-        session.ReplaceEvidence(gathered.Pack.Items);
-        session.ReplaceExplanations(gathered.Pack.Explanations);
-        session.ReplaceMatrix(EvidenceMatrixBuilder.FromPack(gathered.Pack, null, WhyItMattersCatalog.Shared));
-        var gate = EvidenceGate.Evaluate(gathered.Pack);
+        // Evidence a person added in an earlier round joins the pack before the gate, like any other record.
+        var pack = gathered.Pack.Including(session.UserEvidence, WhyItMattersCatalog.Shared);
+        session.ReplaceEvidence(pack.Items);
+        session.ReplaceExplanations(pack.Explanations);
+        session.ReplaceMatrix(EvidenceMatrixBuilder.FromPack(pack, null, WhyItMattersCatalog.Shared));
+        var gate = EvidenceGate.Evaluate(pack);
         if (gate.Outcome != GateOutcome.Sufficient)
         {
             session.Stage = InvestigationStage.Escalated;
@@ -205,7 +219,7 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
         for (var attempt = 0; ; attempt++)
         {
             session.ResolutionCalls++;
-            var request = ResolutionRequest.From(gathered.Pack, gathered.Features);
+            var request = ResolutionRequest.From(pack, gathered.Features);
             request.Feedback = feedback;
             var resolution = await _resolution.ResolveAsync(request, cancellationToken).ConfigureAwait(false);
             session.ResolutionPromptVersion = resolution.PromptVersion;
@@ -219,7 +233,7 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
                 return false;
             }
 
-            var grounding = GroundingValidator.Validate(resolution.Claim, gathered.Pack.Items);
+            var grounding = GroundingValidator.Validate(resolution.Claim, pack.Items);
             accepted = grounding.Claim;
             if (!grounding.Accepted || accepted is null || accepted.Category is null || accepted.Cause is null || accepted.Confidence is null)
             {
@@ -233,8 +247,8 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
             }
 
             // Ruled-out record or shape (CauseGuard), then the category against the cited records (CategoryGuard).
-            var guarded = CauseGuard.Check(accepted, gathered.Pack);
-            var shapeMiss = CauseGuard.ShapeMismatch(accepted.Shape, gathered.Pack);
+            var guarded = CauseGuard.Check(accepted, pack);
+            var shapeMiss = CauseGuard.ShapeMismatch(accepted.Shape, pack);
             var categoryMiss = CategoryGuard.Check(accepted, request.Notes);
             if (guarded is null && categoryMiss is null)
             {
@@ -248,7 +262,7 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
                     " ",
                     new[]
                     {
-                        shapeMiss is null ? null : CauseGuard.ShapeFeedback(accepted.Shape, gathered.Pack),
+                        shapeMiss is null ? null : CauseGuard.ShapeFeedback(accepted.Shape, pack),
                         categoryMiss is null ? null : CategoryGuard.Feedback(accepted, request.Notes),
                     }.Where(note => note is not null));
                 continue;
@@ -260,7 +274,7 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
             return false;
         }
 
-        session.ReplaceExplanations(MergeExplanations(gathered.Pack.Explanations, accepted.Explanations));
+        session.ReplaceExplanations(MergeExplanations(pack.Explanations, accepted.Explanations));
         session.ReplaceMatrix(accepted.EvidenceMatrix);
         var hypothesis = new Hypothesis(
             new HypothesisId(Uuid5.Create(EvidenceIds.Namespace, incident.Id + "|" + accepted.Category.Value)),
@@ -268,11 +282,11 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
             accepted.Cause,
             accepted.Confidence.Value,
             accepted.EvidenceIds,
-            WithRuledOut(Readable(accepted.CounterEvidence, gathered.Pack.Items), RuledOut.All(gathered.Pack)),
+            WithRuledOut(Readable(accepted.CounterEvidence, pack.Items), RuledOut.All(pack)),
             Mps.Agents.Resolution.RecommendedActions.Complete(
                 accepted.Category.Value,
                 accepted.Actions,
-                gathered.Pack.Items.Where(item => accepted.EvidenceIds.Contains(item.Id)).ToArray(),
+                pack.Items.Where(item => accepted.EvidenceIds.Contains(item.Id)).ToArray(),
                 incident.ToolId.Value));
         session.ClearHypotheses();
         session.AddHypothesis(hypothesis);

@@ -277,7 +277,8 @@ public sealed class ConsoleApiContractTests
             "cmms",
             "document",
             "ticketing",
-            "manualMeasurement");
+            "manualMeasurement",
+            "userProvided");
 
         var evidence = document.Schema("EvidenceItem");
         evidence.AdditionalPropertiesAllowed.Should().BeFalse();
@@ -314,7 +315,8 @@ public sealed class ConsoleApiContractTests
             "approved",
             "rejected",
             "failed",
-            "closedByDemoReset");
+            "closedByDemoReset",
+            "superseded");
 
         var investigation = document.Schema("Investigation");
         investigation.AdditionalPropertiesAllowed.Should().BeFalse();

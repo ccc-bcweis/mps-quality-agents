@@ -65,6 +65,9 @@ public sealed class InvestigationSession
 
     public int ResolutionCalls { get; internal set; }
 
+    /// <summary>Records people added in earlier rounds (the evidence loop). Empty on a first round.</summary>
+    public IReadOnlyList<EvidenceItem> UserEvidence { get; internal set; } = [];
+
     public string? InvestigationPromptVersion { get; internal set; }
 
     public string? ResolutionPromptVersion { get; internal set; }

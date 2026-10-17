@@ -187,6 +187,25 @@ public static class QualityEndpoints
             var site = await SiteForIncidentAsync(incidents, snapshot.IncidentId, cancellationToken).ConfigureAwait(false);
             return Results.Ok(ContractMapper.ToResponse(snapshot, narrative, site));
         });
+        app.MapGet("/api/incidents/{incidentId:guid}/investigations", async (
+            Guid incidentId,
+            IInvestigationService investigations,
+            IInvestigationNarrativeLog narratives,
+            IIncidentLog incidents,
+            CancellationToken cancellationToken) =>
+        {
+            // Every round on the ticket, oldest first (the evidence loop). Closed rounds are read-only history.
+            var rounds = await investigations.ListRoundsAsync(new IncidentId(incidentId), cancellationToken).ConfigureAwait(false);
+            var site = await SiteForIncidentAsync(incidents, new IncidentId(incidentId), cancellationToken).ConfigureAwait(false);
+            var mapped = new List<InvestigationResponse>();
+            foreach (var round in rounds)
+            {
+                var narrative = await narratives.GetAsync(round.Id, cancellationToken).ConfigureAwait(false);
+                mapped.Add(ContractMapper.ToResponse(round, narrative, site));
+            }
+
+            return Results.Ok(mapped);
+        });
         app.MapPost("/api/incidents/{incidentId:guid}/investigations", async (
             Guid incidentId,
             IInvestigationService investigations,
@@ -244,7 +263,8 @@ public static class QualityEndpoints
             Guid investigationId,
             DecisionBody? body,
             IHumanDecisionService decisions,
-            IInvestigationService investigations,
+            IServiceScopeFactory scopes,
+            Mps.Application.Lifecycle.InvestigationsInFlight inFlight,
             IInvestigationNarrativeLog narratives,
             IIncidentLog incidents,
             QualityDbContext db,
@@ -266,6 +286,12 @@ public static class QualityEndpoints
             var approver = string.Equals(approvalCaller.Mode, EasyAuthPrincipal.AzureMode, StringComparison.OrdinalIgnoreCase)
                 ? approvalCaller.DisplayName
                 : body.ApproverId;
+
+            // Added evidence always names who added it; a local run without a name uses the local caller's name.
+            if (body.Kind == HumanDecisionKind.RequestInfo && string.IsNullOrWhiteSpace(approver))
+            {
+                approver = approvalCaller.DisplayName;
+            }
             var outcome = await decisions.DecideAsync(
                 id,
                 body.Kind.Value,
@@ -275,10 +301,11 @@ public static class QualityEndpoints
             var site = await SiteForIncidentAsync(incidents, outcome.Investigation.IncidentId, cancellationToken).ConfigureAwait(false);
             if (outcome.Superseded)
             {
-                // Request more evidence: re-run the agents on the same incident with whatever data is now available.
-                var rerun = await investigations.StartAsync(outcome.Investigation.IncidentId, cancellationToken).ConfigureAwait(false);
-                var rerunNarrative = await narratives.GetAsync(rerun.Id, cancellationToken).ConfigureAwait(false);
-                return Results.Ok(new DecisionResponse(ContractMapper.ToResponse(rerun, rerunNarrative, site), null));
+                // The evidence loop: the round is closed with the person's evidence; the next round runs in the background
+                // (gathering can wait minutes for readings) and the console follows its placeholder until it is saved.
+                var next = await NextRoundAsync(scopes, inFlight, outcome, cancellationToken).ConfigureAwait(false);
+                var nextNarrative = await narratives.GetAsync(next.Id, cancellationToken).ConfigureAwait(false);
+                return Results.Ok(new DecisionResponse(ContractMapper.ToResponse(next, nextNarrative, site), null));
             }
 
             var narrative = await narratives.GetAsync(id, cancellationToken).ConfigureAwait(false);
@@ -781,6 +808,67 @@ public static class QualityEndpoints
 
         var day = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         return (double)await ledger.GetSpendAsync(day, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>How long the decision call waits for the next round before answering with its placeholder.</summary>
+    private static readonly TimeSpan RoundAnswerWait = TimeSpan.FromSeconds(2);
+
+    private static readonly Action<ILogger, Guid, Exception?> RoundNotStarted = LoggerMessage.Define<Guid>(
+        LogLevel.Warning,
+        new EventId(4101, "EvidenceRoundNotStarted"),
+        "The next round did not start for incident {IncidentId}.");
+
+    /// <summary>
+    /// Starts the next round in its own scope so it outlives the request, then answers with the saved round when it
+    /// finishes quickly, or with the "started" placeholder the console polls until the round is saved.
+    /// </summary>
+    private static async Task<Mps.Domain.Investigations.InvestigationSnapshot> NextRoundAsync(
+        IServiceScopeFactory scopes,
+        Mps.Application.Lifecycle.InvestigationsInFlight inFlight,
+        HumanDecisionOutcome outcome,
+        CancellationToken cancellationToken)
+    {
+        var incidentId = outcome.Investigation.IncidentId;
+        var userEvidence = outcome.UserEvidence;
+        var run = Task.Run(
+            async () =>
+            {
+                await using var scope = scopes.CreateAsyncScope();
+                try
+                {
+                    var service = scope.ServiceProvider.GetRequiredService<IInvestigationService>();
+                    return await service.StartRoundAsync(incidentId, userEvidence, CancellationToken.None).ConfigureAwait(false);
+                }
+#pragma warning disable CA1031 // The round runs after the response; a failure is logged and the ticket keeps its closed round.
+                catch (Exception exception)
+#pragma warning restore CA1031
+                {
+                    if (scope.ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger("Mps.Api.EvidenceLoop") is { } logger)
+                    {
+                        RoundNotStarted(logger, incidentId.Value, exception);
+                    }
+
+                    return null;
+                }
+            },
+            CancellationToken.None);
+        var deadline = DateTimeOffset.UtcNow + RoundAnswerWait;
+        while (!run.IsCompleted && DateTimeOffset.UtcNow < deadline)
+        {
+            if (inFlight.ForIncident(incidentId) is { } running && running.Round > outcome.Investigation.Round)
+            {
+                return running;
+            }
+
+            await Task.WhenAny(run, Task.Delay(50, cancellationToken)).ConfigureAwait(false);
+        }
+
+        if (run.IsCompleted)
+        {
+            return await run.ConfigureAwait(false) ?? outcome.Investigation;
+        }
+
+        return inFlight.ForIncident(incidentId) ?? outcome.Investigation;
     }
 }
 

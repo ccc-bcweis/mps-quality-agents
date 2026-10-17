@@ -54,6 +54,7 @@ public static class RuleSettings
             Number("investigation.wait.attempts", Investigation, "Tries", wait.Attempts, null, null),
             Number("investigation.wait.delay", Investigation, "Time between tries", wait.Delay.TotalSeconds, "seconds", null),
             Number("decision.overrideMin", Decision, "Shortest override justification", HumanDecisionService.MinOverrideJustification, "characters", null),
+            Number("decision.maxEvidenceRounds", Decision, "Most rounds per ticket (Add evidence)", EvidenceRoundSettings.Shared.MaxRounds, "rounds", "Each time a person adds evidence the agents run again as the next round. At the last round only approve, override or reject remain."),
         ];
     }
 

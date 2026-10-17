@@ -49,7 +49,7 @@ public sealed class InMemoryInvestigationLog : IInvestigationLog
         _ = cancellationToken;
         var match = _snapshots.LastOrDefault(item =>
             item.IncidentId == incidentId
-            && item.Stage is not (InvestigationStage.Rejected or InvestigationStage.Failed or InvestigationStage.ClosedByDemoReset));
+            && item.Stage is not (InvestigationStage.Rejected or InvestigationStage.Failed or InvestigationStage.ClosedByDemoReset or InvestigationStage.Superseded));
         return Task.FromResult(match);
     }
 
@@ -156,9 +156,16 @@ public sealed class StubWorkflow : IInvestigationWorkflow
 
     public int Starts { get; private set; }
 
-    public async Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken)
+    /// <summary>The user-provided records the last round started with.</summary>
+    public IReadOnlyList<Domain.Evidence.EvidenceItem> LastUserEvidence { get; private set; } = [];
+
+    public Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken) =>
+        StartRoundAsync(incidentId, [], cancellationToken);
+
+    public async Task<InvestigationSnapshot> StartRoundAsync(IncidentId incidentId, IReadOnlyList<Domain.Evidence.EvidenceItem> userEvidence, CancellationToken cancellationToken)
     {
         Starts++;
+        LastUserEvidence = userEvidence;
         if (Gate is not null)
         {
             await Gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -186,7 +193,7 @@ public sealed class StubWorkflow : IInvestigationWorkflow
             InvestigationId.New(),
             incidentId,
             Stage,
-            [evidence],
+            [evidence, .. userEvidence],
             [hypothesis],
             reason,
             "workflow-" + incidentId);

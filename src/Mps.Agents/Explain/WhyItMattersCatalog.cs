@@ -277,6 +277,9 @@ public sealed class WhyItMattersCatalog
         return "This sensor's readings are part of the signal under investigation; open them to compare against the recipe spec.";
     }
 
+    /// <summary>Why a record a person added in the evidence loop matters.</summary>
+    public const string UserEvidenceSentence = "A person on the line added this; the agents weigh it with the plant records.";
+
     private static string SourceSentence(EvidenceSource source, string? title, string? externalRef)
     {
         var haystack = (title ?? string.Empty) + " " + (externalRef ?? string.Empty);
@@ -296,6 +299,7 @@ public sealed class WhyItMattersCatalog
             EvidenceSource.Document => "A procedure in the document set describes how this signal should behave.",
             EvidenceSource.Ticketing => "The ticket records the same incident the sensors and records are being checked against.",
             EvidenceSource.ManualMeasurement => Mps.Application.Printouts.ManualMeasurement.WhyItMatters,
+            EvidenceSource.UserProvided => UserEvidenceSentence,
             _ => GenericSentence,
         };
     }
@@ -611,6 +615,7 @@ public sealed class WhyItMattersCatalog
             EvidenceSource.Document => "document",
             EvidenceSource.Ticketing => "ticketing",
             EvidenceSource.ManualMeasurement => "manualMeasurement",
+            EvidenceSource.UserProvided => "userProvided",
             _ => "document",
         };
     }
@@ -648,6 +653,9 @@ public sealed class WhyItMattersCatalog
                 return true;
             case "manualmeasurement":
                 source = EvidenceSource.ManualMeasurement;
+                return true;
+            case "userprovided":
+                source = EvidenceSource.UserProvided;
                 return true;
             default:
                 source = default;

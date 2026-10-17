@@ -19,6 +19,9 @@ public enum InvestigationStage
     Rejected,
     Failed,
     ClosedByDemoReset,
+
+    /// <summary>A person added evidence; this round is closed read-only and the next round re-runs the agents.</summary>
+    Superseded,
 }
 
 public enum HumanDecisionKind
@@ -107,8 +110,18 @@ public sealed class InvestigationSnapshot
     /// <summary>The person's decision on this investigation, once made: kind, note or justification, who, when.</summary>
     public DecisionRecord? Decision { get; init; }
 
+    /// <summary>Round number on the ticket: 1 for the first run, one more for each time a person added evidence.</summary>
+    public int Round { get; init; } = 1;
+
     public InvestigationSnapshot WithEvidence(IReadOnlyList<EvidenceItem> evidence) =>
-        new(Id, IncidentId, Stage, evidence, Hypotheses, EscalationReason, CorrelationId) { Decision = Decision };
+        new(Id, IncidentId, Stage, evidence, Hypotheses, EscalationReason, CorrelationId) { Decision = Decision, Round = Round };
+
+    public InvestigationSnapshot WithRound(int round) =>
+        new(Id, IncidentId, Stage, Evidence, Hypotheses, EscalationReason, CorrelationId) { Decision = Decision, Round = round < 1 ? 1 : round };
+
+    /// <summary>A copy at another stage and reason that keeps the decision and round.</summary>
+    public InvestigationSnapshot With(InvestigationStage stage, string? escalationReason, DecisionRecord? decision = null) =>
+        new(Id, IncidentId, stage, Evidence, Hypotheses, escalationReason, CorrelationId) { Decision = decision ?? Decision, Round = Round };
 }
 
 /// <summary>A recorded human decision. Kind is approve, override, reject or requestInfo.</summary>

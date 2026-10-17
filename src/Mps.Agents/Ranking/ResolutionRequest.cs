@@ -50,6 +50,11 @@ public sealed class ResolutionRequest
 
     public string[] PmEvidenceIds { get; set; } = [];
 
+    /// <summary>What people added in the evidence loop (source userProvided), in the order they added it.</summary>
+    public string[] UserEvidence { get; set; } = [];
+
+    public string[] UserEvidenceIds { get; set; } = [];
+
     public EvidenceNote[] Notes { get; set; } = [];
 
     /// <summary>Set only on a retry: what was wrong with the previous answer for this same pack.</summary>
@@ -84,6 +89,8 @@ public sealed class ResolutionRequest
                 .Select(item => item.Id.ToString())
                 .ToArray(),
             PmEvidenceIds = Ids(pack, pack.WorkOrders.Where(order => !IsAlignment(order)).Select(order => order.WorkOrderId)),
+            UserEvidence = pack.Items.Where(item => item.Source == EvidenceSource.UserProvided).Select(item => item.Excerpt).ToArray(),
+            UserEvidenceIds = pack.Items.Where(item => item.Source == EvidenceSource.UserProvided).Select(item => item.Id.ToString()).ToArray(),
             Notes = pack.Items.Select(item => new EvidenceNote
             {
                 Id = item.Id.ToString(),
@@ -110,6 +117,7 @@ public sealed class ResolutionRequest
             EvidenceSource.Cmms => "cmms",
             EvidenceSource.Ticketing => "ticketing",
             EvidenceSource.ManualMeasurement => "manualMeasurement",
+            EvidenceSource.UserProvided => "userProvided",
             _ => "document",
         };
     }

@@ -17,6 +17,9 @@ public enum EvidenceSource
     Document,
     Ticketing,
     ManualMeasurement,
+
+    /// <summary>Typed in by a person on the Investigation page (Add evidence). Carries who supplied it.</summary>
+    UserProvided,
 }
 
 public sealed class EvidenceItem
@@ -30,7 +33,8 @@ public sealed class EvidenceItem
         string? toolId,
         string? externalRef,
         EvidenceReading? reading = null,
-        IReadOnlyList<string>? sourceEventIds = null)
+        IReadOnlyList<string>? sourceEventIds = null,
+        string? suppliedBy = null)
     {
         if (id.IsEmpty)
         {
@@ -46,6 +50,11 @@ public sealed class EvidenceItem
         ExternalRef = string.IsNullOrWhiteSpace(externalRef) ? null : externalRef.Trim();
         Reading = Normalize(reading);
         SourceEventIds = NormalizeIds(sourceEventIds);
+        SuppliedBy = string.IsNullOrWhiteSpace(suppliedBy) ? null : suppliedBy.Trim();
+        if (source == EvidenceSource.UserProvided && SuppliedBy is null)
+        {
+            throw new DomainRuleException("User-provided evidence names who supplied it.");
+        }
     }
 
     public EvidenceId Id { get; }
@@ -66,8 +75,11 @@ public sealed class EvidenceItem
 
     public IReadOnlyList<string> SourceEventIds { get; }
 
+    /// <summary>Who typed this record in, for user-provided evidence; null for records the agents gathered.</summary>
+    public string? SuppliedBy { get; }
+
     public EvidenceItem WithSourceEventIds(IReadOnlyList<string> sourceEventIds) =>
-        new(Id, Source, Title, Excerpt, ObservedAt, ToolId, ExternalRef, Reading, sourceEventIds);
+        new(Id, Source, Title, Excerpt, ObservedAt, ToolId, ExternalRef, Reading, sourceEventIds, SuppliedBy);
 
     private static List<string> NormalizeIds(IReadOnlyList<string>? sourceEventIds)
     {

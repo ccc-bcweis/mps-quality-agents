@@ -78,17 +78,35 @@ public sealed class ApprovalDecisionTests
     }
 
     [Fact]
-    public async Task RequestMoreEvidenceSupersedesTheEscalatedRun()
+    public async Task AddingEvidenceToAnEscalatedRoundClosesItAndCarriesTheEvidence()
     {
         var harness = await HarnessAsync(escalated: true);
 
-        var outcome = await harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.RequestInfo, "Pull the gas lot certificate.", null, CancellationToken.None);
+        var outcome = await harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.RequestInfo, "Pull the gas lot certificate.", "qe-1", CancellationToken.None);
 
         outcome.Superseded.Should().BeTrue();
         outcome.Capa.Should().BeNull();
-        outcome.Investigation.Stage.Should().Be(InvestigationStage.Rejected);
-        outcome.Investigation.EscalationReason.Should().Contain("more evidence");
+        outcome.Investigation.Stage.Should().Be(InvestigationStage.Superseded);
+        outcome.Investigation.Decision.Should().BeEquivalentTo(new { Kind = "requestInfo", Note = "Pull the gas lot certificate.", DecidedBy = "qe-1" });
+        outcome.UserEvidence.Should().ContainSingle().Which.Should().BeEquivalentTo(new
+        {
+            Source = EvidenceSource.UserProvided,
+            Excerpt = "Pull the gas lot certificate.",
+            SuppliedBy = "qe-1",
+            ExternalRef = "USER-R1",
+        });
         harness.Incident.Stage.Should().Be(IncidentStage.Investigating);
+    }
+
+    [Fact]
+    public async Task RequestMoreEvidenceWithoutTextIsRefusedAndKeepsTheRoundOpen()
+    {
+        var harness = await HarnessAsync();
+
+        var act = () => harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.RequestInfo, "  ", "qe-1", CancellationToken.None);
+
+        await act.Should().ThrowAsync<IntakeValidationException>().WithMessage("Type the evidence*");
+        harness.Incident.Stage.Should().Be(IncidentStage.RecommendationReady);
     }
 
     [Fact]
@@ -113,7 +131,7 @@ public sealed class ApprovalDecisionTests
         outcome.Capa.Should().BeNull();
         outcome.Investigation.Stage.Should().Be(InvestigationStage.Rejected);
         harness.Writer.Calls.Should().Be(0);
-        harness.Incident.Stage.Should().Be(IncidentStage.Rejected);
+        harness.Incident.Stage.Should().Be(IncidentStage.Closed, "reject ends the loop and closes the ticket with no action");
     }
 
     [Fact]

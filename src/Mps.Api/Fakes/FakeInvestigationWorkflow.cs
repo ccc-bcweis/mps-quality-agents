@@ -20,6 +20,8 @@ public sealed class FakeInvestigationWorkflow : IInvestigationWorkflow
 
     public const string StandInSignalId = "spc.stand-in";
 
+    public const string UserEvidenceWhyItMatters = "A person added this in the evidence loop; the agents weigh it with the other records.";
+
     private readonly IInvestigationLog _investigations;
     private readonly IInvestigationNarrativeLog _narratives;
     private readonly IIncidentLog _incidents;
@@ -45,8 +47,12 @@ public sealed class FakeInvestigationWorkflow : IInvestigationWorkflow
         _time = time;
     }
 
-    public async Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken)
+    public Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken) =>
+        StartRoundAsync(incidentId, [], cancellationToken);
+
+    public async Task<InvestigationSnapshot> StartRoundAsync(IncidentId incidentId, IReadOnlyList<EvidenceItem> userEvidence, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(userEvidence);
         var evidenceId = EvidenceId.New();
         var evidence = new List<EvidenceItem>
         {
@@ -67,6 +73,8 @@ public sealed class FakeInvestigationWorkflow : IInvestigationWorkflow
                 evidence.Add(measurement.Evidence);
             }
         }
+
+        evidence.AddRange(userEvidence);
         var hypothesis = new Hypothesis(
             HypothesisId.New(),
             RootCauseCategory.ProcessDrift,
@@ -94,7 +102,10 @@ public sealed class FakeInvestigationWorkflow : IInvestigationWorkflow
         var notes = new List<EvidenceNote> { new(evidenceId, StandInWhyItMatters, StandInSignalId) };
         foreach (var item in snapshot.Evidence.Skip(1))
         {
-            notes.Add(new EvidenceNote(item.Id.Value, ManualMeasurement.WhyItMatters, null));
+            notes.Add(new EvidenceNote(
+                item.Id.Value,
+                item.Source == EvidenceSource.UserProvided ? UserEvidenceWhyItMatters : ManualMeasurement.WhyItMatters,
+                null));
         }
 
         return InvestigationNarrative.Create(

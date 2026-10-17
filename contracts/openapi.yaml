@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Meridian Precision Systems Quality API
-  version: 1.4.0
+  version: 1.6.0
   description: |
     Console API for the fictional Meridian Precision Systems quality-investigation demo.
     Every intake channel becomes one incident. A CAPA is created only after a human approval,
@@ -34,6 +34,10 @@ info:
     Contract 1.5 adds GET /api/trace/{eventId}. The path returns the ancestors of one
     event and the tree of events that followed it. EvidenceItem gains optional sourceEventIds,
     the events that item was derived from. Both additions are optional for older clients.
+    Contract 1.6 adds the evidence loop: GET /api/incidents/{incidentId}/investigations lists every round on a
+    ticket, oldest first; Investigation gains round and maxRounds; InvestigationStage gains superseded (a round a
+    person closed by adding evidence); EvidenceSource gains userProvided and EvidenceItem gains suppliedBy.
+    A requestInfo decision carries the evidence text as comment and answers with the next round. All additive.
     All names and data are synthetic.
   license:
     name: MIT
@@ -334,6 +338,26 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
   /api/incidents/{incidentId}/investigations:
+    get:
+      tags: [investigations]
+      operationId: listInvestigationRounds
+      summary: Every round on a ticket, oldest first
+      description: |
+        Additive in contract 1.6 (the evidence loop). Each time a person adds evidence the round closes as
+        superseded with its decision on file and the agents run again as the next round. Closed rounds are read-only.
+      parameters:
+        - $ref: "#/components/parameters/IncidentId"
+      responses:
+        "200":
+          description: Rounds, oldest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Investigation"
+        "404":
+          $ref: "#/components/responses/NotFound"
     post:
       tags: [investigations]
       operationId: startInvestigation
@@ -355,8 +379,10 @@ paths:
     post:
       tags: [investigations]
       operationId: submitDecision
-      summary: Approve, reject, or request more information
+      summary: Approve, reject, or add evidence for another round
       description: |
+        requestInfo needs the evidence text as comment: the round closes as superseded and the response carries the
+        next round (often its "started" placeholder while evidence is gathered). Reject closes the ticket with no action.
         Approve requires approverId. The server issues a single-use approval token bound to the
         action hash and creates the CAPA. A client-supplied signature is not part of the schema and the request is rejected (400).
       parameters:
@@ -1267,7 +1293,7 @@ components:
           $ref: "#/components/schemas/Severity"
     EvidenceSource:
       type: string
-      enum: [telemetry, spc, mes, qms, plm, erp, cmms, document, ticketing, manualMeasurement]
+      enum: [telemetry, spc, mes, qms, plm, erp, cmms, document, ticketing, manualMeasurement, userProvided]
     EvidenceItem:
       type: object
       additionalProperties: false
@@ -1330,6 +1356,10 @@ components:
           description: Event ids this evidence was derived from. Absent when the item has none.
           items:
             type: string
+        suppliedBy:
+          type: string
+          nullable: true
+          description: Who typed this record in (source userProvided, the evidence loop). Absent for gathered records.
     CausalTrace:
       type: object
       additionalProperties: false
@@ -1444,6 +1474,7 @@ components:
         - rejected
         - failed
         - closedByDemoReset
+        - superseded
     Investigation:
       type: object
       additionalProperties: false
@@ -1483,6 +1514,14 @@ components:
           description: Plain-language status. Present only when a demo reset closed the investigation.
         decision:
           $ref: "#/components/schemas/DecisionRecord"
+        round:
+          type: integer
+          minimum: 1
+          description: Round on the ticket (the evidence loop). 1 for the first run, one more each time a person added evidence.
+        maxRounds:
+          type: integer
+          minimum: 1
+          description: The most rounds a ticket can have (data/metadata/investigation.yaml evidenceRounds.max).
     DecisionRecord:
       type: object
       nullable: true
@@ -1584,7 +1623,7 @@ components:
           format: date-time
         kind:
           type: string
-          description: fault, alert, ticket, incident, investigation, approval, or capa.
+          description: fault, alert, ticket, incident, investigation, decision, userEvidence (a person added evidence and the agents ran another round), approval, or capa.
         summary:
           type: string
         actor:

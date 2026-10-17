@@ -4,6 +4,7 @@ using System.Text.Json.Nodes;
 
 using Microsoft.Extensions.AI;
 
+using Mps.Domain.Evidence;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
 using Mps.Domain.Investigations;
@@ -77,6 +78,41 @@ public sealed class ShapeRetryTests
         started.Stage.Should().Be(InvestigationStage.AwaitingApproval);
         started.Hypotheses[0].Cause.Should().Contain("rather than a gradual drift");
         rig.Resolution.Calls.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ARoundWithUserEvidenceSendsItToTheAiAndKeepsTheShapeRetry()
+    {
+        var resolution = new ShapeContradictingChat(WorkflowRig.MockChat(), contradictCalls: 1);
+        var rig = new WorkflowRig(ScenarioKind.EngineeringChange, WorkflowRig.MockChat(), resolution);
+        var incident = Oscillation("corr-user-evidence-round");
+        rig.Incidents.Add(incident);
+        var note = InvestigationRounds.UserEvidence("The chiller loop was serviced yesterday and the flow valve was left half open.", "Bryan Weis", WorkflowRig.At, "E-02", closedRound: 1);
+
+        var started = await rig.Workflow.StartRoundAsync(incident.Id, [note], CancellationToken.None);
+
+        started.Stage.Should().Be(InvestigationStage.AwaitingApproval);
+        started.Evidence.Should().Contain(item => item.Source == EvidenceSource.UserProvided && item.SuppliedBy == "Bryan Weis");
+        rig.Resolution.Calls.Should().Be(1 + MafInvestigationWorkflow.ShapeRetries, "the single shape retry still applies on a user-evidence round");
+        resolution.Requests.Should().HaveCount(2);
+        resolution.Requests.Should().OnlyContain(request => request.Contains("flow valve was left half open", StringComparison.Ordinal));
+        resolution.Requests[0].Should().Contain("userEvidence");
+    }
+
+    [Fact]
+    public async Task UserEvidenceDoesNotLetAPersistentShapeMismatchThrough()
+    {
+        var resolution = new ShapeContradictingChat(WorkflowRig.MockChat(), contradictCalls: 2);
+        var rig = new WorkflowRig(ScenarioKind.EngineeringChange, WorkflowRig.MockChat(), resolution);
+        var incident = Oscillation("corr-user-evidence-guard");
+        rig.Incidents.Add(incident);
+        var note = InvestigationRounds.UserEvidence("Operators saw the clamp chatter.", "Bryan Weis", WorkflowRig.At, "E-02", closedRound: 1);
+
+        var started = await rig.Workflow.StartRoundAsync(incident.Id, [note], CancellationToken.None);
+
+        started.Stage.Should().Be(InvestigationStage.Escalated);
+        started.Hypotheses.Should().BeEmpty();
+        started.Evidence.Should().Contain(item => item.Source == EvidenceSource.UserProvided);
     }
 
     private static Incident Oscillation(string correlationId)

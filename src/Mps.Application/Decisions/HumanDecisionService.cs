@@ -12,6 +12,7 @@ using Mps.Application.Writes;
 using Mps.Domain;
 using Mps.Domain.Approval;
 using Mps.Domain.Capa;
+using Mps.Domain.Evidence;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
 using Mps.Domain.Investigations;
@@ -20,8 +21,11 @@ namespace Mps.Application.Decisions;
 
 public sealed record HumanDecisionOutcome(InvestigationSnapshot Investigation, StoredCapa? Capa)
 {
-    /// <summary>True when the investigation was closed so a new run can gather more evidence.</summary>
+    /// <summary>True when a person added evidence: the round is closed and the next round should run with <see cref="UserEvidence"/>.</summary>
     public bool Superseded { get; init; }
+
+    /// <summary>Every user-provided record for the next round: the ones carried from earlier rounds plus the new one.</summary>
+    public IReadOnlyList<EvidenceItem> UserEvidence { get; init; } = [];
 }
 
 /// <summary>
@@ -59,6 +63,7 @@ public sealed class HumanDecisionService : IHumanDecisionService
     private readonly IMetricsLog _metrics;
     private readonly ILifecycleEventSink? _events;
     private readonly ICascadeDirectory? _cascade;
+    private readonly EvidenceRoundSettings _rounds;
 
     /// <summary>Stamps decisions and CAPA on the plant clock so they sort after the alert. Approval tokens stay on wall time.</summary>
     private readonly TimeProvider _records;
@@ -75,9 +80,11 @@ public sealed class HumanDecisionService : IHumanDecisionService
         IMetricsLog metrics,
         ILifecycleEventSink? events = null,
         ICascadeDirectory? cascade = null,
-        RecordClock? recordClock = null)
+        RecordClock? recordClock = null,
+        EvidenceRoundSettings? rounds = null)
     {
         _records = (TimeProvider?)recordClock ?? time;
+        _rounds = rounds ?? EvidenceRoundSettings.Shared;
         ArgumentNullException.ThrowIfNull(investigations);
         ArgumentNullException.ThrowIfNull(incidents);
         ArgumentNullException.ThrowIfNull(capas);
@@ -117,14 +124,20 @@ public sealed class HumanDecisionService : IHumanDecisionService
         var stored = await _incidents.GetAsync(snapshot.IncidentId, cancellationToken).ConfigureAwait(false)
             ?? throw new ResourceNotFoundException("Incident was not found.");
 
-        // A decision is final: an approved or rejected investigation keeps its decision as a read-only record.
-        if (snapshot.Stage is InvestigationStage.Approved or InvestigationStage.Rejected)
+        // A decision is final per round: an approved, rejected or superseded round keeps its decision as a read-only record.
+        if (snapshot.Stage is InvestigationStage.Approved or InvestigationStage.Rejected or InvestigationStage.Superseded
+            || (snapshot.Decision is not null && snapshot.Stage != InvestigationStage.Approved))
         {
             throw new LifecycleConflictException(AlreadyDecided(snapshot));
         }
 
         var outcome = await DecideCoreAsync(snapshot, stored, kind, comment, approverId, cancellationToken).ConfigureAwait(false);
-        var recorded = kind is HumanDecisionKind.Reject or HumanDecisionKind.RequestInfo
+        if (outcome.Superseded)
+        {
+            return outcome;
+        }
+
+        var recorded = kind is HumanDecisionKind.Reject
             || outcome.Investigation.Stage == InvestigationStage.Approved;
         if (!recorded)
         {
@@ -133,10 +146,10 @@ public sealed class HumanDecisionService : IHumanDecisionService
 
         var current = await _investigations.GetAsync(snapshot.Id, cancellationToken).ConfigureAwait(false) ?? snapshot;
         var note = string.IsNullOrWhiteSpace(comment) ? null : comment.Trim();
-        var decided = new InvestigationSnapshot(current.Id, current.IncidentId, current.Stage, current.Evidence, current.Hypotheses, current.EscalationReason, current.CorrelationId)
-        {
-            Decision = new DecisionRecord(KindName(kind), note, string.IsNullOrWhiteSpace(approverId) ? null : approverId.Trim(), _records.GetUtcNow()),
-        };
+        var decided = current.With(
+            current.Stage,
+            current.EscalationReason,
+            new DecisionRecord(KindName(kind), note, string.IsNullOrWhiteSpace(approverId) ? null : approverId.Trim(), _records.GetUtcNow()));
         await _investigations.UpdateAsync(decided, cancellationToken).ConfigureAwait(false);
         await _notifier.InvestigationChangedAsync(decided, cancellationToken).ConfigureAwait(false);
         return outcome.Investigation.Id == decided.Id ? outcome with { Investigation = decided } : outcome;
@@ -158,14 +171,18 @@ public sealed class HumanDecisionService : IHumanDecisionService
             "approve" => "approved",
             "override" => "approved with an override",
             "reject" => "rejected",
-            "requestInfo" => "closed so the agents could gather more evidence",
+            "requestInfo" => "closed when more evidence was added; the agents ran it again as round "
+                + (snapshot.Round + 1).ToString(System.Globalization.CultureInfo.InvariantCulture),
             _ => snapshot.Stage == InvestigationStage.Approved ? "approved" : "closed",
         };
         var who = snapshot.Decision?.DecidedBy is { Length: > 0 } name ? " by " + name : string.Empty;
         var when = snapshot.Decision is { } decision
             ? " on " + decision.DecidedAt.ToString("yyyy-MM-dd HH:mm 'UTC'", System.Globalization.CultureInfo.InvariantCulture)
             : string.Empty;
-        return "This investigation was already " + what + who + when + ". A decision cannot be changed.";
+        var subject = snapshot.Decision?.Kind == "requestInfo"
+            ? "Round " + snapshot.Round.ToString(System.Globalization.CultureInfo.InvariantCulture) + " was already "
+            : "This investigation was already ";
+        return subject + what + who + when + ". A decision cannot be changed.";
     }
 
     private async Task<HumanDecisionOutcome> DecideCoreAsync(
@@ -196,12 +213,10 @@ public sealed class HumanDecisionService : IHumanDecisionService
                     return await RejectAsync(snapshot, stored, _records.GetUtcNow(), cancellationToken).ConfigureAwait(false);
                 }
             case HumanDecisionKind.RequestInfo:
-                if (snapshot.Stage == InvestigationStage.Escalated)
+                using (QualityDiagnostics.ActivitySource.StartActivity("decision.addEvidence"))
                 {
-                    return await SupersedeForMoreEvidenceAsync(snapshot, stored, comment, _records.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+                    return await AddEvidenceAsync(snapshot, stored, comment, approverId, _records.GetUtcNow(), cancellationToken).ConfigureAwait(false);
                 }
-
-                return await RequestInfoAsync(snapshot, stored, comment, _records.GetUtcNow(), cancellationToken).ConfigureAwait(false);
             case HumanDecisionKind.Override:
                 if (snapshot.Stage != InvestigationStage.Escalated)
                 {
@@ -578,7 +593,9 @@ public sealed class HumanDecisionService : IHumanDecisionService
             return new HumanDecisionOutcome(snapshot, null);
         }
 
+        // Reject ends the loop: the ticket closes with no action (no CAPA). The alert follows the readings, not the ticket.
         LifecycleMoves.WalkTo(stored, IncidentStage.Rejected);
+        LifecycleMoves.WalkTo(stored, IncidentStage.Closed);
         await _incidents.SaveAsync(stored, now, cancellationToken).ConfigureAwait(false);
         var updated = Copy(snapshot, InvestigationStage.Rejected, snapshot.EscalationReason);
         await _investigations.UpdateAsync(updated, cancellationToken).ConfigureAwait(false);
@@ -609,62 +626,66 @@ public sealed class HumanDecisionService : IHumanDecisionService
                 0d),
             cancellationToken);
 
-    private async Task<HumanDecisionOutcome> RequestInfoAsync(
+    /// <summary>
+    /// "Request more evidence" with the evidence a person typed (the evidence loop). The round is closed as superseded
+    /// with its decision on file, the ticket goes back to investigating, and the caller starts the next round with every
+    /// user-provided record so far. The round cap comes from data/metadata/investigation.yaml.
+    /// </summary>
+    private async Task<HumanDecisionOutcome> AddEvidenceAsync(
         InvestigationSnapshot snapshot,
         StoredIncident stored,
         string? comment,
+        string? approverId,
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
-        var reason = string.IsNullOrWhiteSpace(comment) ? "More information was requested." : comment.Trim();
-        if (stored.Incident.Stage != IncidentStage.Escalated)
+        if (string.IsNullOrWhiteSpace(comment))
         {
-            LifecycleMoves.WalkTo(stored, IncidentStage.Escalated);
-            await _incidents.SaveAsync(stored, now, cancellationToken).ConfigureAwait(false);
+            throw new IntakeValidationException("Type the evidence to add. The agents read it in the next round.");
         }
 
-        var updated = Copy(snapshot, InvestigationStage.Escalated, reason);
-        await _investigations.UpdateAsync(updated, cancellationToken).ConfigureAwait(false);
-        await _notifier.InvestigationChangedAsync(updated, cancellationToken).ConfigureAwait(false);
-        await _notifier.IncidentChangedAsync(stored.Incident, cancellationToken).ConfigureAwait(false);
-        return new HumanDecisionOutcome(updated, null);
-    }
+        if (string.IsNullOrWhiteSpace(approverId))
+        {
+            throw new IntakeValidationException("Approver id is required.");
+        }
 
-    /// <summary>
-    /// "Request more evidence" on an escalated investigation closes it as superseded and returns the incident to
-    /// investigating, so the endpoint can start a fresh run with the added data (ADR-005).
-    /// </summary>
-    private async Task<HumanDecisionOutcome> SupersedeForMoreEvidenceAsync(
-        InvestigationSnapshot snapshot,
-        StoredIncident stored,
-        string? comment,
-        DateTimeOffset now,
-        CancellationToken cancellationToken)
-    {
-        var note = string.IsNullOrWhiteSpace(comment) ? "More evidence requested." : comment.Trim();
-        var updated = Copy(snapshot, InvestigationStage.Rejected, "Superseded: more evidence requested. " + note);
-        await _investigations.UpdateAsync(updated, cancellationToken).ConfigureAwait(false);
-        if (stored.Incident.Stage == IncidentStage.Escalated)
+        if (!InvestigationRounds.IsOpenForDecision(snapshot))
+        {
+            throw new LifecycleConflictException("Evidence can be added only while a round waits for a decision.");
+        }
+
+        if (snapshot.Round >= _rounds.MaxRounds)
+        {
+            throw new LifecycleConflictException(InvestigationRounds.CapReached(_rounds.MaxRounds));
+        }
+
+        var who = approverId.Trim();
+        var text = comment.Trim();
+        InvestigationSnapshot closed;
+        EvidenceItem added;
+        try
+        {
+            added = InvestigationRounds.UserEvidence(text, who, now, stored.Incident.ToolId.Value, snapshot.Round);
+            closed = InvestigationRounds.Supersede(snapshot, new DecisionRecord(KindName(HumanDecisionKind.RequestInfo), text, who, now), _rounds.MaxRounds, added);
+        }
+        catch (DomainRuleException exception)
+        {
+            throw new IntakeValidationException(exception.Message);
+        }
+
+        await _investigations.UpdateAsync(closed, cancellationToken).ConfigureAwait(false);
+        if (stored.Incident.Stage != IncidentStage.Investigating)
         {
             LifecycleMoves.WalkTo(stored, IncidentStage.Investigating);
             await _incidents.SaveAsync(stored, now, cancellationToken).ConfigureAwait(false);
         }
 
-        await _notifier.InvestigationChangedAsync(updated, cancellationToken).ConfigureAwait(false);
+        await _notifier.InvestigationChangedAsync(closed, cancellationToken).ConfigureAwait(false);
         await _notifier.IncidentChangedAsync(stored.Incident, cancellationToken).ConfigureAwait(false);
-        return new HumanDecisionOutcome(updated, null) { Superseded = true };
+        var carried = InvestigationRounds.CarriedUserEvidence(closed);
+        return new HumanDecisionOutcome(closed, null) { Superseded = true, UserEvidence = carried };
     }
 
     private static InvestigationSnapshot Copy(InvestigationSnapshot snapshot, InvestigationStage stage, string? reason) =>
-        new(
-            snapshot.Id,
-            snapshot.IncidentId,
-            stage,
-            snapshot.Evidence,
-            snapshot.Hypotheses,
-            reason,
-            snapshot.CorrelationId)
-        {
-            Decision = snapshot.Decision,
-        };
+        snapshot.With(stage, reason);
 }

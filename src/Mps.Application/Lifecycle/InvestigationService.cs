@@ -17,6 +17,15 @@ public interface IInvestigationService
 {
     Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Starts the next round on the ticket (the evidence loop): the agents run again from evidence gathering with the
+    /// user-provided records included, and the evidence gate, grounding and cause checks apply as on the first round.
+    /// </summary>
+    Task<InvestigationSnapshot> StartRoundAsync(IncidentId incidentId, IReadOnlyList<EvidenceItem> userEvidence, CancellationToken cancellationToken);
+
+    /// <summary>Every round on the ticket, oldest first, including one still gathering evidence.</summary>
+    Task<IReadOnlyList<InvestigationSnapshot>> ListRoundsAsync(IncidentId incidentId, CancellationToken cancellationToken);
+
     Task<InvestigationSnapshot> GetAsync(InvestigationId investigationId, CancellationToken cancellationToken);
 
     Task<InvestigationSnapshot> GetLatestByIncidentAsync(IncidentId incidentId, CancellationToken cancellationToken);
@@ -69,7 +78,37 @@ public sealed class InvestigationService : IInvestigationService
         _inFlight = inFlight ?? new InvestigationsInFlight();
     }
 
-    public async Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken)
+    public Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken) =>
+        StartCoreAsync(incidentId, [], cancellationToken);
+
+    public Task<InvestigationSnapshot> StartRoundAsync(IncidentId incidentId, IReadOnlyList<EvidenceItem> userEvidence, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(userEvidence);
+        if (userEvidence.Any(item => item.Source != EvidenceSource.UserProvided))
+        {
+            throw new IntakeValidationException("Only user-provided evidence can start a new round.");
+        }
+
+        return StartCoreAsync(incidentId, userEvidence, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<InvestigationSnapshot>> ListRoundsAsync(IncidentId incidentId, CancellationToken cancellationToken)
+    {
+        _ = await _incidents.GetAsync(incidentId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ResourceNotFoundException("Incident was not found.");
+        var saved = (await _investigations.ListAsync(cancellationToken).ConfigureAwait(false))
+            .Where(item => item.IncidentId == incidentId)
+            .OrderBy(item => item.Round)
+            .ToList();
+        if (_inFlight.ForIncident(incidentId) is { } running && saved.All(item => item.Id != running.Id))
+        {
+            saved.Add(running);
+        }
+
+        return saved;
+    }
+
+    private async Task<InvestigationSnapshot> StartCoreAsync(IncidentId incidentId, IReadOnlyList<EvidenceItem> userEvidence, CancellationToken cancellationToken)
     {
         var stored = await _incidents.GetAsync(incidentId, cancellationToken).ConfigureAwait(false)
             ?? throw new ResourceNotFoundException("Incident was not found.");
@@ -86,8 +125,18 @@ public sealed class InvestigationService : IInvestigationService
 
         // Gathering can take minutes (the agent waits for enough readings). Show a placeholder meanwhile, and answer a
         // second Start with it instead of running a duplicate investigation that would look hung.
+        var previous = await _investigations.FindLatestByIncidentAsync(incidentId, cancellationToken).ConfigureAwait(false);
+        var round = (previous?.Round ?? 0) + 1;
+        if (userEvidence.Count == 0 && previous is { Stage: InvestigationStage.Superseded })
+        {
+            // A plain Start after a closed round (the next round did not start) still carries what people added.
+            userEvidence = InvestigationRounds.CarriedUserEvidence(previous);
+        }
         var placeholder = Stamp(
-            new InvestigationSnapshot(InvestigationId.New(), incidentId, InvestigationStage.Started, [], [], null, stored.Incident.CorrelationId),
+            new InvestigationSnapshot(InvestigationId.New(), incidentId, InvestigationStage.Started, userEvidence, [], null, stored.Incident.CorrelationId)
+            {
+                Round = round,
+            },
             stored.Incident);
         if (!_inFlight.TryBegin(placeholder, out var running))
         {
@@ -99,7 +148,7 @@ public sealed class InvestigationService : IInvestigationService
         InvestigationId? saved = null;
         try
         {
-            var result = await RunAsync(incidentId, stored, cancellationToken).ConfigureAwait(false);
+            var result = await RunAsync(incidentId, stored, userEvidence, round, cancellationToken).ConfigureAwait(false);
             saved = result.Id;
             return result;
         }
@@ -109,11 +158,19 @@ public sealed class InvestigationService : IInvestigationService
         }
     }
 
-    private async Task<InvestigationSnapshot> RunAsync(IncidentId incidentId, StoredIncident stored, CancellationToken cancellationToken)
+    private async Task<InvestigationSnapshot> RunAsync(
+        IncidentId incidentId,
+        StoredIncident stored,
+        IReadOnlyList<EvidenceItem> userEvidence,
+        int round,
+        CancellationToken cancellationToken)
     {
         var watch = System.Diagnostics.Stopwatch.StartNew();
         using var activity = QualityDiagnostics.ActivitySource.StartActivity("investigation.start");
-        var started = await _workflow.StartAsync(incidentId, cancellationToken).ConfigureAwait(false);
+        activity?.SetTag("mps.investigation.round", round);
+        var started = userEvidence.Count == 0
+            ? await _workflow.StartAsync(incidentId, cancellationToken).ConfigureAwait(false)
+            : await _workflow.StartRoundAsync(incidentId, userEvidence, cancellationToken).ConfigureAwait(false);
         if (started.IncidentId != incidentId)
         {
             throw new LifecycleConflictException("The workflow returned a different incident.");
@@ -124,7 +181,8 @@ public sealed class InvestigationService : IInvestigationService
             throw new LifecycleConflictException("The workflow cannot skip to a human decision.");
         }
 
-        var aligned = Stamp(AlignCorrelation(started, stored.Incident.CorrelationId), stored.Incident);
+        var aligned = Stamp(KeepUserEvidence(AlignCorrelation(started, stored.Incident.CorrelationId), userEvidence), stored.Incident);
+        aligned = aligned.WithRound(round);
         var opened = await OpenCommandAsync(aligned, stored.Incident, cancellationToken).ConfigureAwait(false);
         using var command = CommandAmbient.Adopt(opened);
         aligned = await StampRecordsAsync(aligned, stored.Incident, opened, cancellationToken).ConfigureAwait(false);
@@ -186,6 +244,7 @@ public sealed class InvestigationService : IInvestigationService
         InvestigationStage.Approved => IncidentStage.Approved,
         InvestigationStage.Rejected => IncidentStage.Rejected,
         InvestigationStage.ClosedByDemoReset => IncidentStage.ClosedByDemoReset,
+        InvestigationStage.Superseded => IncidentStage.Investigating,
         _ => throw new LifecycleConflictException($"Investigation stage {stage} is not mapped."),
     };
 
@@ -290,6 +349,13 @@ public sealed class InvestigationService : IInvestigationService
                 new { incidentId = incident.Id.Value, investigationId = snapshot.Id.Value }),
             cancellationToken).ConfigureAwait(false);
         return new CommandAmbient.Opened(snapshot.CorrelationId, eventId);
+    }
+
+    /// <summary>A person's records stay on the round even when the run ended before reading them (a failed gather).</summary>
+    private static InvestigationSnapshot KeepUserEvidence(InvestigationSnapshot snapshot, IReadOnlyList<EvidenceItem> userEvidence)
+    {
+        var missing = userEvidence.Where(item => snapshot.Evidence.All(existing => existing.Id != item.Id)).ToArray();
+        return missing.Length == 0 ? snapshot : snapshot.WithEvidence(snapshot.Evidence.Concat(missing).ToArray());
     }
 
     private static InvestigationSnapshot AlignCorrelation(InvestigationSnapshot snapshot, string correlationId)

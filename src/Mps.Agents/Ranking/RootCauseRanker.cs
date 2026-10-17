@@ -73,24 +73,30 @@ public static class RootCauseRanker
 
         if (!eco && !material && Mentions(request, "bearing"))
         {
+            var told = UserSaid(request, "bearing");
             return Recommend(
                 request,
                 RootCauseCategory.EquipmentCalibrationOrAlignment,
-                "A maintenance record shows the pump bearing is past its service interval, and vibration is rising.",
+                told
+                    ? "A person on the line reports the pump bearing is worn past its service interval, and the readings moved with it."
+                    : "A maintenance record shows the pump bearing is past its service interval, and vibration is rising.",
                 0.83d,
-                Prefer(request.PmEvidenceIds, request.SignalEvidenceIds),
+                told ? UserFirst(request) : Prefer(request.PmEvidenceIds, request.SignalEvidenceIds),
                 request.LotIds.Select(id => "Supplier lot " + id + " is a confounder.").Concat(DocumentOnlyCounters(documentOnly)).ToArray(),
                 ["Replace the pump bearing before the next production lot."]);
         }
 
-        if (!eco && !material && Mentions(request, "recipe setpoint"))
+        if (!eco && !material && (Mentions(request, "recipe setpoint") || UserSaid(request, "operator error")))
         {
+            var told = UserSaid(request, "recipe setpoint") || UserSaid(request, "operator error");
             return Recommend(
                 request,
                 RootCauseCategory.ProcessDrift,
-                "An operator changed a recipe setpoint and there is no engineering change order for that edit.",
+                told
+                    ? "A person on the line reports an operator error on the process, and there is no engineering change order for it."
+                    : "An operator changed a recipe setpoint and there is no engineering change order for that edit.",
                 0.8d,
-                Prefer(request.PmEvidenceIds, request.SignalEvidenceIds),
+                told ? UserFirst(request) : Prefer(request.PmEvidenceIds, request.SignalEvidenceIds),
                 DocumentOnlyCounters(documentOnly),
                 ["Restore the approved recipe setpoint and record the edit."]);
         }
@@ -316,8 +322,17 @@ public static class RootCauseRanker
         return primary.Length > 0 ? primary : fallback;
     }
 
+    /// <summary>A maintenance summary or a record a person added in the evidence loop names the phrase.</summary>
     private static bool Mentions(ResolutionRequest request, string phrase) =>
-        request.PmSummaries.Any(summary => summary.Contains(phrase, StringComparison.OrdinalIgnoreCase));
+        request.PmSummaries.Any(summary => summary.Contains(phrase, StringComparison.OrdinalIgnoreCase))
+        || UserSaid(request, phrase);
+
+    private static bool UserSaid(ResolutionRequest request, string phrase) =>
+        request.UserEvidence.Any(text => text.Contains(phrase, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Cites what the person added, then the maintenance records, then the signal.</summary>
+    private static string[] UserFirst(ResolutionRequest request) =>
+        request.UserEvidenceIds.Concat(Prefer(request.PmEvidenceIds, request.SignalEvidenceIds)).Distinct(StringComparer.Ordinal).ToArray();
 
     private static string? First(string[] values)
     {

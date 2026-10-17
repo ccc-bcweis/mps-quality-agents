@@ -324,8 +324,9 @@ public sealed class EfQualityStore :
         var rejected = nameof(InvestigationStage.Rejected);
         var failed = nameof(InvestigationStage.Failed);
         var closedByReset = nameof(InvestigationStage.ClosedByDemoReset);
+        var superseded = nameof(InvestigationStage.Superseded);
         var row = await _db.Investigations.AsNoTracking()
-            .Where(item => item.IncidentId == incidentId.Value && item.Stage != rejected && item.Stage != failed && item.Stage != closedByReset)
+            .Where(item => item.IncidentId == incidentId.Value && item.Stage != rejected && item.Stage != failed && item.Stage != closedByReset && item.Stage != superseded)
             .OrderByDescending(item => item.Id)
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -644,6 +645,7 @@ public sealed class EfQualityStore :
             row.CorrelationId)
         {
             Decision = ReadDecision(row.DecisionJson),
+            Round = row.Sequence < 1 ? 1 : row.Sequence,
         };
     }
 
@@ -701,7 +703,8 @@ public sealed class EfQualityStore :
             ChamberName: item.Reading?.ChamberName,
             Center: item.Reading?.Center,
             Sigma: item.Reading?.Sigma,
-            SourceEventIds: item.SourceEventIds.Count == 0 ? null : item.SourceEventIds.ToArray());
+            SourceEventIds: item.SourceEventIds.Count == 0 ? null : item.SourceEventIds.ToArray(),
+            SuppliedBy: item.SuppliedBy);
 
     private static EvidenceItem ToEvidence(EvidenceDocument document)
     {
@@ -724,7 +727,8 @@ public sealed class EfQualityStore :
             document.ToolId,
             document.ExternalRef,
             reading,
-            document.SourceEventIds);
+            document.SourceEventIds,
+            document.SuppliedBy);
     }
 
     private static HypothesisDocument ToHypothesisDocument(Hypothesis hypothesis) =>
@@ -777,7 +781,8 @@ public sealed class EfQualityStore :
         string? ChamberName = null,
         IReadOnlyList<string>? SourceEventIds = null,
         double? Center = null,
-        double? Sigma = null);
+        double? Sigma = null,
+        string? SuppliedBy = null);
 
     private sealed record MatrixDocument(string Category, Guid EvidenceId, string Stance, string? WhyItMatters);
 

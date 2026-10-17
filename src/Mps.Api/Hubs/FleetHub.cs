@@ -391,5 +391,6 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
         or InvestigationStage.AwaitingApproval
         or InvestigationStage.Approved
         or InvestigationStage.Rejected
+        or InvestigationStage.Superseded
         or InvestigationStage.Failed;
 }
