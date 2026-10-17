@@ -103,6 +103,8 @@ export type Ticket = {
   toolId: string;
   title: string;
   openedAt: string;
+  /** Open until the ticket's incident is closed (by work or by reset). From the API. */
+  status?: "open" | "closed";
 };
 
 export type Incident = {

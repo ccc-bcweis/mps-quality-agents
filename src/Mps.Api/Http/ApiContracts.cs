@@ -40,7 +40,18 @@ public sealed record TicketResponse(
     string ToolId,
     string Title,
     DateTimeOffset OpenedAt,
-    string SiteId);
+    string SiteId,
+    string Status = TicketStatus.Open);
+
+/// <summary>A ticket is closed when its incident is closed (by work or by reset); otherwise it is open.</summary>
+public static class TicketStatus
+{
+    public const string Open = "open";
+    public const string Closed = "closed";
+
+    public static string For(IncidentStage? stage) =>
+        stage is IncidentStage.Closed or IncidentStage.ClosedByDemoReset ? Closed : Open;
+}
 
 public sealed record IncidentResponse(
     Guid Id,
