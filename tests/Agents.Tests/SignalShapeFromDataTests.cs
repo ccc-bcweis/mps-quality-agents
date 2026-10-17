@@ -128,6 +128,23 @@ public sealed class SignalShapeFromDataTests
         EvidencePackFactory.ShapeOf(full, violations).Should().Be(SignalShape.Oscillation);
     }
 
+    [Fact]
+    public void AnEarlyLowSeverityTrendBreakDoesNotCutTheWaitShort()
+    {
+        // Live D-01-A: a Low Nelson trend break 9 minutes before the fault, then the oscillation's rule 1 break.
+        var wait = new Mps.Agents.Investigation.ShapeWait(30, TimeSpan.FromSeconds(20), 20);
+        var points = LiveA.Select((value, i) => new TelemetryPoint(Start.AddSeconds(15 * i), value)).ToArray();
+        var nominals = LiveA.Select((_, i) => i < 24 ? 3.5d : 3.0d).ToArray();
+        var early = new TelemetryWindow(new ToolId("D-01"), "chamberPressure", Start, points[55].At, points.Take(56).ToArray()) { Nominals = nominals.Take(56).ToArray() };
+        SpcViolation[] violations =
+        [
+            new SpcViolation("nelson-6", new ToolId("D-01"), "D-01-A", "chamberPressure", Start.AddSeconds(15 * 10), 3.59d, 0.25d, Severity.Low),
+            new SpcViolation("western-electric-1", new ToolId("D-01"), "D-01-A", "chamberPressure", Start.AddSeconds(15 * 48), 4.458d, 0.25d, Severity.High),
+        ];
+
+        wait.NeedsMoreReadings(early, violations).Should().BeTrue();
+    }
+
     private static string RepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
