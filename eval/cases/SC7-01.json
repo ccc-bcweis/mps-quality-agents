@@ -5,7 +5,8 @@
   "expected": {
     "behavior": "recommend",
     "category": "equipmentCalibrationOrAlignment",
-    "forbiddenInCause": ["SIH4-088"]
+    "forbiddenInCause": ["SIH4-088"],
+    "causeTerms": ["bearing"]
   },
   "request": {
     "scopeKind": "chamber",

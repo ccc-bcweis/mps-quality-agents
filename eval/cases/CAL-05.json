@@ -5,7 +5,10 @@
   "expected": {
     "behavior": "recommend",
     "category": "equipmentCalibrationOrAlignment",
-    "forbiddenInCause": []
+    "forbiddenInCause": [],
+    "causeTerms": [
+      "Baratron manometer"
+    ]
   },
   "request": {
     "scopeKind": "chamber",

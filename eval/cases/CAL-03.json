@@ -5,7 +5,10 @@
   "expected": {
     "behavior": "recommend",
     "category": "equipmentCalibrationOrAlignment",
-    "forbiddenInCause": []
+    "forbiddenInCause": [],
+    "causeTerms": [
+      "RF match sensor"
+    ]
   },
   "request": {
     "scopeKind": "chamber",

@@ -5,7 +5,10 @@
   "expected": {
     "behavior": "recommend",
     "category": "equipmentCalibrationOrAlignment",
-    "forbiddenInCause": []
+    "forbiddenInCause": [],
+    "causeTerms": [
+      "O2 MFC"
+    ]
   },
   "request": {
     "scopeKind": "chamber",

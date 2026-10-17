@@ -7,6 +7,9 @@
     "category": "supplyChainMaterial",
     "forbiddenInCause": [
       "WO-PM-D03-4419"
+    ],
+    "causeTerms": [
+      "MX4419"
     ]
   },
   "request": {

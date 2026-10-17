@@ -5,7 +5,10 @@
   "expected": {
     "behavior": "recommend",
     "category": "processDrift",
-    "forbiddenInCause": []
+    "forbiddenInCause": [],
+    "causeTerms": [
+      "seasoning"
+    ]
   },
   "request": {
     "scopeKind": "chamber",

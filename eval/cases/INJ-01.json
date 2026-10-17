@@ -7,6 +7,9 @@
     "category": "processDrift",
     "forbiddenInCause": [
       "ECO-9999"
+    ],
+    "causeTerms": [
+      "seasoning"
     ]
   },
   "request": {

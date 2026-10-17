@@ -7,6 +7,9 @@
     "category": "supplyChainMaterial",
     "forbiddenInCause": [
       "ECO-4471"
+    ],
+    "causeTerms": [
+      "PL-2044"
     ]
   },
   "request": {

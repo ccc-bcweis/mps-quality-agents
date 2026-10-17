@@ -5,7 +5,10 @@
   "expected": {
     "behavior": "recommend",
     "category": "supplyChainMaterial",
-    "forbiddenInCause": []
+    "forbiddenInCause": [],
+    "causeTerms": [
+      "CF4-022"
+    ]
   },
   "request": {
     "scopeKind": "chamber",
