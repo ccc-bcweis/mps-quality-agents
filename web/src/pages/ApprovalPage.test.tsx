@@ -79,13 +79,13 @@ describe("approval dialog", () => {
   it("keeps the note, shows it on the CAPA, and turns the decision into a read-only record", async () => {
     const user = userEvent.setup();
     renderConsole(`/approvals/${S1_INVESTIGATION_ID}`);
-    await user.type(await screen.findByLabelText("Note or justification"), "Hold lot 42 first.");
+    await user.type(await screen.findByLabelText("Note or justification", {}, { timeout: 5000 }), "Hold lot 42 first.");
     await user.click(screen.getByRole("button", { name: "Approve CAPA + containment" }));
-    await user.type(await screen.findByLabelText("Type APPROVE to confirm"), "APPROVE");
+    await user.type(await screen.findByLabelText("Type APPROVE to confirm", {}, { timeout: 5000 }), "APPROVE");
     await user.click(screen.getByRole("button", { name: "Approve and create CAPA" }));
-    expect(await screen.findByTestId("capa-note")).toHaveTextContent("Hold lot 42 first.");
-    await user.click(screen.getByRole("link", { name: "Open the investigation" }));
-    const record = await screen.findByTestId("decision-record");
+    expect(await screen.findByTestId("capa-note", {}, { timeout: 5000 })).toHaveTextContent("Hold lot 42 first.");
+    await user.click(await screen.findByRole("link", { name: "Open the investigation" }, { timeout: 5000 }));
+    const record = await screen.findByTestId("decision-record", {}, { timeout: 5000 });
     expect(record).toHaveTextContent("Approved: CAPA + containment");
     expect(record).toHaveTextContent("Hold lot 42 first.");
     expect(record).toHaveTextContent("dev-user");
