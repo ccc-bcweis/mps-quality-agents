@@ -41,4 +41,12 @@ public sealed class CauseGuardTests
         CauseGuard.Check("The oscillation started after ECO-4471 changed the edge ring.", Pack(SignalShape.Oscillation)).Should().BeNull();
         CauseGuard.Check("ECO-4471 changed the edge ring before onset.", Pack(SignalShape.Unknown)).Should().BeNull();
     }
+
+    [Fact]
+    public void NamingTheProcessDriftClassIsNotAShapeClaim()
+    {
+        CauseGuard.Check("The oscillation started after ECO-4471; calibration is in date, so process drift is ruled out.", Pack(SignalShape.Oscillation)).Should().BeNull();
+        CauseGuard.Check("The oscillation is not process-drift.", Pack(SignalShape.Oscillation)).Should().BeNull();
+        CauseGuard.Check("The temperature shows a slow drift upward.", Pack(SignalShape.Oscillation)).Should().NotBeNull();
+    }
 }
