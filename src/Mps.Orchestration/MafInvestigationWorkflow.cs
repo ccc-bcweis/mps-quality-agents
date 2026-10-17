@@ -25,7 +25,7 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
 {
     public const string ApprovalPortId = "human-approval";
 
-    /// <summary>Retries the resolution allows when its cause names a shape the readings do not show.</summary>
+    /// <summary>Retries the resolution allows when its shape or category disagrees with the evidence.</summary>
     public const int ShapeRetries = 1;
 
     private readonly IIncidentSource _incidents;
@@ -197,8 +197,9 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
             return false;
         }
 
-        // A reported shape (the structured "shape" field) that is not the measured shape gets one retry with that shape fed back.
-        // Grounding and the cause guard still run on every answer; a second miss escalates.
+        // A reported shape (the structured "shape" field) that is not the measured shape, or a category the cited records
+        // contradict (data/metadata/category-evidence.yaml), gets one retry with feedback. Grounding and both guards run on
+        // every answer; a second miss escalates.
         string? feedback = null;
         ResolutionClaim? accepted;
         for (var attempt = 0; ; attempt++)
@@ -231,19 +232,30 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
                 return false;
             }
 
-            if (CauseGuard.Check(accepted, gathered.Pack) is not { } guarded)
+            // Ruled-out record or shape (CauseGuard), then the category against the cited records (CategoryGuard).
+            var guarded = CauseGuard.Check(accepted, gathered.Pack);
+            var shapeMiss = CauseGuard.ShapeMismatch(accepted.Shape, gathered.Pack);
+            var categoryMiss = CategoryGuard.Check(accepted, request.Notes);
+            if (guarded is null && categoryMiss is null)
             {
                 break;
             }
 
-            if (attempt < ShapeRetries && CauseGuard.ShapeMismatch(accepted.Shape, gathered.Pack) is not null)
+            var retryable = guarded is null || string.Equals(guarded, shapeMiss, StringComparison.Ordinal);
+            if (attempt < ShapeRetries && retryable)
             {
-                feedback = CauseGuard.ShapeFeedback(accepted.Shape, gathered.Pack);
+                feedback = string.Join(
+                    " ",
+                    new[]
+                    {
+                        shapeMiss is null ? null : CauseGuard.ShapeFeedback(accepted.Shape, gathered.Pack),
+                        categoryMiss is null ? null : CategoryGuard.Feedback(accepted, request.Notes),
+                    }.Where(note => note is not null));
                 continue;
             }
 
             session.Stage = InvestigationStage.Escalated;
-            session.EscalationReason = guarded;
+            session.EscalationReason = guarded ?? categoryMiss;
             session.ClearHypotheses();
             return false;
         }

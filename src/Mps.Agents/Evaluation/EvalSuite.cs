@@ -84,7 +84,9 @@ public static class EvalSuite
     private static EvalCaseResult Score(EvalCase item)
     {
         var decision = RootCauseRanker.Rank(item.Request);
-        var behavior = decision.Escalate ? "escalate" : "recommend";
+        // The same category check the live workflow runs: a category the cited records contradict does not recommend.
+        var contradicted = decision.Claim is not null && Mps.Agents.Grounding.CategoryGuard.Check(decision.Claim, item.Request.Notes) is not null;
+        var behavior = decision.Escalate || contradicted ? "escalate" : "recommend";
         var category = decision.Claim is null ? null : JsonNamingPolicy.CamelCase.ConvertName(decision.Claim.Category.ToString() ?? string.Empty);
         var cause = decision.Claim?.Cause ?? string.Empty;
         var clean = item.Expected.ForbiddenInCause.All(term => !cause.Contains(term, StringComparison.OrdinalIgnoreCase));

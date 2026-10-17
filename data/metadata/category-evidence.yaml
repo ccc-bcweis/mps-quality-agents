@@ -1,0 +1,24 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Which root-cause class a cited record implies, loaded at startup.
+# When the resolution cites a record that matches a rule (source plus text), its category must be one of the classes
+# those cited records imply. A mismatch gets one retry with feedback, then escalates to a person. A cited record the
+# reply itself rules out (counterEvidence, or rulesOut for that class in evidenceMatrix) does not count.
+# sources: evidence source names (telemetry, spc, mes, qms, plm, erp, cmms, document, ticketing, manualMeasurement).
+# anyOf: the record text contains at least one term; allOf: it contains every term. matchCase: compare case-sensitively.
+# implies: engineeringChange, equipmentCalibrationOrAlignment, supplyChainMaterial or processDrift.
+rules:
+  - id: maintenancePastServiceInterval
+    description: a maintenance record says a wearing part is past its service interval
+    sources: [cmms]
+    anyOf: [past the service interval, past its service interval]
+    implies: equipmentCalibrationOrAlignment
+  - id: calibrationOverdue
+    description: a calibration record is marked overdue
+    sources: [cmms]
+    anyOf: [", overdue.", days overdue, calibration is overdue, calibration overdue]
+    implies: equipmentCalibrationOrAlignment
+  - id: calibrationDeferred
+    description: a work order deferred a calibration
+    sources: [cmms]
+    allOf: [calibration, deferred]
+    implies: equipmentCalibrationOrAlignment

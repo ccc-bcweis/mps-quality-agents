@@ -217,6 +217,9 @@ internal sealed class ScenarioTools :
 {
     private readonly ScenarioKind _kind;
 
+    /// <summary>Adds a maintenance work order that says the pump bearing is past its service interval (an equipment record).</summary>
+    public bool BearingWorkOrder { get; init; }
+
     public ScenarioTools(ScenarioKind kind)
     {
         _kind = kind;
@@ -334,8 +337,10 @@ internal sealed class ScenarioTools :
             return Task.FromResult<IReadOnlyList<WorkOrder>>([]);
         }
 
-        return Task.FromResult<IReadOnlyList<WorkOrder>>([
-            new WorkOrder("WO-19", toolId, "E-02", "PM", WorkflowRig.At.AddDays(-1), "Preventive maintenance the same week")]);
+        WorkOrder routine = new("WO-19", toolId, "E-02", "PM", WorkflowRig.At.AddDays(-1), "Preventive maintenance the same week");
+        return Task.FromResult<IReadOnlyList<WorkOrder>>(BearingWorkOrder
+            ? [routine, new WorkOrder("WO-PMP-E02-BRG", toolId, "E-02", "maintenance", WorkflowRig.At.AddDays(-3), "Foreline pump bearing hours are past the service interval. Vibration has been rising.")]
+            : [routine]);
     }
 
     public Task<IReadOnlyList<CalibrationRecord>> GetCalibrationsAsync(ToolId toolId, CancellationToken cancellationToken)
