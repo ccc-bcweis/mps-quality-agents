@@ -21,6 +21,9 @@ public sealed class ReplayDataModeTests
     {
         await using var factory = new ApiFactory();
         var client = factory.CreateClient();
+
+        // Recording steps the plant 90 ticks and publishes every reading; on a shared CI runner that can pass the default 100 s.
+        client.Timeout = TimeSpan.FromMinutes(5);
         var before = await client.GetFromJsonAsync<JsonElement>("/api/fleet/live");
         var idle = await client.GetFromJsonAsync<JsonElement>("/api/demo/data-mode");
 
