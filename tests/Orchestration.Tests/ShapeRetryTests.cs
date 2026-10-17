@@ -29,6 +29,8 @@ public sealed class ShapeRetryTests
         resolution.Requests[0].Should().NotContain("Your previous cause");
         resolution.Requests[1].Should().Contain("Your previous cause described the signal as");
         resolution.Requests[1].Should().Contain("measured shape");
+        resolution.Requests[1].Should().Contain("not even to say the signal is not like that", "a contrast such as \"a step, not a drift\" still reads as the wrong shape");
+        resolution.Requests[1].Should().Contain("gradual, drift");
     }
 
     [Fact]
