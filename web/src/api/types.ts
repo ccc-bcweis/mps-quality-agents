@@ -271,6 +271,15 @@ export type Investigation = {
   escalationReason?: string | null;
   correlationId: string;
   statusLabel?: string | null;
+  /** The recorded human decision, once made. A decision is final. */
+  decision?: DecisionRecord | null;
+};
+
+export type DecisionRecord = {
+  kind: HumanDecisionKind;
+  note?: string | null;
+  decidedBy?: string | null;
+  decidedAt: string;
 };
 
 export type HumanDecisionRequest = {
@@ -291,6 +300,8 @@ export type Capa = {
   approvedAt?: string | null;
   /** Tool the CAPA belongs to, resolved from its incident by the API. */
   toolId?: string | null;
+  /** The approver's note, when one was written. */
+  note?: string | null;
 };
 
 export type AuditEvent = {

@@ -16,6 +16,9 @@ namespace Mps.Api.Http;
 /// </summary>
 public static class AuditLog
 {
+    private static string NoteSuffix(string? note) =>
+        string.IsNullOrWhiteSpace(note) ? string.Empty : " Note: " + note.Trim();
+
     public static async Task<AuditLogResponse> ReadAsync(QualityDbContext db, CancellationToken cancellationToken) =>
         await ReadAsync(db, null, cancellationToken).ConfigureAwait(false);
 
@@ -143,6 +146,24 @@ public static class AuditLog
                 toolId,
                 investigation.CorrelationId,
                 investigation.Id.ToString("D")));
+            if (EfQualityStore.ReadDecision(investigation.DecisionJson) is { } decision
+                && !string.Equals(decision.Kind, "approve", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(decision.Kind, "override", StringComparison.OrdinalIgnoreCase))
+            {
+                var by = string.IsNullOrWhiteSpace(decision.DecidedBy) ? "an approver" : decision.DecidedBy.Trim();
+                var what = string.Equals(decision.Kind, "reject", StringComparison.OrdinalIgnoreCase)
+                    ? "Rejected by "
+                    : "More evidence requested by ";
+                events.Add(new AuditStamp(
+                    decision.DecidedAt,
+                    5,
+                    "decision",
+                    what + by + "." + NoteSuffix(decision.Note),
+                    by,
+                    toolId,
+                    investigation.CorrelationId,
+                    investigation.Id.ToString("D")));
+            }
         }
 
         foreach (var approval in approvals)
@@ -153,8 +174,8 @@ public static class AuditLog
                 || string.Equals(approval.Decision, DemoReset.StatusLabel, StringComparison.Ordinal)
                 ? DemoReset.StatusLabel + "."
                 : string.Equals(approval.Decision, "approve", StringComparison.OrdinalIgnoreCase)
-                ? "Approved by " + name + "."
-                : "Decision recorded by " + name + ".";
+                ? "Approved by " + name + "." + NoteSuffix(approval.Comment)
+                : "Decision recorded by " + name + "." + NoteSuffix(approval.Comment);
             events.Add(new AuditStamp(
                 Utc(approval.IssuedAt),
                 5,

@@ -120,7 +120,12 @@ public static class ContractMapper
                 entry.Stance,
                 entry.WhyItMatters)).ToArray(),
             SiteForTool(siteId),
-            snapshot.Stage == InvestigationStage.ClosedByDemoReset ? DemoReset.StatusLabel : null);
+            snapshot.Stage == InvestigationStage.ClosedByDemoReset ? DemoReset.StatusLabel : null)
+        {
+            Decision = snapshot.Decision is { } decision
+                ? new DecisionRecordResponse(decision.Kind, decision.Note, decision.DecidedBy, decision.DecidedAt)
+                : null,
+        };
     }
 
     public static CapaResponse ToResponse(CapaAction capa, string siteId, string? toolId = null) =>
@@ -153,6 +158,7 @@ public static class ContractMapper
         return capa with
         {
             ApprovedBy = approval.ApproverId.Trim(),
+            Note = string.IsNullOrWhiteSpace(approval.Comment) ? null : approval.Comment.Trim(),
             ApprovedAt = new DateTimeOffset(DateTime.SpecifyKind(approval.IssuedAt, DateTimeKind.Utc)),
         };
     }
