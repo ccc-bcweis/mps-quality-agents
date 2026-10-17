@@ -35,6 +35,10 @@ public sealed class EfQualityStore :
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    /// <summary>Reads a stored decision record; null when none was recorded.</summary>
+    public static DecisionRecord? ReadDecision(string? json) =>
+        string.IsNullOrWhiteSpace(json) ? null : JsonSerializer.Deserialize<DecisionRecord>(json, JsonOptions);
+
     private readonly Dictionary<Guid, InvestigationNarrative> _stagedNarratives = [];
 
     private readonly QualityDbContext _db;
@@ -254,6 +258,10 @@ public sealed class EfQualityStore :
         row.Stage = snapshot.Stage.ToString();
         row.EscalationReason = snapshot.EscalationReason;
         row.CorrelationId = snapshot.CorrelationId;
+        if (snapshot.Decision is not null)
+        {
+            row.DecisionJson = JsonSerializer.Serialize(snapshot.Decision, JsonOptions);
+        }
         var prior = JsonSerializer.Deserialize<EvidenceDocument[]>(row.EvidenceJson, JsonOptions) ?? [];
         var priorById = prior.ToDictionary(item => item.Id);
         var evidence = snapshot.Evidence.Select(item =>
@@ -619,6 +627,7 @@ public sealed class EfQualityStore :
             EvidenceJson = JsonSerializer.Serialize(snapshot.Evidence.Select(ToEvidenceDocument), JsonOptions),
             HypothesesJson = JsonSerializer.Serialize(snapshot.Hypotheses.Select(ToHypothesisDocument), JsonOptions),
             EvidenceMatrixJson = "[]",
+            DecisionJson = snapshot.Decision is null ? null : JsonSerializer.Serialize(snapshot.Decision, JsonOptions),
         };
 
     private static InvestigationSnapshot ToSnapshot(InvestigationRow row)
@@ -632,7 +641,10 @@ public sealed class EfQualityStore :
             evidence.Select(ToEvidence).ToArray(),
             hypotheses.Select(ToHypothesis).ToArray(),
             row.EscalationReason,
-            row.CorrelationId);
+            row.CorrelationId)
+        {
+            Decision = ReadDecision(row.DecisionJson),
+        };
     }
 
     private static void ApplyNarrative(InvestigationRow row, InvestigationNarrative narrative)

@@ -242,7 +242,7 @@ export function CapaPage() {
     <div>
       <div className="mb-4">
         <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">
-          <Link className={btnSm} to="/approvals">Decisions</Link> · <Explain text="QMS" spellOut={false} />
+          <Link className={btnSm} to="/investigations">Investigations</Link> · <Explain text="QMS" spellOut={false} />
         </p>
         <h1 className="text-mps-display font-semibold">
           <Term id="CAPA" spellOut={false} />
@@ -303,6 +303,10 @@ export function CapaPage() {
               </p>
               <p className="mt-2 text-mps-secondary">
                 {capa.approvedBy && capa.approvedAt ? approvalSentence(capa.approvedBy, capa.approvedAt) : "Approved."}
+              </p>
+              <p className="mt-2" data-testid="capa-note">
+                <span className="text-mps-secondary">Approver's note: </span>
+                {capa.note?.trim() ? capa.note : "No note was written."}
               </p>
               <p className="mt-2 text-mps-secondary">Stage {CAPA_STAGES.find((item) => item.id === capa.stage)?.label ?? capa.stage}</p>
             </section>

@@ -684,9 +684,16 @@ export const handlers = [
     const id = String(params.investigationId);
     const current = mockExtras().investigations.find((item) => item.id === id) ?? investigationFor(id);
     if (!current) return problem("No such record.", 404);
+    if (current.decision || current.stage === "approved" || current.stage === "rejected") {
+      return HttpResponse.json(
+        { title: "The lifecycle rejected the transition.", detail: "This investigation was already decided. A decision cannot be changed.", status: 409 },
+        { status: 409, headers: { "content-type": "application/problem+json" } },
+      );
+    }
     const next = clone(current);
     next.stage =
       body.kind === "approve" || body.kind === "override" ? "approved" : body.kind === "reject" ? "rejected" : "escalated";
+    next.decision = { kind: (body.kind ?? "approve") as HumanDecisionKind, note: body.comment ?? null, decidedBy: body.approverId ?? null, decidedAt: "2026-10-15T02:42:00.000Z" };
     mockExtras().investigations.push(next);
     const capa =
       body.kind === "approve" || body.kind === "override"
@@ -700,6 +707,7 @@ export const handlers = [
             openedAt: "2026-10-14T15:05:00Z",
             approvedBy: body.approverId ?? null,
             approvedAt: "2026-10-15T02:42:00.000Z",
+            note: body.comment ?? null,
           }
         : null;
     return HttpResponse.json({ investigation: next, capa });

@@ -30,15 +30,20 @@ describe("history lists", () => {
     expect(await screen.findByText("No tickets yet.")).toBeInTheDocument();
   });
 
-  it("opens Investigation and Approval on the lists", async () => {
+  it("opens Investigation on the list and has no Decisions tab", async () => {
     renderConsole("/");
     const nav = await screen.findByRole("navigation", { name: "Console" });
     const investigation = within(nav).getByRole("link", { name: "Investigation" });
-    const approval = within(nav).getByRole("link", { name: "Decisions" });
     expect(investigation).toHaveAttribute("href", "/investigations");
-    expect(approval).toHaveAttribute("href", "/approvals");
     expect(investigation.getAttribute("href")).not.toContain(S1_INVESTIGATION_ID);
-    expect(approval.getAttribute("href")).not.toContain(S1_INVESTIGATION_ID);
+    expect(within(nav).queryByRole("link", { name: "Decisions" })).not.toBeInTheDocument();
+  });
+
+  it("sends an old Decisions link to the investigation list, and an old decision link to its Decision section", async () => {
+    renderConsole("/approvals");
+    expect(await screen.findByRole("table", { name: "Investigations" })).toBeInTheDocument();
+    renderConsole(`/approvals/${S1_INVESTIGATION_ID}`);
+    expect(await screen.findByRole("region", { name: "Decision" })).toBeInTheDocument();
   });
 
   it("falls back to the list when a deep link misses", async () => {

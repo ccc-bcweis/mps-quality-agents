@@ -127,7 +127,7 @@ public sealed class ApprovalDecisionTests
             "Hold the lot.",
             "eng-17",
             CancellationToken.None);
-        var again = await harness.Service.DecideAsync(
+        var again = () => harness.Service.DecideAsync(
             harness.InvestigationId,
             HumanDecisionKind.Approve,
             "Hold the lot.",
@@ -136,12 +136,13 @@ public sealed class ApprovalDecisionTests
 
         outcome.Capa.Should().NotBeNull();
         outcome.Capa!.ExternalId.Should().Be("CAPA-900");
-        outcome.Capa.Capa.Summary.Should().Be("Hold the lot.");
+        outcome.Capa.Capa.Summary.Should().NotBe("Hold the lot.", "the note is kept as the approval comment, not as the CAPA action");
+        outcome.Investigation.Decision.Should().BeEquivalentTo(new { Kind = "approve", Note = "Hold the lot.", DecidedBy = "eng-17" });
+        (await again.Should().ThrowAsync<LifecycleConflictException>()).WithMessage("This investigation was already approved by eng-17*A decision cannot be changed.");
         outcome.Capa.Capa.Stage.Should().Be(CapaStage.Open);
         outcome.Investigation.Stage.Should().Be(InvestigationStage.Approved);
         harness.Incident.Stage.Should().Be(IncidentStage.Approved);
         harness.Writer.Calls.Should().Be(1);
-        again.Capa!.Capa.Id.Should().Be(outcome.Capa.Capa.Id);
         var approval = harness.Approvals.Approvals.Single();
         approval.Outcome.Should().Be(ApprovalOutcomes.Succeeded);
         approval.Token.IsConsumed.Should().BeTrue();
@@ -267,7 +268,7 @@ public sealed class ApprovalDecisionTests
 
         var failed = await harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.Approve, "Hold the lot.", "eng-17", CancellationToken.None);
         var retried = await harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.Approve, "Hold the lot.", "eng-17", CancellationToken.None);
-        var clickedAgain = await harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.Approve, "Hold the lot.", "eng-17", CancellationToken.None);
+        var clickedAgain = () => harness.Service.DecideAsync(harness.InvestigationId, HumanDecisionKind.Approve, "Hold the lot.", "eng-17", CancellationToken.None);
         var audit = await harness.Approvals.ListByInvestigationAsync(harness.InvestigationId, CancellationToken.None);
 
         writer.Calls.Should().Be(4);
@@ -277,8 +278,7 @@ public sealed class ApprovalDecisionTests
         retried.Capa!.ExternalId.Should().Be("CAPA-910");
         retried.Investigation.Stage.Should().Be(InvestigationStage.Approved);
         harness.Incident.Stage.Should().Be(IncidentStage.Approved);
-        clickedAgain.Capa!.Capa.Id.Should().Be(retried.Capa.Capa.Id);
-        clickedAgain.Capa.Capa.ApprovalTokenId.Should().Be(retried.Capa.Capa.ApprovalTokenId);
+        await clickedAgain.Should().ThrowAsync<LifecycleConflictException>();
         audit.Should().HaveCount(2);
         audit[0].Outcome.Should().Be(ApprovalOutcomes.Failed);
         audit[0].Attempts.Should().Be(3);

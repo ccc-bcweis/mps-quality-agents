@@ -16,6 +16,9 @@ After a live run (an injected chamber-pressure oscillation on D-01-A), the owner
   override).
 - The Approval tab becomes **Decisions**: a list of investigations to decide. An old `/approvals/:id` link opens the
   investigation at its Decision section.
+  - *Update (Oct 17):* the Decisions tab is removed; it duplicated the Investigation list. `/approvals` redirects to
+    `/investigations` and `/approvals/:id` to `/investigations/:id#decision`. Once decided, the Decision section is a
+    read-only record (decision, note or justification, approver, time) and a second decision is rejected by the server.
 - Screens carry no architecture or enforcement remarks. Approval enforcement (approver required, single-use,
   expiring, hash-bound tokens; no agent write tools) stays in code, tests and SPEC §7, not on screen.
 - Agent steps open and close from the whole row, with a chevron on the left, instead of a "Details" link.

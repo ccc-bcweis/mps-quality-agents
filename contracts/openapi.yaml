@@ -1489,6 +1489,26 @@ components:
         statusLabel:
           type: string
           description: Plain-language status. Present only when a demo reset closed the investigation.
+        decision:
+          $ref: "#/components/schemas/DecisionRecord"
+    DecisionRecord:
+      type: object
+      nullable: true
+      additionalProperties: false
+      required: [kind, decidedAt]
+      description: The recorded human decision. A decision is final; a second one is rejected with 409.
+      properties:
+        kind:
+          $ref: "#/components/schemas/HumanDecisionKind"
+        note:
+          type: string
+          nullable: true
+        decidedBy:
+          type: string
+          nullable: true
+        decidedAt:
+          type: string
+          format: date-time
     HumanDecisionKind:
       type: string
       enum: [approve, reject, requestInfo, override]
@@ -1555,6 +1575,13 @@ components:
           format: date-time
           nullable: true
           description: When the approval was recorded. The console shows this in local time.
+        toolId:
+          type: string
+          nullable: true
+        note:
+          type: string
+          nullable: true
+          description: The approver's note, when one was written.
     AuditEvent:
       type: object
       additionalProperties: false

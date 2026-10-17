@@ -117,6 +117,65 @@ public sealed class HumanDecisionService : IHumanDecisionService
         var stored = await _incidents.GetAsync(snapshot.IncidentId, cancellationToken).ConfigureAwait(false)
             ?? throw new ResourceNotFoundException("Incident was not found.");
 
+        // A decision is final: an approved or rejected investigation keeps its decision as a read-only record.
+        if (snapshot.Stage is InvestigationStage.Approved or InvestigationStage.Rejected)
+        {
+            throw new LifecycleConflictException(AlreadyDecided(snapshot));
+        }
+
+        var outcome = await DecideCoreAsync(snapshot, stored, kind, comment, approverId, cancellationToken).ConfigureAwait(false);
+        var recorded = kind is HumanDecisionKind.Reject or HumanDecisionKind.RequestInfo
+            || outcome.Investigation.Stage == InvestigationStage.Approved;
+        if (!recorded)
+        {
+            return outcome;
+        }
+
+        var current = await _investigations.GetAsync(snapshot.Id, cancellationToken).ConfigureAwait(false) ?? snapshot;
+        var note = string.IsNullOrWhiteSpace(comment) ? null : comment.Trim();
+        var decided = new InvestigationSnapshot(current.Id, current.IncidentId, current.Stage, current.Evidence, current.Hypotheses, current.EscalationReason, current.CorrelationId)
+        {
+            Decision = new DecisionRecord(KindName(kind), note, string.IsNullOrWhiteSpace(approverId) ? null : approverId.Trim(), _records.GetUtcNow()),
+        };
+        await _investigations.UpdateAsync(decided, cancellationToken).ConfigureAwait(false);
+        await _notifier.InvestigationChangedAsync(decided, cancellationToken).ConfigureAwait(false);
+        return outcome.Investigation.Id == decided.Id ? outcome with { Investigation = decided } : outcome;
+    }
+
+    private static string KindName(HumanDecisionKind kind) => kind switch
+    {
+        HumanDecisionKind.Approve => "approve",
+        HumanDecisionKind.Override => "override",
+        HumanDecisionKind.Reject => "reject",
+        _ => "requestInfo",
+    };
+
+    /// <summary>Plain words for a second decision on a decided investigation.</summary>
+    private static string AlreadyDecided(InvestigationSnapshot snapshot)
+    {
+        var what = snapshot.Decision?.Kind switch
+        {
+            "approve" => "approved",
+            "override" => "approved with an override",
+            "reject" => "rejected",
+            "requestInfo" => "closed so the agents could gather more evidence",
+            _ => snapshot.Stage == InvestigationStage.Approved ? "approved" : "closed",
+        };
+        var who = snapshot.Decision?.DecidedBy is { Length: > 0 } name ? " by " + name : string.Empty;
+        var when = snapshot.Decision is { } decision
+            ? " on " + decision.DecidedAt.ToString("yyyy-MM-dd HH:mm 'UTC'", System.Globalization.CultureInfo.InvariantCulture)
+            : string.Empty;
+        return "This investigation was already " + what + who + when + ". A decision cannot be changed.";
+    }
+
+    private async Task<HumanDecisionOutcome> DecideCoreAsync(
+        InvestigationSnapshot snapshot,
+        StoredIncident stored,
+        HumanDecisionKind kind,
+        string? comment,
+        string? approverId,
+        CancellationToken cancellationToken)
+    {
         switch (kind)
         {
             case HumanDecisionKind.Approve:
@@ -209,7 +268,8 @@ public sealed class HumanDecisionService : IHumanDecisionService
         string approverId,
         CancellationToken cancellationToken)
     {
-        var summary = ResolveSummary(comment, snapshot);
+        // The CAPA summary is the recommended action; the approver's note is kept separately as the approval comment.
+        var summary = ResolveSummary(null, snapshot);
         _ = IncidentStagePath.Between(
             stored.Incident.Stage,
             IncidentStage.Approved,
@@ -603,5 +663,8 @@ public sealed class HumanDecisionService : IHumanDecisionService
             snapshot.Evidence,
             snapshot.Hypotheses,
             reason,
-            snapshot.CorrelationId);
+            snapshot.CorrelationId)
+        {
+            Decision = snapshot.Decision,
+        };
 }
