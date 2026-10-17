@@ -5,7 +5,8 @@
   "expected": {
     "behavior": "escalate",
     "category": null,
-    "forbiddenInCause": []
+    "forbiddenInCause": [],
+    "causeTerms": []
   },
   "request": {
     "scopeKind": "chamber",

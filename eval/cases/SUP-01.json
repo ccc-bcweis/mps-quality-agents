@@ -7,6 +7,9 @@
     "category": "supplyChainMaterial",
     "forbiddenInCause": [
       "ECO-4502"
+    ],
+    "causeTerms": [
+      "NF-3317"
     ]
   },
   "request": {

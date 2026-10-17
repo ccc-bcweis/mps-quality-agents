@@ -20,6 +20,8 @@ public sealed class EvalSuiteTests
         report.GatesPass.Should().BeTrue(string.Join("; ", report.Results.Where(r => !r.Passed).Select(r => r.Id)));
         var committed = File.ReadAllText(Path.Combine(root, "eval", "results", "latest.json")).Trim();
         committed.Should().Be(JsonSerializer.Serialize(report, EvalSuite.Json).Trim(), "run `dotnet run --project eval/Eval.Runner` and commit eval/results/latest.json");
+        var table = File.ReadAllText(Path.Combine(root, "eval", "results", "latest.md")).ReplaceLineEndings("\n");
+        table.Should().Be(EvalReportMarkdown.Write(report), "commit eval/results/latest.md from the same run");
     }
 
     private static string Root()

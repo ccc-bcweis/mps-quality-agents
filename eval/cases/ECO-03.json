@@ -5,7 +5,10 @@
   "expected": {
     "behavior": "recommend",
     "category": "engineeringChange",
-    "forbiddenInCause": []
+    "forbiddenInCause": [],
+    "causeTerms": [
+      "ECO-4480"
+    ]
   },
   "request": {
     "scopeKind": "chamber",
