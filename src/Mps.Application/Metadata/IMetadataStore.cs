@@ -19,7 +19,6 @@ public interface IMetadataStore
 
     IReadOnlyList<BusinessRule> Rules { get; }
 
-    IReadOnlyList<ProcessMap> ProcessMaps { get; }
 
     TimeSpan LoadDuration { get; }
 

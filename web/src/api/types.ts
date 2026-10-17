@@ -720,25 +720,3 @@ export type RuleSetting = {
   unit?: string | null;
   help?: string | null;
 };
-
-export type ProcessStep = {
-  id: string;
-  name: string;
-  order: number;
-  detail?: string | null;
-  highlightStages: IncidentStage[];
-};
-
-export type ProcessTransition = {
-  from: string;
-  to: string;
-  name: string;
-};
-
-export type ProcessMap = {
-  id: string;
-  name: string;
-  state: "current" | "future";
-  steps: ProcessStep[];
-  transitions: ProcessTransition[];
-};

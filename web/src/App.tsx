@@ -5,7 +5,7 @@ import { AppShell, ConsoleFrame, HarnessFrame } from "./components/AppShell";
 import { ConsoleProvider } from "./context/ConsoleContext";
 import { AlertsPage } from "./pages/AlertsPage";
 import { AuditPage } from "./pages/AuditPage";
-import { ApprovalPage } from "./pages/ApprovalPage";
+import { LegacyApprovalRedirect } from "./pages/LegacyApprovalRedirect";
 import { CapaPage } from "./pages/CapaPage";
 import { FleetPage } from "./pages/FleetPage";
 import { GlossaryPage } from "./pages/GlossaryPage";
@@ -44,8 +44,8 @@ export function AppRoutes() {
           <Route path="/investigations" element={<InvestigationPage />} />
           <Route path="/investigations/incident/:incidentId" element={<InvestigationPage />} />
           <Route path="/investigations/:investigationId" element={<InvestigationPage />} />
-          <Route path="/approvals" element={<ApprovalPage />} />
-          <Route path="/approvals/:investigationId" element={<ApprovalPage />} />
+          <Route path="/approvals" element={<LegacyApprovalRedirect />} />
+          <Route path="/approvals/:investigationId" element={<LegacyApprovalRedirect />} />
           <Route path="/capas" element={<CapaPage />} />
           <Route path="/capas/:capaId" element={<CapaPage />} />
           <Route path="/rules" element={<RulesProcessPage />} />

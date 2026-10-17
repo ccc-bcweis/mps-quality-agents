@@ -67,8 +67,8 @@ public sealed class MetadataEndpointTests
         Setting("clear.readings").Should().Be("8");
         Setting("decision.overrideMin").Should().Be("20");
 
-        var maps = await client.GetFromJsonAsync<JsonElement>("/api/metadata/process-maps", Json);
-        maps!.EnumerateArray().Select(map => map.GetProperty("state").GetString()).Should().Equal("current", "future");
+        var retired = await client.GetAsync("/api/metadata/process-maps");
+        retired.IsSuccessStatusCode.Should().BeFalse("the old current/future process map endpoint was removed");
     }
 
     [Fact]

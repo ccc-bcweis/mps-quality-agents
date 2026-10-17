@@ -844,20 +844,6 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/RuleSetting"
-  /api/metadata/process-maps:
-    get:
-      tags: [metadata]
-      operationId: listProcessMaps
-      summary: Current-state and future-state process maps
-      responses:
-        "200":
-          description: Ordered steps and the transitions between them.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ProcessMap"
   /api/trace/{eventId}:
     get:
       tags: [trace]
@@ -2456,52 +2442,3 @@ components:
         help:
           type: string
           nullable: true
-    ProcessStep:
-      type: object
-      additionalProperties: false
-      required: [id, name, order, highlightStages]
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        order:
-          type: integer
-        detail:
-          type: string
-          nullable: true
-        highlightStages:
-          type: array
-          items:
-            $ref: "#/components/schemas/IncidentStage"
-    ProcessTransition:
-      type: object
-      additionalProperties: false
-      required: [from, to, name]
-      properties:
-        from:
-          type: string
-        to:
-          type: string
-        name:
-          type: string
-    ProcessMap:
-      type: object
-      additionalProperties: false
-      required: [id, name, state, steps, transitions]
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        state:
-          type: string
-          enum: [current, future]
-        steps:
-          type: array
-          items:
-            $ref: "#/components/schemas/ProcessStep"
-        transitions:
-          type: array
-          items:
-            $ref: "#/components/schemas/ProcessTransition"

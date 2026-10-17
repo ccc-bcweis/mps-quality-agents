@@ -3,7 +3,7 @@
 
 import type { SiteDetail, Throughput, ToolFamily, ToolStatus } from "../api/types";
 
-export const DESIGN_WIDTH = 1280;
+const DESIGN_WIDTH = 1280;
 
 const PAD = 16;
 const GUTTER = 72;
@@ -82,7 +82,7 @@ export function formatPct(value: number): string {
   return `${value.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
 }
 
-export function kpiLines(kpis: Throughput): [string, string] {
+function kpiLines(kpis: Throughput): [string, string] {
   return [
     `Wafer starts ${formatPerHour(kpis.waferStartsPerHour)} · Wafer outs ${formatPerHour(kpis.waferOutsPerHour)}`,
     `WIP ${kpis.wip} · Yield ${formatPct(kpis.yieldPct)} · Uptime ${formatPct(kpis.uptimePct)}`,
@@ -95,7 +95,7 @@ export function statusWord(status: ToolStatus): string {
   return "Nominal";
 }
 
-export function textWidth(text: string, fontSize: number, mono: boolean): number {
+function textWidth(text: string, fontSize: number, mono: boolean): number {
   return text.length * fontSize * (mono ? 0.68 : 0.62);
 }
 
@@ -117,7 +117,7 @@ export function labelInside(box: LabelBox, width: number, height: number, margin
   );
 }
 
-export function intersects(a: LabelBox, b: LabelBox, gap = 2): boolean {
+function intersects(a: LabelBox, b: LabelBox, gap = 2): boolean {
   return a.x < b.x + b.w + gap && b.x < a.x + a.w + gap && a.y < b.y + b.h + gap && b.y < a.y + a.h + gap;
 }
 

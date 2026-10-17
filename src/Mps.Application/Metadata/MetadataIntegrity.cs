@@ -45,7 +45,6 @@ public static class MetadataIntegrity
         var tools = Index(catalog.Tools.Select(tool => tool.Id), "tool", errors);
         CheckTools(catalog, lines, capabilities, errors);
         CheckRules(catalog, sites, tools, errors);
-        CheckMaps(catalog.ProcessMaps, errors);
         return errors;
     }
 
@@ -449,53 +448,6 @@ public static class MetadataIntegrity
                 && string.IsNullOrWhiteSpace(action.Queue))
             {
                 errors.Add("Rule " + rule.Id + " route-to-queue needs a queue.");
-            }
-        }
-    }
-
-    private static void CheckMaps(IReadOnlyList<ProcessMap> maps, List<string> errors)
-    {
-        Index(maps.Select(map => map.Id), "process map", errors);
-        if (maps.Count(map => string.Equals(map.State, "current", StringComparison.Ordinal)) != 1
-            || maps.Count(map => string.Equals(map.State, "future", StringComparison.Ordinal)) != 1)
-        {
-            errors.Add("Process maps need exactly one current state and one future state.");
-        }
-
-        foreach (var map in maps)
-        {
-            if (!string.Equals(map.State, "current", StringComparison.Ordinal)
-                && !string.Equals(map.State, "future", StringComparison.Ordinal))
-            {
-                errors.Add("Process map " + map.Id + " state must be current or future.");
-            }
-
-            var steps = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var step in map.Steps)
-            {
-                if (!steps.Add(step.Id))
-                {
-                    errors.Add("Process map " + map.Id + " repeats step " + step.Id + ".");
-                }
-
-                Require(step.Name, "Step " + step.Id + " name", errors);
-                foreach (var stage in step.HighlightStages)
-                {
-                    if (!Enum.TryParse<IncidentStage>(stage, ignoreCase: false, out _))
-                    {
-                        errors.Add("Step " + step.Id + " cites unknown stage " + stage + ".");
-                    }
-                }
-            }
-
-            foreach (var transition in map.Transitions)
-            {
-                if (!steps.Contains(transition.From) || !steps.Contains(transition.To))
-                {
-                    errors.Add("Process map " + map.Id + " transition " + transition.From + " to " + transition.To + " cites a missing step.");
-                }
-
-                Require(transition.Name, "Transition name", errors);
             }
         }
     }

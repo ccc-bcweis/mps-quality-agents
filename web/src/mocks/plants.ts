@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
 /** Plant id from the tool prefix. I- is Ironwood, P- is Lumen, and the rest is Northwater. */
-export function plantOfTool(toolId: string): string {
+function plantOfTool(toolId: string): string {
   if (toolId.startsWith("I-")) return "ironwood";
   if (toolId.startsWith("P-")) return "lumen";
   return "northwater";

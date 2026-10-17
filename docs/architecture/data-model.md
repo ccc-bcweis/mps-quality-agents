@@ -15,8 +15,6 @@ erDiagram
     Capability ||--o{ Tool : "direct attach"
     Tool ||--|{ ToolParameter : measures
     BusinessRule }o--o{ ToolParameter : "may cite"
-    ProcessMap ||--|{ ProcessStep : orders
-    ProcessStep ||--o{ ProcessTransition : leaves
     Tool ||--o{ TelemetryReading : emits
     Tool ||--o{ Alert : raises
     Alert |o--o| Incident : opens

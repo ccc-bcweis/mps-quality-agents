@@ -3,7 +3,7 @@ import { useEffect, useId, useRef } from "react";
 import { btn, btnPrimary } from "./ui";
 
 /** PDFs open in the browser's own viewer; images show as an image. Decided from the file name the server kept. */
-export function attachmentKind(fileName: string | null | undefined): "pdf" | "image" {
+function attachmentKind(fileName: string | null | undefined): "pdf" | "image" {
   return /\.pdf$/i.test(fileName ?? "") ? "pdf" : "image";
 }
 

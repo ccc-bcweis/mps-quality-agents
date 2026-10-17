@@ -32,7 +32,7 @@ function patternFor(terms: GlossaryTerm[]): RegExp | null {
 }
 
 /** Plain-word terms that AI text links too (supplier and material words), matched case-insensitively. */
-export const PLAIN_LINKED = ["certificate of analysis", "supplier notice", "material lot", "silane", "precursor", "out of spec", "out of control", "control limits", "recipe spec"];
+const PLAIN_LINKED = ["certificate of analysis", "supplier notice", "material lot", "silane", "precursor", "out of spec", "out of control", "control limits", "recipe spec"];
 
 function splitPlain(text: string, terms: GlossaryTerm[]): GlossaryPart[] {
   const known = PLAIN_LINKED.filter((word) => terms.some((term) => term.term.toLowerCase() === word));

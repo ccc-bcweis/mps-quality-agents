@@ -2,14 +2,14 @@
 import type { LiveSeries, ManualReading, ToolLive } from "../api/types";
 import type { SensorStatus } from "../fleet/telemetry";
 
-export const INSTRUMENT_WORDS: Record<string, string> = {
+const INSTRUMENT_WORDS: Record<string, string> = {
   oscilloscope: "oscilloscope",
   rfPowerMeter: "RF power meter",
   particleCounter: "particle counter",
   thermocoupleLogger: "thermocouple logger",
 };
 
-export function instrumentWords(instrument: string): string {
+function instrumentWords(instrument: string): string {
   return INSTRUMENT_WORDS[instrument] ?? instrument;
 }
 

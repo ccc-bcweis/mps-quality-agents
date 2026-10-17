@@ -44,7 +44,6 @@ public sealed class YamlMetadataStore : IMetadataStore
         Lines = catalog.Lines;
         Tools = catalog.Tools;
         Rules = catalog.Rules.OrderBy(rule => rule.Order).ToArray();
-        ProcessMaps = catalog.ProcessMaps;
         LoadDuration = watch.Elapsed;
         LoadCount = 1;
         _tools = Tools.ToDictionary(tool => tool.Id, StringComparer.OrdinalIgnoreCase);
@@ -61,8 +60,6 @@ public sealed class YamlMetadataStore : IMetadataStore
     public IReadOnlyList<ToolProfile> Tools { get; }
 
     public IReadOnlyList<BusinessRule> Rules { get; }
-
-    public IReadOnlyList<ProcessMap> ProcessMaps { get; }
 
     public TimeSpan LoadDuration { get; }
 
@@ -109,9 +106,8 @@ public sealed class YamlMetadataStore : IMetadataStore
         var capabilities = Load<CapabilityFile>(Path.Combine(directory, "capabilities.yaml"), errors)?.Capabilities;
         var lines = Load<LineFile>(Path.Combine(directory, "lines.yaml"), errors)?.Lines;
         var rules = Load<RuleFile>(Path.Combine(directory, "business-rules.yaml"), errors)?.Rules;
-        var maps = Load<MapFile>(Path.Combine(directory, "process-maps.yaml"), errors)?.ProcessMaps;
         var toolDtos = LoadTools(directory, errors);
-        if (errors.Count > 0 || company is null || sites is null || capabilities is null || lines is null || rules is null || maps is null)
+        if (errors.Count > 0 || company is null || sites is null || capabilities is null || lines is null || rules is null)
         {
             return null;
         }
@@ -122,8 +118,7 @@ public sealed class YamlMetadataStore : IMetadataStore
             capabilities.Select(dto => MapCapability(dto, errors)).ToArray(),
             lines.Select(MapLine).ToArray(),
             toolDtos.Select(MapTool).ToArray(),
-            rules.Select(MapRule).ToArray(),
-            maps.Select(MapProcess).ToArray());
+            rules.Select(MapRule).ToArray());
     }
 
     private static List<ToolDto> LoadTools(string directory, List<string> errors)
@@ -259,21 +254,6 @@ public sealed class YamlMetadataStore : IMetadataStore
                 RequiresAlert = when.RequiresAlert,
             },
             (dto.Actions ?? []).Select(action => new RuleAction(Text(action.Type), BlankToNull(action.Priority), BlankToNull(action.Queue))).ToArray());
-    }
-
-    private static ProcessMap MapProcess(MapDto dto)
-    {
-        return new ProcessMap(
-            Text(dto.Id),
-            Text(dto.Name),
-            Text(dto.State),
-            (dto.Steps ?? []).Select(step => new ProcessStep(
-                Text(step.Id),
-                Text(step.Name),
-                step.Order,
-                BlankToNull(step.Detail),
-                Texts(step.HighlightStages))).ToArray(),
-            (dto.Transitions ?? []).Select(transition => new ProcessTransition(Text(transition.From), Text(transition.To), Text(transition.Name))).ToArray());
     }
 
     private static string Text(string? value) => value?.Trim() ?? string.Empty;
@@ -497,45 +477,5 @@ public sealed class YamlMetadataStore : IMetadataStore
         public string? Priority { get; set; }
 
         public string? Queue { get; set; }
-    }
-
-    private sealed class MapFile
-    {
-        public List<MapDto>? ProcessMaps { get; set; }
-    }
-
-    private sealed class MapDto
-    {
-        public string? Id { get; set; }
-
-        public string? Name { get; set; }
-
-        public string? State { get; set; }
-
-        public List<StepDto>? Steps { get; set; }
-
-        public List<TransitionDto>? Transitions { get; set; }
-    }
-
-    private sealed class StepDto
-    {
-        public string? Id { get; set; }
-
-        public string? Name { get; set; }
-
-        public int Order { get; set; }
-
-        public string? Detail { get; set; }
-
-        public List<string>? HighlightStages { get; set; }
-    }
-
-    private sealed class TransitionDto
-    {
-        public string? From { get; set; }
-
-        public string? To { get; set; }
-
-        public string? Name { get; set; }
     }
 }
