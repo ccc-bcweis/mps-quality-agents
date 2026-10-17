@@ -17,7 +17,7 @@ public sealed class SimulationOptions
 
     public int TickSeconds { get; init; } = 2;
 
-    public int SimSecondsPerWallSecond { get; init; } = 60;
+    public int SimSecondsPerWallSecond { get; init; } = Mps.Simulator.Demo.DemoDefaults.ClockScale;
 
     public int PrimeSeconds { get; init; } = 600;
 
@@ -43,7 +43,7 @@ public sealed class SimulationOptions
             Enabled = section.GetValue("Enabled", true),
             RealTime = section.GetValue("RealTime", false),
             TickSeconds = Positive(section.GetValue("TickSeconds", 2), 2),
-            SimSecondsPerWallSecond = Positive(section.GetValue("SimSecondsPerWallSecond", 60), 60),
+            SimSecondsPerWallSecond = Positive(section.GetValue("SimSecondsPerWallSecond", Mps.Simulator.Demo.DemoDefaults.ClockScale), Mps.Simulator.Demo.DemoDefaults.ClockScale),
             PrimeSeconds = NonNegative(section.GetValue("PrimeSeconds", 600)),
             SampleStrideSeconds = Positive(section.GetValue("SampleStrideSeconds", 15), 15),
             MaxPointsPerSeries = Positive(section.GetValue("MaxPointsPerSeries", 960), 960),

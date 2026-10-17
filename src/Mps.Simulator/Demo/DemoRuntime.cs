@@ -11,7 +11,7 @@ namespace Mps.Simulator.Demo;
 /// </summary>
 public sealed class DemoRuntime
 {
-    public const int DefaultSeed = 4242;
+    public const int DefaultSeed = DemoDefaults.PlantSeed;
 
     public DemoRuntime(FleetCatalog fleet, int seed, TimeProvider? timeProvider = null, DateTimeOffset? origin = null)
     {

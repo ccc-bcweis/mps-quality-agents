@@ -25,7 +25,7 @@ namespace Mps.Api.Demo;
 /// </summary>
 public sealed class DemoResetService
 {
-    private const int ChunkSize = 2000;
+    private const int ChunkSize = EventBatch.Size;
 
     private static readonly SemaphoreSlim Gate = new(1, 1);
 

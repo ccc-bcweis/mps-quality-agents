@@ -9,7 +9,7 @@ namespace Mps.Simulator.Sites;
 /// </summary>
 public static class SiteIds
 {
-    public const int DefaultSeed = 4242;
+    public const int DefaultSeed = Demo.DemoDefaults.PlantSeed;
 
     public const string Northwater = "northwater";
 

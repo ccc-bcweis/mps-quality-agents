@@ -8,7 +8,7 @@ namespace Mps.Simulator.Telemetry;
 /// </summary>
 public sealed class DemoClock
 {
-    public const double DefaultScale = 60d;
+    public const double DefaultScale = Demo.DemoDefaults.ClockScale;
 
     /// <summary>Start of the authored scenario day, moved to today when real time is on.</summary>
     public static DateTimeOffset BaselineOrigin => RecordDates.Shift(RecordDates.ReferenceOrigin);

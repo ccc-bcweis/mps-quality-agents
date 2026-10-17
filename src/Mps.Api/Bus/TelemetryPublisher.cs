@@ -9,7 +9,7 @@ namespace Mps.Api.Bus;
 /// <summary>Publishes simulator frames after they are stored in the live ring, and waits until the telemetry table has them.</summary>
 public sealed class TelemetryPublisher
 {
-    private const int ChunkSize = 2000;
+    private const int ChunkSize = EventBatch.Size;
 
     private readonly PlantSimulation _plant;
     private readonly ILifecycleEventSink _sink;

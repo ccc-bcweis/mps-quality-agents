@@ -52,7 +52,7 @@ public static class LiveModelHost
                 OutputUsdPerMillionTokens = config.GetValue("Mps:Model:OutputUsdPerMillionTokens", 4.50m),
                 LiveRetryCount = 0,
                 ScriptedReplay = config.GetValue("Mps:Model:ScriptedReplay", false),
-                Seed = config.GetValue("Mps:Model:Seed", (long)config.GetValue("Mps:Demo:Seed", 4242)),
+                Seed = config.GetValue("Mps:Model:Seed", (long)Mps.Simulator.Demo.DemoDefaults.PlantSeedFrom(config)),
 
                 // gpt-5.x mini rejects a temperature; set Mps:Model:Temperature only for models that accept it.
                 Temperature = config.GetValue<float?>("Mps:Model:Temperature"),
