@@ -563,11 +563,23 @@ public static class QualityEndpoints
                 .ToArray();
             return Results.Ok(rows);
         });
-        app.MapGet("/api/manual-readings/{evidenceId:guid}/file", (Guid evidenceId, IManualMeasurementLog measurements, Mps.Api.Printouts.PrintoutFileStore files) =>
+        app.MapGet("/api/manual-readings/{evidenceId:guid}/file", (Guid evidenceId, HttpContext http, IManualMeasurementLog measurements, Mps.Api.Printouts.PrintoutFileStore files) =>
         {
             var item = measurements.All().FirstOrDefault(row => row.Evidence.Id.Value == evidenceId);
             var file = item?.FileId is { } id ? files.Find(id) : null;
-            return file is null ? Results.NotFound() : Results.File(file.Bytes, file.ContentType, file.FileName);
+            if (file is null)
+            {
+                return Results.NotFound();
+            }
+
+            // Shown in the console's viewer and in a new tab, so PDFs and images go inline with the type read from the bytes.
+            var contentType = Mps.Api.Printouts.PrintoutContentType.Detect(file.Bytes);
+            var disposition = new Microsoft.Net.Http.Headers.ContentDispositionHeaderValue(
+                Mps.Api.Printouts.PrintoutContentType.ShowsInline(contentType) ? "inline" : "attachment");
+            disposition.SetHttpFileName(file.FileName);
+            http.Response.Headers.ContentDisposition = disposition.ToString();
+            http.Response.Headers.XContentTypeOptions = "nosniff";
+            return Results.File(file.Bytes, contentType);
         });
         app.MapGet("/api/injector/scenarios", (ScenarioCardCatalog cards) =>
         {

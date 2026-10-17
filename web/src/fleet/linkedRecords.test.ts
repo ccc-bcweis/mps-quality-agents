@@ -1,29 +1,26 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { describe, expect, it } from "vitest";
-import type { Alert, Incident, Investigation, Ticket } from "../api/types";
-import { linkedForTool } from "./linkedRecords";
+import type { Alert, Incident, Investigation, ManualReading, Ticket } from "../api/types";
+import { orderedLinked } from "./linkedRecords";
 
-describe("linkedForTool", () => {
-  it("finds the tool's tickets, alerts and investigations and ignores other tools", () => {
-    const tickets = [
-      { id: "t1", number: "TKT-1001", incidentId: "i1", toolId: "E-01", title: "a", openedAt: "" },
-      { id: "t2", number: "TKT-1002", incidentId: "i2", toolId: "E-02", title: "b", openedAt: "" },
-    ] as Ticket[];
-    const alerts = [
-      { id: "a1", toolId: "E-01" },
-      { id: "a2", toolId: "E-02" },
-    ] as Alert[];
-    const incidents = [
-      { id: "i1", toolId: "E-01" },
-      { id: "i2", toolId: "E-02" },
-    ] as Incident[];
-    const investigations = [
-      { id: "v1", incidentId: "i1" },
-      { id: "v2", incidentId: "i2" },
-    ] as Investigation[];
-    const linked = linkedForTool("E-01", { tickets, alerts, incidents, investigations });
-    expect(linked.tickets.map((t) => t.number)).toEqual(["TKT-1001"]);
-    expect(linked.alerts.map((a) => a.id)).toEqual(["a1"]);
-    expect(linked.investigations.map((v) => v.id)).toEqual(["v1"]);
+const incident = (id: string, openedAt: string) => ({ id, toolId: "E-01", openedAt }) as unknown as Incident;
+const ticket = (id: string, incidentId: string, openedAt: string) => ({ id, incidentId, toolId: "E-01", number: id, title: id, openedAt }) as unknown as Ticket;
+const alert = (id: string, raisedAt: string) => ({ id, toolId: "E-01", raisedAt, rule: "western-electric-1" }) as unknown as Alert;
+const investigation = (id: string, incidentId: string) => ({ id, incidentId, stage: "started" }) as unknown as Investigation;
+
+describe("linked records order", () => {
+  it("lists every record newest first, and at one moment the investigation before its ticket before its alert", () => {
+    const incidents = [incident("n1", "2026-10-17T06:00:00Z"), incident("n2", "2026-10-17T07:00:00Z")];
+    const linked = {
+      tickets: [ticket("t1", "n1", "2026-10-17T06:00:00Z"), ticket("t2", "n2", "2026-10-17T07:00:00Z")],
+      alerts: [alert("a1", "2026-10-17T06:00:00Z"), alert("a2", "2026-10-17T07:00:00Z")],
+      investigations: [investigation("i1", "n1"), investigation("i2", "n2")],
+    };
+    const manual = [{ evidenceId: "m1", observedAt: "2026-10-17T06:30:00Z" } as unknown as ManualReading];
+
+    const order = orderedLinked(linked, incidents, manual, 20).map((entry) => entry.id);
+
+    expect(order).toEqual(["i2", "t2", "a2", "m1", "i1", "t1", "a1"]);
+    expect(orderedLinked(linked, incidents, manual, 3).map((entry) => entry.id)).toEqual(["i2", "t2", "a2"]);
   });
 });
