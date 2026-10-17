@@ -10,7 +10,7 @@ import { useSite } from "../context/SiteContext";
 import { visibleProblem } from "./copy";
 import { byNewestTime, toolPlainName } from "./order";
 
-export function InvestigationHistory({ detail }: { detail: "investigation" | "approval" }) {
+export function InvestigationHistory() {
   const [investigations, setInvestigations] = useState<Investigation[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [tools, setTools] = useState<Tool[]>([]);
@@ -58,7 +58,7 @@ export function InvestigationHistory({ detail }: { detail: "investigation" | "ap
           <>
             <div>{incident?.summary ?? "Investigation"}</div>
             <div className="mt-1">
-              <Link to={detail === "approval" ? `/investigations/${investigation.id}#decision` : `/investigations/${investigation.id}`} className={btnSm}>Open</Link>
+              <Link to={`/investigations/${investigation.id}`} className={btnSm}>Open</Link>
             </div>
           </>
         ),
@@ -68,9 +68,9 @@ export function InvestigationHistory({ detail }: { detail: "investigation" | "ap
 
   return (
     <RecordList
-      label={detail === "approval" ? "Decisions" : "Investigations"}
+      label="Investigations"
       rows={rows}
-      empty={detail === "approval" ? "No approvals yet." : "No investigations yet."}
+      empty="No investigations yet."
     />
   );
 }

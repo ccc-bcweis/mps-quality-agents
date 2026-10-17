@@ -242,7 +242,7 @@ export function CapaPage() {
     <div>
       <div className="mb-4">
         <p className="font-mono text-mps-micro uppercase tracking-wider text-mps-muted">
-          <Link className={btnSm} to="/approvals">Decisions</Link> · <Explain text="QMS" spellOut={false} />
+          <Link className={btnSm} to="/investigations">Investigations</Link> · <Explain text="QMS" spellOut={false} />
         </p>
         <h1 className="text-mps-display font-semibold">
           <Term id="CAPA" spellOut={false} />
