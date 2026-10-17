@@ -1204,6 +1204,10 @@ components:
         siteId:
           type: string
           description: Plant that owns the tool. Derived from the tool id.
+        status:
+          type: string
+          enum: [open, closed]
+          description: Closed once the ticket's incident is closed (by work or by reset); otherwise open.
     Incident:
       type: object
       additionalProperties: false
