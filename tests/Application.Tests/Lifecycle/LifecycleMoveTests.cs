@@ -215,6 +215,37 @@ public sealed class LifecycleMoveTests
     }
 
     [Fact]
+    public async Task AnInvestigationStillGatheringIsListedAndASecondStartReturnsItInsteadOfHanging()
+    {
+        var incidents = new InMemoryIncidentLog();
+        var investigations = new InMemoryInvestigationLog();
+        var incident = Incident.Open(IncidentId.New(), new ToolId("E-02"), "E-02-A", "escTemperature", IncidentChannel.IotSpcAlert, Severity.High, "Alert.", "corr-running", Now);
+        await incidents.AddAsync(new StoredIncident(incident, false, false), CancellationToken.None);
+        var gate = new TaskCompletionSource();
+        var workflow = new StubWorkflow { Gate = gate.Task };
+        var inFlight = new InvestigationsInFlight();
+        var service = new InvestigationService(incidents, investigations, workflow, NullQualityNotifier.Instance, TimeProvider.System, NullMetricsLog.Instance, new MetricsPolicy(0d, 2d), inFlight: inFlight);
+
+        var auto = service.StartAsync(incident.Id, CancellationToken.None);
+
+        var listed = await service.ListAsync(CancellationToken.None);
+        listed.Should().ContainSingle().Which.Stage.Should().Be(InvestigationStage.Started);
+        var placeholder = await service.GetLatestByIncidentAsync(incident.Id, CancellationToken.None);
+        placeholder.Id.Should().Be(listed[0].Id);
+        (await service.GetAsync(placeholder.Id, CancellationToken.None)).Stage.Should().Be(InvestigationStage.Started);
+
+        var manual = await service.StartAsync(incident.Id, CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(2));
+        manual.Id.Should().Be(placeholder.Id);
+        workflow.Starts.Should().Be(1);
+
+        gate.SetResult();
+        var saved = await auto;
+        saved.Stage.Should().Be(InvestigationStage.RecommendationReady);
+        (await service.GetAsync(placeholder.Id, CancellationToken.None)).Id.Should().Be(saved.Id);
+        (await service.ListAsync(CancellationToken.None)).Should().ContainSingle().Which.Id.Should().Be(saved.Id);
+    }
+
+    [Fact]
     public async Task AWorkflowThatSkipsToApprovalIsRejected()
     {
         var incidents = new InMemoryIncidentLog();

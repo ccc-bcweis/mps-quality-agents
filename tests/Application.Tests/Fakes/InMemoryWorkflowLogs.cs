@@ -151,9 +151,19 @@ public sealed class StubWorkflow : IInvestigationWorkflow
 {
     public InvestigationStage Stage { get; set; } = InvestigationStage.RecommendationReady;
 
-    public Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken)
+    /// <summary>When set, gathering waits for it, like the live agent waiting for enough readings.</summary>
+    public Task? Gate { get; set; }
+
+    public int Starts { get; private set; }
+
+    public async Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken)
     {
-        _ = cancellationToken;
+        Starts++;
+        if (Gate is not null)
+        {
+            await Gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
         var evidenceId = EvidenceId.New();
         var evidence = new Domain.Evidence.EvidenceItem(
             evidenceId,
@@ -180,7 +190,7 @@ public sealed class StubWorkflow : IInvestigationWorkflow
             [hypothesis],
             reason,
             "workflow-" + incidentId);
-        return Task.FromResult(snapshot);
+        return snapshot;
     }
 
     public Task<InvestigationSnapshot> ResumeWithHumanInputAsync(

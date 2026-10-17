@@ -36,6 +36,7 @@ public sealed class InvestigationService : IInvestigationService
     private readonly MetricsPolicy _metricsPolicy;
     private readonly ILifecycleEventSink? _events;
     private readonly ICascadeDirectory? _hints;
+    private readonly InvestigationsInFlight _inFlight;
 
     public InvestigationService(
         IIncidentLog incidents,
@@ -46,7 +47,8 @@ public sealed class InvestigationService : IInvestigationService
         IMetricsLog metrics,
         MetricsPolicy metricsPolicy,
         ILifecycleEventSink? events = null,
-        ICascadeDirectory? hints = null)
+        ICascadeDirectory? hints = null,
+        InvestigationsInFlight? inFlight = null)
     {
         ArgumentNullException.ThrowIfNull(incidents);
         ArgumentNullException.ThrowIfNull(investigations);
@@ -64,6 +66,7 @@ public sealed class InvestigationService : IInvestigationService
         _metricsPolicy = metricsPolicy;
         _events = events;
         _hints = hints;
+        _inFlight = inFlight ?? new InvestigationsInFlight();
     }
 
     public async Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken)
@@ -81,6 +84,31 @@ public sealed class InvestigationService : IInvestigationService
             throw new LifecycleConflictException($"Cannot start an investigation from {stored.Incident.Stage}.");
         }
 
+        // Gathering can take minutes (the agent waits for enough readings). Show a placeholder meanwhile, and answer a
+        // second Start with it instead of running a duplicate investigation that would look hung.
+        var placeholder = Stamp(
+            new InvestigationSnapshot(InvestigationId.New(), incidentId, InvestigationStage.Started, [], [], null, stored.Incident.CorrelationId),
+            stored.Incident);
+        if (!_inFlight.TryBegin(placeholder, out var running))
+        {
+            return running;
+        }
+
+        InvestigationId? saved = null;
+        try
+        {
+            var result = await RunAsync(incidentId, stored, cancellationToken).ConfigureAwait(false);
+            saved = result.Id;
+            return result;
+        }
+        finally
+        {
+            _inFlight.End(placeholder, saved);
+        }
+    }
+
+    private async Task<InvestigationSnapshot> RunAsync(IncidentId incidentId, StoredIncident stored, CancellationToken cancellationToken)
+    {
         var watch = System.Diagnostics.Stopwatch.StartNew();
         using var activity = QualityDiagnostics.ActivitySource.StartActivity("investigation.start");
         var started = await _workflow.StartAsync(incidentId, cancellationToken).ConfigureAwait(false);
@@ -122,7 +150,9 @@ public sealed class InvestigationService : IInvestigationService
 
     public async Task<InvestigationSnapshot> GetAsync(InvestigationId investigationId, CancellationToken cancellationToken)
     {
-        return await _investigations.GetAsync(investigationId, cancellationToken).ConfigureAwait(false)
+        var id = _inFlight.SavedAs(investigationId) ?? investigationId;
+        return await _investigations.GetAsync(id, cancellationToken).ConfigureAwait(false)
+            ?? _inFlight.ById(investigationId)
             ?? throw new ResourceNotFoundException("Investigation was not found.");
     }
 
@@ -130,12 +160,18 @@ public sealed class InvestigationService : IInvestigationService
     {
         _ = await _incidents.GetAsync(incidentId, cancellationToken).ConfigureAwait(false)
             ?? throw new ResourceNotFoundException("Incident was not found.");
-        return await _investigations.FindLatestByIncidentAsync(incidentId, cancellationToken).ConfigureAwait(false)
+        return _inFlight.ForIncident(incidentId)
+            ?? await _investigations.FindLatestByIncidentAsync(incidentId, cancellationToken).ConfigureAwait(false)
             ?? throw new ResourceNotFoundException("Investigation was not found.");
     }
 
-    public Task<IReadOnlyList<InvestigationSnapshot>> ListAsync(CancellationToken cancellationToken) =>
-        _investigations.ListAsync(cancellationToken);
+    /// <summary>Saved investigations plus the ones still gathering evidence, newest first.</summary>
+    public async Task<IReadOnlyList<InvestigationSnapshot>> ListAsync(CancellationToken cancellationToken)
+    {
+        var saved = await _investigations.ListAsync(cancellationToken).ConfigureAwait(false);
+        var running = _inFlight.Running;
+        return running.Count == 0 ? saved : running.Concat(saved).ToArray();
+    }
 
     public static IncidentStage Map(InvestigationStage stage) => stage switch
     {

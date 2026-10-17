@@ -55,6 +55,7 @@ public sealed class DemoResetService
     private readonly IManualMeasurementLog _measurements;
     private readonly ScriptedScenarioContext _context;
     private readonly ResetProgress _progress;
+    private readonly Mps.Application.Lifecycle.InvestigationsInFlight? _inFlight;
 
     public DemoResetService(
         QualityDbContext db,
@@ -71,7 +72,8 @@ public sealed class DemoResetService
         Mps.Application.Faults.ConfounderBoard confounders,
         IManualMeasurementLog measurements,
         ScriptedScenarioContext context,
-        ResetProgress progress)
+        ResetProgress progress,
+        Mps.Application.Lifecycle.InvestigationsInFlight? inFlight = null)
     {
         ArgumentNullException.ThrowIfNull(db);
         ArgumentNullException.ThrowIfNull(plant);
@@ -92,6 +94,7 @@ public sealed class DemoResetService
         _traces = traces;
         _events = events;
         _cascade = cascade;
+        _inFlight = inFlight;
         _sink = sink;
         _time = time;
         _seeder = seeder;
@@ -204,6 +207,7 @@ public sealed class DemoResetService
         _context.Set(null);
         _traces.Clear();
         _cascade.Clear();
+        _inFlight?.Clear();
     }
 
     private async Task CloseOpenWorkAsync(string resetEventId, string correlationId, CancellationToken cancellationToken)
