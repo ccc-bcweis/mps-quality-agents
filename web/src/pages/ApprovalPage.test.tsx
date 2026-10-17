@@ -12,9 +12,13 @@ describe("approval dialog", () => {
   it("does not issue a token until APPROVE is typed and confirmed", async () => {
     const user = userEvent.setup();
     renderConsole(`/approvals/${S1_INVESTIGATION_ID}`);
-    await user.click(await screen.findByRole("button", { name: "Approve CAPA + containment" }));
+    await user.click(await screen.findByRole("button", { name: "Approve CAPA" }));
     const issue = await screen.findByRole("button", { name: "Approve and create CAPA" });
     expect(issue).toBeDisabled();
+    expect(issue.textContent).toBe("Approve and create CAPA");
+    expect(issue.className).toContain("bg-mps-ok-solid");
+    expect(issue.className).toContain("ring-mps-ok");
+    expect(screen.getByRole("dialog").textContent).not.toMatch(/does not sign/);
     await user.type(screen.getByLabelText("Type APPROVE to confirm"), "approve");
     expect(issue).toBeDisabled();
     await user.clear(screen.getByLabelText("Type APPROVE to confirm"));
@@ -24,7 +28,7 @@ describe("approval dialog", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.queryByText("77777777-7777-4777-8777-777777777777")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Approve CAPA + containment" }));
+    await user.click(screen.getByRole("button", { name: "Approve CAPA" }));
     await user.type(await screen.findByLabelText("Type APPROVE to confirm"), "APPROVE");
     await user.click(screen.getByRole("button", { name: "Approve and create CAPA" }));
     expect(await screen.findAllByText(APPROVED)).not.toHaveLength(0);
@@ -52,7 +56,7 @@ describe("approval dialog", () => {
   it("surfaces the server error when advance is illegal", async () => {
     const user = userEvent.setup();
     renderConsole(`/approvals/${S1_INVESTIGATION_ID}`);
-    await user.click(await screen.findByRole("button", { name: "Approve CAPA + containment" }));
+    await user.click(await screen.findByRole("button", { name: "Approve CAPA" }));
     await user.type(await screen.findByLabelText("Type APPROVE to confirm"), "APPROVE");
     await user.click(screen.getByRole("button", { name: "Approve and create CAPA" }));
     await screen.findAllByText(APPROVED);
@@ -64,7 +68,7 @@ describe("approval dialog", () => {
     const user = userEvent.setup();
     renderConsole(`/approvals/${S2_INVESTIGATION_ID}`);
     expect(await screen.findByTestId("escalation-gate")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Approve CAPA + containment" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Approve CAPA" })).toBeDisabled();
     const override = screen.getByRole("button", { name: "Override with justification" });
     expect(override).toBeDisabled();
     await user.type(screen.getByLabelText("Note or justification"), "too short");
@@ -80,16 +84,16 @@ describe("approval dialog", () => {
     const user = userEvent.setup();
     renderConsole(`/approvals/${S1_INVESTIGATION_ID}`);
     await user.type(await screen.findByLabelText("Note or justification", {}, { timeout: 5000 }), "Hold lot 42 first.");
-    await user.click(screen.getByRole("button", { name: "Approve CAPA + containment" }));
+    await user.click(screen.getByRole("button", { name: "Approve CAPA" }));
     await user.type(await screen.findByLabelText("Type APPROVE to confirm", {}, { timeout: 5000 }), "APPROVE");
     await user.click(screen.getByRole("button", { name: "Approve and create CAPA" }));
     expect(await screen.findByTestId("capa-note", {}, { timeout: 5000 })).toHaveTextContent("Hold lot 42 first.");
     await user.click(await screen.findByRole("link", { name: "Open the investigation" }, { timeout: 5000 }));
     const record = await screen.findByTestId("decision-record", {}, { timeout: 5000 });
-    expect(record).toHaveTextContent("Approved: CAPA + containment");
+    expect(record).toHaveTextContent("Approved: CAPA");
     expect(record).toHaveTextContent("Hold lot 42 first.");
     expect(record).toHaveTextContent("dev-user");
-    expect(screen.queryByRole("button", { name: "Approve CAPA + containment" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Approve CAPA" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Reject" })).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Note or justification")).not.toBeInTheDocument();
   });

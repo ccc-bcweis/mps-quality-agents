@@ -7,7 +7,7 @@ import type { DecisionRecord, HumanDecisionKind, Investigation } from "../api/ty
 import { ApprovalDialog, type DecisionMode } from "./ApprovalDialog";
 import { Explain } from "./Explain";
 import { Term } from "./Term";
-import { btnDanger, btnOk, btnPrimary, panel } from "./ui";
+import { btnDanger, btnInfo, btnOk, panel } from "./ui";
 import { plainFinding } from "../investigation/format";
 import { useConsole } from "../context/ConsoleContext";
 import { visibleProblem } from "../history/copy";
@@ -136,9 +136,11 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
       </label>
       <div className="mt-3 flex flex-wrap gap-2">
         <button type="button" className={btnOk} disabled={pending || !top || escalated} onClick={() => setMode("approve")}>
-          Approve <Term id="CAPA" spellOut={false} /> + containment
+          <span>
+            Approve <Term id="CAPA" spellOut={false} />
+          </span>
         </button>
-        <button type="button" className={btnPrimary} disabled={pending} onClick={() => void decide("requestInfo", note.trim() || "More evidence requested.")}>
+        <button type="button" className={btnInfo} disabled={pending} onClick={() => void decide("requestInfo", note.trim() || "More evidence requested.")}>
           Request more evidence
         </button>
         {escalated ? (
@@ -168,7 +170,7 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
 }
 
 const DECISION_LABEL: Record<HumanDecisionKind, string> = {
-  approve: "Approved: CAPA + containment",
+  approve: "Approved: CAPA",
   override: "Overridden with justification",
   reject: "Rejected",
   requestInfo: "More evidence requested",

@@ -146,7 +146,7 @@ export function pipelineStations(settings: RuleSetting[], rules: BusinessRule[])
       title: "A person decides",
       text: "The engineer reads the recommendation and the evidence and picks one. A decision is final.",
       branches: [
-        { label: "Approve CAPA + containment", result: "opens the CAPA", tone: "ok" },
+        { label: "Approve CAPA", result: "opens the CAPA", tone: "ok" },
         { label: "Request more evidence", result: "runs the investigation again", tone: "info" },
         { label: "Override with justification", result: `only for an escalated case, with at least ${value("decision.overrideMin", "20")} characters of reason; opens the CAPA`, tone: "warn" },
         { label: "Reject", result: "no CAPA; the case stays on record", tone: "alarm" },

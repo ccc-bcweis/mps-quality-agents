@@ -7,8 +7,10 @@ export function Explain({ text: raw, spellOut = true }: { text: string; spellOut
   const text = plainParameters(raw);
   const parts = splitGlossary(text);
   if (parts.every((part) => part.kind === "text")) return text;
+  // One inline wrapper: inside a flex row or button, loose text and term spans would each become a flex item
+  // and lose the spaces between them ("ApproveCAPA").
   return (
-    <>
+    <span>
       {parts.map((part, index) =>
         part.kind === "term" ? (
           <Term key={`${part.term}-${index}`} id={part.term} spellOut={spellOut} />
@@ -16,6 +18,6 @@ export function Explain({ text: raw, spellOut = true }: { text: string; spellOut
           <span key={`text-${index}`}>{part.text}</span>
         ),
       )}
-    </>
+    </span>
   );
 }
