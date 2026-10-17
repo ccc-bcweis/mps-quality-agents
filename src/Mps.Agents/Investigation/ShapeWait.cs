@@ -17,7 +17,7 @@ public sealed record ShapeWait(int Attempts, TimeSpan Delay, int MinReadingsSinc
     public static ShapeWait None { get; } = new(0, TimeSpan.Zero);
 
     /// <summary>True while the shape is unclear or fewer than the configured readings have arrived since the first rule break.</summary>
-    public bool NeedsMoreReadings(TelemetryWindow? window, IReadOnlyList<SpcViolation> violations)
+    public bool NeedsMoreReadings(TelemetryWindow? window, IReadOnlyList<SpcViolation> violations, DateTimeOffset? openedAt = null)
     {
         ArgumentNullException.ThrowIfNull(violations);
         if (window is null)
@@ -30,14 +30,16 @@ public sealed record ShapeWait(int Attempts, TimeSpan Delay, int MinReadingsSinc
             return true;
         }
 
-        if (MinReadingsSinceOnset <= 0 || violations.Count == 0)
+        if (MinReadingsSinceOnset <= 0 || (violations.Count == 0 && openedAt is null))
         {
             return false;
         }
 
-        // Onset is the first serious break: a low-severity trend rule can fire on ordinary noise long before the fault.
+        // Onset is when the alert opened the incident. The rule-break list only keeps each rule's latest break, and at
+        // high plant speed those move to "now" every second, so counting from them would never reach the minimum.
+        // Without an incident time, use the first serious break (a low-severity trend rule can fire on plain noise).
         var serious = violations.Where(violation => violation.Severity >= Severity.High).ToArray();
-        var onset = (serious.Length > 0 ? serious : violations).Min(violation => violation.At);
+        var onset = openedAt ?? (serious.Length > 0 ? serious : violations).Min(violation => violation.At);
         return window.Points.Count(point => point.At >= onset) < MinReadingsSinceOnset;
     }
 

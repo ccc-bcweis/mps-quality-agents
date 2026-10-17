@@ -145,6 +145,7 @@ public static class QualityHost
             builder.Services.AddScoped<IInvestigationWorkflow>(services => ActivatorUtilities.CreateInstance<FakeInvestigationWorkflow>(services, (TimeProvider)services.GetRequiredService<Mps.Application.RecordClock>()));
         }
 
+        builder.Services.AddSingleton<Mps.Application.Lifecycle.InvestigationsInFlight>();
         builder.Services.AddScoped<IInvestigationService>(services => ActivatorUtilities.CreateInstance<InvestigationService>(services, (TimeProvider)services.GetRequiredService<Mps.Application.RecordClock>()));
         builder.Services.AddSingleton<Mps.Application.Lifecycle.IPlantFaultControl>(services => services.GetRequiredService<PlantSimulation>());
         builder.Services.AddScoped<ICapaLifecycleService>(services => ActivatorUtilities.CreateInstance<CapaLifecycleService>(services, (TimeProvider)services.GetRequiredService<Mps.Application.RecordClock>()));
