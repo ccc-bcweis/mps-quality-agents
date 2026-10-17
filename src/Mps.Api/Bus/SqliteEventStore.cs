@@ -302,13 +302,17 @@ public sealed class SqliteEventStore : IDisposable
 
     public void Dispose()
     {
-        if (_disposed)
+        // Take the same gate as every write, so shutdown never closes the connection under a running transaction.
+        lock (_gate)
         {
-            return;
-        }
+            if (_disposed)
+            {
+                return;
+            }
 
-        _disposed = true;
-        _connection.Dispose();
+            _disposed = true;
+            _connection.Dispose();
+        }
     }
 
     private void Ready()
