@@ -7,7 +7,7 @@ using 'main.bicep'
 
 param location = 'eastus2'
 param namePrefix = 'mpsdemo'
-param apiImage = 'mcr.microsoft.com/dotnet/aspnet:8.0'
+param apiImage = 'mcr.microsoft.com/dotnet/aspnet:10.0'
 param deploySql = false
 param deployStaticWeb = false
 param staticWebAppLocation = 'eastus2'
