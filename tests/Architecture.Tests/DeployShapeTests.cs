@@ -25,6 +25,18 @@ public sealed class DeployShapeTests
     }
 
     [Fact]
+    public void LocalComposeRunsTheHostedImage()
+    {
+        var compose = Read("docker-compose.yml");
+
+        compose.Should().Contain("dockerfile: deploy/app.Dockerfile", "a clone-and-run reviewer gets the same console and API the hosted demo serves");
+        compose.Should().Contain("\"8080:8080\"");
+        compose.Should().Contain("LLM_MODE: ${LLM_MODE:-replay}");
+        compose.Should().NotContain("web.Dockerfile");
+        File.Exists(Path.Combine(Root, "deploy", "web.Dockerfile")).Should().BeFalse("the placeholder console image was retired");
+    }
+
+    [Fact]
     public void ApiImageDoesNotCopyGroundTruth()
     {
         Read("deploy/api.Dockerfile").Should().NotContain("groundtruth");
