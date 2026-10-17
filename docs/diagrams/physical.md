@@ -3,7 +3,7 @@
 **Issue:** G2 (#47)
 **Copyright (c) 2026 Bryan C. Weis and Common Consulting Company**
 
-Hosted demo in Bryan’s Azure subscription, resource group `rg-mps-demo`. Local run is `docker compose` (API, mock enterprise, web, Aspire dashboard) and is **not** this diagram. Bicep is authored in the foundation lane; this file does not deploy anything.
+Hosted demo in Bryan’s Azure subscription, resource group `rg-mps-demo`. Local run is `docker compose` (the same app image plus the Aspire dashboard) and is **not** this diagram. Bicep is authored in the foundation lane; this file does not deploy anything.
 
 Invite-only. No secrets in Git. Cost-minimal SKUs, one always-on API replica, teardown = delete the resource group after the review.
 

@@ -1,11 +1,12 @@
-# Local skeleton. Not deployed. Do not put secret values in this file.
-# Copy .env.example to .env before live mode. Replay mode starts with the defaults below.
+# Local run. Not deployed. Do not put secret values in this file.
+# One image, the same one the hosted demo runs: the built console is served by the API on port 8080.
+# Copy .env.example to .env first. Replay mode starts with the defaults below and needs no model key.
 
 services:
-  api:
+  app:
     build:
       context: .
-      dockerfile: deploy/api.Dockerfile
+      dockerfile: deploy/app.Dockerfile
     ports:
       - "8080:8080"
     env_file:
@@ -15,20 +16,13 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       LLM_MODE: ${LLM_MODE:-replay}
-      ConnectionStrings__Mps: ${ConnectionStrings__Mps:-Data Source=/tmp/mps.db}
+      ConnectionStrings__Mps: Data Source=/app/data/mps.db
       OTEL_SERVICE_NAME: Mps.Api
       OTEL_EXPORTER_OTLP_ENDPOINT: http://aspire-dashboard:18889
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       OTEL_EXPORTER_OTLP_HEADERS: x-otlp-api-key=${ASPIRE_OTLP_API_KEY:-local-dev-only}
     depends_on:
       - aspire-dashboard
-
-  web:
-    build:
-      context: .
-      dockerfile: deploy/web.Dockerfile
-    ports:
-      - "5173:80"
 
   aspire-dashboard:
     image: mcr.microsoft.com/dotnet/aspire-dashboard:9.5
