@@ -17,3 +17,7 @@ That script is idempotent. It sets:
 The Azure CLI token is still bound to the signed-in user and to app assignment. Unassigned users cannot get a token.
 
 The script also creates the `admin` app role and assigns it to `admin-upn`. Easy Auth passes app roles in the principal header, and `POST /api/admin/reset` requires `admin`. A user must sign out and back in to pick up a new role.
+
+## Sign out
+
+The signed-in name in the console header opens a menu with Sign out. It calls the platform `/.auth/logout?post_logout_redirect_uri=/signed-out.html`. The splash page and its logo are excluded from the platform sign-in (`globalValidation.excludedPaths`), and its Sign in button goes to `/.auth/login/aad?post_login_redirect_uri=/`. No new app registration, secret or redirect URI is needed: both paths are served by the existing Easy Auth configuration.

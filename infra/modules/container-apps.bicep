@@ -180,6 +180,11 @@ resource auth 'Microsoft.App/containerApps/authConfigs@2024-03-01' = if (!empty(
     globalValidation: {
       redirectToProvider: 'azureactivedirectory'
       unauthenticatedClientAction: 'RedirectToLoginPage'
+      // The signed-out splash and its logo load without sign-in, so signing out does not bounce straight back to login.
+      excludedPaths: [
+        '/signed-out.html'
+        '/logo-concept-1.svg'
+      ]
     }
     httpSettings: {
       requireHttps: true
