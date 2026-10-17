@@ -81,7 +81,8 @@ export function FleetPage() {
 
   const rows = (tools ?? []).filter((tool) => toolInPlant(siteId, tool.id, tool.siteId));
   const visibleAlerts = alerts.filter((alert) => toolInPlant(siteId, alert.toolId));
-  const tickets = ticketRows === null ? null : ticketRows.filter((ticket) => toolInPlant(siteId, ticket.toolId)).length;
+  // Count only open tickets, from the ticket status the API derives from the incident.
+  const tickets = ticketRows === null ? null : ticketRows.filter((ticket) => toolInPlant(siteId, ticket.toolId) && ticket.status !== "closed").length;
   const liveById = new Map((live?.tools ?? []).map((tool) => [tool.toolId, tool]));
   const stories = rows.map((tool) => ({ tool, story: storyWithLive(storyFor(tool, visibleAlerts), liveById.get(tool.id), sparks[tool.id]) }));
   const plantName = PLANTS.find((plant) => plant.id === siteId)?.name ?? "All sites";
