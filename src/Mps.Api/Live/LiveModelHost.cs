@@ -107,7 +107,10 @@ public static class LiveModelHost
                     prompts,
                     provider.GetRequiredService<TimeProvider>(),
                     measurements: provider.GetRequiredService<Mps.Application.Printouts.IManualMeasurementLog>(),
-                    shapeWait: Mps.Agents.Investigation.ShapeWait.Load()),
+                    // Waiting for readings only makes sense when the plant streams in real time; a stepped plant never sends more on its own.
+                    shapeWait: SimulationOptions.From(config) is { RealTime: true, Enabled: true }
+                        ? Mps.Agents.Investigation.ShapeWait.Load()
+                        : Mps.Agents.Investigation.ShapeWait.None),
                 new ResolutionAgent(gateway, prompts),
                 key,
                 provider.GetRequiredService<TimeProvider>(),

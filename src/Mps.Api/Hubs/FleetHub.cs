@@ -149,7 +149,8 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
         var stored = await _incidents.GetAsync(snapshot.IncidentId, cancellationToken).ConfigureAwait(false);
         var toolId = stored?.Incident.ToolId.ToString();
         var site = ContractMapper.SiteForTool(toolId);
-        if (_cascade.FindStep(snapshot.CorrelationId, "investigation") is null)
+        // Per investigation: one scenario can open several (one per tool), and each lists its own steps.
+        if (_cascade.FindStep(snapshot.CorrelationId, StepKey(snapshot)) is null)
         {
             await PublishStepsAsync(snapshot, stored?.Incident, cancellationToken).ConfigureAwait(false);
         }
@@ -226,6 +227,8 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
             cancellationToken).ConfigureAwait(false);
     }
 
+    private static string StepKey(InvestigationSnapshot snapshot) => "investigation:" + snapshot.Id.Value.ToString("N");
+
     private async Task PublishStepsAsync(InvestigationSnapshot snapshot, Incident? incident, CancellationToken cancellationToken)
     {
         var parent = CommandAmbient.EventId
@@ -245,6 +248,7 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
                 new { kind = "started", investigationId = snapshot.Id.Value, stage = snapshot.Stage.ToString() }),
             cancellationToken).ConfigureAwait(false);
         _cascade.RememberStep(snapshot.CorrelationId, "investigation", started);
+        _cascade.RememberStep(snapshot.CorrelationId, StepKey(snapshot), started);
         string? lastEvidence = null;
         foreach (var item in snapshot.Evidence)
         {

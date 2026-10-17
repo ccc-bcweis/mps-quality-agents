@@ -178,7 +178,7 @@ public sealed class InvestigationAgent : IInvestigationAgent
             return;
         }
 
-        for (var attempt = 0; attempt < _shapeWait.Attempts && EvidencePackFactory.ShapeOf(harvest.Telemetry, harvest.Violations) == SignalShape.Unknown; attempt++)
+        for (var attempt = 0; attempt < _shapeWait.Attempts && _shapeWait.NeedsMoreReadings(harvest.Telemetry, harvest.Violations); attempt++)
         {
             await Task.Delay(_shapeWait.Delay, _time, cancellationToken).ConfigureAwait(false);
             harvest.Violations.Clear();

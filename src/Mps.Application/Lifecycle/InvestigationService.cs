@@ -235,7 +235,9 @@ public sealed class InvestigationService : IInvestigationService
             return null;
         }
 
-        var parent = _hints?.FindStep(snapshot.CorrelationId, "ticket") ?? _hints?.FindStep(snapshot.CorrelationId, "alert");
+        var parent = InvestigationParent.EventId
+            ?? _hints?.FindStep(snapshot.CorrelationId, "ticket")
+            ?? _hints?.FindStep(snapshot.CorrelationId, "alert");
         var eventId = await _events.PublishAsync(
             new LifecycleEvent(
                 LifecycleTypes.InvestigationStart,
