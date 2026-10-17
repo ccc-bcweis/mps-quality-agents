@@ -37,6 +37,7 @@ import type {
   Ticket,
   Tool,
   BusinessRule,
+  RuleSetting,
   CompanyMetadata,
   MetadataSite,
   MetadataTool,
@@ -162,6 +163,7 @@ export const api = {
   metadataSites: () => apiSend<MetadataSite[]>("/api/metadata/sites"),
   metadataTool: (toolId: string) => apiSend<MetadataTool>(`/api/metadata/tools/${encodeURIComponent(toolId)}`),
   businessRules: () => apiSend<BusinessRule[]>("/api/metadata/rules"),
+  ruleSettings: () => apiSend<RuleSetting[]>("/api/metadata/settings"),
   processMaps: () => apiSend<ProcessMap[]>("/api/metadata/process-maps"),
   listScenarios: () => apiSend<ScriptedScenario[]>("/api/injector/scenarios"),
   runScenario: (scenarioId: string) =>

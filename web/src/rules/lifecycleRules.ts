@@ -3,6 +3,17 @@
 /** How a case closes. Enforced by the server; listed here so the Rules table shows the whole path. */
 export const ALERT_CLEAR_READINGS = 8;
 
+const WORDS: Record<string, string> = { "1": "one", "2": "two", "3": "three", "4": "four" };
+
+/** The lifecycle rules, with the alert-clearing numbers taken from the server's settings. */
+export function lifecycleRules(clearReadings: string = String(ALERT_CLEAR_READINGS), clearSigma = "2") {
+  return LIFECYCLE_RULES.map((rule) =>
+    rule.id === "life-alert-clear"
+      ? { ...rule, whenPlain: `When ${clearReadings} readings in a row stay inside ${WORDS[clearSigma] ?? clearSigma} sigma after an alert.` }
+      : rule,
+  );
+}
+
 export const LIFECYCLE_RULES = [
   {
     id: "life-capa-on-approval",

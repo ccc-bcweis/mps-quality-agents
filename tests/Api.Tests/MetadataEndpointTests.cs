@@ -54,6 +54,19 @@ public sealed class MetadataEndpointTests
         rules!.EnumerateArray().First().GetProperty("id").GetString().Should().Be("rule-critical-human");
         rules.EnumerateArray().Should().Contain(rule => rule.GetProperty("whenPlain").GetString()!.Contains("critical", StringComparison.Ordinal));
 
+        var critical = rules.EnumerateArray().First().GetProperty("conditions").EnumerateArray().Single();
+        critical.GetProperty("field").GetString().Should().Be("severity");
+        critical.GetProperty("value").GetString().Should().Be("critical");
+        rules.EnumerateArray().Single(rule => rule.GetProperty("id").GetString() == "rule-low-confidence")
+            .GetProperty("conditions").EnumerateArray().Single().GetProperty("value").GetString().Should().Be("0.5");
+
+        var settings = await client.GetFromJsonAsync<JsonElement>("/api/metadata/settings", Json);
+        string Setting(string id) => settings.EnumerateArray().Single(row => row.GetProperty("id").GetString() == id).GetProperty("value").GetString()!;
+        Setting("spc.controlLimitSigma").Should().Be("3", "spc-rules.yaml sets control limits at 3 sigma");
+        Setting("spc.we4.count").Should().Be("8");
+        Setting("clear.readings").Should().Be("8");
+        Setting("decision.overrideMin").Should().Be("20");
+
         var maps = await client.GetFromJsonAsync<JsonElement>("/api/metadata/process-maps", Json);
         maps!.EnumerateArray().Select(map => map.GetProperty("state").GetString()).Should().Equal("current", "future");
     }

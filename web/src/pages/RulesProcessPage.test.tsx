@@ -1,19 +1,15 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
-import { incidents, tickets } from "../mocks/demoData";
+import { metadataSettings } from "../mocks/handlers";
+import { NOT_SAVED_NOTICE } from "../rules/RuleEditor";
 import { renderConsole } from "../test/render";
 import { server } from "../test/server";
 
 describe("rules and process", () => {
-  it("shows the rules in plain language and highlights the ticket step on the future map", async () => {
-    server.use(
-      http.get("/api/tickets", () => HttpResponse.json(tickets)),
-      http.get("/api/incidents", () => HttpResponse.json(incidents)),
-    );
-    const user = userEvent.setup();
+  it("shows the rules in plain language with their settings as fields read from the data", async () => {
     renderConsole("/rules");
 
     expect(await screen.findByRole("heading", { name: "Rules & Process" })).toBeInTheDocument();
@@ -22,24 +18,69 @@ describe("rules and process", () => {
     expect(screen.getByText(/A critical signal can affect the wafers or the tool/)).toBeInTheDocument();
     expect(screen.queryByText("rule-critical-human")).not.toBeInTheDocument();
     expect(screen.getByText("When 8 readings in a row stay inside two sigma after an alert.")).toBeInTheDocument();
-    expect(screen.getByText(/Remove the fault on that tool so its readings return to nominal/)).toBeInTheDocument();
     expect(screen.getByText(/Close the incident and its ticket\. The investigation keeps its Approved result\./)).toBeInTheDocument();
-    expect(screen.queryByText("TKT-1038")).not.toBeInTheDocument();
-    expect(screen.queryByText("TKT-1044")).not.toBeInTheDocument();
 
-    expect(screen.getByRole("button", { name: "Current state" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByText("Someone notices the excursion")).toBeInTheDocument();
+    const control = screen.getByRole("spinbutton", { name: "Control limits" });
+    expect(control).toHaveValue(3);
+    expect(control).toBeDisabled();
+    expect(screen.getByRole("textbox", { name: "Critical signal needs a person: Severity is" })).toHaveValue("critical");
+    expect(screen.getByRole("textbox", { name: "Critical signal needs a person: Queue" })).toHaveValue("Shift lead");
+    expect(within(screen.getByRole("row", { name: /When the severity is critical/ })).getByRole("switch", { name: "Ask a person to review" })).toBeChecked();
+    expect(screen.getByRole("switch", { name: "Rule 4 on" })).toBeChecked();
+  });
 
-    await user.click(screen.getByRole("button", { name: "Future state" }));
-    expect(screen.getByRole("button", { name: "Future state" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByText(/An escalated case cannot skip this step/)).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: /Supplier notice: gas lot NF-3317 moisture out of spec/ }));
-    const step = screen.getByText("A rule opens the ticket").closest("[data-highlighted]");
-    expect(step).toHaveAttribute("data-highlighted", "true");
-    expect(screen.getByText("The investigation gathers evidence").closest("[data-highlighted]")).toHaveAttribute(
-      "data-highlighted",
-      "false",
+  it("takes its values from the server, not from the page", async () => {
+    server.use(
+      http.get("/api/metadata/settings", () =>
+        HttpResponse.json(metadataSettings.map((setting) => (setting.id === "spc.controlLimitSigma" ? { ...setting, value: "2.5" } : setting))),
+      ),
     );
+    renderConsole("/rules");
+    expect(await screen.findByRole("spinbutton", { name: "Control limits" })).toHaveValue(2.5);
+    expect(await screen.findByRole("list", { name: "Quality flow" })).toHaveTextContent(/control limits at 2\.5 sigma/);
+  });
+
+  it("lets a person edit the fields, and Save says plainly the change is not kept", async () => {
+    const user = userEvent.setup();
+    renderConsole("/rules");
+    await user.click(await screen.findByRole("button", { name: "Edit" }));
+    const control = screen.getByRole("spinbutton", { name: "Control limits" });
+    expect(control).toBeEnabled();
+    await user.clear(control);
+    await user.type(control, "4");
+    await user.click(screen.getByRole("switch", { name: "Rule 4 on" }));
+    expect(control).toHaveValue(4);
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(screen.getByTestId("rules-notice")).toHaveTextContent(NOT_SAVED_NOTICE);
+    expect(screen.getByTestId("rules-notice").textContent).not.toMatch(/demo/i);
+    expect(screen.getByRole("spinbutton", { name: "Control limits" })).toHaveValue(3);
+    expect(screen.getByRole("spinbutton", { name: "Control limits" })).toBeDisabled();
+    expect(screen.getByRole("switch", { name: "Rule 4 on" })).toBeChecked();
+  });
+
+  it("draws one map of the actual flow, from readings to close, without the old generic boxes", async () => {
+    renderConsole("/rules");
+    const map = await screen.findByRole("list", { name: "Quality flow" });
+    const stages = within(map)
+      .getAllByRole("listitem")
+      .map((item) => item.getAttribute("data-stage"))
+      .filter(Boolean);
+    expect(stages).toEqual(["readings", "rules", "alert", "ticket", "investigation", "decision", "capa", "containment", "close"]);
+    const choices = within(map).getByRole("list", { name: "Decision choices" });
+    expect(within(choices).getAllByRole("listitem").map((item) => item.textContent?.split(" → ")[0])).toEqual([
+      "Approve CAPA + containment",
+      "Request more evidence",
+      "Override with justification",
+      "Reject",
+    ]);
+    expect(map).toHaveTextContent(/Western Electric rule 4: 8 readings in a row on one side/);
+    expect(map).toHaveTextContent(/2 rules open a ticket/);
+    expect(map).toHaveTextContent(/alert clears after 8 readings in a row/);
+    expect(screen.queryByRole("button", { name: "Current state" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Future state" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Someone notices the excursion")).not.toBeInTheDocument();
+    expect(screen.queryByText("Hand off by email")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Moves" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Tickets" })).not.toBeInTheDocument();
   });
 });
