@@ -66,6 +66,7 @@ export function lifecycleForInvestigation(stage: InvestigationStage): LifecycleV
     case "rejected":
       return { current: "approval", escalated: false };
     case "closedByDemoReset":
+    case "superseded":
       return { current: "investigation", escalated: false };
     default:
       return { current: "alert", escalated: false };

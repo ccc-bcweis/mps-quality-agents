@@ -27,6 +27,9 @@ describe("rules and process", () => {
     expect(screen.getByRole("textbox", { name: "Critical signal needs a person: Queue" })).toHaveValue("Shift lead");
     expect(within(screen.getByRole("row", { name: /When the severity is critical/ })).getByRole("switch", { name: "Ask a person to review" })).toBeChecked();
     expect(screen.getByRole("switch", { name: "Rule 4 on" })).toBeChecked();
+    expect(screen.getByRole("spinbutton", { name: "Most rounds per ticket (Add evidence)" })).toHaveValue(5);
+    expect(screen.getByRole("list", { name: "Quality flow" })).toHaveTextContent(/the agents run the next round with it, up to 5 rounds per ticket/);
+    expect(screen.getByRole("list", { name: "Quality flow" })).toHaveTextContent(/the ticket closes with no action/);
   });
 
   it("takes its values from the server, not from the page", async () => {

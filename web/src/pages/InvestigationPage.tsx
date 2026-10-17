@@ -11,6 +11,7 @@ import { EvidenceMatrix } from "../components/EvidenceMatrix";
 import { EvidencePack } from "../components/EvidencePack";
 import { Explain } from "../components/Explain";
 import { HistoryNote } from "../components/RecordList";
+import { RoundHistory } from "../components/RoundHistory";
 import { btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { hiddenMissingTitle, MISSING_INVESTIGATION, visibleProblem } from "../history/copy";
@@ -149,7 +150,12 @@ export function InvestigationPage() {
   useHubEvent("investigationChanged", (payload) => {
     const next = payload as Investigation | null;
     if (!next || !liveIncident || next.incidentId !== liveIncident) return;
-    setInvestigation((current) => (current && current.id !== next.id && current.stage !== "started" && next.stage === "started" ? current : next));
+    setInvestigation((current) => {
+      if (!current || current.id === next.id) return next;
+      // A closed round stays on screen as history; Rounds links to the newer round.
+      if (current.stage === "superseded" || (current.round && next.round && next.round !== current.round)) return current;
+      return current.stage !== "started" && next.stage === "started" ? current : next;
+    });
   });
   const connected = useHubConnected();
   const reloadRef = useRef<() => void>(() => undefined);
@@ -265,6 +271,7 @@ function InvestigationDetail({ investigation, onChange }: { investigation: Inves
           Go to decision
         </a>
       </div>
+      <RoundHistory investigation={investigation} />
       <EvidenceGate investigation={investigation} />
       <DecisionPanel investigation={investigation} onChange={onChange} />
       <section className={`${panel} mb-3`}>

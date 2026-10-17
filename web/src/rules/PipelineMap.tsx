@@ -144,12 +144,16 @@ export function pipelineStations(settings: RuleSetting[], rules: BusinessRule[])
     {
       id: "decision",
       title: "A person decides",
-      text: "The engineer reads the recommendation and the evidence and picks one. A decision is final.",
+      text: "The engineer reads the recommendation and the evidence and picks one. A decision is final for that round.",
       branches: [
         { label: "Approve CAPA", result: "opens the CAPA", tone: "ok" },
-        { label: "Request more evidence", result: "runs the investigation again", tone: "info" },
+        {
+          label: "Request more evidence",
+          result: `the engineer adds evidence, the round closes, and the agents run the next round with it, up to ${value("decision.maxEvidenceRounds", "5")} rounds per ticket`,
+          tone: "info",
+        },
         { label: "Override with justification", result: `only for an escalated case, with at least ${value("decision.overrideMin", "20")} characters of reason; opens the CAPA`, tone: "warn" },
-        { label: "Reject", result: "no CAPA; the case stays on record", tone: "alarm" },
+        { label: "Reject", result: "no CAPA; the ticket closes with no action and the case stays on record", tone: "alarm" },
       ],
     },
     {

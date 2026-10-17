@@ -5,6 +5,7 @@ import { api, ApiProblem } from "../api/client";
 import { CATEGORY_LABEL, INVESTIGATION_STAGE_LABEL } from "../api/labels";
 import type { DecisionRecord, HumanDecisionKind, Investigation } from "../api/types";
 import { ApprovalDialog, type DecisionMode } from "./ApprovalDialog";
+import { AddEvidenceBox, canAddRound, maxRoundsOf, roundOf } from "./AddEvidenceBox";
 import { Explain } from "./Explain";
 import { Term } from "./Term";
 import { btnDanger, btnInfo, btnOk, panel } from "./ui";
@@ -15,7 +16,10 @@ import { visibleProblem } from "../history/copy";
 /** Matches HumanDecisionService.MinOverrideJustification (ADR-005). */
 export const OVERRIDE_MIN = 20;
 
-/** The human decision at the gate result: approve, reject, request more evidence, or override an escalation. */
+/**
+ * The human decision for the current round: approve, reject, add evidence (request more evidence), or override an
+ * escalation. A decision is final per round; adding evidence closes this round and the agents run the next one.
+ */
 export function DecisionPanel({ investigation, onChange }: { investigation: Investigation; onChange: (next: Investigation) => void }) {
   const navigate = useNavigate();
   const { rememberCapa } = useConsole();
@@ -24,6 +28,7 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
   const [pending, setPending] = useState(false);
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
   useEffect(() => {
     let cancelled = false;
     api
@@ -48,6 +53,7 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
       });
       onChange(result.investigation);
       setMode(null);
+      setAdding(false);
       if (kind === "requestInfo" && result.investigation.id !== investigation.id) {
         navigate(`/investigations/${result.investigation.id}`);
         return;
@@ -70,10 +76,17 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
   const justified = note.trim().length >= OVERRIDE_MIN;
   const top = investigation.hypotheses.slice().sort((a, b) => b.confidence - a.confidence)[0];
   const record = recordedDecision(investigation);
+  const round = roundOf(investigation);
+  const maxRounds = maxRoundsOf(investigation);
+  // An escalated round, including an evidence-gate escalation, always offers Add evidence.
+  const showAddEvidence = !record && (adding || escalated);
 
   return (
     <section id="decision" aria-label="Decision" className={`${panel} mb-3 scroll-mt-4`}>
-      <h2 className="mb-2 text-mps-title font-semibold">Decision</h2>
+      <h2 className="mb-2 text-mps-title font-semibold">
+        Decision · Round {round}
+        {round > 1 || investigation.maxRounds ? <span className="ml-1 text-mps-label font-normal text-mps-muted">of at most {maxRounds}</span> : null}
+      </h2>
       {problem ? (
         <p className="mb-3 text-mps-alarm-text" role="alert">
           {problem}
@@ -109,12 +122,18 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
           <Explain text="No recommendation is ready. An escalation does not create a CAPA." spellOut={false} />
         </p>
       )}
-      {record ? <DecisionRecordView record={record} /> : null}
+      {record ? <DecisionRecordView record={record} round={round} /> : null}
       {!record && escalated ? (
         <div className="mt-4 rounded border border-mps-line p-3" data-testid="escalation-gate">
-          <h3 className="font-semibold">The agents escalated this case</h3>
+          <h3 className="font-semibold">Waiting for more evidence</h3>
           <p className="mt-1 text-mps-secondary">
-            <Explain text="An escalated case cannot go straight to a CAPA. Ask the agents to look again with more evidence, or override with a written reason. The reason is kept in the audit trail." />
+            <Explain
+              text={
+                canAddRound(investigation)
+                  ? "The agents could not support a cause with the evidence they found, so this round cannot go straight to a CAPA. Add what you know below and the agents run again, or override with a written reason. Both are kept in the audit trail."
+                  : "The agents could not support a cause with the evidence they found. This ticket has used every round, so override with a written reason or reject. Both are kept in the audit trail."
+              }
+            />
           </p>
         </div>
       ) : null}
@@ -140,9 +159,17 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
             Approve <Term id="CAPA" spellOut={false} />
           </span>
         </button>
-        <button type="button" className={btnInfo} disabled={pending} onClick={() => void decide("requestInfo", note.trim() || "More evidence requested.")}>
-          Request more evidence
-        </button>
+        {escalated ? null : (
+          <button
+            type="button"
+            className={btnInfo}
+            disabled={pending || adding || !canAddRound(investigation)}
+            title={canAddRound(investigation) ? undefined : `This ticket has reached ${maxRounds} rounds, the most allowed.`}
+            onClick={() => setAdding(true)}
+          >
+            Request more evidence
+          </button>
+        )}
         {escalated ? (
           <button type="button" className={btnDanger} disabled={pending || !justified || !approverId.trim()} onClick={() => void decide("override", note.trim())}>
             Override with justification
@@ -153,6 +180,14 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
         </button>
       </div>
       {escalated && !justified ? <p className="mt-2 font-mono text-mps-micro text-mps-muted">Override needs at least {OVERRIDE_MIN} characters of justification.</p> : null}
+      {showAddEvidence ? (
+        <AddEvidenceBox
+          investigation={investigation}
+          pending={pending}
+          onSubmit={(text) => void decide("requestInfo", text)}
+          onCancel={escalated ? undefined : () => setAdding(false)}
+        />
+      ) : null}
         </>
       )}
       <p className="mt-3 text-mps-secondary">Stage: {INVESTIGATION_STAGE_LABEL[investigation.stage]}</p>
@@ -173,7 +208,7 @@ const DECISION_LABEL: Record<HumanDecisionKind, string> = {
   approve: "Approved: CAPA",
   override: "Overridden with justification",
   reject: "Rejected",
-  requestInfo: "More evidence requested",
+  requestInfo: "More evidence added",
 };
 
 /** The decision on file. Older records without one still count as decided once approved or rejected. */
@@ -191,21 +226,27 @@ function decidedAtLabel(value: string): string {
 }
 
 /** Read-only record of a final decision. The action buttons are gone once a decision is made. */
-function DecisionRecordView({ record }: { record: DecisionRecord }) {
+function DecisionRecordView({ record, round }: { record: DecisionRecord; round: number }) {
   return (
     <div className="mt-4 rounded border border-mps-line p-3" data-testid="decision-record">
       <h3 className="font-semibold">Decision on file</h3>
       <dl className="mt-2 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
         <dt className="text-mps-secondary">Decision</dt>
         <dd>{DECISION_LABEL[record.kind] ?? record.kind}</dd>
-        <dt className="text-mps-secondary">Note or justification</dt>
-        <dd>{record.note?.trim() ? record.note : "No note was written."}</dd>
+        <dt className="text-mps-secondary">{record.kind === "requestInfo" ? "Evidence added" : "Note or justification"}</dt>
+        <dd className="whitespace-pre-line">{record.note?.trim() ? record.note : "No note was written."}</dd>
         <dt className="text-mps-secondary">Approver</dt>
         <dd>{record.decidedBy?.trim() ? record.decidedBy : "Not recorded"}</dd>
         <dt className="text-mps-secondary">Time</dt>
         <dd>{decidedAtLabel(record.decidedAt)}</dd>
       </dl>
-      <p className="mt-2 text-mps-secondary">A decision is final and cannot be changed.</p>
+      <p className="mt-2 text-mps-secondary">
+        {record.kind === "requestInfo"
+          ? `Round ${round} is closed and kept as history. The agents ran again with this evidence as round ${round + 1}.`
+          : record.kind === "reject"
+            ? `The decision for round ${round} is final. The ticket closed with no action.`
+            : `The decision for round ${round} is final and cannot be changed.`}
+      </p>
     </div>
   );
 }

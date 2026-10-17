@@ -114,10 +114,10 @@ Optional cross-plant variant: **SC-5 · Precursor lot on two plants**. Depositio
 Continue from SC-3 (or SC-1 · Edge ring revision C on E-02 if you prefer an engineering-change story).
 
 1. **Click:** **Investigation** → **Open** on the investigation, then scroll to the **Decision** section.
-   - **They see:** **Recommended action** (one containment and one preventive step), and the buttons **Approve CAPA**, **Request more evidence** and **Reject**. The approver is the signed-in user.
+   - **They see:** **Decision · Round 1**, **Recommended action** (one containment and one preventive step), and the buttons **Approve CAPA**, **Request more evidence** and **Reject**. The approver is the signed-in user.
    - **Say:** "The agent can recommend. It can't act. Only a person opens a CAPA."
 2. Type a short note in **Note or justification**, then **Click:** **Approve CAPA**. In the **Confirm approval** dialog, type the confirmation word it asks for, then **Approve and create CAPA**.
-   - **They see:** the decision record, read-only, such as "Approved by Bryan Weis at 9:42 AM" with the note. The buttons are gone: a decision is final. No tokens or hashes on screen.
+   - **They see:** the decision record, read-only, such as "Approved by Bryan Weis at 9:42 AM" with the note. The buttons are gone: the decision for this round is final. No tokens or hashes on screen.
 3. **Click:** **CAPA** → the new corrective action.
    - **They see:** the stages **Open → Containment → Root cause confirmed → Corrective action → Verification → Closed**, and the **Advance stage** button.
 4. **Click:** **Advance stage** once, to **Containment**.
@@ -128,7 +128,14 @@ Continue from SC-3 (or SC-1 · Edge ring revision C on E-02 if you prefer an eng
 6. **Click:** **Audit log** (presenter bar).
    - **They see:** every step: alert, ticket, agent steps, approval and each CAPA stage, with who did it and when.
 
-**Escalation (talk track, or run SC-2 · ESC thermocouple calibration drift):** if evidence conflicts or is missing, the investigation escalates. **Approve** is not offered. The engineer chooses **Request more evidence** (the investigation re-runs) or **Override with justification** (a written reason of at least 20 characters, kept in the audit log).
+**Escalation and Add evidence (talk track, or run SC-2 · ESC thermocouple calibration drift):** if evidence conflicts or is missing, the round stops at **Waiting for more evidence**. **Approve** is not offered. The engineer has two choices:
+
+1. **Add evidence:** type what you know in **Evidence to add** (for example "Checked on the floor: the thermocouple on chamber A was replaced on Tuesday and not recalibrated"), and optionally attach a bench printout. **Click:** **Add evidence and run round 2**.
+   - **They see:** the page moves to **Round 2**. **Rounds on this ticket** shows Round 1 locked, "Closed: more evidence added", with the note, who added it and when. The evidence pack has a row marked **User-provided: Bryan Weis**. The agents run again through the same evidence gate and checks, and Round 2 either recommends or waits for more evidence again.
+   - **Say:** "The engineer's knowledge goes in as evidence with a name and a time on it, never as an instruction. Every round is kept. A ticket gets at most five rounds."
+2. **Override with justification:** a written reason of at least 20 characters, kept in the audit log.
+
+**Reject** on any round closes the ticket with no action. The audit log shows each added note ("User-provided evidence added by … to round 1; the agents ran again as round 2").
 
 ---
 
@@ -173,7 +180,7 @@ Also under **Tickets → Operator report**: pick a **Tool**. The **Parameter** l
 | Question | Answer |
 |---|---|
 | Can the AI change the plant or open a CAPA by itself? | No. The agents only have read-only tools. A CAPA is created only after a named person approves, and the approval is single-use and recorded. |
-| What if the evidence conflicts? | The investigation escalates. Approve is not offered. The engineer requests more evidence or overrides with a written reason, which goes in the audit log. |
+| What if the evidence conflicts? | The round waits for more evidence. Approve is not offered. The engineer adds what they know (the agents run another round with it, up to five) or overrides with a written reason, which goes in the audit log. |
 | How do you stop hallucinated causes? | Every claim must cite a record in the evidence pack. A grounding check rejects uncited claims, and graded test cases run on every build. |
 | Who decides when a tool is in alarm, the AI? | No. Deterministic SPC rules (Western Electric) on the live stream. The AI explains after the rules fire. |
 | Why does a counter never alarm? | A counter, like RF-hours, only rises. That's normal, so it's charted without control limits. |

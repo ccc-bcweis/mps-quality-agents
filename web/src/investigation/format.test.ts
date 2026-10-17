@@ -119,3 +119,32 @@ describe("record ids stay raw", () => {
     }
   });
 });
+
+describe("screenshot wording bugs (#294)", () => {
+  it("names a tool and its chamber once", () => {
+    expect(plainFinding("A step on E-01 E-01-A after the clean.")).toBe("A step on Etch tool E-01-A after the clean.");
+    expect(plainFinding("A step on Etch tool E-01 E-01-A after the clean.")).toBe("A step on Etch tool E-01-A after the clean.");
+    expect(plainFinding("A step on E-01 (E-01-A).")).toBe("A step on Etch tool E-01-A.");
+    expect(plainNarrative("Pressure on D-02, chamber D-02-B rose.")).toBe("Pressure on Deposition tool D-02-B rose.");
+    expect(plainFinding("Vibration on E-02 rose.")).toBe("Vibration on Etch tool E-02 rose.");
+    expect(plainFinding("Etch tool E-02 and E-01 both moved.")).toBe("Etch tool E-02 and Etch tool E-01 both moved.");
+    expect(plainFinding("A step on E-01 E-01-A")).not.toMatch(/tool E-01 \w+ tool/);
+  });
+
+  it("shows inline times as local time and never leaves an empty slot", () => {
+    const text = "The ramp began after the clean, with the first rule break at 2026-10-17 14:02 UTC and the low reading at 2026-10-17T14:20:00Z.";
+    const out = plainFinding(text, "America/New_York");
+    expect(out).toBe("The ramp began after the clean, with the first rule break at Oct 17, 10:02 AM EDT and the low reading at Oct 17, 10:20 AM EDT.");
+    expect(plainNarrative(text, "UTC")).toContain("at Oct 17, 2:02 PM UTC");
+    for (const format of [plainFinding, plainNarrative]) {
+      const shown = format(text);
+      expect(shown).not.toMatch(/\bat\s+(and\b|[.,;:]|$)/);
+      expect(shown).not.toMatch(/\uE000/);
+    }
+  });
+
+  it("drops the word that introduced a record id it removes", () => {
+    expect(plainNarrative("The change is recorded in ECO-4471.")).toBe("The change is recorded.");
+    expect(plainNarrative("See ECO-4471 (ECO-4471) for detail.")).not.toMatch(/\(\s*\)|\uE000/);
+  });
+});

@@ -29,7 +29,8 @@ export type EvidenceSource =
   | "cmms"
   | "document"
   | "ticketing"
-  | "manualMeasurement";
+  | "manualMeasurement"
+  | "userProvided";
 export type RootCauseCategory =
   | "engineeringChange"
   | "equipmentCalibrationOrAlignment"
@@ -44,7 +45,8 @@ export type InvestigationStage =
   | "approved"
   | "rejected"
   | "failed"
-  | "closedByDemoReset";
+  | "closedByDemoReset"
+  | "superseded";
 export type HumanDecisionKind = "approve" | "reject" | "requestInfo" | "override";
 export type CapaStage =
   | "open"
@@ -226,6 +228,8 @@ export type EvidenceItem = {
   controlHigh?: number | null;
   center?: number | null;
   limitState?: LimitState | null;
+  /** Set on userProvided evidence: who added it with Add evidence. */
+  suppliedBy?: string | null;
 };
 
 /** outOfSpec: outside the recipe spec. outOfControl: inside spec but statistically unusual. */
@@ -275,6 +279,10 @@ export type Investigation = {
   decision?: DecisionRecord | null;
   /** Root-cause class to evidence stance, built by the server from data/evidence-matrix.yaml. Empty until ranked. */
   evidenceMatrix?: EvidenceMatrixEntry[];
+  /** Round on this ticket: 1, then one more each time a person adds evidence. Older records omit it. */
+  round?: number;
+  /** Most rounds a ticket allows (data/metadata/investigation.yaml). */
+  maxRounds?: number;
 };
 
 export type EvidenceStance = "supports" | "rulesOut" | "neutral";

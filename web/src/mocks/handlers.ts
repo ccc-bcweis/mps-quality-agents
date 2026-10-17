@@ -225,6 +225,7 @@ export const metadataSettings: RuleSetting[] = [
   { id: "investigation.wait.attempts", group: "Investigation", label: "Tries", kind: "number", value: "30" },
   { id: "investigation.wait.delay", group: "Investigation", label: "Time between tries", kind: "number", value: "20", unit: "seconds" },
   { id: "decision.overrideMin", group: "Decision", label: "Shortest override justification", kind: "number", value: "20", unit: "characters" },
+  { id: "decision.maxEvidenceRounds", group: "Decision", label: "Most rounds per ticket (Add evidence)", kind: "number", value: "5", unit: "rounds" },
 ];
 
 /** Live queue only. Scripted S1 and S2 records stay available by id for a direct link. */
@@ -486,9 +487,18 @@ export const handlers = [
     return HttpResponse.json(rows);
   }),
 
+  http.get("/api/incidents/:incidentId/investigations", ({ params }) => {
+    const incidentId = String(params.incidentId);
+    if (!knownIncidents().some((item) => item.id === incidentId)) return problem("Incident was not found.", 404);
+    const byId = new Map<string, Investigation>();
+    for (const item of allInvestigations()) if (item.incidentId === incidentId) byId.set(item.id, item);
+    const rounds = [...byId.values()].sort((left, right) => (left.round ?? 1) - (right.round ?? 1));
+    return HttpResponse.json(clone(rounds));
+  }),
+
   http.get("/api/investigations/:investigationId", ({ params }) => {
     const id = String(params.investigationId);
-    const found = mockExtras().investigations.find((item) => item.id === id) ?? investigationFor(id);
+    const found = [...mockExtras().investigations].reverse().find((item) => item.id === id) ?? investigationFor(id);
     if (!found) return problem("No such record.", 404);
     return HttpResponse.json(clone(found));
   }),
@@ -624,17 +634,59 @@ export const handlers = [
       return problem("Approval requires an approver.", 400);
     }
     const id = String(params.investigationId);
-    const current = mockExtras().investigations.find((item) => item.id === id) ?? investigationFor(id);
+    const current = [...mockExtras().investigations].reverse().find((item) => item.id === id) ?? investigationFor(id);
     if (!current) return problem("No such record.", 404);
-    if (current.decision || current.stage === "approved" || current.stage === "rejected") {
+    if (current.decision || current.stage === "approved" || current.stage === "rejected" || current.stage === "superseded") {
       return HttpResponse.json(
         { title: "The lifecycle rejected the transition.", detail: "This investigation was already decided. A decision cannot be changed.", status: 409 },
         { status: 409, headers: { "content-type": "application/problem+json" } },
       );
     }
+    if (body.kind === "requestInfo") {
+      const text = (body.comment ?? "").trim();
+      if (!text) return problem("Type the evidence to add. The agents read it in the next round.", 400);
+      const round = current.round ?? 1;
+      const maxRounds = current.maxRounds ?? 5;
+      if (round >= maxRounds) {
+        return HttpResponse.json(
+          { title: "The lifecycle rejected the transition.", detail: `This ticket has reached ${maxRounds} rounds, the most allowed. Approve, override or reject this round.`, status: 409 },
+          { status: 409, headers: { "content-type": "application/problem+json" } },
+        );
+      }
+      const by = body.approverId ?? "Console user";
+      const at = new Date().toISOString();
+      const added = {
+        id: crypto.randomUUID(),
+        source: "userProvided" as const,
+        title: `Added by ${by} for round ${round + 1}`,
+        excerpt: text,
+        observedAt: at,
+        toolId: current.evidence.find((item: { toolId?: string | null }) => item.toolId)?.toolId ?? null,
+        externalRef: `USER-R${round}`,
+        suppliedBy: by,
+        whyItMatters: "A person on the line added this; the agents weighed it with the records.",
+      };
+      const closed = clone(current);
+      closed.stage = "superseded";
+      closed.round = round;
+      closed.maxRounds = maxRounds;
+      closed.decision = { kind: "requestInfo", note: text, decidedBy: by, decidedAt: at };
+      const extras = mockExtras().investigations;
+      for (let index = extras.length - 1; index >= 0; index -= 1) if (extras[index]?.id === id) extras.splice(index, 1);
+      extras.push(closed);
+      const nextRound = clone(current);
+      nextRound.id = crypto.randomUUID();
+      nextRound.round = round + 1;
+      nextRound.maxRounds = maxRounds;
+      nextRound.decision = null;
+      nextRound.stage = nextRound.hypotheses.length > 0 ? "awaitingApproval" : "escalated";
+      nextRound.evidence = [...nextRound.evidence, added];
+      extras.push(nextRound);
+      return HttpResponse.json({ investigation: clone(nextRound), capa: null });
+    }
     const next = clone(current);
     next.stage =
-      body.kind === "approve" || body.kind === "override" ? "approved" : body.kind === "reject" ? "rejected" : "escalated";
+      body.kind === "approve" || body.kind === "override" ? "approved" : "rejected";
     next.decision = { kind: (body.kind ?? "approve") as HumanDecisionKind, note: body.comment ?? null, decidedBy: body.approverId ?? null, decidedAt: "2026-10-15T02:42:00.000Z" };
     mockExtras().investigations.push(next);
     const capa =

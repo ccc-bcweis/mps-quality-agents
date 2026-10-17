@@ -10,7 +10,27 @@ const TIP =
 const harnessBtn =
   "inline-flex shrink-0 items-center whitespace-nowrap rounded border border-sn-gold bg-transparent px-2 py-1 font-pitch text-mps-body text-sn-gold hover:bg-sn-navy-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sn-gold disabled:cursor-not-allowed disabled:opacity-40";
 
-export function HarnessPrintout() {
+const panelBtn =
+  "inline-flex shrink-0 items-center whitespace-nowrap rounded border border-mps-line bg-transparent px-2 py-1 text-mps-body hover:bg-mps-panel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-40";
+
+type PrintoutProps = {
+  /** harness: the gold presenter bar. panel: inside a console panel such as Add evidence. */
+  tone?: "harness" | "panel";
+  label?: string;
+  /** Called with a plain sentence about the stored reading. */
+  onConfirmed?: (summary: string) => void;
+};
+
+/** One plain sentence for a stored bench reading. */
+export function printoutSummary(draft: PrintoutConfirmRequest): string {
+  const range = draft.specMinimum != null && draft.specMaximum != null ? ` (printed limits ${draft.specMinimum}-${draft.specMaximum} ${draft.unit})` : "";
+  return `Bench printout: ${draft.parameter} read ${draft.value} ${draft.unit} on ${draft.toolId}${draft.chamberId ? ` chamber ${draft.chamberId}` : ""}${range}.`;
+}
+
+export function HarnessPrintout({ tone = "harness", label = "Sample printout", onConfirmed }: PrintoutProps = {}) {
+  const panelTone = tone === "panel";
+  const button = panelTone ? panelBtn : harnessBtn;
+  const text = panelTone ? "text-mps-body" : "text-mps-body text-sn-gold-wash";
   const [draft, setDraft] = useState<PrintoutConfirmRequest | null>(null);
   const [pending, setPending] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -38,6 +58,7 @@ export function HarnessPrintout() {
     try {
       const confirmed = await api.confirmPrintout(draft);
       setNote(confirmed.appliedToSimulation ? "Stored the reading as a manual sample. The process-control rules decide any alert." : "Stored the reading.");
+      onConfirmed?.(printoutSummary(draft));
       setDraft(null);
     } catch (reason: unknown) {
       setError(reason instanceof ApiProblem ? reason.title : "The reading was not stored.");
@@ -48,13 +69,17 @@ export function HarnessPrintout() {
 
   return (
     <div className="flex min-w-0 basis-full flex-wrap items-center gap-2" title={TIP}>
-      <label className="flex min-w-0 max-w-full flex-wrap items-center gap-2 text-mps-body text-sn-gold-wash" title={TIP}>
-        Sample printout
+      <label className={`flex min-w-0 max-w-full flex-wrap items-center gap-2 ${text}`} title={TIP}>
+        {label}
         <input
-          className="max-w-full text-mps-body text-sn-gold-wash file:mr-2 file:rounded file:border file:border-sn-gold file:bg-transparent file:px-2 file:py-1 file:font-pitch file:text-mps-body file:text-sn-gold"
+          className={
+            panelTone
+              ? "max-w-full text-mps-body file:mr-2 file:rounded file:border file:border-mps-line file:bg-transparent file:px-2 file:py-1 file:text-mps-body"
+              : "max-w-full text-mps-body text-sn-gold-wash file:mr-2 file:rounded file:border file:border-sn-gold file:bg-transparent file:px-2 file:py-1 file:font-pitch file:text-mps-body file:text-sn-gold"
+          }
           type="file"
           accept="application/pdf,image/png,image/jpeg,.pdf,.png,.jpg,.jpeg"
-          aria-label="Sample printout"
+          aria-label={label}
           title={TIP}
           disabled={pending}
           onChange={(event) => {
@@ -65,7 +90,7 @@ export function HarnessPrintout() {
       </label>
       {draft ? (
         <>
-          <p className="whitespace-nowrap text-mps-body text-sn-gold-wash">
+          <p className={`whitespace-nowrap ${text}`}>
             Read {draft.value} {draft.unit} on {draft.toolId}.
           </p>
           <ObservedAtField
@@ -75,16 +100,16 @@ export function HarnessPrintout() {
             value={draft.observedAt}
             printed={draft.printedObservedAt}
             onChange={(observedAt, printedObservedAt) => setDraft((current) => (current ? { ...current, observedAt, printedObservedAt } : current))}
-            className="rounded border border-sn-gold bg-transparent px-2 py-1 font-mono text-mps-body text-sn-gold-wash"
-            labelClassName="flex flex-wrap items-center gap-2 text-mps-body text-sn-gold-wash"
+            className={panelTone ? "rounded border border-mps-line bg-transparent px-2 py-1 font-mono text-mps-body" : "rounded border border-sn-gold bg-transparent px-2 py-1 font-mono text-mps-body text-sn-gold-wash"}
+            labelClassName={`flex flex-wrap items-center gap-2 ${text}`}
           />
-          <button className={harnessBtn} type="button" disabled={pending} onClick={() => void onConfirm()}>
+          <button className={button} type="button" disabled={pending} onClick={() => void onConfirm()}>
             {pending ? "Saving…" : "Confirm reading"}
           </button>
         </>
       ) : null}
       {note ? (
-        <p className="basis-full text-mps-body text-sn-gold-wash" role="status">
+        <p className={`basis-full ${text}`} role="status">
           {note}
         </p>
       ) : null}

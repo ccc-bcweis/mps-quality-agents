@@ -190,7 +190,7 @@ public sealed class EvidenceLoopTests
             writer,
             NullQualityNotifier.Instance,
             TimeProvider.System,
-            new ApprovalPolicy(ApprovalPolicy.DemoSigningKey(), TimeSpan.FromMinutes(15)),
+            new ApprovalPolicy([.. Enumerable.Range(1, 32).Select(value => (byte)value)], TimeSpan.FromMinutes(15)),
             NullMetricsLog.Instance,
             rounds: new EvidenceRoundSettings(maxRounds));
         return new Loop(service, decisions, workflow, writer, incident);
