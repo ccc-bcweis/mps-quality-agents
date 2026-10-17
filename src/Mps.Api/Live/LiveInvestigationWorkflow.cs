@@ -34,9 +34,12 @@ public sealed class LiveInvestigationWorkflow : IInvestigationWorkflow
         _catalog = catalog;
     }
 
-    public async Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken)
+    public Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken) =>
+        StartRoundAsync(incidentId, [], cancellationToken);
+
+    public async Task<InvestigationSnapshot> StartRoundAsync(IncidentId incidentId, IReadOnlyList<Mps.Domain.Evidence.EvidenceItem> userEvidence, CancellationToken cancellationToken)
     {
-        var snapshot = ToApi(await _inner.StartAsync(incidentId, cancellationToken).ConfigureAwait(false));
+        var snapshot = ToApi(await _inner.StartRoundAsync(incidentId, userEvidence, cancellationToken).ConfigureAwait(false));
         if (snapshot.Evidence.Count > 0)
         {
             _narratives.Stage(snapshot.Id, Narrative(snapshot));

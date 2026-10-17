@@ -30,13 +30,6 @@ public static class InvestigationLifecycle
             throw new DomainRuleException($"Cannot close an investigation from {snapshot.Stage} by demo reset.");
         }
 
-        return new InvestigationSnapshot(
-            snapshot.Id,
-            snapshot.IncidentId,
-            InvestigationStage.ClosedByDemoReset,
-            snapshot.Evidence,
-            snapshot.Hypotheses,
-            snapshot.EscalationReason,
-            snapshot.CorrelationId);
+        return snapshot.With(InvestigationStage.ClosedByDemoReset, snapshot.EscalationReason);
     }
 }

@@ -72,14 +72,19 @@ public static class EvidenceGate
         return pack.Items.Any(item => item.Source is EvidenceSource.Spc or EvidenceSource.Telemetry);
     }
 
+    /// <summary>A record a person added in the evidence loop can fill a context or discriminator gap. It never stands in for the signal.</summary>
+    private static bool HasUserEvidence(EvidencePack pack) =>
+        pack.Items.Any(item => item.Source == EvidenceSource.UserProvided);
+
     private static bool HasContext(EvidencePack pack)
     {
-        return pack.Items.Any(item => item.Source is EvidenceSource.Mes or EvidenceSource.Plm or EvidenceSource.Erp or EvidenceSource.Cmms);
+        return HasUserEvidence(pack)
+            || pack.Items.Any(item => item.Source is EvidenceSource.Mes or EvidenceSource.Plm or EvidenceSource.Erp or EvidenceSource.Cmms);
     }
 
     private static bool HasDiscriminator(EvidencePack pack)
     {
-        if (pack.Ecos.Count > 0)
+        if (HasUserEvidence(pack) || pack.Ecos.Count > 0)
         {
             return true;
         }

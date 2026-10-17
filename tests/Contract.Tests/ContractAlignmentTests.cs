@@ -79,6 +79,7 @@ public sealed class ContractAlignmentTests
         Methods(typeof(ITicketingPort)).Should().Equal("Open");
         Methods(typeof(IInvestigationWorkflow)).Should().Equal(
             "Start",
+            "StartRound",
             "ResumeWithHumanInput",
             "GetState");
 

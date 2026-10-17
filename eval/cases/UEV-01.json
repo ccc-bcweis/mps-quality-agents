@@ -1,0 +1,33 @@
+{
+  "id": "UEV-01",
+  "group": "userEvidence",
+  "groundTruth": null,
+  "expected": {
+    "behavior": "recommend",
+    "category": "equipmentCalibrationOrAlignment",
+    "forbiddenInCause": [
+      "seasoning"
+    ],
+    "causeTerms": [
+      "bearing"
+    ],
+    "categoryWithoutUserEvidence": "processDrift"
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "E-01",
+    "signalShape": "ramp",
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000900"
+    ],
+    "pmSummaries": [
+      "WO-CLN-E01-220 chamber clean; seasoning in progress."
+    ],
+    "userEvidence": [
+      "Checked on the floor: the turbo pump bearing on E-01 is worn and is past its service interval. The vibration started before the clean."
+    ],
+    "userEvidenceIds": [
+      "00000000-0000-0000-0000-000000000910"
+    ]
+  }
+}

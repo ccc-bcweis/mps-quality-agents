@@ -11,3 +11,7 @@ shapeWait:
   delaySeconds: 20
   minReadingsSinceOnset: 20
   maxReadingsSinceOnset: 180
+# Evidence loop: a person can add evidence to a round and the agents run again (round 2, 3 ...).
+# max is the most rounds one ticket can have; at the last round only approve, override or reject remain.
+evidenceRounds:
+  max: 5

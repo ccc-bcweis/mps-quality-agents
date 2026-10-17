@@ -190,11 +190,11 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         var firstId = (await firstResponse.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("id").GetGuid();
         var rejected = await client.PostAsJsonAsync("/api/investigations/" + firstId.ToString("D") + "/decisions", new
         {
-            kind = "reject",
-            comment = "The signal returned to the window.",
+            kind = "requestInfo",
+            comment = "The pump bearing on this tool is past its service interval.",
+            approverId = "Bryan Weis",
         });
-        var secondResponse = await client.PostAsync("/api/incidents/" + olderIncidentId.ToString("D") + "/investigations", null);
-        var secondId = (await secondResponse.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("id").GetGuid();
+        var secondId = (await EvidenceRounds.WaitForRoundAsync(client, olderIncidentId, 2)).GetProperty("id").GetGuid();
 
         var newerIncident = await OpenIncidentAsync(client, "D-01", "chamberPressure");
         var newerIncidentId = newerIncident.GetProperty("id").GetGuid();
@@ -217,7 +217,6 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         empty.GetArrayLength().Should().Be(0);
         firstResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         rejected.StatusCode.Should().Be(HttpStatusCode.OK);
-        secondResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         thirdResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         ids.Should().Equal(thirdId, secondId, firstId);
     }
@@ -238,11 +237,11 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         var afterFirst = await client.GetFromJsonAsync<JsonElement>("/api/incidents/" + incidentId.ToString("D") + "/investigation");
         var rejected = await client.PostAsJsonAsync("/api/investigations/" + firstId.ToString("D") + "/decisions", new
         {
-            kind = "reject",
-            comment = "The signal returned to the window.",
+            kind = "requestInfo",
+            comment = "The pump bearing on this tool is past its service interval.",
+            approverId = "Bryan Weis",
         });
-        var secondResponse = await client.PostAsync("/api/incidents/" + incidentId.ToString("D") + "/investigations", null);
-        var second = await secondResponse.Content.ReadFromJsonAsync<JsonElement>(Json);
+        var second = await EvidenceRounds.WaitForRoundAsync(client, incidentId, 2);
         var latest = await client.GetFromJsonAsync<JsonElement>("/api/incidents/" + incidentId.ToString("D") + "/investigation");
 
         unknown.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -252,7 +251,6 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
         afterFirst.GetProperty("id").GetGuid().Should().Be(firstId);
         afterFirst.GetProperty("incidentId").GetGuid().Should().Be(incidentId);
         rejected.StatusCode.Should().Be(HttpStatusCode.OK);
-        secondResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         latest.GetProperty("id").GetGuid().Should().Be(second.GetProperty("id").GetGuid());
         latest.GetProperty("id").GetGuid().Should().NotBe(firstId);
         latest.GetProperty("incidentId").GetGuid().Should().Be(incidentId);

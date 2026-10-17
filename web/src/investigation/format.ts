@@ -12,6 +12,7 @@ export const SOURCE_LABEL: Record<EvidenceSource, string> = {
   cmms: "Maintenance system",
   document: "Service document",
   manualMeasurement: "Bench reading",
+  userProvided: "Added by a person",
   ticketing: "Tickets",
 };
 
@@ -97,27 +98,56 @@ export function placeLabel(
   return tool || chamber || "—";
 }
 
-/** Drop record ids and inline timestamps from a sentence the operator reads. */
-export function plainNarrative(text: string): string {
+/** "E-02" in prose becomes "Etch tool E-02", unless the words before it already name the tool family. */
+function friendlyTools(text: string): string {
+  const named = text.replace(TOOL_ID, (match: string, letter: string, num: string, offset: number, whole: string) => {
+    const family = FAMILY[letter] ?? "Tool";
+    const before = whole.slice(Math.max(0, offset - family.length - 6), offset);
+    return new RegExp(`${family} tool\\s*$`, "i").test(before) ? match : `${family} tool ${letter}-${num}`;
+  });
+  // "Etch tool E-01 Etch tool E-01-A", "Etch tool E-01 E-01-A" and "Etch tool E-01 (E-01-A)" name one chamber once.
+  return named.replace(
+    /\b(Deposition|Etch|Strip|Clean|Tool) tool ([DESC]-\d{2})\s*,?\s*\(?\s*(?:chamber\s+)?(?:(?:Deposition|Etch|Strip|Clean|Tool) tool )?\2-([A-D])\b\)?/gi,
+    (_match, family: string, tool: string, chamber: string) => `${family} tool ${tool}-${chamber}`,
+  );
+}
+
+/** Marks where a stamp or record id was taken out, so only the word that introduced it goes too. */
+const GONE = "\uE000";
+const DANGLING = /(?:\b(?:at|on|from|to|since|by|until|after|before|in|per|see)\s*)?\s*\uE000/gi;
+
+/**
+ * Inline timestamps read as local clock time. A stamp that cannot be read is removed together with the word that
+ * introduced it, so the sentence never shows an empty slot ("the first rule break at and the low reading at.").
+ */
+function readableStamps(text: string, timeZone?: string): string {
   return text
-    .replace(GUID, "")
-    .replace(STAMP, "")
-    .replace(TOOL_ID, (_match, letter: string, num: string) => `${FAMILY[letter] ?? "Tool"} tool ${letter}-${num}`)
-    .replace(RECORD_ID, "")
+    .replace(STAMP, (stamp) => {
+      const iso = stamp.includes("T") ? stamp.replace(/\s*UTC$/, "Z") : stamp.replace(" UTC", "Z").replace(" ", "T");
+      const local = formatLocalWhen(iso, timeZone);
+      return local === "—" ? GONE : local;
+    });
+}
+
+function tidy(text: string): string {
+  return text
+    .replace(DANGLING, "")
     .replace(/\s{2,}/g, " ")
     .replace(/\s+([.,;:])/g, "$1")
+    .replace(/([,;:])(?=[.,;:])/g, "")
+    .replace(/\(\s*\)/g, "")
+    .replace(/\s{2,}/g, " ")
     .trim();
 }
 
+/** Drop record ids from a sentence the operator reads; inline timestamps become local time. */
+export function plainNarrative(text: string, timeZone?: string): string {
+  return tidy(friendlyTools(readableStamps(text.replace(GUID, GONE), timeZone)).replace(RECORD_ID, GONE));
+}
+
 /** Plain wording for a finding or action: like plainNarrative, but keeps business record ids (ECO-4471) a reader must check. */
-export function plainFinding(text: string): string {
-  return text
-    .replace(GUID, "")
-    .replace(STAMP, "")
-    .replace(TOOL_ID, (_match, letter: string, num: string) => `${FAMILY[letter] ?? "Tool"} tool ${letter}-${num}`)
-    .replace(/\s{2,}/g, " ")
-    .replace(/\s+([.,;:])/g, "$1")
-    .trim();
+export function plainFinding(text: string, timeZone?: string): string {
+  return tidy(friendlyTools(readableStamps(text.replace(GUID, GONE), timeZone)));
 }
 
 export function oneSentence(text: string): string {

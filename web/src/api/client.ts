@@ -119,6 +119,9 @@ export const api = {
     apiSend<Investigation>(`/api/investigations/${investigationId}`),
   getLatestInvestigation: (incidentId: string) =>
     apiSend<Investigation>(`/api/incidents/${incidentId}/investigation`),
+  /** Every round on a ticket, oldest first. */
+  listInvestigationRounds: (incidentId: string) =>
+    apiSend<Investigation[]>(`/api/incidents/${incidentId}/investigations`),
   startInvestigation: (incidentId: string) =>
     apiSend<Investigation>(`/api/incidents/${incidentId}/investigations`, { method: "POST" }),
   submitDecision: (investigationId: string, body: HumanDecisionRequest) =>

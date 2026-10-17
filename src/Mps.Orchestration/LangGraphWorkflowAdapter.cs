@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
 using Mps.Application.Workflow;
+using Mps.Domain.Evidence;
 using Mps.Domain.Identity;
 using Mps.Domain.Investigations;
 
@@ -13,6 +14,13 @@ public sealed class LangGraphWorkflowAdapter : IInvestigationWorkflow
 {
     public Task<InvestigationSnapshot> StartAsync(IncidentId incidentId, CancellationToken cancellationToken)
     {
+        _ = cancellationToken;
+        throw Stub(incidentId.ToString());
+    }
+
+    public Task<InvestigationSnapshot> StartRoundAsync(IncidentId incidentId, IReadOnlyList<EvidenceItem> userEvidence, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(userEvidence);
         _ = cancellationToken;
         throw Stub(incidentId.ToString());
     }

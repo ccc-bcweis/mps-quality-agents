@@ -136,6 +136,8 @@ public static class AuditLog
             var where = string.IsNullOrWhiteSpace(toolId) ? "." : " for " + toolId + ".";
             var investigationSummary = string.Equals(investigation.Stage, nameof(InvestigationStage.ClosedByDemoReset), StringComparison.Ordinal)
                 ? DemoReset.StatusLabel + where
+                : investigation.Sequence > 1
+                ? "Investigation round " + investigation.Sequence.ToString(System.Globalization.CultureInfo.InvariantCulture) + " started" + where
                 : "Investigation started" + where;
             events.Add(new AuditStamp(
                 incident is null ? DateTimeOffset.UnixEpoch : Utc(incident.OpenedAt),
@@ -151,14 +153,18 @@ public static class AuditLog
                 && !string.Equals(decision.Kind, "override", StringComparison.OrdinalIgnoreCase))
             {
                 var by = string.IsNullOrWhiteSpace(decision.DecidedBy) ? "an approver" : decision.DecidedBy.Trim();
-                var what = string.Equals(decision.Kind, "reject", StringComparison.OrdinalIgnoreCase)
-                    ? "Rejected by "
-                    : "More evidence requested by ";
+                var rejected = string.Equals(decision.Kind, "reject", StringComparison.OrdinalIgnoreCase);
+                var round = Math.Max(1, investigation.Sequence).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                var next = (Math.Max(1, investigation.Sequence) + 1).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                var summary = rejected
+                    ? "Rejected by " + by + "; the ticket closed with no action." + NoteSuffix(decision.Note)
+                    : "User-provided evidence added by " + by + " to round " + round + "; the agents ran again as round " + next + "."
+                        + (string.IsNullOrWhiteSpace(decision.Note) ? string.Empty : " Evidence: " + decision.Note.Trim());
                 events.Add(new AuditStamp(
                     decision.DecidedAt,
                     5,
-                    "decision",
-                    what + by + "." + NoteSuffix(decision.Note),
+                    rejected ? "decision" : "userEvidence",
+                    summary,
                     by,
                     toolId,
                     investigation.CorrelationId,

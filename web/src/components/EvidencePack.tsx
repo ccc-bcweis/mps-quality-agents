@@ -50,9 +50,20 @@ export function EvidencePack({ items }: { items: EvidenceItem[] }) {
               const range = rangeText(row);
               return (
               <tr key={item.id} title={hoverRecord(item)} className="border-t border-mps-line align-top">
-                <td className="break-words py-2 pr-2">{SOURCE_LABEL[item.source]}</td>
                 <td className="break-words py-2 pr-2">
-                  <Explain text={whatItShows(item)} spellOut={false} />
+                  {SOURCE_LABEL[item.source]}
+                  {item.source === "userProvided" ? (
+                    <div className="mt-1 inline-block rounded border border-mps-warn px-1 text-mps-micro font-semibold" data-testid="user-provided">
+                      User-provided{item.suppliedBy ? `: ${item.suppliedBy}` : ""}
+                    </div>
+                  ) : null}
+                </td>
+                <td className="break-words py-2 pr-2">
+                  {item.source === "userProvided" ? (
+                    <p className="whitespace-pre-line break-words">{item.excerpt}</p>
+                  ) : (
+                    <Explain text={whatItShows(item)} spellOut={false} />
+                  )}
                   {range ? <div className="text-mps-micro text-mps-muted">{range}</div> : null}
                   {row.rules.length > 1 ? (
                     <div className="text-mps-micro text-mps-muted">
@@ -63,13 +74,15 @@ export function EvidencePack({ items }: { items: EvidenceItem[] }) {
                     <summary className={`${btn} inline-flex list-none [&::-webkit-details-marker]:hidden`}>Details</summary>
                     <p className="mt-1 break-words text-mps-secondary">{readableExcerpt(fullText(item))}</p>
                   </details>
-                  <button
-                    type="button"
-                    className={`${btn} mt-2 h-auto w-full whitespace-normal break-words text-left`}
-                    onClick={() => setTraceItem(item)}
-                  >
-                    Show the cause for {whatItShows(item)}
-                  </button>
+                  {item.source === "userProvided" ? null : (
+                    <button
+                      type="button"
+                      className={`${btn} mt-2 h-auto w-full whitespace-normal break-words text-left`}
+                      onClick={() => setTraceItem(item)}
+                    >
+                      Show the cause for {whatItShows(item)}
+                    </button>
+                  )}
                 </td>
                 <td className="break-words py-2 pr-2">
                   {valueVsSpec(item)}

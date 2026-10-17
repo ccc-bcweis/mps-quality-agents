@@ -90,7 +90,8 @@ public sealed record EvidenceResponse(
     double? ControlLow = null,
     double? ControlHigh = null,
     double? Center = null,
-    string? LimitState = null);
+    string? LimitState = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? SuppliedBy = null);
 
 public sealed record EvidenceMatrixResponse(
     RootCauseCategory Category,
@@ -121,6 +122,12 @@ public sealed record InvestigationResponse(
 {
     /// <summary>The recorded human decision, once made; the console shows it as a read-only record.</summary>
     public DecisionRecordResponse? Decision { get; init; }
+
+    /// <summary>Round on the ticket (the evidence loop): 1 for the first run, then one more each time a person added evidence.</summary>
+    public int Round { get; init; } = 1;
+
+    /// <summary>The most rounds a ticket can have (data/metadata/investigation.yaml evidenceRounds.max).</summary>
+    public int MaxRounds { get; init; } = Mps.Application.Decisions.EvidenceRoundSettings.DefaultMaxRounds;
 }
 
 public sealed record CapaResponse(

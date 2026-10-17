@@ -34,5 +34,5 @@ Every company, plant, tool, supplier, person and record in this demo is fictiona
 | Replay and mock reasoner | Saved model answers keyed by prompt hash, and a rule-based reasoner when no answer is saved. Local runs use these by default. | `data/replay/scripted`, `src/Mps.ModelGateway/Replay` |
 | Printout reading | Text from a PDF bench printout, or the vision model for an image, becomes one manual sample that goes through the same rules. | `src/Mps.Api/Printouts`, `src/Mps.Connectors/Printouts` |
 | Traces and audit | OpenTelemetry traces and an audit log of every step. | `src/Mps.Api` |
-| Evaluation | 27 replay cases with hard gates on every CI run. | `eval/` |
+| Evaluation | 28 replay cases with hard gates on every CI run. | `eval/` |
 | Sign-in, hosted | Container Apps Easy Auth with Microsoft Entra, and join links for guests. | `infra/`, `src/Mps.Api/Access` |

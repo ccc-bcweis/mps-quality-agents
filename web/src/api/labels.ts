@@ -20,7 +20,7 @@ export const STAGE_LABEL: Record<IncidentStage, string> = {
   ticketOpened: "Ticket opened",
   investigating: "Investigating",
   recommendationReady: "Recommendation ready",
-  escalated: "Escalated",
+  escalated: "Waiting for more evidence",
   awaitingApproval: "Waiting for approval",
   approved: "Approved",
   rejected: "Rejected",
@@ -32,12 +32,13 @@ export const INVESTIGATION_STAGE_LABEL: Record<InvestigationStage, string> = {
   started: "Started",
   evidenceGathered: "Evidence gathered",
   recommendationReady: "Recommendation ready",
-  escalated: "Escalated",
+  escalated: "Waiting for more evidence",
   awaitingApproval: "Waiting for approval",
   approved: "Approved",
   rejected: "Rejected",
   failed: "Failed",
   closedByDemoReset: "Closed by reset",
+  superseded: "Closed: more evidence added",
 };
 
 export const CAPA_STAGE_LABEL: Record<CapaStage, string> = {

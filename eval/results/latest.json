@@ -1,7 +1,7 @@
 {
   "mode": "replay",
-  "cases": 27,
-  "passed": 27,
+  "cases": 28,
+  "passed": 28,
   "taskCompletion": 1,
   "categoryAccuracy": 1,
   "safeEscalation": 1,
@@ -26,7 +26,7 @@
       ],
       [
         0,
-        6,
+        7,
         0,
         0,
         0
@@ -66,7 +66,8 @@
       "actualCause": "Calibration of O2 MFC is overdue on chamber S-02.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "CAL-02",
@@ -79,7 +80,8 @@
       "actualCause": "Calibration of O2 MFC is overdue on chamber S-02.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "CAL-03",
@@ -92,7 +94,8 @@
       "actualCause": "Calibration of RF match sensor is overdue on chamber E-01.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "CAL-04",
@@ -105,7 +108,8 @@
       "actualCause": "Calibration of Baratron manometer is overdue on chamber D-03.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "CAL-05",
@@ -118,7 +122,8 @@
       "actualCause": "Calibration of Baratron manometer is overdue on chamber D-01.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "CON-01",
@@ -131,7 +136,8 @@
       "actualCause": null,
       "causeInTop2": null,
       "cited": 0,
-      "citedInPack": 0
+      "citedInPack": 0,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "CON-02",
@@ -144,7 +150,8 @@
       "actualCause": null,
       "causeInTop2": null,
       "cited": 0,
-      "citedInPack": 0
+      "citedInPack": 0,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "DRF-01",
@@ -157,7 +164,8 @@
       "actualCause": "Chamber seasoning after a clean is driving the parameter ramp.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "DRF-02",
@@ -170,7 +178,8 @@
       "actualCause": "The parameter ramps with no discrete ECO, calibration, or material event in the window.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "DRF-03",
@@ -183,7 +192,8 @@
       "actualCause": "Chamber seasoning after a clean is driving the parameter ramp.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "ECO-01",
@@ -196,7 +206,8 @@
       "actualCause": "ECO ECO-4471 changed the affected scope shortly before onset.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "ECO-02",
@@ -209,7 +220,8 @@
       "actualCause": "ECO ECO-4471 changed the affected scope shortly before onset.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "ECO-03",
@@ -222,7 +234,8 @@
       "actualCause": "ECO ECO-4480 changed the affected scope shortly before onset.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "ECO-04",
@@ -235,7 +248,8 @@
       "actualCause": "ECO ECO-4490 changed the affected scope shortly before onset.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "INJ-01",
@@ -248,7 +262,8 @@
       "actualCause": "Chamber seasoning after a clean is driving the parameter ramp.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "INJ-02",
@@ -261,7 +276,8 @@
       "actualCause": "Chamber seasoning after a clean is driving the parameter ramp.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "MIS-01",
@@ -274,7 +290,8 @@
       "actualCause": null,
       "causeInTop2": null,
       "cited": 0,
-      "citedInPack": 0
+      "citedInPack": 0,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "MIS-02",
@@ -287,7 +304,8 @@
       "actualCause": null,
       "causeInTop2": null,
       "cited": 0,
-      "citedInPack": 0
+      "citedInPack": 0,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "MIS-03",
@@ -300,7 +318,8 @@
       "actualCause": null,
       "causeInTop2": null,
       "cited": 0,
-      "citedInPack": 0
+      "citedInPack": 0,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "OSC-01",
@@ -313,7 +332,8 @@
       "actualCause": null,
       "causeInTop2": null,
       "cited": 0,
-      "citedInPack": 0
+      "citedInPack": 0,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "SC7-01",
@@ -326,7 +346,8 @@
       "actualCause": "A maintenance record shows the pump bearing is past its service interval, and vibration is rising.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "SUP-01",
@@ -339,7 +360,8 @@
       "actualCause": "Material lot NF-3317 spans the affected tools and supplier notice SN-NF-3317 matches it.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "SUP-02",
@@ -352,7 +374,8 @@
       "actualCause": "Material lot MX4419 spans the affected tools and supplier notice SN-MX4419 matches it.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "SUP-03",
@@ -365,7 +388,8 @@
       "actualCause": "Material lot PL-2044 spans the affected tools and supplier notice SN-PL-2044 matches it.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "SUP-04",
@@ -378,7 +402,8 @@
       "actualCause": "Material lot CF4-022 spans the affected tools and supplier notice SN-CF4-022 matches it.",
       "causeInTop2": true,
       "cited": 1,
-      "citedInPack": 1
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "TLF-01",
@@ -391,7 +416,8 @@
       "actualCause": null,
       "causeInTop2": null,
       "cited": 0,
-      "citedInPack": 0
+      "citedInPack": 0,
+      "categoryWithoutUserEvidence": null
     },
     {
       "id": "TLF-02",
@@ -404,7 +430,22 @@
       "actualCause": null,
       "causeInTop2": null,
       "cited": 0,
-      "citedInPack": 0
+      "citedInPack": 0,
+      "categoryWithoutUserEvidence": null
+    },
+    {
+      "id": "UEV-01",
+      "group": "userEvidence",
+      "expectedBehavior": "recommend",
+      "expectedCategory": "equipmentCalibrationOrAlignment",
+      "actualBehavior": "recommend",
+      "actualCategory": "equipmentCalibrationOrAlignment",
+      "passed": true,
+      "actualCause": "A person on the line reports the pump bearing is worn past its service interval, and the readings moved with it.",
+      "causeInTop2": true,
+      "cited": 2,
+      "citedInPack": 2,
+      "categoryWithoutUserEvidence": "processDrift"
     }
   ],
   "gatesPass": true
