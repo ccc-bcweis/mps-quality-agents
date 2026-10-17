@@ -21,6 +21,15 @@ public static class CauseGuard
         (@"\bspike\w*|\bintermittent\w*", SignalShape.Intermittent),
     ];
 
+    /// <summary>The words the cause check reads as each shape, for the retry note.</summary>
+    private static readonly (SignalShape Shape, string Words)[] ShapeVocabulary =
+    [
+        (SignalShape.Oscillation, "oscillation, oscillating, swing"),
+        (SignalShape.Step, "step, stepped, sudden"),
+        (SignalShape.Ramp, "gradual, drift, drifting, ramp, rise, rising, creep"),
+        (SignalShape.Intermittent, "spike, spikes, intermittent"),
+    ];
+
     /// <summary>Null when the cause passes, otherwise a plain escalation reason.</summary>
     public static string? Check(string cause, EvidencePack pack)
     {
@@ -62,10 +71,13 @@ public static class CauseGuard
     public static string ShapeFeedback(string word, EvidencePack pack)
     {
         ArgumentNullException.ThrowIfNull(pack);
+        var forbidden = string.Join(", ", ShapeVocabulary.Where(entry => entry.Shape != pack.SignalShape).Select(entry => entry.Words));
+        var avoid = " In cause, do not use any of these words, not even to say the signal is not like that: " + forbidden
+            + ". The class name processDrift may still be ranked, but write it as \"process drift\".";
         return pack.SignalShape == SignalShape.Unknown
-            ? "Your previous cause described the signal as \"" + word + "\", but the readings do not show a clear shape yet. Do not describe a shape; rank the cause from the records, or escalate."
+            ? "Your previous cause described the signal as \"" + word + "\", but the readings do not show a clear shape yet. Do not describe a shape; rank the cause from the records, or escalate." + avoid
             : "Your previous cause described the signal as \"" + word + "\", but the measured shape of the readings since the first rule break is " + EvidencePackFactory.ShapeWords(pack.SignalShape)
-                + ". Describe the signal as " + EvidencePackFactory.ShapeWords(pack.SignalShape) + " and re-rank the cause with that shape, or escalate if no record fits it.";
+                + ". Describe the signal only as " + EvidencePackFactory.ShapeWords(pack.SignalShape) + " and re-rank the cause with that shape, or escalate if no record fits it." + avoid;
     }
 
     private static IEnumerable<string> RuledOutIds(EvidencePack pack) =>
