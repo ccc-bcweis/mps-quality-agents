@@ -31,7 +31,7 @@ function InvestigationList({ note }: { note: string | null }) {
         <p className="max-w-3xl text-mps-secondary">Past investigations, newest first. Open one to read the evidence.</p>
       </div>
       {note ? <HistoryNote text={note} /> : null}
-      <InvestigationHistory detail="investigation" />
+      <InvestigationHistory />
     </div>
   );
 }

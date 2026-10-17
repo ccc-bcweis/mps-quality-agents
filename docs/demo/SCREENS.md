@@ -27,7 +27,7 @@ Charcoal application inside the gold frame.
 | Alerts | `/alerts` | Rules-engine alerts, newest first. A missing alert falls back to the list. |
 | Tickets | `/tickets` | Normalized intake, newest first. Operator report and Upload telemetry sit side by side. A missing ticket falls back to the list. |
 | Investigation | `/investigations` | The tab opens the list, newest first. A missing deep link falls back to the list. Detail stays at `/investigations/:id`. |
-| Approval | `/approvals` | The tab opens the list. A missing deep link falls back to the list. The gate stays at `/approvals/:id`. |
+| Decision | `/investigations/:id#decision` | No tab of its own: the Decision section is on the Investigation page. Old links redirect: `/approvals` → `/investigations`, `/approvals/:id` → `/investigations/:id#decision`. |
 | Corrective and preventive action | `/capas` | The tab opens the list, newest first. Detail stays at `/capas/:id`. |
 | Glossary | `/glossary` | Application page, linked from the console header. Not a tab, and not a harness tool. |
 
