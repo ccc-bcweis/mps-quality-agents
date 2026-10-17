@@ -569,14 +569,14 @@ internal sealed class ScriptedTools :
 
     public bool Touched { get; private set; }
 
-    public Task<TelemetryWindow> GetWindowAsync(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
+    public Task<TelemetryWindow> GetWindowAsync(ToolId toolId, string? chamberId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
     {
         Touch();
         TelemetryPoint[] points = [new(from, 1d), new(from.AddMinutes(1), 5d), new(from.AddMinutes(2), 1d), new(from.AddMinutes(3), 5d), new(from.AddMinutes(4), 1d), new(from.AddMinutes(5), 5d)];
         return Task.FromResult(new TelemetryWindow(toolId, parameter, from, until, points));
     }
 
-    public Task<IReadOnlyList<SpcViolation>> GetViolationsAsync(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
+    public Task<IReadOnlyList<SpcViolation>> GetViolationsAsync(ToolId toolId, string? chamberId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
     {
         Touch();
         if (ThrowOnSpc)

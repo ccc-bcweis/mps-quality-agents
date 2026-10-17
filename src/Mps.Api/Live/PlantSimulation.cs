@@ -318,9 +318,9 @@ public sealed class PlantSimulation : Mps.Application.Lifecycle.IPlantFaultContr
         return chosen.Select(point => new TelemetryPoint(point.At, point.Value)).ToArray();
     }
 
-    public IReadOnlyList<SpcViolation> Evaluate(string toolId, string parameter, DateTimeOffset from, DateTimeOffset until)
+    public IReadOnlyList<SpcViolation> Evaluate(string toolId, string parameter, DateTimeOffset from, DateTimeOffset until, string? chamberId = null)
     {
-        var chamber = Runtime.Simulator.ActiveFaults
+        var chamber = chamberId ?? Runtime.Simulator.ActiveFaults
             .LastOrDefault(fault => string.Equals(fault.ToolId, toolId, StringComparison.Ordinal)
                 && string.Equals(fault.Parameter, parameter, StringComparison.Ordinal))
             ?.ChamberId

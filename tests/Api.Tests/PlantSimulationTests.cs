@@ -43,6 +43,7 @@ public sealed class PlantSimulationTests
             plant);
         var window = await tools.GetWindowAsync(
             new ToolId("E-02"),
+            null,
             "escTemperature",
             DateTimeOffset.UnixEpoch,
             DateTimeOffset.UnixEpoch.AddYears(80),

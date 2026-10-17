@@ -45,6 +45,25 @@ public sealed class SignalShapeFromDataTests
     }
 
     [Fact]
+    public void AStepInNormalSensorNoiseIsAStep()
+    {
+        // Regression: a 4.5-sigma step in ordinary noise never had one clean jump, so triage waited for a shape that never came.
+        var random = new Random(11);
+        var gaussian = Enumerable.Range(0, 120).Select(_ => Math.Sqrt(-2d * Math.Log(1d - random.NextDouble())) * Math.Cos(2d * Math.PI * random.NextDouble())).ToArray();
+        var values = gaussian.Select((noise, i) => (i < 90 ? 50d : 45.5d) + noise).ToArray();
+
+        SignalShapeClassifier.Classify(values).Should().Be(SignalShape.Step);
+    }
+
+    [Fact]
+    public void ARampThatLevelsOffIsNotCalledAStep()
+    {
+        var values = Enumerable.Range(0, 200).Select(i => Math.Min(i < 60 ? 0d : (i - 60) * 0.05d, 3d) + Noise(i)).ToArray();
+
+        SignalShapeClassifier.Classify(values).Should().NotBe(SignalShape.Step);
+    }
+
+    [Fact]
     public void TheEvidenceReadsTheShapeSinceTheFirstRuleBreakAndSaysItInWords()
     {
         // Two hours of normal readings, then ten minutes of oscillation: the whole window looks flat, the recent part swings.

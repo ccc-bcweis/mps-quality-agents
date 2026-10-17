@@ -12,8 +12,10 @@ namespace Mps.Application.Tools;
 /// </summary>
 public interface ITelemetryTool
 {
+    /// <summary>Readings for one chamber when <paramref name="chamberId"/> is set. Sources that do not split by chamber ignore it.</summary>
     Task<TelemetryWindow> GetWindowAsync(
         ToolId toolId,
+        string? chamberId,
         string parameter,
         DateTimeOffset from,
         DateTimeOffset until,
@@ -22,8 +24,10 @@ public interface ITelemetryTool
 
 public interface ISpcTool
 {
+    /// <summary>Rule breaks for one chamber when <paramref name="chamberId"/> is set. Sources that do not split by chamber ignore it.</summary>
     Task<IReadOnlyList<SpcViolation>> GetViolationsAsync(
         ToolId toolId,
+        string? chamberId,
         string parameter,
         DateTimeOffset from,
         DateTimeOffset until,

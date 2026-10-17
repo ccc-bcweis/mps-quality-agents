@@ -222,6 +222,7 @@ export const metadataSettings: RuleSetting[] = [
   { id: "clear.sigma", group: "Alert clearing", label: "In control means within", kind: "number", value: "2", unit: "sigma" },
   { id: "investigation.wait.on", group: "Investigation", label: "Wait for a clear signal shape", kind: "toggle", value: "true" },
   { id: "investigation.wait.minReadings", group: "Investigation", label: "Readings since the first rule break", kind: "number", value: "20", unit: "readings" },
+  { id: "investigation.wait.maxReadings", group: "Investigation", label: "Stop waiting for a clear shape after", kind: "number", value: "180", unit: "readings" },
   { id: "investigation.wait.attempts", group: "Investigation", label: "Tries", kind: "number", value: "30" },
   { id: "investigation.wait.delay", group: "Investigation", label: "Time between tries", kind: "number", value: "20", unit: "seconds" },
   { id: "decision.overrideMin", group: "Decision", label: "Shortest override justification", kind: "number", value: "20", unit: "characters" },
