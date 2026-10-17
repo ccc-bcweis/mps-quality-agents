@@ -126,6 +126,9 @@ public sealed class InvestigationRow
     public string HypothesesJson { get; set; } = "[]";
 
     public string EvidenceMatrixJson { get; set; } = "[]";
+
+    /// <summary>The recorded human decision as JSON, or null before one is made.</summary>
+    public string? DecisionJson { get; set; }
 }
 
 public sealed class CapaRow

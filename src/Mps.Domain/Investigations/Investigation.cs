@@ -104,6 +104,12 @@ public sealed class InvestigationSnapshot
 
     public string CorrelationId { get; }
 
+    /// <summary>The person's decision on this investigation, once made: kind, note or justification, who, when.</summary>
+    public DecisionRecord? Decision { get; init; }
+
     public InvestigationSnapshot WithEvidence(IReadOnlyList<EvidenceItem> evidence) =>
-        new(Id, IncidentId, Stage, evidence, Hypotheses, EscalationReason, CorrelationId);
+        new(Id, IncidentId, Stage, evidence, Hypotheses, EscalationReason, CorrelationId) { Decision = Decision };
 }
+
+/// <summary>A recorded human decision. Kind is approve, override, reject or requestInfo.</summary>
+public sealed record DecisionRecord(string Kind, string? Note, string? DecidedBy, DateTimeOffset DecidedAt);

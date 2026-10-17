@@ -56,6 +56,9 @@ public sealed record IncidentResponse(
     string SiteId,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? StatusLabel = null);
 
+/// <summary>Kind is approve, override, reject or requestInfo.</summary>
+public sealed record DecisionRecordResponse(string Kind, string? Note, string? DecidedBy, DateTimeOffset DecidedAt);
+
 public sealed record EvidenceResponse(
     Guid Id,
     EvidenceSource Source,
@@ -103,7 +106,11 @@ public sealed record InvestigationResponse(
     string CorrelationId,
     IReadOnlyList<EvidenceMatrixResponse> EvidenceMatrix,
     string SiteId,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? StatusLabel = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? StatusLabel = null)
+{
+    /// <summary>The recorded human decision, once made; the console shows it as a read-only record.</summary>
+    public DecisionRecordResponse? Decision { get; init; }
+}
 
 public sealed record CapaResponse(
     Guid Id,
@@ -116,7 +123,8 @@ public sealed record CapaResponse(
     string SiteId,
     string? ApprovedBy = null,
     DateTimeOffset? ApprovedAt = null,
-    string? ToolId = null);
+    string? ToolId = null,
+    string? Note = null);
 
 public sealed record AuditEventResponse(
     DateTimeOffset At,

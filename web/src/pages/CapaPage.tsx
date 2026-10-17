@@ -304,6 +304,10 @@ export function CapaPage() {
               <p className="mt-2 text-mps-secondary">
                 {capa.approvedBy && capa.approvedAt ? approvalSentence(capa.approvedBy, capa.approvedAt) : "Approved."}
               </p>
+              <p className="mt-2" data-testid="capa-note">
+                <span className="text-mps-secondary">Approver's note: </span>
+                {capa.note?.trim() ? capa.note : "No note was written."}
+              </p>
               <p className="mt-2 text-mps-secondary">Stage {CAPA_STAGES.find((item) => item.id === capa.stage)?.label ?? capa.stage}</p>
             </section>
           </div>

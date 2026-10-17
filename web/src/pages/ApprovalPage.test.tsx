@@ -76,4 +76,21 @@ describe("approval dialog", () => {
     expect(await screen.findAllByText(APPROVED)).not.toHaveLength(0);
     expect(screen.queryByText("77777777-7777-4777-8777-777777777777")).not.toBeInTheDocument();
   });
+  it("keeps the note, shows it on the CAPA, and turns the decision into a read-only record", async () => {
+    const user = userEvent.setup();
+    renderConsole(`/approvals/${S1_INVESTIGATION_ID}`);
+    await user.type(await screen.findByLabelText("Note or justification"), "Hold lot 42 first.");
+    await user.click(screen.getByRole("button", { name: "Approve CAPA + containment" }));
+    await user.type(await screen.findByLabelText("Type APPROVE to confirm"), "APPROVE");
+    await user.click(screen.getByRole("button", { name: "Approve and create CAPA" }));
+    expect(await screen.findByTestId("capa-note")).toHaveTextContent("Hold lot 42 first.");
+    await user.click(screen.getByRole("link", { name: "Open the investigation" }));
+    const record = await screen.findByTestId("decision-record");
+    expect(record).toHaveTextContent("Approved: CAPA + containment");
+    expect(record).toHaveTextContent("Hold lot 42 first.");
+    expect(record).toHaveTextContent("dev-user");
+    expect(screen.queryByRole("button", { name: "Approve CAPA + containment" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reject" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Note or justification")).not.toBeInTheDocument();
+  });
 });

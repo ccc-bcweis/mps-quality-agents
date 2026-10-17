@@ -71,7 +71,7 @@ public sealed class AuditLogTests
         approvalKinds.Should().Contain("incident").And.Contain("ticket").And.Contain("investigation").And.Contain("approval").And.Contain("capa");
         approvalTrace.GetProperty("events").EnumerateArray().Should().Contain(row =>
             row.GetProperty("kind").GetString() == "approval"
-            && row.GetProperty("summary").GetString() == "Approved by Bryan Weis."
+            && row.GetProperty("summary").GetString() == "Approved by Bryan Weis. Note: Hold the lot."
             && row.GetProperty("actor").GetString() == "Bryan Weis");
     }
 

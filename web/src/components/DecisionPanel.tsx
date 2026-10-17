@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { CATEGORY_LABEL, INVESTIGATION_STAGE_LABEL } from "../api/labels";
-import type { HumanDecisionKind, Investigation } from "../api/types";
+import type { DecisionRecord, HumanDecisionKind, Investigation } from "../api/types";
 import { ApprovalDialog, type DecisionMode } from "./ApprovalDialog";
 import { Explain } from "./Explain";
 import { Term } from "./Term";
@@ -43,7 +43,7 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
     try {
       const result = await api.submitDecision(investigation.id, {
         kind,
-        approverId: kind === "approve" || kind === "override" ? approverId.trim() : undefined,
+        approverId: approverId.trim() || undefined,
         comment: comment ?? null,
       });
       onChange(result.investigation);
@@ -57,7 +57,9 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
         navigate(`/capas/${result.capa.id}`);
       }
     } catch (reason: unknown) {
-      setError(reason instanceof ApiProblem ? reason.title : "The decision was not accepted.");
+      setError(
+        reason instanceof ApiProblem ? (reason.status === 409 && reason.detail ? reason.detail : reason.title) : "The decision was not accepted.",
+      );
     } finally {
       setPending(false);
     }
@@ -67,6 +69,7 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
   const escalated = investigation.stage === "escalated";
   const justified = note.trim().length >= OVERRIDE_MIN;
   const top = investigation.hypotheses.slice().sort((a, b) => b.confidence - a.confidence)[0];
+  const record = recordedDecision(investigation);
 
   return (
     <section id="decision" aria-label="Decision" className={`${panel} mb-3 scroll-mt-4`}>
@@ -106,7 +109,8 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
           <Explain text="No recommendation is ready. An escalation does not create a CAPA." spellOut={false} />
         </p>
       )}
-      {escalated ? (
+      {record ? <DecisionRecordView record={record} /> : null}
+      {!record && escalated ? (
         <div className="mt-4 rounded border border-mps-line p-3" data-testid="escalation-gate">
           <h3 className="font-semibold">The agents escalated this case</h3>
           <p className="mt-1 text-mps-secondary">
@@ -114,6 +118,8 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
           </p>
         </div>
       ) : null}
+      {record ? null : (
+        <>
       <label className="mt-3 block">
         <span className="text-mps-secondary">Note or justification</span>
         <textarea
@@ -145,16 +151,59 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
         </button>
       </div>
       {escalated && !justified ? <p className="mt-2 font-mono text-mps-micro text-mps-muted">Override needs at least {OVERRIDE_MIN} characters of justification.</p> : null}
+        </>
+      )}
       <p className="mt-3 text-mps-secondary">Stage: {INVESTIGATION_STAGE_LABEL[investigation.stage]}</p>
       {mode ? (
         <ApprovalDialog
           mode={mode}
           approverId={approverId}
           onCancel={() => setMode(null)}
-          onApprove={() => void decide("approve")}
+          onApprove={() => void decide("approve", note.trim() || undefined)}
           onReject={(comment) => void decide("reject", comment)}
         />
       ) : null}
     </section>
+  );
+}
+
+const DECISION_LABEL: Record<HumanDecisionKind, string> = {
+  approve: "Approved: CAPA + containment",
+  override: "Overridden with justification",
+  reject: "Rejected",
+  requestInfo: "More evidence requested",
+};
+
+/** The decision on file. Older records without one still count as decided once approved or rejected. */
+function recordedDecision(investigation: Investigation): DecisionRecord | null {
+  if (investigation.decision) return investigation.decision;
+  if (investigation.stage === "approved") return { kind: "approve", decidedAt: "" };
+  if (investigation.stage === "rejected") return { kind: "reject", decidedAt: "" };
+  return null;
+}
+
+function decidedAtLabel(value: string): string {
+  if (!value) return "Not recorded";
+  const at = new Date(value);
+  return Number.isNaN(at.getTime()) ? value : at.toLocaleString();
+}
+
+/** Read-only record of a final decision. The action buttons are gone once a decision is made. */
+function DecisionRecordView({ record }: { record: DecisionRecord }) {
+  return (
+    <div className="mt-4 rounded border border-mps-line p-3" data-testid="decision-record">
+      <h3 className="font-semibold">Decision on file</h3>
+      <dl className="mt-2 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
+        <dt className="text-mps-secondary">Decision</dt>
+        <dd>{DECISION_LABEL[record.kind] ?? record.kind}</dd>
+        <dt className="text-mps-secondary">Note or justification</dt>
+        <dd>{record.note?.trim() ? record.note : "No note was written."}</dd>
+        <dt className="text-mps-secondary">Approver</dt>
+        <dd>{record.decidedBy?.trim() ? record.decidedBy : "Not recorded"}</dd>
+        <dt className="text-mps-secondary">Time</dt>
+        <dd>{decidedAtLabel(record.decidedAt)}</dd>
+      </dl>
+      <p className="mt-2 text-mps-secondary">A decision is final and cannot be changed.</p>
+    </div>
   );
 }
