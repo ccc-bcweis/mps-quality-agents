@@ -17,11 +17,11 @@ export const CHANNEL_LABEL: Record<IncidentChannel, string> = {
 };
 
 export const STAGE_LABEL: Record<IncidentStage, string> = {
-  ticketOpened: "Ticket",
-  investigating: "Investigation",
-  recommendationReady: "Recommendation",
+  ticketOpened: "Ticket opened",
+  investigating: "Investigating",
+  recommendationReady: "Recommendation ready",
   escalated: "Escalated",
-  awaitingApproval: "Approval",
+  awaitingApproval: "Waiting for approval",
   approved: "Approved",
   rejected: "Rejected",
   closed: "Closed",

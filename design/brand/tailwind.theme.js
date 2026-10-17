@@ -39,6 +39,7 @@ const extend = {
       "alarm-solid": "#B91C1C",
       ok: "#10B981",
       "ok-solid": "#047857",
+      "info-solid": "#1D4ED8",
       ai: "#A78BFA",
     },
   },

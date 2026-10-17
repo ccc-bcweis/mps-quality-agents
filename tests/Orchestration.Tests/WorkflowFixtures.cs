@@ -224,7 +224,7 @@ internal sealed class ScenarioTools :
 
     public bool ThrowOnSpc { get; set; }
 
-    public Task<TelemetryWindow> GetWindowAsync(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
+    public Task<TelemetryWindow> GetWindowAsync(ToolId toolId, string? chamberId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
     {
         _ = cancellationToken;
         TelemetryPoint[] points = _kind == ScenarioKind.ConfigConflict
@@ -233,7 +233,7 @@ internal sealed class ScenarioTools :
         return Task.FromResult(new TelemetryWindow(toolId, parameter, from, until, points));
     }
 
-    public Task<IReadOnlyList<SpcViolation>> GetViolationsAsync(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
+    public Task<IReadOnlyList<SpcViolation>> GetViolationsAsync(ToolId toolId, string? chamberId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
     {
         _ = from;
         _ = until;

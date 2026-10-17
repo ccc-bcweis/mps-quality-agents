@@ -49,7 +49,7 @@ export function ApprovalDialog({
         {approving ? (
           <>
             <p className="mt-2 text-mps-secondary">
-              <Explain text="This records the approval and creates the CAPA. The console does not sign it." spellOut={false} />
+              <Explain text="This records the approval and creates the CAPA." spellOut={false} />
             </p>
             <label className="mt-3 block text-mps-label text-mps-muted">
               Approver name
@@ -81,14 +81,14 @@ export function ApprovalDialog({
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            className={approving ? btnOk : btnDanger}
+            className={approving ? `${btnOk} ring-2 ring-mps-ok ring-offset-2 ring-offset-mps-panel` : btnDanger}
             disabled={!ready}
             onClick={() => (approving ? onApprove() : onReject(comment.trim()))}
           >
             {approving ? (
-              <>
+              <span>
                 Approve and create <Term id="CAPA" spellOut={false} />
-              </>
+              </span>
             ) : (
               "Reject recommendation"
             )}

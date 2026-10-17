@@ -194,6 +194,7 @@ describe("tool detail with a manual reading", () => {
     expect(await screen.findByText(/Manual reading 68 C \(thermocouple logger\)\. Observed before this window/)).toBeInTheDocument();
     const linked = screen.getByRole("list", { name: "Linked records" });
     expect(linked).toHaveTextContent(/Older than the chart window/);
+    expect(document.body.textContent).not.toMatch(/Fixed rule checks draw this chart|The AI has not written anything here/);
     await userEvent.setup().click(screen.getByRole("button", { name: "Printout" }));
     const viewer = await screen.findByRole("dialog", { name: "thermocouple-logger-e01.png" });
     expect(viewer.querySelector("img")).toHaveAttribute("src", "/api/manual-readings/77777777-7777-4777-8777-777777777777/file");

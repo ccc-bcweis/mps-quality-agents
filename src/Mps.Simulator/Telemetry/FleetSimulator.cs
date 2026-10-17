@@ -170,10 +170,10 @@ public sealed class FleetSimulator : ITelemetrySource
                     var values = new Dictionary<string, double>(StringComparer.Ordinal);
                     foreach (var chamber in tool.Chambers)
                     {
-                        foreach (var parameter in RecipeSchedule.Parameters(schedule.Recipe))
+                        foreach (var parameter in ChamberParameters(tool, chamber.Id, schedule.Recipe))
                         {
-                            var window = RecipeSchedule.Resolve(schedule, parameter);
                             var sensor = tool.RequireParameterSensor(chamber.Id, parameter);
+                            var window = WindowFor(schedule, sensor, parameter);
                             if (!string.Equals(sensor.Unit, window.Unit, StringComparison.Ordinal))
                             {
                                 throw new InvalidOperationException($"Sensor {sensor.Id} unit {sensor.Unit} does not match {window.Unit}.");
@@ -233,6 +233,36 @@ public sealed class FleetSimulator : ITelemetrySource
 
             return frames;
         }
+    }
+
+    /// <summary>
+    /// Every chamber sensor reads on every tick. The running recipe lists the parameters it controls first;
+    /// sensors the recipe does not control (pump vibration, wafer alignment under some recipes) still stream.
+    /// </summary>
+    internal static IReadOnlyList<string> ChamberParameters(ToolSpec tool, string chamberId, RecipeSpec recipe)
+    {
+        var parameters = RecipeSchedule.Parameters(recipe).ToList();
+        foreach (var sensor in tool.Sensors
+            .Where(sensor => string.Equals(sensor.ChamberId, chamberId, StringComparison.Ordinal)
+                && sensor.Parameter is not null
+                && sensor.TracksSensorId is null)
+            .OrderBy(sensor => sensor.Id, StringComparer.Ordinal))
+        {
+            if (!parameters.Contains(sensor.Parameter!, StringComparer.Ordinal))
+            {
+                parameters.Add(sensor.Parameter!);
+            }
+        }
+
+        return parameters;
+    }
+
+    /// <summary>The recipe window when the recipe controls the parameter, otherwise the sensor's own limits.</summary>
+    private static OperatingWindow WindowFor(RecipeCursor schedule, SensorSpec sensor, string parameter)
+    {
+        return RecipeSchedule.Parameters(schedule.Recipe).Contains(parameter, StringComparer.Ordinal)
+            ? RecipeSchedule.Resolve(schedule, parameter)
+            : new OperatingWindow(parameter, sensor.Unit, sensor.Limits.Minimum, sensor.Limits.Maximum, sensor.Limits.Nominal);
     }
 
     /// <summary>Baseline noise stays well inside spec. Rarely one kept point jumps past the watch line and the next is back to normal.</summary>

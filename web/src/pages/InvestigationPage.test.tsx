@@ -59,13 +59,28 @@ describe("investigation", () => {
     expect(recommended).toHaveTextContent(/Containment:.*roll back to edge ring revision B/);
     expect(recommended).toHaveTextContent(/Preventive:.*ECO-4471/);
     expect(recommended.compareDocumentPosition(within(decision).getByRole("button", { name: "Reject" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(within(decision).getByRole("button", { name: "Approve CAPA + containment" })).toBeInTheDocument();
+    expect(within(decision).getByRole("button", { name: "Approve CAPA" })).toBeInTheDocument();
     expect(within(decision).getByRole("button", { name: "Request more evidence" })).toBeInTheDocument();
     expect(within(decision).getByRole("button", { name: "Reject" })).toBeInTheDocument();
     expect(within(decision).getByLabelText("Note or justification")).toBeInTheDocument();
     expect(within(decision).getByLabelText("Approver name")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Go to decision" })).toHaveAttribute("href", "#decision");
     expect(document.body.textContent).not.toMatch(/write authority|Enforcement|No approver name|human-gated/);
+  });
+
+  it("colors the decision buttons and keeps the spaces around CAPA", async () => {
+    renderConsole(`/investigations/${S1_INVESTIGATION_ID}`);
+    const decision = await screen.findByRole("region", { name: "Decision" });
+    const approve = within(decision).getByRole("button", { name: "Approve CAPA" });
+    const more = within(decision).getByRole("button", { name: "Request more evidence" });
+    const reject = within(decision).getByRole("button", { name: "Reject" });
+    expect(approve.className).toContain("bg-mps-ok-solid");
+    expect(more.className).toContain("bg-mps-info-solid");
+    expect(reject.className).toContain("bg-mps-alarm-solid");
+    for (const button of [approve, more, reject]) expect(button.className).not.toContain("bg-mps-raised");
+    expect(approve.textContent).toBe("Approve CAPA");
+    expect(approve.children).toHaveLength(1);
+    expect(decision.textContent).not.toMatch(/containment\s*$|\+ containment/);
   });
 
   it("an old approval link opens the investigation at its decision", async () => {
