@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { formatStamp } from "../api/labels";
+import { UserMenu } from "./UserMenu";
 import { btnSm } from "./ui";
 import {  } from "./ui";
 import { useEffect, useState } from "react";
@@ -141,9 +142,7 @@ export function ConsoleFrame() {
           <span className="whitespace-nowrap">
             Plants <b className="font-medium text-mps-secondary">3</b>
           </span>
-          <span className="whitespace-nowrap">
-            Signed in <b className="font-medium text-mps-secondary">{session?.displayName ?? "…"}</b>
-          </span>
+          <UserMenu session={session} />
           <Link
             to="/glossary"
             aria-current={location.pathname.startsWith("/glossary") ? "page" : undefined}
