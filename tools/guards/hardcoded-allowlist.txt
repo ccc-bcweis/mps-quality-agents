@@ -19,6 +19,7 @@ src/Mps.Api/Bus/CausalTraceService.cs | MaxChildren = 200 | trace walk safety ca
 src/Mps.Api/Printouts/PrintoutFileStore.cs | MaxFiles = 50 | printout store size cap
 src/Mps.Application/Decisions/HumanDecisionService.cs | MaxWriteAttempts = 3 | optimistic-concurrency retry count
 src/Mps.Api/Access/JoinLinkStore.cs | TimeSpan.FromDays(30) | longest join-link lifetime an admin may choose (security cap)
+src/Mps.Api/Hosting/ApprovalPolicyLoader.cs | MinimumKeyBytes = 32 | security floor for the approval signing key (256-bit HMAC), not a process limit
 src/Mps.Api/Http/ManualReadings.cs | TimeSpan.FromSeconds(1) | timestamp match tolerance between a reading and its alert
 src/Mps.Api/Live/SimulationTickService.cs | TimeSpan.FromMilliseconds(200) | wall-clock tick loop interval
 src/Mps.Agents/Investigation/InvestigationLimits.cs | TimeSpan.FromSeconds(60) | default per-investigation time budget (safety cap)
