@@ -19,7 +19,7 @@ namespace Mps.Api.Live;
 public sealed partial class StreamSpcPublisher
 {
     [LoggerMessage(EventId = 7101, Level = LogLevel.Information, Message = "SPC opened a ticket for {ToolId} {Parameter} from the live stream.")]
-    private static partial void TicketOpened(ILogger logger, string toolId, string parameter);
+    private static partial void TicketOpened(ILogger logger, ToolId toolId, string parameter);
 
     [LoggerMessage(EventId = 7102, Level = LogLevel.Information, Message = "Investigation for {IncidentId} was not started.")]
     private static partial void InvestigationSkipped(ILogger logger, Exception error, Guid incidentId);
@@ -77,7 +77,7 @@ public sealed partial class StreamSpcPublisher
 
             if (outcome.Ticket is not null)
             {
-                TicketOpened(_logger, sample.ToolId.ToString(), sample.Parameter);
+                TicketOpened(_logger, sample.ToolId, sample.Parameter);
             }
 
             // Start this investigation before the next tool overwrites the shared step pointer.

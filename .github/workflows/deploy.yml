@@ -30,7 +30,7 @@ jobs:
       ENTRA_ISSUER: ${{ vars.ENTRA_ISSUER }}
       BUDGET_EMAIL: ${{ vars.BUDGET_EMAIL }}
       IMAGE_TAG: ${{ inputs.imageTag || github.sha }}
-      BOOTSTRAP_IMAGE: mcr.microsoft.com/dotnet/aspnet:8.0
+      BOOTSTRAP_IMAGE: mcr.microsoft.com/dotnet/aspnet:10.0
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

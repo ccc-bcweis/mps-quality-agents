@@ -90,19 +90,19 @@ public static class FleetKpiCalculator
         return new ToolKpi(toolId, runRate, uptime, oee, firstPassYield, mtbf, mttr, operating, failures, repair);
     }
 
-    private static FleetKpiRollup Rollup(IReadOnlyList<ToolKpi> tools)
+    private static FleetKpiRollup Rollup(ToolKpi[] tools)
     {
         var runRate = tools.Sum(tool => tool.RunRateWafersPerHour);
         var operating = tools.Sum(tool => tool.OperatingHours);
         var failures = tools.Sum(tool => tool.FailureCount);
         var repair = tools.Sum(tool => tool.RepairHours);
-        var uptime = Round2(operating / (PlannedHours * tools.Count) * 100m);
+        var uptime = Round2(operating / (PlannedHours * tools.Length) * 100m);
         var firstPassYield = Round2(tools.Sum(tool => tool.FirstPassYieldPercent * tool.RunRateWafersPerHour) / runRate);
-        var averageRunRate = runRate / tools.Count;
+        var averageRunRate = runRate / tools.Length;
         var oee = Round2((uptime / 100m) * (averageRunRate / IdealWafersPerHour) * (firstPassYield / 100m) * 100m);
         var mtbf = Round2(operating / failures);
         var mttr = Round2(repair / failures);
-        return new FleetKpiRollup(runRate, uptime, oee, firstPassYield, mtbf, mttr, operating, failures, repair, tools.Count);
+        return new FleetKpiRollup(runRate, uptime, oee, firstPassYield, mtbf, mttr, operating, failures, repair, tools.Length);
     }
 
     private static decimal Unit(SeededRng rng) => (decimal)rng.NextUnit();

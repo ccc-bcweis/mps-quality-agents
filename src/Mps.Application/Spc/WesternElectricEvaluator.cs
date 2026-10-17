@@ -173,7 +173,7 @@ public static class WesternElectricEvaluator
     }
 
     private static int SameSideBeyond(
-        IReadOnlyList<TelemetryPoint> points,
+        TelemetryPoint[] points,
         ControlBaseline baseline,
         int start,
         int end,
@@ -197,7 +197,7 @@ public static class WesternElectricEvaluator
         return Math.Max(high, low);
     }
 
-    private static bool RunOnOneSide(IReadOnlyList<TelemetryPoint> points, ControlBaseline baseline, int start, int end)
+    private static bool RunOnOneSide(TelemetryPoint[] points, ControlBaseline baseline, int start, int end)
     {
         var high = true;
         var low = true;
@@ -218,7 +218,7 @@ public static class WesternElectricEvaluator
         return high || low;
     }
 
-    private static bool StrictlyRising(IReadOnlyList<TelemetryPoint> points, int start, int end)
+    private static bool StrictlyRising(TelemetryPoint[] points, int start, int end)
     {
         for (var index = start + 1; index <= end; index++)
         {
