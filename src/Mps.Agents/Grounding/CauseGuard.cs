@@ -17,7 +17,7 @@ public static class CauseGuard
     [
         (@"\boscillat\w*|\bswing\w*", SignalShape.Oscillation),
         (@"\bstep(?:s|ped)?\b|\bsudden\b", SignalShape.Step),
-        (@"\bgradual\w*|\bdrift\w*|\bramp\w*|\bris(?:e|ing)\b|\bcreep\w*", SignalShape.Ramp),
+        (@"\bgradual\w*|(?<!\bprocess[\s-])\bdrift\w*|\bramp\w*|\bris(?:e|ing)\b|\bcreep\w*", SignalShape.Ramp),
         (@"\bspike\w*|\bintermittent\w*", SignalShape.Intermittent),
     ];
 
