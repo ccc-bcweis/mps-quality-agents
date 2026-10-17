@@ -94,9 +94,16 @@ public sealed class SpcAlertService
         var active = history.Where(item => item.IsActive).OrderByDescending(item => item.RaisedAt).FirstOrDefault();
         if (active is not null)
         {
+            var rulesBefore = active.Rule;
             var escalated = active.Update(WesternElectricEvaluator.JoinRules(violations), severity, at, DistinctSamples(violations));
             await _alerts.UpdateAsync(active, cancellationToken).ConfigureAwait(false);
-            await _notifier.AlertRaisedAsync(active, cancellationToken).ConfigureAwait(false);
+
+            // Broadcast only a real change (a higher severity or a newly broken rule). More readings on the same
+            // alert are stored but not re-announced, so open pages do not reload on every evaluation.
+            if (escalated || !string.Equals(rulesBefore, active.Rule, StringComparison.Ordinal))
+            {
+                await _notifier.AlertRaisedAsync(active, cancellationToken).ConfigureAwait(false);
+            }
             if (!escalated)
             {
                 return new SpcAlertOutcome(violations, active, null, null, debounced: true);

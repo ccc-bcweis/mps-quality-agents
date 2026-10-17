@@ -284,9 +284,54 @@ public sealed class SpcAlertServiceTests
         fixture.Alerts.Alerts.Should().Contain(alert => alert.IsActive);
     }
 
+    [Fact]
+    public async Task AnUnchangedActiveAlertIsNotBroadcastAgainOnEveryEvaluation()
+    {
+        // SC-3 style sustained step: the publisher re-evaluates every tick; only new alerts and real changes go out.
+        var notifier = new CountingNotifier();
+        var fixture = new Fixture(notifier);
+        var points = new List<TelemetryPoint>();
+        for (var index = 0; index < 20; index++)
+        {
+            points.Add(new TelemetryPoint(SpcSeries.Start.AddSeconds(15 * index), index % 2 == 0 ? 0.1d : -0.1d));
+        }
+
+        for (var index = 20; index < 20 + (30 * 4); index++)
+        {
+            points.Add(new TelemetryPoint(SpcSeries.Start.AddSeconds(15 * index), -4d + (index % 2 == 0 ? 0.2d : -0.2d)));
+            await fixture.Service.RaiseAsync(new SpcSample(SpcSeries.Tool, "A", "cf4Flow", SpcSeries.Unit, points.Skip(points.Count - 20).ToArray()), CancellationToken.None);
+        }
+
+        var alert = fixture.Alerts.Alerts.Should().ContainSingle().Subject;
+        alert.Occurrences.Should().BeGreaterThan(100, "every out-of-limit reading is still folded into the alert");
+        var distinctStates = alert.Rule.Split('+').Length + 2;
+        notifier.Alerts.Should().BeInRange(1, distinctStates, "only the new alert, a severity change or a newly broken rule is broadcast");
+    }
+
+    private sealed class CountingNotifier : IQualityNotifier
+    {
+        public int Alerts { get; private set; }
+
+        public Task AlertRaisedAsync(Alert alert, CancellationToken cancellationToken)
+        {
+            Alerts++;
+            return Task.CompletedTask;
+        }
+
+        public Task TicketOpenedAsync(Ticket ticket, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task IncidentChangedAsync(Incident incident, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task InvestigationChangedAsync(Mps.Domain.Investigations.InvestigationSnapshot snapshot, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task CapaChangedAsync(Mps.Domain.Capa.CapaAction capa, string eventName, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task FaultInjectedAsync(Guid faultId, string correlationId, string toolId, CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
     private sealed class Fixture
     {
-        public Fixture()
+        public Fixture(IQualityNotifier? notifier = null)
         {
             Alerts = new InMemoryAlertLog();
             Incidents = new InMemoryIncidentLog();
@@ -294,7 +339,7 @@ public sealed class SpcAlertServiceTests
             var fleet = new InMemoryFleetCatalog();
             fleet.Add(new Tool(SpcSeries.Tool, "Etch 02", ToolFamily.Etch, "MPS-E7", "Bay-2", [new Chamber("A", "Chamber A")]));
             var intake = new IntakeService(fleet, Incidents, Ticketing, NullQualityNotifier.Instance, TimeProvider.System, DemoRules.Engine);
-            Service = new SpcAlertService(Alerts, intake, NullQualityNotifier.Instance, SpcAlertService.DefaultDebounce, DemoRules.Engine);
+            Service = new SpcAlertService(Alerts, intake, notifier ?? NullQualityNotifier.Instance, SpcAlertService.DefaultDebounce, DemoRules.Engine);
         }
 
         public InMemoryAlertLog Alerts { get; }

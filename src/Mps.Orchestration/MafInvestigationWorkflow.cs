@@ -25,6 +25,9 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
 {
     public const string ApprovalPortId = "human-approval";
 
+    /// <summary>Retries the resolution allows when its cause names a shape the readings do not show.</summary>
+    public const int ShapeRetries = 1;
+
     private readonly IIncidentSource _incidents;
     private readonly IInvestigationAgent _investigation;
     private readonly IResolutionAgent _resolution;
@@ -194,37 +197,51 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
             return false;
         }
 
-        session.ResolutionCalls++;
-        var resolution = await _resolution.ResolveAsync(
-            ResolutionRequest.From(gathered.Pack, gathered.Features),
-            cancellationToken).ConfigureAwait(false);
-        session.ResolutionPromptVersion = resolution.PromptVersion;
-        if (resolution.Escalated || resolution.Claim is null)
+        // A cause whose shape word contradicts the measured shape gets one retry with that shape fed back.
+        // Grounding and the cause guard still run on every answer; a second miss escalates.
+        string? feedback = null;
+        ResolutionClaim? accepted;
+        for (var attempt = 0; ; attempt++)
         {
-            session.Stage = InvestigationStage.Escalated;
-            session.EscalationReason = string.IsNullOrWhiteSpace(resolution.Reason)
-                ? "Resolution escalated."
-                : resolution.Reason;
-            session.ClearHypotheses();
-            return false;
-        }
+            session.ResolutionCalls++;
+            var request = ResolutionRequest.From(gathered.Pack, gathered.Features);
+            request.Feedback = feedback;
+            var resolution = await _resolution.ResolveAsync(request, cancellationToken).ConfigureAwait(false);
+            session.ResolutionPromptVersion = resolution.PromptVersion;
+            if (resolution.Escalated || resolution.Claim is null)
+            {
+                session.Stage = InvestigationStage.Escalated;
+                session.EscalationReason = string.IsNullOrWhiteSpace(resolution.Reason)
+                    ? "Resolution escalated."
+                    : resolution.Reason;
+                session.ClearHypotheses();
+                return false;
+            }
 
-        var claim = resolution.Claim;
-        var grounding = GroundingValidator.Validate(claim, gathered.Pack.Items);
-        var accepted = grounding.Claim;
-        if (!grounding.Accepted || accepted is null || accepted.Category is null || accepted.Cause is null || accepted.Confidence is null)
-        {
-            var detail = grounding.Failures.Count == 0
-                ? "category-without-evidence"
-                : string.Join(", ", grounding.Failures);
-            session.Stage = InvestigationStage.Escalated;
-            session.EscalationReason = "grounding: " + detail;
-            session.ClearHypotheses();
-            return false;
-        }
+            var grounding = GroundingValidator.Validate(resolution.Claim, gathered.Pack.Items);
+            accepted = grounding.Claim;
+            if (!grounding.Accepted || accepted is null || accepted.Category is null || accepted.Cause is null || accepted.Confidence is null)
+            {
+                var detail = grounding.Failures.Count == 0
+                    ? "category-without-evidence"
+                    : string.Join(", ", grounding.Failures);
+                session.Stage = InvestigationStage.Escalated;
+                session.EscalationReason = "grounding: " + detail;
+                session.ClearHypotheses();
+                return false;
+            }
 
-        if (CauseGuard.Check(accepted.Cause, gathered.Pack) is { } guarded)
-        {
+            if (CauseGuard.Check(accepted.Cause, gathered.Pack) is not { } guarded)
+            {
+                break;
+            }
+
+            if (attempt < ShapeRetries && CauseGuard.ShapeConflict(accepted.Cause, gathered.Pack) is { } word)
+            {
+                feedback = CauseGuard.ShapeFeedback(word, gathered.Pack);
+                continue;
+            }
+
             session.Stage = InvestigationStage.Escalated;
             session.EscalationReason = guarded;
             session.ClearHypotheses();

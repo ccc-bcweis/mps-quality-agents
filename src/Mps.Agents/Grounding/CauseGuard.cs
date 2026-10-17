@@ -34,20 +34,38 @@ public static class CauseGuard
             }
         }
 
+        return ShapeConflict(cause, pack) is { } word
+            ? pack.SignalShape == SignalShape.Unknown
+                ? "The AI described the signal as \"" + word + "\", but the readings do not show a clear shape yet. Request more evidence once more readings are in."
+                : "The AI described the signal as \"" + word + "\", but the readings show " + EvidencePackFactory.ShapeWords(pack.SignalShape) + "."
+            : null;
+    }
+
+    /// <summary>The first shape word in the cause that the measured shape contradicts, or null.</summary>
+    public static string? ShapeConflict(string cause, EvidencePack pack)
+    {
+        ArgumentNullException.ThrowIfNull(cause);
+        ArgumentNullException.ThrowIfNull(pack);
         foreach (var (pattern, shape) in ShapeWords)
         {
             var match = Regex.Match(cause, pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-            if (!match.Success || shape == pack.SignalShape)
+            if (match.Success && shape != pack.SignalShape)
             {
-                continue;
+                return match.Value;
             }
-
-            return pack.SignalShape == SignalShape.Unknown
-                ? "The AI described the signal as \"" + match.Value + "\", but the readings do not show a clear shape yet. Request more evidence once more readings are in."
-                : "The AI described the signal as \"" + match.Value + "\", but the readings show " + EvidencePackFactory.ShapeWords(pack.SignalShape) + ".";
         }
 
         return null;
+    }
+
+    /// <summary>The note sent back to the model once when its cause names the wrong shape.</summary>
+    public static string ShapeFeedback(string word, EvidencePack pack)
+    {
+        ArgumentNullException.ThrowIfNull(pack);
+        return pack.SignalShape == SignalShape.Unknown
+            ? "Your previous cause described the signal as \"" + word + "\", but the readings do not show a clear shape yet. Do not describe a shape; rank the cause from the records, or escalate."
+            : "Your previous cause described the signal as \"" + word + "\", but the measured shape of the readings since the first rule break is " + EvidencePackFactory.ShapeWords(pack.SignalShape)
+                + ". Describe the signal as " + EvidencePackFactory.ShapeWords(pack.SignalShape) + " and re-rank the cause with that shape, or escalate if no record fits it.";
     }
 
     private static IEnumerable<string> RuledOutIds(EvidencePack pack) =>
