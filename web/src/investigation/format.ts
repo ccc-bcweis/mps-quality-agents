@@ -22,7 +22,11 @@ const FAMILY: Record<string, string> = {
   C: "Clean",
 };
 
-const TOOL_ID = /\b([DESC])-(\d{2})\b/g;
+/**
+ * A standalone tool id in prose ("E-02", or "E-02-A" for a chamber). Never part of a record id: not after a letter,
+ * digit or dash ("RUN-BG-20261014-E-02-W05-03", "LOT-E-02-W05", "I-D-01") and not followed by more id text.
+ */
+const TOOL_ID = /(?<![\w-])([DESC])-(\d{2})(?![\w]|-(?![A-D]\b))/g;
 const RECORD_ID = /\b(?:ECO|NCR|PM|CAL|TEL|SB|NF3|WO|L)-[A-Z0-9]+(?:-[A-Z0-9]+)*\b/g;
 const STAMP = /\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:\s*UTC|Z|[+-]\d{2}:?\d{2})?/g;
 const VALUE_UNIT = /(-?\d+(?:\.\d+)?)\s*(°C|mTorr|sccm|mm\/s|kW|Torr|C|W|%)/;

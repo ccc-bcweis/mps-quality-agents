@@ -8,6 +8,7 @@ import {
   oneSentence,
   placeLabel,
   plainChamber,
+  plainFinding,
   plainNarrative,
   plainTool,
   readableExcerpt,
@@ -90,5 +91,31 @@ describe("evidence formatting", () => {
     expect(formatStepDuration("done", 12)).toBe("12 s");
     expect(formatStepDuration("done", 1)).toBe("1 s");
     expect(formatStepDuration("escalated", 2)).toBe("Escalated · 2 s");
+  });
+});
+
+describe("record ids stay raw", () => {
+  const ids = ["RUN-BG-20261014-E-02-W05-03", "LOT-E-02-W05", "LOT-C-01-W02", "NCR-S-01-052", "I-D-01", "WO-PMP-D02-BRG", "TKT-1001"];
+
+  it("only standalone tool ids in prose get the friendly name", () => {
+    const text = "MES run RUN-BG-20261014-E-02-W05-03 on E-02 started: recipe OXIDE-ETCH revision B, lot LOT-E-02-W05. Chamber E-02-A held.";
+    const out = plainFinding(text);
+    expect(out).toContain("RUN-BG-20261014-E-02-W05-03");
+    expect(out).toContain("LOT-E-02-W05");
+    expect(out).toContain("on Etch tool E-02 started");
+    expect(out).toContain("Etch tool E-02-A");
+    expect(readableExcerpt(text)).toContain("RUN-BG-20261014-E-02-W05-03");
+    expect(readableExcerpt(text)).toContain("LOT-E-02-W05");
+    expect(plainNarrative(text)).toContain("on Etch tool E-02 started");
+    expect(plainNarrative(text)).not.toMatch(/-(Etch|Deposition|Strip|Clean) tool /);
+  });
+
+  it("never rewrites the inside of any record id", () => {
+    for (const id of ids) {
+      for (const format of [plainFinding, readableExcerpt]) {
+        expect(format(`Record ${id} was checked.`)).toContain(id);
+      }
+      expect(plainNarrative(`Record ${id} was checked.`)).not.toMatch(/(Etch|Deposition|Strip|Clean) tool/);
+    }
   });
 });
