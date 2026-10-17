@@ -17,6 +17,23 @@ public static class SignalShapeClassifier
 
     private const double SameDirectionShare = 0.75d;
 
+    // A step buried in sample noise: the best single split must move the mean by this many noise sigmas.
+    private const double NoisyStepSigmas = 3d;
+
+    // The step model must explain the trace clearly better than a straight line, or it is a ramp.
+    private const double NoisyStepFitShare = 0.6d;
+
+    // Neither side of a noisy step may drift by more than this share of the step on its own (a settling edge is fine).
+    private const double NoisyStepSideDrift = 0.25d;
+
+    private const int NoisyStepMinSide = 6;
+
+    // The move between the two levels must be quick: after light smoothing, at most this many readings in a row sit in
+    // the middle of the way across. A ramp that levels off spends a long stretch in between and stays a ramp.
+    private const int NoisyStepSmoothing = 5;
+
+    private const int NoisyStepEdgeReadings = 2 * NoisyStepSmoothing;
+
     public static SignalShape Classify(IReadOnlyList<TelemetryPoint> points)
     {
         ArgumentNullException.ThrowIfNull(points);
@@ -48,6 +65,11 @@ public static class SignalShapeClassifier
         if (IsPeriodic(values))
         {
             return SignalShape.Oscillation;
+        }
+
+        if (IsNoisyStep(values))
+        {
+            return SignalShape.Step;
         }
 
         if (IsIntermittent(values, range))
@@ -93,6 +115,134 @@ public static class SignalShapeClassifier
             && right.Length > 0
             && Range(left) <= (FlatShare * maxAbs)
             && Range(right) <= (FlatShare * maxAbs);
+    }
+
+    /// <summary>
+    /// A real step in normal sensor noise never shows one clean jump between two flat stretches. Find the split that best
+    /// separates two levels; it is a step when the levels differ by several noise sigmas, the two-level fit beats a
+    /// straight line by a clear margin, and neither side drifts on its own.
+    /// </summary>
+    private static bool IsNoisyStep(IReadOnlyList<double> values)
+    {
+        var count = values.Count;
+        if (count < 2 * NoisyStepMinSide)
+        {
+            return false;
+        }
+
+        var prefix = new double[count + 1];
+        var prefixSquares = new double[count + 1];
+        for (var i = 0; i < count; i++)
+        {
+            prefix[i + 1] = prefix[i] + values[i];
+            prefixSquares[i + 1] = prefixSquares[i] + (values[i] * values[i]);
+        }
+
+        var bestSplit = -1;
+        var bestError = double.MaxValue;
+        for (var split = NoisyStepMinSide; split <= count - NoisyStepMinSide; split++)
+        {
+            var error = SquaredError(prefix, prefixSquares, 0, split) + SquaredError(prefix, prefixSquares, split, count);
+            if (error < bestError)
+            {
+                bestError = error;
+                bestSplit = split;
+            }
+        }
+
+        if (bestSplit < 0)
+        {
+            return false;
+        }
+
+        var left = values.Take(bestSplit).ToArray();
+        var right = values.Skip(bestSplit).ToArray();
+        var sigma = Math.Sqrt(bestError / (count - 2));
+        var shift = Math.Abs(right.Average() - left.Average());
+        if (sigma <= 0d || shift < NoisyStepSigmas * sigma)
+        {
+            return false;
+        }
+
+        return bestError <= NoisyStepFitShare * LinearError(values)
+            && EdgeReadings(values, left.Average(), right.Average()) <= NoisyStepEdgeReadings
+            && FittedDrift(left) <= NoisyStepSideDrift * shift
+            && FittedDrift(right) <= NoisyStepSideDrift * shift;
+    }
+
+    private static double SquaredError(double[] prefix, double[] prefixSquares, int start, int end)
+    {
+        var n = end - start;
+        var sum = prefix[end] - prefix[start];
+        return Math.Max(0d, prefixSquares[end] - prefixSquares[start] - (sum * sum / n));
+    }
+
+    /// <summary>The longest run of smoothed readings in the middle half of the way between the two levels.</summary>
+    private static int EdgeReadings(IReadOnlyList<double> values, double leftLevel, double rightLevel)
+    {
+        var low = Math.Min(leftLevel, rightLevel);
+        var high = Math.Max(leftLevel, rightLevel);
+        var quarter = (high - low) / 4d;
+        var half = NoisyStepSmoothing / 2;
+        var longest = 0;
+        var run = 0;
+        for (var i = 0; i < values.Count; i++)
+        {
+            var start = Math.Max(0, i - half);
+            var end = Math.Min(values.Count - 1, i + half);
+            var sum = 0d;
+            for (var j = start; j <= end; j++)
+            {
+                sum += values[j];
+            }
+
+            var smoothed = sum / (end - start + 1);
+            run = smoothed > low + quarter && smoothed < high - quarter ? run + 1 : 0;
+            longest = Math.Max(longest, run);
+        }
+
+        return longest;
+    }
+
+    /// <summary>How far a straight-line fit moves from the first reading to the last.</summary>
+    private static double FittedDrift(IReadOnlyList<double> values)
+    {
+        var count = values.Count;
+        var meanX = (count - 1) / 2d;
+        var meanY = values.Average();
+        double sxx = 0d;
+        double sxy = 0d;
+        for (var i = 0; i < count; i++)
+        {
+            sxx += (i - meanX) * (i - meanX);
+            sxy += (i - meanX) * (values[i] - meanY);
+        }
+
+        return sxx <= 0d ? 0d : Math.Abs(sxy / sxx * (count - 1));
+    }
+
+    private static double LinearError(IReadOnlyList<double> values)
+    {
+        var count = values.Count;
+        var meanX = (count - 1) / 2d;
+        var meanY = values.Average();
+        double sxx = 0d;
+        double sxy = 0d;
+        for (var i = 0; i < count; i++)
+        {
+            sxx += (i - meanX) * (i - meanX);
+            sxy += (i - meanX) * (values[i] - meanY);
+        }
+
+        var slope = sxx <= 0d ? 0d : sxy / sxx;
+        double error = 0d;
+        for (var i = 0; i < count; i++)
+        {
+            var residual = values[i] - (meanY + (slope * (i - meanX)));
+            error += residual * residual;
+        }
+
+        return error;
     }
 
     private static bool IsIntermittent(IReadOnlyList<double> values, double range)

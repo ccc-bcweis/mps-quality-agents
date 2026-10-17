@@ -12,7 +12,7 @@ using YamlDotNet.Serialization.NamingConventions;
 namespace Mps.Agents.Investigation;
 
 /// <summary>How long to wait for enough readings to classify the signal shape. From data/metadata/investigation.yaml.</summary>
-public sealed record ShapeWait(int Attempts, TimeSpan Delay, int MinReadingsSinceOnset = 0)
+public sealed record ShapeWait(int Attempts, TimeSpan Delay, int MinReadingsSinceOnset = 0, int MaxReadingsSinceOnset = 0)
 {
     public static ShapeWait None { get; } = new(0, TimeSpan.Zero);
 
@@ -25,22 +25,32 @@ public sealed record ShapeWait(int Attempts, TimeSpan Delay, int MinReadingsSinc
             return false;
         }
 
+        var since = ReadingsSinceOnset(window, violations, openedAt);
         if (EvidencePackFactory.ShapeOf(window, violations) == SignalShape.Unknown)
         {
-            return true;
+            // More readings stop helping after a point: once this many have arrived, hand over "no clear shape"
+            // instead of holding triage open until every attempt has run out.
+            return MaxReadingsSinceOnset <= 0 || since is null || since < MaxReadingsSinceOnset;
         }
 
-        if (MinReadingsSinceOnset <= 0 || (violations.Count == 0 && openedAt is null))
+        return MinReadingsSinceOnset > 0 && since is not null && since < MinReadingsSinceOnset;
+    }
+
+    /// <summary>
+    /// Onset is when the alert opened the incident. The rule-break list only keeps each rule's latest break, and at
+    /// high plant speed those move to "now" every second, so counting from them would never reach the minimum.
+    /// Without an incident time, use the first serious break (a low-severity trend rule can fire on plain noise).
+    /// </summary>
+    private static int? ReadingsSinceOnset(TelemetryWindow window, IReadOnlyList<SpcViolation> violations, DateTimeOffset? openedAt)
+    {
+        if (violations.Count == 0 && openedAt is null)
         {
-            return false;
+            return null;
         }
 
-        // Onset is when the alert opened the incident. The rule-break list only keeps each rule's latest break, and at
-        // high plant speed those move to "now" every second, so counting from them would never reach the minimum.
-        // Without an incident time, use the first serious break (a low-severity trend rule can fire on plain noise).
         var serious = violations.Where(violation => violation.Severity >= Severity.High).ToArray();
         var onset = openedAt ?? (serious.Length > 0 ? serious : violations).Min(violation => violation.At);
-        return window.Points.Count(point => point.At >= onset) < MinReadingsSinceOnset;
+        return window.Points.Count(point => point.At >= onset);
     }
 
     public static ShapeWait Load(string? path = null)
@@ -56,7 +66,7 @@ public sealed record ShapeWait(int Attempts, TimeSpan Delay, int MinReadingsSinc
         var wait = file?.ShapeWait;
         return wait is null || wait.Attempts <= 0 || wait.DelaySeconds <= 0
             ? None
-            : new ShapeWait(wait.Attempts, TimeSpan.FromSeconds(wait.DelaySeconds), Math.Max(0, wait.MinReadingsSinceOnset));
+            : new ShapeWait(wait.Attempts, TimeSpan.FromSeconds(wait.DelaySeconds), Math.Max(0, wait.MinReadingsSinceOnset), Math.Max(0, wait.MaxReadingsSinceOnset));
     }
 
     private sealed class FileShape
@@ -71,5 +81,7 @@ public sealed record ShapeWait(int Attempts, TimeSpan Delay, int MinReadingsSinc
         public double DelaySeconds { get; set; }
 
         public int MinReadingsSinceOnset { get; set; }
+
+        public int MaxReadingsSinceOnset { get; set; }
     }
 }

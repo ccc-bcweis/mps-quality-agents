@@ -3,8 +3,11 @@
 # The investigation re-reads the signal and its rule breaks until the shape is clear and at least
 # minReadingsSinceOnset readings have arrived since the first rule break (20 readings at 15 s = 5 minutes,
 # about two cycles of an injected oscillation), trying this many times, this many seconds apart.
+# If the shape is still unclear after maxReadingsSinceOnset readings, triage goes on with "no clear shape"
+# rather than waiting out every attempt (180 readings = 3 minutes at 10x; at 1x the attempts run out first). 0 turns the cap off.
 # 0 attempts turns waiting off.
 shapeWait:
   attempts: 30
   delaySeconds: 20
   minReadingsSinceOnset: 20
+  maxReadingsSinceOnset: 180

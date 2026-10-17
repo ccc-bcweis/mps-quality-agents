@@ -69,11 +69,11 @@ public sealed class ReadOnlyToolSession
         switch (name)
         {
             case AgentToolNames.SpcGetViolations:
-                var violations = await _spc.GetViolationsAsync(incident.ToolId, incident.Parameter, from, until, cancellationToken).ConfigureAwait(false);
+                var violations = await _spc.GetViolationsAsync(incident.ToolId, incident.ChamberId, incident.Parameter, from, until, cancellationToken).ConfigureAwait(false);
                 harvest.Violations.AddRange(violations);
                 return "spc:" + violations.Count;
             case AgentToolNames.TelemetryGetWindow:
-                var window = await _telemetry.GetWindowAsync(incident.ToolId, incident.Parameter, from, until, cancellationToken).ConfigureAwait(false);
+                var window = await _telemetry.GetWindowAsync(incident.ToolId, incident.ChamberId, incident.Parameter, from, until, cancellationToken).ConfigureAwait(false);
                 harvest.Telemetry = window;
                 return "telemetry:" + window.Points.Count;
             case AgentToolNames.ImpactScope:

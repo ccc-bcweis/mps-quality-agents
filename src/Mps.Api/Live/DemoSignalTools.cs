@@ -31,9 +31,13 @@ public sealed class DemoSignalTools : ITelemetryTool, ISpcTool, IImpactScopeTool
         _plant = plant;
     }
 
-    public Task<TelemetryWindow> GetWindowAsync(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
+    /// <summary>
+    /// Reads the incident's own chamber. Without one, the chamber of the active fault, then the newest chamber.
+    /// Stop scenario clears the active faults, so an investigation still running must not fall back to a healthy chamber.
+    /// </summary>
+    public Task<TelemetryWindow> GetWindowAsync(ToolId toolId, string? chamberId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
     {
-        var live = LivePoints(toolId, parameter, from, until);
+        var live = LivePoints(toolId, chamberId, parameter, from, until);
         if (live.Count == 0)
         {
             return Task.FromResult(new TelemetryWindow(toolId, parameter, from, until < from ? from : until, []));
@@ -44,9 +48,9 @@ public sealed class DemoSignalTools : ITelemetryTool, ISpcTool, IImpactScopeTool
         return Task.FromResult(new TelemetryWindow(toolId, parameter, from < start ? from : start, end, live) { Nominals = NominalsFor(toolId, parameter, live) });
     }
 
-    public Task<IReadOnlyList<SpcViolation>> GetViolationsAsync(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
+    public Task<IReadOnlyList<SpcViolation>> GetViolationsAsync(ToolId toolId, string? chamberId, string parameter, DateTimeOffset from, DateTimeOffset until, CancellationToken cancellationToken)
     {
-        IReadOnlyList<SpcViolation> live = _plant is null ? [] : _plant.Evaluate(toolId.Value, parameter, from, until);
+        IReadOnlyList<SpcViolation> live = _plant is null ? [] : _plant.Evaluate(toolId.Value, parameter, from, until, chamberId);
         return Task.FromResult(live);
     }
 
@@ -69,14 +73,14 @@ public sealed class DemoSignalTools : ITelemetryTool, ISpcTool, IImpactScopeTool
         return last is null ? null : result.Select(value => double.IsNaN(value) ? last.Value : value).ToArray();
     }
 
-    private IReadOnlyList<TelemetryPoint> LivePoints(ToolId toolId, string parameter, DateTimeOffset from, DateTimeOffset until)
+    private IReadOnlyList<TelemetryPoint> LivePoints(ToolId toolId, string? chamberId, string parameter, DateTimeOffset from, DateTimeOffset until)
     {
         if (_plant is null)
         {
             return [];
         }
 
-        var chamber = _plant.Runtime.Simulator.ActiveFaults
+        var chamber = chamberId ?? _plant.Runtime.Simulator.ActiveFaults
             .LastOrDefault(fault => string.Equals(fault.ToolId, toolId.Value, StringComparison.Ordinal)
                 && string.Equals(fault.Parameter, parameter, StringComparison.Ordinal))
             ?.ChamberId;

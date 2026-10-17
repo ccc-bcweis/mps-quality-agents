@@ -50,6 +50,7 @@ public static class RuleSettings
             Number("clear.sigma", Clearing, "In control means within", AlertClearing.ZoneSigma, "sigma", null),
             Toggle("investigation.wait.on", Investigation, "Wait for a clear signal shape", wait.Attempts > 0),
             Number("investigation.wait.minReadings", Investigation, "Readings since the first rule break", wait.MinReadingsSinceOnset, "readings", null),
+            Number("investigation.wait.maxReadings", Investigation, "Stop waiting for a clear shape after", wait.MaxReadingsSinceOnset, "readings", null),
             Number("investigation.wait.attempts", Investigation, "Tries", wait.Attempts, null, null),
             Number("investigation.wait.delay", Investigation, "Time between tries", wait.Delay.TotalSeconds, "seconds", null),
             Number("decision.overrideMin", Decision, "Shortest override justification", HumanDecisionService.MinOverrideJustification, "characters", null),
