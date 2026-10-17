@@ -154,7 +154,7 @@ Goal: technical credibility that a non-manufacturing audience can still follow.
 ## 3. Technology choices (justified)
 | Area | Choice | Why | Alternative considered |
 |---|---|---|---|
-| Backend | .NET 8 (LTS) ASP.NET Core Minimal API | Requested stack, strong typing for domain rules, first-class OTel | Python/FastAPI: richer AI ecosystem, but off-brief |
+| Backend | .NET 10 (LTS) ASP.NET Core Minimal API | Requested stack, strong typing for domain rules, first-class OTel | Python/FastAPI: richer AI ecosystem, but off-brief |
 | Orchestration | **Microsoft Agent Framework (.NET)**, the open-source (MIT) successor that unifies Semantic Kernel and AutoGen; fallback to Semantic Kernel Agents if MAF APIs aren't stable enough on build day | Native .NET, MIT licensed, typed graph workflows, built-in OTel, model-agnostic `IChatClient` (Microsoft.Extensions.AI) | LangGraph (see §3.1) |
 | Model abstraction | `Microsoft.Extensions.AI` `IChatClient` behind our own **ModelGateway** | One interface for Azure OpenAI, OpenAI, Ollama/local SLM and the Mock; routing, retries, budgets and cost accounting in one place | Direct SDKs, which cause lock-in |
 | Models | Azure OpenAI gpt-4o-mini (investigation tool use, cheap) and gpt-4o or equivalent (resolution); optional **Ollama Phi/Llama** route | Cost/quality routing; the local SLM route answers Kartik's "no frontier dependency" scenario | Single model |
@@ -281,7 +281,7 @@ flowchart TB
   SWA -->|linked backend| APIc
   subgraph RG["Resource group rg-mps-demo (isolated, own identity)"]
     subgraph ACA["Container Apps environment"]
-      APIc[api - .NET 8, SignalR, scale 0-3]
+      APIc[api - .NET 10, SignalR, scale 0-3]
       WRK[investigation-worker - scale on queue]
       SIMc[simulator - 1 replica]
       MOCK[mock enterprise APIs: QMS / ticketing / ERP...]

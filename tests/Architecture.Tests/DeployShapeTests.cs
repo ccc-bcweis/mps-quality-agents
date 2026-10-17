@@ -17,7 +17,7 @@ public sealed class DeployShapeTests
         docker.Should().Contain("node:22-bookworm-slim");
         docker.Should().Contain("VITE_USE_MSW=false");
         docker.Should().Contain("dotnet publish src/Mps.Api/Mps.Api.csproj");
-        docker.Should().Contain("mcr.microsoft.com/dotnet/aspnet:8.0");
+        docker.Should().Contain("mcr.microsoft.com/dotnet/aspnet:10.0");
         docker.Should().Contain("./wwwroot");
         docker.Should().Contain("USER ${APP_UID:-1654}");
         docker.Should().NotContain("groundtruth");
