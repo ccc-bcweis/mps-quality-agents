@@ -7,22 +7,22 @@ namespace Mps.Simulator.Telemetry;
 /// <summary>Baseline telemetry settings the console and its tests can read.</summary>
 public static class BaselineNoise
 {
-    /// <summary>Chance that one kept chamber reading is a lone excursion. About 3 to 4 per wall-clock hour across all 32 tools.</summary>
-    public const double ExcursionChance = 4e-7d;
+    /// <summary>Chance that one kept chamber reading is a lone excursion (data/metadata/simulation.yaml).</summary>
+    public static double ExcursionChance => SimulationSettings.Shared.Noise.ExcursionChance;
 
-    /// <summary>Size of a lone excursion in sigma: past the 2 sigma watch line, inside the 3 sigma control limit and the spec.</summary>
-    public const double ExcursionSigma = 2.4d;
+    /// <summary>Size of a lone excursion in sigma: past the watch line, inside the control limit and the spec (simulation.yaml).</summary>
+    public static double ExcursionSigma => SimulationSettings.Shared.Noise.ExcursionSigma;
 }
 
 internal static class TelemetryMath
 {
-    public const double Phi = 0.82d;
+    public static double Phi => SimulationSettings.Shared.Noise.Phi;
 
-    public const double NoiseScale = 0.12d;
+    public static double NoiseScale => SimulationSettings.Shared.Noise.Scale;
 
-    public const double ExcursionChance = BaselineNoise.ExcursionChance;
+    public static double ExcursionChance => BaselineNoise.ExcursionChance;
 
-    public const double ExcursionSigma = BaselineNoise.ExcursionSigma;
+    public static double ExcursionSigma => BaselineNoise.ExcursionSigma;
 
     public static string SeriesKey(string toolId, string chamberId, string parameter)
     {

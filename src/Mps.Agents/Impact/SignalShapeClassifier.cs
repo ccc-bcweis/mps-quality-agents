@@ -9,30 +9,33 @@ namespace Mps.Agents.Impact;
 /// </summary>
 public static class SignalShapeClassifier
 {
-    private const double StepShare = 0.7d;
+    // Thresholds live in data/metadata/investigation.yaml (shapeClassifier); see the comments there.
+    private static Mps.Agents.Investigation.InvestigationTuning.ShapeClassifierSettings Tuning => Mps.Agents.Investigation.InvestigationTuning.Shared.ShapeClassifier;
 
-    private const double FlatShare = 0.2d;
+    private static double StepShare => Tuning.StepShare;
 
-    private const double RampShare = 0.5d;
+    private static double FlatShare => Tuning.FlatShare;
 
-    private const double SameDirectionShare = 0.75d;
+    private static double RampShare => Tuning.RampShare;
+
+    private static double SameDirectionShare => Tuning.SameDirectionShare;
 
     // A step buried in sample noise: the best single split must move the mean by this many noise sigmas.
-    private const double NoisyStepSigmas = 3d;
+    private static double NoisyStepSigmas => Tuning.NoisyStepSigmas;
 
     // The step model must explain the trace clearly better than a straight line, or it is a ramp.
-    private const double NoisyStepFitShare = 0.6d;
+    private static double NoisyStepFitShare => Tuning.NoisyStepFitShare;
 
     // Neither side of a noisy step may drift by more than this share of the step on its own (a settling edge is fine).
-    private const double NoisyStepSideDrift = 0.25d;
+    private static double NoisyStepSideDrift => Tuning.NoisyStepSideDrift;
 
-    private const int NoisyStepMinSide = 6;
+    private static int NoisyStepMinSide => Tuning.NoisyStepMinSide;
 
     // The move between the two levels must be quick: after light smoothing, at most this many readings in a row sit in
     // the middle of the way across. A ramp that levels off spends a long stretch in between and stays a ramp.
-    private const int NoisyStepSmoothing = 5;
+    private static int NoisyStepSmoothing => Tuning.NoisyStepSmoothing;
 
-    private const int NoisyStepEdgeReadings = 2 * NoisyStepSmoothing;
+    private static int NoisyStepEdgeReadings => Tuning.NoisyStepEdgeReadings;
 
     public static SignalShape Classify(IReadOnlyList<TelemetryPoint> points)
     {

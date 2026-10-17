@@ -15,3 +15,22 @@ shapeWait:
 # max is the most rounds one ticket can have; at the last round only approve, override or reject remain.
 evidenceRounds:
   max: 5
+# The signal-shape classifier. Shares are of the trace range; a noisy step must move the mean by noisyStepSigmas noise
+# sigmas, explain the trace clearly better than a line (noisyStepFitShare), keep each side flat (noisyStepSideDrift),
+# have noisyStepMinSide readings per side, and cross quickly (at most noisyStepEdgeReadings in between after smoothing).
+shapeClassifier:
+  stepShare: 0.7
+  flatShare: 0.2
+  rampShare: 0.5
+  sameDirectionShare: 0.75
+  noisyStepSigmas: 3
+  noisyStepFitShare: 0.6
+  noisyStepSideDrift: 0.25
+  noisyStepMinSide: 6
+  noisyStepSmoothing: 5
+  noisyStepEdgeReadings: 10
+# Model call budget: a resolution reply that is not JSON is retried up to maxModelCalls calls; an answer whose shape or
+# category disagrees with the evidence is asked again shapeRetries times before the case escalates.
+resolution:
+  maxModelCalls: 2
+  shapeRetries: 1
