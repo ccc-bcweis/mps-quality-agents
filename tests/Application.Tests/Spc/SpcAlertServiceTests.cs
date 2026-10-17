@@ -339,7 +339,7 @@ public sealed class SpcAlertServiceTests
             var fleet = new InMemoryFleetCatalog();
             fleet.Add(new Tool(SpcSeries.Tool, "Etch 02", ToolFamily.Etch, "MPS-E7", "Bay-2", [new Chamber("A", "Chamber A")]));
             var intake = new IntakeService(fleet, Incidents, Ticketing, NullQualityNotifier.Instance, TimeProvider.System, DemoRules.Engine);
-            Service = new SpcAlertService(Alerts, intake, notifier ?? NullQualityNotifier.Instance, SpcAlertService.DefaultDebounce, DemoRules.Engine);
+            Service = new SpcAlertService(Alerts, intake, notifier ?? NullQualityNotifier.Instance, SpcRuleSettings.Shared.AlertDebounce, DemoRules.Engine);
         }
 
         public InMemoryAlertLog Alerts { get; }

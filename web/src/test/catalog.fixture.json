@@ -1,0 +1,217 @@
+{
+  "limits": {
+    "controlLimitSigma": 3,
+    "watchSigma": 2,
+    "criticalSigma": 4,
+    "limitCheckReadings": 20,
+    "clearReadings": 8,
+    "clearSigma": 2,
+    "overrideMinChars": 20,
+    "maxEvidenceRounds": 5,
+    "maxEvidenceChars": 4000,
+    "zoneSigmas": [
+      1,
+      2,
+      3
+    ]
+  },
+  "rules": [
+    {
+      "id": "western-electric-1",
+      "label": "Western Electric rules, rule 1: one point is more than 3σ from the average",
+      "plain": "Western Electric rule 1 (one reading more than 3 sigma from the average)",
+      "brief": "one reading beyond 3 sigma"
+    },
+    {
+      "id": "western-electric-2",
+      "label": "Western Electric rules, rule 2: 2 of the last 3 points are more than 2σ out on the same side",
+      "plain": "Western Electric rule 2 (2 of 3 readings more than 2 sigma out on one side)",
+      "brief": "2 of 3 beyond 2 sigma, one side"
+    },
+    {
+      "id": "western-electric-3",
+      "label": "Western Electric rules, rule 3: 4 of the last 5 points are more than 1σ out on the same side",
+      "plain": "Western Electric rule 3 (4 of 5 readings more than 1 sigma out on one side)",
+      "brief": "4 of 5 beyond 1 sigma, one side"
+    },
+    {
+      "id": "western-electric-4",
+      "label": "Western Electric rules, rule 4: 8 points in a row on one side of the average",
+      "plain": "Western Electric rule 4 (8 readings in a row on one side of the average)",
+      "brief": "8 readings in a row on one side"
+    },
+    {
+      "id": "nelson-6-rising",
+      "label": "Nelson rule 6: 6 readings in a row, each higher than the last",
+      "plain": "Nelson rule 6 (6 readings in a row, each higher than the last)",
+      "brief": "6 readings in a row, each higher"
+    },
+    {
+      "id": "window",
+      "label": "Reading outside the spec window",
+      "plain": "reading outside the spec window",
+      "brief": "reading outside the spec window"
+    },
+    {
+      "id": "manualMeasurement",
+      "label": "Manual measurement outside the printed spec",
+      "plain": "manual measurement outside the printed spec",
+      "brief": "manual measurement outside the printed spec"
+    }
+  ],
+  "parameters": [
+    {
+      "id": "ambientPressure",
+      "label": "Room pressure"
+    },
+    {
+      "id": "arFlow",
+      "label": "Argon flow"
+    },
+    {
+      "id": "ashRate",
+      "label": "Ash rate"
+    },
+    {
+      "id": "bathTemperature",
+      "label": "Chemical bath temperature"
+    },
+    {
+      "id": "cf4Flow",
+      "label": "CF4 flow"
+    },
+    {
+      "id": "chamberPressure",
+      "label": "Chamber pressure"
+    },
+    {
+      "id": "chf3Flow",
+      "label": "CHF3 flow"
+    },
+    {
+      "id": "diwFlow",
+      "label": "DIW flow"
+    },
+    {
+      "id": "edgeRingHeight",
+      "label": "Edge ring height"
+    },
+    {
+      "id": "endpointTime",
+      "label": "Endpoint time"
+    },
+    {
+      "id": "escTemperature",
+      "label": "ESC temperature"
+    },
+    {
+      "id": "etchRate",
+      "label": "Etch rate"
+    },
+    {
+      "id": "filmThickness",
+      "label": "Film thickness"
+    },
+    {
+      "id": "filmUniformity",
+      "label": "Film uniformity"
+    },
+    {
+      "id": "heaterTemperature",
+      "label": "Heater temperature"
+    },
+    {
+      "id": "megasonicPower",
+      "label": "Megasonic power"
+    },
+    {
+      "id": "n2h2Flow",
+      "label": "N2H2 flow"
+    },
+    {
+      "id": "n2oFlow",
+      "label": "N2O flow"
+    },
+    {
+      "id": "nh3Flow",
+      "label": "NH3 flow"
+    },
+    {
+      "id": "o2Flow",
+      "label": "O2 flow"
+    },
+    {
+      "id": "particlesAdders",
+      "label": "Particle adders"
+    },
+    {
+      "id": "remotePlasmaPower",
+      "label": "Remote plasma power"
+    },
+    {
+      "id": "residueCount",
+      "label": "Residue count"
+    },
+    {
+      "id": "rfBiasPower",
+      "label": "Bias RF power"
+    },
+    {
+      "id": "rfPower",
+      "label": "RF power"
+    },
+    {
+      "id": "rfSourcePower",
+      "label": "Source RF power"
+    },
+    {
+      "id": "sc1Flow",
+      "label": "SC1 flow"
+    },
+    {
+      "id": "sc2Flow",
+      "label": "SC2 flow"
+    },
+    {
+      "id": "sih4Flow",
+      "label": "SiH4 flow"
+    },
+    {
+      "id": "spinChuckRunout",
+      "label": "Spin chuck runout"
+    },
+    {
+      "id": "temperature",
+      "label": "Temperature"
+    },
+    {
+      "id": "vibrationRms",
+      "label": "Vibration"
+    },
+    {
+      "id": "waferCenterOffset",
+      "label": "Wafer center offset"
+    },
+    {
+      "id": "wallTemperature",
+      "label": "Chamber wall temperature"
+    }
+  ],
+  "sites": [
+    {
+      "id": "northwater",
+      "name": "Northwater Fab",
+      "toolPrefix": ""
+    },
+    {
+      "id": "ironwood",
+      "name": "Ironwood Fab",
+      "toolPrefix": "I-"
+    },
+    {
+      "id": "lumen",
+      "name": "Lumen Pilot Works",
+      "toolPrefix": "P-"
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import { mpsColor } from "../brand/colors";
 import { Term } from "./Term";
 import { limits, type SpcPoint } from "../spc/series";
 import { WAITING_FOR_READINGS } from "../fleet/catalog";
+import { limits as catalogLimits, limitText } from "../labels";
 
 export function SpcChart({
   label,
@@ -45,6 +46,7 @@ export function SpcChart({
   // Limits come from the server for this series, the same ones its rules check, so a point drawn past the UCL is a
   // point the rules engine also sees past the control limit.
   const band = center ? limits(center.mean, center.sigma) : null;
+  const zone = catalogLimits()?.zoneSigmas ?? [];
   if (cumulative) {
     const trendCaption = `Trend of ${label}, a running count in ${unit}. Counts climb by design, so they have no SPC limits. The rate is charted with limits as run rate.`;
     return (
@@ -97,7 +99,7 @@ export function SpcChart({
               <ReferenceArea y1={band.lcl3} y2={band.ucl3} fill={mpsColor.alarm} fillOpacity={0.08} />
               <ReferenceArea y1={band.lcl2} y2={band.ucl2} fill={mpsColor.warn} fillOpacity={0.08} />
               <ReferenceArea y1={band.lcl1} y2={band.ucl1} fill={mpsColor.nominal} fillOpacity={0.1} />
-              <ReferenceLine y={band.ucl3} stroke={mpsColor.alarm} strokeDasharray="4 3" label={{ value: "UCL 3σ", fill: mpsColor.alarm, fontSize: 10, position: "right" }} />
+              <ReferenceLine y={band.ucl3} stroke={mpsColor.alarm} strokeDasharray="4 3" label={{ value: `UCL ${limitText(zone[2])}σ`, fill: mpsColor.alarm, fontSize: 10, position: "right" }} />
               <ReferenceLine y={band.lcl3} stroke={mpsColor.alarm} strokeDasharray="4 3" />
               <ReferenceLine y={band.mean} stroke={mpsColor.muted} label={{ value: "mean", fill: mpsColor.muted, fontSize: 10, position: "right" }} />
             </>
@@ -118,9 +120,9 @@ export function SpcChart({
         </ResponsiveContainer>
       </div>
       <figcaption className="mt-2 flex flex-wrap gap-3 text-mps-micro text-mps-muted">
-        <span>σ1 <i className="inline-block h-2 w-3 bg-mps-nominal" /></span>
-        <span>σ2 <i className="inline-block h-2 w-3 bg-mps-warn" /></span>
-        <span>σ3 <i className="inline-block h-2 w-3 bg-mps-alarm" /></span>
+        <span>σ{limitText(zone[0])} <i className="inline-block h-2 w-3 bg-mps-nominal" /></span>
+        <span>σ{limitText(zone[1])} <i className="inline-block h-2 w-3 bg-mps-warn" /></span>
+        <span>σ{limitText(zone[2])} <i className="inline-block h-2 w-3 bg-mps-alarm" /></span>
         <span className="text-mps-secondary">{finding}</span>
         {manual ? (
           <span data-manual-marker="true" className="text-mps-warn">

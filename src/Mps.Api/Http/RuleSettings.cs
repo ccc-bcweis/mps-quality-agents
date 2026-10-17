@@ -14,15 +14,16 @@ public sealed record RuleSettingResponse(string Id, string Group, string Label, 
 /// <summary>One condition of a business rule, as configured in business-rules.yaml.</summary>
 public sealed record RuleConditionResponse(string Field, string Label, string Kind, string Value);
 
-/// <summary>Reads the live rule settings from the loaded configuration (spc-rules.yaml, investigation.yaml and code limits).</summary>
+/// <summary>Reads the live rule settings from the loaded configuration (spc-rules.yaml, investigation.yaml and decision.yaml).</summary>
 public static class RuleSettings
 {
     private static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
 
-    public static IReadOnlyList<RuleSettingResponse> Read(SpcRuleSettings spc, Mps.Agents.Investigation.ShapeWait wait)
+    public static IReadOnlyList<RuleSettingResponse> Read(SpcRuleSettings spc, Mps.Agents.Investigation.ShapeWait wait, DecisionSettings decision)
     {
         ArgumentNullException.ThrowIfNull(spc);
         ArgumentNullException.ThrowIfNull(wait);
+        ArgumentNullException.ThrowIfNull(decision);
         const string Chart = "Control chart";
         const string Rules = "Western Electric and Nelson rules";
         const string Clearing = "Alert clearing";
@@ -34,26 +35,29 @@ public static class RuleSettings
             Number("spc.controlLimitSigma", Chart, "Control limits", spc.ControlLimitSigma, "sigma", "Centre line plus or minus this many sigma."),
             Number("spc.watchSigma", Chart, "Watch level", spc.WatchSigma, "sigma", "A tile turns amber past this distance from nominal."),
             Number("spc.criticalSigma", Chart, "Critical level", spc.CriticalSigma, "sigma", "A reading this far out makes the alert critical."),
-            Toggle("spc.we1.on", Rules, "Rule 1 on", we.Rule1.Count > 0),
+            Number("spc.limitCheck.readings", Chart, "Limit check looks at", spc.LimitCheck.RecentReadings, "readings", "The most recent readings of every live series, checked against the control limits and the recipe spec."),
+            Number("spc.debounce", Chart, "A repeat break updates the same alert within", spc.AlertDebounceMinutes, "minutes", null),
+            Toggle("spc.we1.on", Rules, "Rule 1 on", we.Rule1.Count > 0, Help(SpcRuleNames.WesternElectric1, spc)),
             Number("spc.we1.sigma", Rules, "Rule 1: one reading beyond", we.Rule1.Sigma, "sigma", null),
-            Toggle("spc.we2.on", Rules, "Rule 2 on", we.Rule2.Count > 0),
-            Number("spc.we2.count", Rules, "Rule 2: readings out of the window", we.Rule2.Count, "readings", $"{we.Rule2.Count} of {we.Rule2.Window} beyond {Text(we.Rule2.Sigma)} sigma, one side."),
+            Toggle("spc.we2.on", Rules, "Rule 2 on", we.Rule2.Count > 0, Help(SpcRuleNames.WesternElectric2, spc)),
+            Number("spc.we2.count", Rules, "Rule 2: readings out of the window", we.Rule2.Count, "readings", Help(SpcRuleNames.WesternElectric2, spc)),
             Number("spc.we2.sigma", Rules, "Rule 2: beyond", we.Rule2.Sigma, "sigma", null),
-            Toggle("spc.we3.on", Rules, "Rule 3 on", we.Rule3.Count > 0),
-            Number("spc.we3.count", Rules, "Rule 3: readings out of the window", we.Rule3.Count, "readings", $"{we.Rule3.Count} of {we.Rule3.Window} beyond {Text(we.Rule3.Sigma)} sigma, one side."),
+            Toggle("spc.we3.on", Rules, "Rule 3 on", we.Rule3.Count > 0, Help(SpcRuleNames.WesternElectric3, spc)),
+            Number("spc.we3.count", Rules, "Rule 3: readings out of the window", we.Rule3.Count, "readings", Help(SpcRuleNames.WesternElectric3, spc)),
             Number("spc.we3.sigma", Rules, "Rule 3: beyond", we.Rule3.Sigma, "sigma", null),
-            Toggle("spc.we4.on", Rules, "Rule 4 on", we.Rule4.Count > 0),
+            Toggle("spc.we4.on", Rules, "Rule 4 on", we.Rule4.Count > 0, Help(SpcRuleNames.WesternElectric4, spc)),
             Number("spc.we4.count", Rules, "Rule 4: readings in a row on one side", we.Rule4.Count, "readings", null),
-            Toggle("spc.nelson.on", Rules, "Nelson rising run on", spc.NelsonRising.Count > 0),
+            Toggle("spc.nelson.on", Rules, "Nelson rising run on", spc.NelsonRising.Count > 0, Help(SpcRuleNames.NelsonSixRising, spc)),
             Number("spc.nelson.count", Rules, "Nelson: readings in a row, each higher", spc.NelsonRising.Count, "readings", null),
-            Number("clear.readings", Clearing, "Readings in control before an alert clears", AlertClearing.InControlReadings, "readings", null),
-            Number("clear.sigma", Clearing, "In control means within", AlertClearing.ZoneSigma, "sigma", null),
+            Number("clear.readings", Clearing, "Readings in control before an alert clears", spc.Clearing.Readings, "readings", null),
+            Number("clear.sigma", Clearing, "In control means within", spc.Clearing.Sigma, "sigma", null),
+            Number("clear.watch", Clearing, "Keep watching a signal after its fault is removed for", spc.RecoveryWatchMinutes, "minutes", null),
             Toggle("investigation.wait.on", Investigation, "Wait for a clear signal shape", wait.Attempts > 0),
             Number("investigation.wait.minReadings", Investigation, "Readings since the first rule break", wait.MinReadingsSinceOnset, "readings", null),
             Number("investigation.wait.maxReadings", Investigation, "Stop waiting for a clear shape after", wait.MaxReadingsSinceOnset, "readings", null),
             Number("investigation.wait.attempts", Investigation, "Tries", wait.Attempts, null, null),
             Number("investigation.wait.delay", Investigation, "Time between tries", wait.Delay.TotalSeconds, "seconds", null),
-            Number("decision.overrideMin", Decision, "Shortest override justification", HumanDecisionService.MinOverrideJustification, "characters", null),
+            Number("decision.overrideMin", Decision, "Shortest override justification", decision.OverrideMinChars, "characters", null),
             Number("decision.maxEvidenceRounds", Decision, "Most rounds per ticket (Add evidence)", EvidenceRoundSettings.Shared.MaxRounds, "rounds", "Each time a person adds evidence the agents run again as the next round. At the last round only approve, override or reject remain."),
         ];
     }
@@ -97,8 +101,11 @@ public static class RuleSettings
     private static RuleSettingResponse Number(string id, string group, string label, double value, string? unit, string? help) =>
         new(id, group, label, "number", Text(value), unit, help);
 
-    private static RuleSettingResponse Toggle(string id, string group, string label, bool on) =>
-        new(id, group, label, "toggle", on ? "true" : "false", null, null);
+    private static RuleSettingResponse Toggle(string id, string group, string label, bool on, string? help = null) =>
+        new(id, group, label, "toggle", on ? "true" : "false", null, help);
+
+    /// <summary>The rule's short sentence, built from its parameters, with a closing period.</summary>
+    private static string Help(string rule, SpcRuleSettings spc) => SpcRuleText.Brief(rule, spc) + ".";
 
     private static string Text(double value) => value.ToString("0.###", Invariant);
 }

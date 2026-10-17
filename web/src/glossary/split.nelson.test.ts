@@ -18,7 +18,7 @@ describe("plain rule names link to the glossary", () => {
   });
 });
 
-import { plainParameters } from "../sites/parameters";
+import { plainParameters } from "../labels";
 describe("parameter ids in text", () => {
   it("become display names", () => {
     expect(plainParameters("The cf4Flow shift on E-01 and o2Flow")).toBe("The CF4 flow shift on E-01 and O2 flow");

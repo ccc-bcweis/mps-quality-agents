@@ -24,7 +24,7 @@ public static class ContractMapper
             tool.Model,
             tool.Bay,
             tool.Chambers.Select(chamber => new ChamberResponse(chamber.Id, chamber.Name)).ToArray(),
-            string.IsNullOrWhiteSpace(tool.SiteId) ? SiteIds.Northwater : tool.SiteId);
+            string.IsNullOrWhiteSpace(tool.SiteId) ? SiteIds.Default : tool.SiteId);
 
     public static AlertResponse ToResponse(Alert alert) =>
         new(
@@ -139,11 +139,11 @@ public static class ContractMapper
     {
         if (string.IsNullOrWhiteSpace(toolOrSiteId))
         {
-            return SiteIds.Northwater;
+            return SiteIds.Default;
         }
 
         var value = toolOrSiteId.Trim();
-        if (value is SiteIds.Northwater or SiteIds.Ironwood or SiteIds.Lumen)
+        if (SiteIds.IsKnown(value))
         {
             return value;
         }

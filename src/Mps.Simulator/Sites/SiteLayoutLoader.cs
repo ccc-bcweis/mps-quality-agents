@@ -53,12 +53,43 @@ public static class SiteLayoutLoader
             errors.Add($"The demo needs 3 plants. Found {sites.Count}.");
         }
 
+        if (errors.Count == 0)
+        {
+            CheckPrefixes(sites, errors);
+        }
+
         if (errors.Count > 0)
         {
             throw new FleetSpecException(errors);
         }
 
         return new SiteLayout(sites);
+    }
+
+    /// <summary>Every tool id must resolve to its own plant by the toolPrefix rule (longest prefix, else the unprefixed plant).</summary>
+    private static void CheckPrefixes(List<SitePlan> sites, List<string> errors)
+    {
+        SiteDirectory directory;
+        try
+        {
+            directory = new SiteDirectory(sites.Select(site => (site.Id, site.Name, site.ToolPrefix)));
+        }
+        catch (InvalidOperationException exception)
+        {
+            errors.Add(exception.Message);
+            return;
+        }
+
+        foreach (var site in sites)
+        {
+            foreach (var tool in site.Bays.SelectMany(bay => bay.Tools))
+            {
+                if (!string.Equals(directory.ForTool(tool.Id), site.Id, StringComparison.Ordinal))
+                {
+                    errors.Add($"{tool.Id}: prefix does not belong to {site.Id}.");
+                }
+            }
+        }
     }
 
     private static SitePlan? MapSite(
@@ -201,25 +232,15 @@ public static class SiteLayoutLoader
                 errors.Add($"{toolId}: duplicate tool id.");
             }
 
-            if (siteId.Length > 0 && !string.Equals(SiteIds.ForTool(toolId), siteId, StringComparison.Ordinal))
-            {
-                errors.Add($"{toolId}: prefix does not belong to {siteId}.");
-            }
-
             if (prefix.Length > 0 && !toolId.StartsWith(prefix, StringComparison.Ordinal))
             {
                 errors.Add($"{toolId}: must start with {prefix}.");
             }
 
-            if (prefix.Length == 0 && (toolId.StartsWith("I-", StringComparison.Ordinal) || toolId.StartsWith("P-", StringComparison.Ordinal)))
-            {
-                errors.Add($"{toolId}: Northwater keeps the original ids.");
-            }
-
             ToolFamily family;
             try
             {
-                family = SiteIds.FamilyOf(toolId);
+                family = SiteIds.FamilyOf(toolId, prefix);
             }
             catch (InvalidOperationException exception)
             {

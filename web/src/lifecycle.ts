@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import type { CapaStage, IncidentStage, InvestigationStage } from "./api/types";
+import { CAPA_STAGES } from "./labels";
 
 export const LIFECYCLE = [
   { id: "alert", label: "Alert" },
@@ -17,14 +18,6 @@ export type LifecycleView = {
   escalated: boolean;
 };
 
-export const CAPA_STAGES: { id: CapaStage; label: string }[] = [
-  { id: "open", label: "Open" },
-  { id: "containment", label: "Containment" },
-  { id: "rootCauseConfirmed", label: "Root cause confirmed" },
-  { id: "correctiveAction", label: "Corrective action" },
-  { id: "verification", label: "Verification" },
-  { id: "closed", label: "Closed" },
-];
 
 export function lifecycleForIncident(stage: IncidentStage): LifecycleView {
   switch (stage) {

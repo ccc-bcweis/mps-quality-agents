@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { CATEGORY_LABEL } from "../api/labels";
+import { CATEGORY_LABEL } from "../labels";
 import type { EvidenceStance, Investigation, RootCauseCategory } from "../api/types";
 import { Explain } from "./Explain";
 

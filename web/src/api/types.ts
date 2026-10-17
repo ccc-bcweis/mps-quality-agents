@@ -728,3 +728,31 @@ export type RuleSetting = {
   unit?: string | null;
   help?: string | null;
 };
+
+/** Rule numbers from spc-rules.yaml and decision.yaml. zoneSigmas are the chart zones, inner to outer. */
+export type CatalogLimits = {
+  controlLimitSigma: number;
+  watchSigma: number;
+  criticalSigma: number;
+  limitCheckReadings: number;
+  clearReadings: number;
+  clearSigma: number;
+  overrideMinChars: number;
+  maxEvidenceRounds: number;
+  maxEvidenceChars: number;
+  zoneSigmas: number[];
+};
+
+export type CatalogRule = { id: string; label: string; plain: string; brief: string };
+
+export type CatalogParameter = { id: string; label: string };
+
+export type CatalogSite = { id: string; name: string; toolPrefix: string };
+
+/** GET /api/metadata/catalog. limits is null only before the catalog has loaded. */
+export type ConsoleCatalog = {
+  limits: CatalogLimits | null;
+  rules: CatalogRule[];
+  parameters: CatalogParameter[];
+  sites: CatalogSite[];
+};

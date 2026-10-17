@@ -44,11 +44,12 @@ public static class SpcSummary
         var high = worst.Value >= sample.Baseline.Center;
         var builder = new StringBuilder();
         builder.Append(Capitalize(signal)).Append(" on ").Append(where).Append(high ? " rose to " : " fell to ").Append(Num(value)).Append(unit);
-        var beyondThree = Math.Abs(Z(worst)) > 3d;
-        if (beyondThree)
+        var limitSigma = SpcRuleSettings.Shared.ControlLimitSigma;
+        if (Math.Abs(Z(worst)) > limitSigma)
         {
-            var limit = center + ((high ? 3d : -3d) * sigma);
-            builder.Append(high ? ", above the 3-sigma upper limit of " : ", below the 3-sigma lower limit of ").Append(Num(limit)).Append(unit);
+            var limit = center + ((high ? limitSigma : -limitSigma) * sigma);
+            var sigmaText = SpcRuleText.N(limitSigma) + "-sigma";
+            builder.Append(high ? $", above the {sigmaText} upper limit of " : $", below the {sigmaText} lower limit of ").Append(Num(limit)).Append(unit);
         }
         else
         {

@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import type {
+  ConsoleCatalog,
   ManualReading,
   JoinLink,
   JoinLinks,
@@ -166,6 +167,7 @@ export const api = {
   metadataTool: (toolId: string) => apiSend<MetadataTool>(`/api/metadata/tools/${encodeURIComponent(toolId)}`),
   businessRules: () => apiSend<BusinessRule[]>("/api/metadata/rules"),
   ruleSettings: () => apiSend<RuleSetting[]>("/api/metadata/settings"),
+  consoleCatalog: () => apiSend<ConsoleCatalog>("/api/metadata/catalog"),
   listScenarios: () => apiSend<ScriptedScenario[]>("/api/injector/scenarios"),
   runScenario: (scenarioId: string) =>
     apiSend<ScenarioRun>(`/api/injector/scenarios/${encodeURIComponent(scenarioId)}`, { method: "POST" }),

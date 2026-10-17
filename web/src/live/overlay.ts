@@ -5,50 +5,8 @@ import { statusFromAlerts, type ToolTile, type WindowRow } from "../fleet/catalo
 import { formatValue, type SensorStatus } from "../fleet/telemetry";
 import type { SpcPoint } from "../spc/series";
 import { LIMIT_LABEL, limitTone, rangeLabel } from "../investigation/limits";
-import { PARAMETER_LABEL, unitLabel } from "../sites/parameters";
-
-// Keys are the lower-cased parts of a sensor id.
-const SENSOR_WORDS: Record<string, string> = {
-  rf: "RF",
-  bias: "Bias",
-  src: "Source",
-  rfl: "reflected",
-  fwd: "forward",
-  output: "Output",
-  throughput: "Throughput",
-  run: "Run",
-  rate: "rate",
-  temp: "temperature",
-  press: "pressure",
-};
-
-/**
- * A plain label for a sensor id such as E-01-A-RF-BIAS-RFL: "A Bias RF reflected".
- * The tool id is dropped (the tile already names the tool) and the chamber letter leads.
- */
-export function sensorLabel(sensorId: string): string | null {
-  const match = /^(?:[A-Z]-)?[A-Z]-\d{2}(?:-([A-Z]))?-(.+)$/.exec(sensorId);
-  if (!match) return null;
-  const [, chamber, rest] = match;
-  const tokens = rest.toLowerCase().split("-");
-  const word = (token: string) => SENSOR_WORDS[token] ?? token;
-  const words =
-    tokens[0] === "rf" && (tokens[1] === "bias" || tokens[1] === "src")
-      ? [word(tokens[1]), "RF", ...tokens.slice(2).map(word)]
-      : tokens.map(word);
-  const text = words.join(" ");
-  const sentence = text.charAt(0).toUpperCase() + text.slice(1);
-  return chamber ? `${chamber} ${sentence}` : sentence;
-}
-
-export function parameterLabel(parameter: string): string {
-  const known = PARAMETER_LABEL[parameter];
-  if (known) return known;
-  const sensor = sensorLabel(parameter);
-  if (sensor) return sensor;
-  const words = parameter.replace(/([A-Z])/g, " $1").trim();
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
+import { unitLabel } from "../sites/parameters";
+import { parameterLabel } from "../labels";
 
 function toneFor(status: LiveReading["status"]): Tone | undefined {
   if (status === "alarm") return "alarm";

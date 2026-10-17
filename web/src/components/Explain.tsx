@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { splitGlossary } from "../glossary/split";
 import { Term } from "./Term";
-import { plainParameters } from "../sites/parameters";
+import { plainParameters } from "../labels";
 
 export function Explain({ text: raw, spellOut = true }: { text: string; spellOut?: boolean }) {
   const text = plainParameters(raw);

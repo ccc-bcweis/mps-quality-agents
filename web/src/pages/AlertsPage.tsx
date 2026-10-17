@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import { formatStamp, ruleLabel, severityTone, severityWord } from "../api/labels";
+import { formatStamp, severityTone, severityWord } from "../api/labels";
+import { limitText, limits, ruleLabel } from "../labels";
 import type { Alert, Incident, Ticket, Tool, ManualReading } from "../api/types";
 import { CaseBriefs } from "../components/CaseBriefs";
 import { Chip } from "../components/Chip";
@@ -14,7 +15,7 @@ import { MISSING_ALERT, visibleProblem } from "../history/copy";
 import { byNewestTime, toolPlainName } from "../history/order";
 import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
-import { parameterLabel } from "../sites/parameters";
+import { parameterLabel } from "../labels";
 import { useRecordPatches } from "../live/useLive";
 
 /** "1 sample out of limits", "12 samples out of limits". Counts distinct readings, not rule checks. */
@@ -146,7 +147,7 @@ export function AlertsPage() {
             {" · "}
             {selected.status === "cleared"
               ? `Cleared ${selected.clearedAt ? formatStamp(selected.clearedAt) : ""}`.trim()
-              : "Active until 8 readings in a row are back in control"}
+              : `Active until ${limitText(limits()?.clearReadings)} readings in a row are back in control`}
           </p>
           <p className="mt-2">
             <Explain text={ruleLabel(selected.rule)} /> · {parameterLabel(selected.parameter)}

@@ -16,7 +16,7 @@ import {
   labelProblems,
   overlappingPairs,
   schematicPanels,
-  sensorLabel,
+  pointLabel,
   slotWord,
   type SchematicPanel,
 } from "./schematic";
@@ -42,7 +42,7 @@ function faceplateText(anchor: string) {
       return `${formatValue(widest, sensor.unit)} ${sensor.unit}`;
     })
     .sort((left, right) => right.length - left.length)[0] ?? "";
-  return { label: `${slotWord(anchor)} ${sensorLabel(anchor)}`, id, value };
+  return { label: `${slotWord(anchor)} ${pointLabel(anchor)}`, id, value };
 }
 
 function panelWidth(panel: SchematicPanel): number {

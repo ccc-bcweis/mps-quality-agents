@@ -10,11 +10,11 @@ namespace Mps.Api.Live;
 /// </summary>
 public static class SpcCoverage
 {
-    /// <summary>Limit rules applied to every periodic series, faulted or not.</summary>
-    public const double LimitSigma = 3d;
+    /// <summary>Limit rules applied to every periodic series, faulted or not: the control limit from spc-rules.yaml.</summary>
+    public static double LimitSigma => Mps.Application.Spc.SpcRuleSettings.Shared.ControlLimitSigma;
 
-    /// <summary>How many recent readings a limit check looks at.</summary>
-    public const int RecentReadings = 20;
+    /// <summary>How many recent readings a limit check looks at (spc-rules.yaml limitCheck.recentReadings).</summary>
+    public static int RecentReadings => Mps.Application.Spc.SpcRuleSettings.Shared.LimitCheck.RecentReadings;
 
     public static bool IsCumulative(string parameter, string? sensorId) =>
         string.Equals(parameter, SensorCatalog.Output, StringComparison.OrdinalIgnoreCase)

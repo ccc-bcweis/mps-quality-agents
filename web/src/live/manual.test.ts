@@ -80,7 +80,7 @@ describe("manual readings", () => {
   });
 });
 
-import { sensorLabel } from "./overlay";
+import { sensorIdLabel as sensorLabel } from "../labels";
 
 describe("sensor labels", () => {
   it("turns sensor ids into short plain labels", () => {

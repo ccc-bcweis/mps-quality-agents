@@ -20,7 +20,13 @@ public static class MetadataEndpoints
         app.MapGet("/api/metadata/rules", (IMetadataStore store) => Results.Ok(store.Rules.Select(ToRule).ToArray()));
         app.MapGet("/api/metadata/settings", () => Results.Ok(RuleSettings.Read(
             Mps.Application.Spc.SpcRuleSettings.Shared,
-            Mps.Agents.Investigation.ShapeWait.Load())));
+            Mps.Agents.Investigation.ShapeWait.Load(),
+            Mps.Application.Decisions.DecisionSettings.Shared)));
+        app.MapGet("/api/metadata/catalog", () => Results.Ok(ConsoleCatalog.Build(
+            Mps.Application.Spc.SpcRuleSettings.Shared,
+            Mps.Application.Decisions.DecisionSettings.Shared,
+            Mps.Application.Decisions.EvidenceRoundSettings.Shared,
+            Mps.Simulator.Sites.SiteIds.Directory)));
     }
 
     private static CompanyMetadataResponse ToCompany(IMetadataStore store)

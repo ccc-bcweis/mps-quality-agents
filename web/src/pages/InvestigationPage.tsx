@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import { CATEGORY_LABEL, CHANNEL_LABEL, STAGE_LABEL } from "../api/labels";
+import { CATEGORY_LABEL, CHANNEL_LABEL, STAGE_LABEL } from "../labels";
 import type { Incident, Investigation } from "../api/types";
 import { evidenceGateState } from "../investigation/evidenceGate";
 import { AgentTimeline } from "../components/AgentTimeline";
@@ -21,7 +21,7 @@ import { toolInPlant } from "../sites/selection";
 import { placeLabel, plainFinding, plainNarrative } from "../investigation/format";
 import { lifecycleForIncident, lifecycleForInvestigation } from "../lifecycle";
 import { FALLBACK_POLL_MS, onHubState, useHubConnected, useHubEvent } from "../live/fleetHub";
-import { parameterLabel } from "../sites/parameters";
+import { parameterLabel } from "../labels";
 
 type LoadResult = "ready" | "missing" | "failed";
 

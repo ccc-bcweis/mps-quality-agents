@@ -31,5 +31,5 @@ public static class DemoFleet
             model,
             bay,
             [new Chamber("A", "Chamber A"), new Chamber("B", "Chamber B")],
-            SiteIds.Northwater);
+            SiteIds.Default);
 }

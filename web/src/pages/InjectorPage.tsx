@@ -2,12 +2,12 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import { CATEGORY_LABEL } from "../api/labels";
+import { CATEGORY_LABEL } from "../labels";
 import type { FaultInjectionRequest, FaultShape, RootCauseCategory, Tool } from "../api/types";
 import { Explain } from "../components/Explain";
 import { Term } from "../components/Term";
 import { btnPrimary, field, panel } from "../components/ui";
-import { PLANTS } from "../sites/selection";
+import { plants } from "../labels";
 import { sensorOptionLabel, sensorParameter, sensorsFor } from "../fleet/sensorOptions";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { visibleProblem } from "../history/copy";
@@ -109,7 +109,7 @@ export function InjectorPage() {
           <label className="mb-3 block text-mps-label text-mps-muted">
             Site
             <select className={field} value={siteId} onChange={(event) => setSiteId(event.target.value)}>
-              {PLANTS.filter((plant) => plant.id !== "all").map((plant) => (
+              {plants().map((plant) => (
                 <option key={plant.id} value={plant.id}>
                   {plant.name}
                 </option>

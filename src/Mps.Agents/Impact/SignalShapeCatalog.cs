@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
 using Mps.Application.Spc;
+using Mps.Domain;
 
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;

@@ -1,0 +1,61 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Literals the no-hard-coded-limits guards accept, with the reason. Read by tests/Simulator.Tests/NoHardcodedLimitsTests.cs
+# (src/**/*.cs) and web/src/test/noHardcodedLimits.test.ts (web/src/**/*.ts[x]).
+# Format: path from the repo root | text the line contains | why it is allowed.
+# An entry whose line is gone fails the guard, so remove it when the literal moves to data.
+#
+# Engineering limits: input sizes, budgets and safety caps, not process or rule settings.
+src/Mps.Agents/Explain/PlainSentence.cs | MaxLength = 240 | longest plain sentence the explainer writes (text size cap)
+src/Mps.Application/Evidence/InvestigationNarrative.cs | MaxWhyItMattersLength = 240 | stored text size cap
+src/Mps.Application/Evidence/InvestigationNarrative.cs | MaxSignalIdLength = 200 | stored id size cap
+src/Mps.Application/Intake/IntakeService.cs | MaxSummaryLength = 4000 | request validation size cap
+src/Mps.Domain/Investigations/InvestigationRounds.cs | MaxEvidenceLength = 4000 | request validation size cap for added evidence (#309)
+src/Mps.Api/Http/QualityEndpoints.cs | RoundAnswerWait = TimeSpan.FromSeconds(2) | how long the decision call waits for the next round before replying (#309), an HTTP response budget
+src/Mps.Application/Intake/IntakeService.cs | MaxParameterLength = 200 | request validation size cap
+src/Mps.Connectors/Docs/DocumentIndex.cs | ExcerptLength = 480 | search excerpt size
+src/Mps.Api/Bus/CausalTraceService.cs | MaxDepth = 64 | trace walk safety cap
+src/Mps.Api/Bus/CausalTraceService.cs | MaxNodes = 5000 | trace walk safety cap
+src/Mps.Api/Bus/CausalTraceService.cs | MaxChildren = 200 | trace walk safety cap
+src/Mps.Api/Printouts/PrintoutFileStore.cs | MaxFiles = 50 | printout store size cap
+src/Mps.Application/Decisions/HumanDecisionService.cs | MaxWriteAttempts = 3 | optimistic-concurrency retry count
+src/Mps.Api/Access/JoinLinkStore.cs | TimeSpan.FromDays(30) | longest join-link lifetime an admin may choose (security cap)
+src/Mps.Api/Hosting/ApprovalPolicyLoader.cs | MinimumKeyBytes = 32 | security floor for the approval signing key (256-bit HMAC), not a process limit
+src/Mps.Api/Http/ManualReadings.cs | TimeSpan.FromSeconds(1) | timestamp match tolerance between a reading and its alert
+src/Mps.Api/Live/SimulationTickService.cs | TimeSpan.FromMilliseconds(200) | wall-clock tick loop interval
+src/Mps.Agents/Investigation/InvestigationLimits.cs | TimeSpan.FromSeconds(60) | default per-investigation time budget (safety cap)
+src/Mps.Application/Printouts/PrintoutReading.cs | toolId.StartsWith("E-" | tool family letter (etch), not a plant prefix
+#
+# Simulator and seed shape: how the fictional plant generates data, not a rule the plant is judged by.
+src/Mps.Api/Bus/NominalHistorySeeder.cs | RecentStrideSeconds = 25 | seeded history spacing
+src/Mps.Api/Bus/NominalHistorySeeder.cs | OlderStrideSeconds = 900 | seeded history spacing
+src/Mps.Api/Live/DemoSignalTools.cs | TimeSpan.FromMinutes(15) | demo signal tool sample step
+src/Mps.Api/Live/SeedEnterpriseTools.cs | TimeSpan.FromDays(30) | seeded engineering-change lookback
+src/Mps.Simulator/Kpi/FleetKpi.cs | PlannedHours = 2160 | KPI seed: planned hours in the quarter
+src/Mps.Simulator/Scenarios/ScriptedScenarioCatalog.cs | SampleSeconds = 30 | scripted scenario sample spacing
+src/Mps.Simulator/Sites/SitePlantGenerator.cs | SampleCount = 128 | generated samples per site series
+#
+# P4, moving to data in #288 (agent and simulator thresholds). Values unchanged until then.
+src/Mps.Agents/Impact/SignalShapeClassifier.cs | StepShare = 0.7d | #288 shape classifier threshold
+src/Mps.Agents/Impact/SignalShapeClassifier.cs | FlatShare = 0.2d | #288 shape classifier threshold
+src/Mps.Agents/Impact/SignalShapeClassifier.cs | RampShare = 0.5d | #288 shape classifier threshold
+src/Mps.Agents/Impact/SignalShapeClassifier.cs | SameDirectionShare = 0.75d | #288 shape classifier threshold
+src/Mps.Agents/Impact/SignalShapeClassifier.cs | NoisyStepSigmas = 3d | #288 shape classifier threshold
+src/Mps.Agents/Impact/SignalShapeClassifier.cs | NoisyStepFitShare = 0.6d | #288 shape classifier threshold
+src/Mps.Agents/Impact/SignalShapeClassifier.cs | NoisyStepSideDrift = 0.25d | #288 shape classifier threshold
+src/Mps.Agents/Impact/SignalShapeClassifier.cs | NoisyStepMinSide = 6 | #288 shape classifier threshold
+src/Mps.Agents/Impact/SignalShapeClassifier.cs | NoisyStepSmoothing = 5 | #288 shape classifier threshold
+src/Mps.Agents/Impact/SignalShapeClassifier.cs | NoisyStepEdgeReadings = 2 * NoisyStepSmoothing | #288 shape classifier threshold
+src/Mps.Agents/Resolution/ResolutionAgent.cs | MaxModelCalls = 2 | #288 model call budget per resolution
+src/Mps.Orchestration/MafInvestigationWorkflow.cs | ShapeRetries = 1 | #288 shape/category retry count
+src/Mps.Api/Live/PlantSimulation.cs | RealTimeFaultPace = 6d | #288 fault pace at 1x (Bryan kept it; to config)
+src/Mps.Simulator/Sites/SiteComparison.cs | SpreadRatio = 1.5d | #288 site discrepancy threshold
+src/Mps.Simulator/Telemetry/RecipeSchedule.cs | StepSeconds = 120 | #288 recipe step timing to fleet YAML
+src/Mps.Simulator/Telemetry/RecipeSchedule.cs | WaferSeconds = 300 | #288 recipe wafer timing to fleet YAML
+src/Mps.Simulator/Telemetry/TelemetryMath.cs | ExcursionSigma = 2.4d | #288 simulator excursion size
+#
+# Web layout and copy.
+web/src/live/stream.ts | LIVE_WINDOW_POINTS = 600 | chart window length in points, matching the API live window; a display size, not a process limit
+web/src/fleet/schematic.ts | CHAMBER_MIN_PX = 620 | layout width in pixels, not a process limit
+web/src/fleet/schematic.ts | COUNTER_MIN_PX = 220 | layout width in pixels, not a process limit
+web/src/pages/ToolPage.tsx | LINKED_LIMIT = 12 | how many linked records the Tool page lists
+web/src/pages/SitesPage.tsx | Lumen Pilot Works also keeps a | descriptive copy about the pilot plant, not a plant list

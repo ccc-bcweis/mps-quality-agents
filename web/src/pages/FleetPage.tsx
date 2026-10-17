@@ -2,7 +2,7 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import { FAMILY_PROCESS } from "../api/labels";
+import { FAMILY_PROCESS } from "../labels";
 import type { Alert, Ticket, Tool } from "../api/types";
 import { mpsColor } from "../brand/colors";
 import { Chip } from "../components/Chip";
@@ -16,7 +16,7 @@ import { useSite } from "../context/SiteContext";
 import { bayCaption, statusTone, WAITING_FOR_READINGS } from "../fleet/catalog";
 import { toolTile } from "../live/overlay";
 import { useFleetLive, useRecordPatches } from "../live/useLive";
-import { PLANTS, toolInPlant } from "../sites/selection";
+import { ALL_SITES, plantOptions, toolInPlant } from "../sites/selection";
 
 export function FleetPage() {
   useSetLifecycle("alert");
@@ -94,7 +94,7 @@ export function FleetPage() {
   const tickets = ticketRows === null ? null : ticketRows.filter((ticket) => toolInPlant(siteId, ticket.toolId) && ticket.status !== "closed").length;
   const liveById = new Map((live?.tools ?? []).map((tool) => [tool.toolId, tool]));
   const stories = rows.map((tool) => ({ tool, story: toolTile(tool.id, visibleAlerts, liveById.get(tool.id), sparks[tool.id]) }));
-  const plantName = PLANTS.find((plant) => plant.id === siteId)?.name ?? "All sites";
+  const plantName = plantOptions().find((plant) => plant.id === siteId)?.name ?? ALL_SITES.name;
   const bays = [...new Set(rows.map((tool) => tool.bay))];
   const families = new Set(rows.map((tool) => tool.family)).size;
   // Same rows the Alerts page lists for this plant, so the button and the page always agree.

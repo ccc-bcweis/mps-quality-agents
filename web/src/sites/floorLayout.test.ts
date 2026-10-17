@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { describe, expect, it } from "vitest";
 import { familyComparison, siteDetails } from "../mocks/sites/fixtures";
-import { PARAMETER_LABEL } from "./parameters";
+import { isKnownParameter } from "../labels";
 import { labelFits, labelInside, layoutFloor, overlappingPairs, scaleLayout, statusWord } from "./floorLayout";
 
 const WIDTHS = [1248, 1280, 1600, 1888, 1920];
@@ -51,7 +51,7 @@ describe("site fixtures", () => {
       const comparison = familyComparison(family);
       expect(comparison?.parameters.length).toBeGreaterThan(0);
       for (const parameter of comparison?.parameters ?? []) {
-        expect(PARAMETER_LABEL[parameter.parameter], parameter.parameter).toBeTruthy();
+        expect(isKnownParameter(parameter.parameter), parameter.parameter).toBe(true);
       }
     }
     expect(familyComparison("deposition")?.parameters.some((parameter) => parameter.sites.some((site) => site.discrepancy))).toBe(false);

@@ -45,9 +45,6 @@ public sealed class HumanDecisionService : IHumanDecisionService
 {
     public const int MaxWriteAttempts = 3;
 
-    /// <summary>Shortest override justification accepted, in characters (ADR-005).</summary>
-    public const int MinOverrideJustification = 20;
-
     public const string OverridePrefix = "Override of escalation by ";
 
     private static readonly ConcurrentDictionary<Guid, SemaphoreSlim> ApprovalGates = new();
@@ -224,10 +221,10 @@ public sealed class HumanDecisionService : IHumanDecisionService
                 }
 
                 var justification = comment?.Trim() ?? string.Empty;
-                if (justification.Length < MinOverrideJustification)
+                if (justification.Length < DecisionSettings.Shared.OverrideMinChars)
                 {
                     throw new IntakeValidationException(
-                        $"Override needs a written justification of at least {MinOverrideJustification} characters.");
+                        $"Override needs a written justification of at least {DecisionSettings.Shared.OverrideMinChars} characters.");
                 }
 
                 using (var activity = QualityDiagnostics.ActivitySource.StartActivity("decision.override"))

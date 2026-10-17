@@ -87,7 +87,7 @@ public static class GroundTruthFactory
         var number = (int)(BitConverter.ToUInt32(faultId.ToByteArray(), 4) % 9000) + 1000;
         var n = number.ToString(CultureInfo.InvariantCulture);
         var fault = faultId.ToString("N");
-        var display = Mps.Domain.Telemetry.ParameterNames.Display(parameter);
+        var display = Mps.Application.Metadata.ParameterNames.Display(parameter);
         var lower = display.ToLowerInvariant();
         switch (category)
         {

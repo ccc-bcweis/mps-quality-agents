@@ -334,7 +334,7 @@ export function anchorBody(anchor: string): string {
   return anchor.replace(/^(?:a|b|tool)\./, "");
 }
 
-export function sensorLabel(anchor: string): string {
+export function pointLabel(anchor: string): string {
   return POINT_LABEL[anchorBody(anchor)] ?? anchor;
 }
 

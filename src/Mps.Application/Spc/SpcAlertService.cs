@@ -16,8 +16,6 @@ namespace Mps.Application.Spc;
 /// </summary>
 public sealed class SpcAlertService
 {
-    public static readonly TimeSpan DefaultDebounce = TimeSpan.FromMinutes(10);
-
     private readonly IAlertLog _alerts;
     private readonly IIntakeService _intake;
     private readonly IQualityNotifier _notifier;
@@ -189,7 +187,7 @@ public sealed class SpcAlertService
     public async Task ClearRecoveredAsync(SpcSample sample, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(sample);
-        if (sample.Points.Count < AlertClearing.InControlReadings)
+        if (sample.Points.Count < SpcRuleSettings.Shared.Clearing.Readings)
         {
             return;
         }
@@ -202,8 +200,8 @@ public sealed class SpcAlertService
             return;
         }
 
-        // A run inside +/-2 sigma can still be out of control (eight on one side during a slow drift).
-        var trailing = sample.Points.Skip(Math.Max(0, sample.Points.Count - AlertClearing.InControlReadings)).ToArray();
+        // A run inside the clearing zone can still be out of control (a run on one side during a slow drift).
+        var trailing = sample.Points.Skip(Math.Max(0, sample.Points.Count - SpcRuleSettings.Shared.Clearing.Readings)).ToArray();
         if (WesternElectricEvaluator.Evaluate(sample.ToolId, sample.ChamberId, sample.Parameter, sample.Baseline, sample.Points)
             .Any(violation => violation.At >= trailing[0].At))
         {
@@ -213,7 +211,7 @@ public sealed class SpcAlertService
         foreach (var alert in active)
         {
             var run = InControlRun(sample, alert.RaisedAt);
-            if (run.Count < AlertClearing.InControlReadings)
+            if (run.Count < SpcRuleSettings.Shared.Clearing.Readings)
             {
                 continue;
             }
@@ -243,7 +241,7 @@ public sealed class SpcAlertService
                             clearedAt = at,
                             parameter = sample.Parameter,
                             readings = run.Count,
-                            why = $"{run.Count} readings in a row inside +/-{AlertClearing.ZoneSigma:0} sigma",
+                            why = $"{run.Count} readings in a row inside +/-{SpcRuleSettings.Shared.Clearing.Sigma:0.###} sigma",
                         }),
                     cancellationToken).ConfigureAwait(false);
             }
@@ -258,7 +256,7 @@ public sealed class SpcAlertService
         for (var index = sample.Points.Count - 1; index >= 0; index--)
         {
             var point = sample.Points[index];
-            if (point.At <= after || Math.Abs(sample.Baseline.Z(point.Value)) >= AlertClearing.ZoneSigma)
+            if (point.At <= after || Math.Abs(sample.Baseline.Z(point.Value)) >= SpcRuleSettings.Shared.Clearing.Sigma)
             {
                 break;
             }

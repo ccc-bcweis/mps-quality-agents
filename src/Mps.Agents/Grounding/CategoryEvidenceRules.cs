@@ -2,6 +2,7 @@
 
 using Mps.Agents.Ranking;
 using Mps.Application.Spc;
+using Mps.Domain;
 using Mps.Domain.Hypotheses;
 
 using YamlDotNet.Serialization;
