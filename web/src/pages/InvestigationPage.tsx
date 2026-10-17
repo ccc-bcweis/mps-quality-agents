@@ -4,6 +4,7 @@ import { useLocation, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { CATEGORY_LABEL, CHANNEL_LABEL, STAGE_LABEL } from "../api/labels";
 import type { Incident, Investigation } from "../api/types";
+import { evidenceGateState } from "../investigation/evidenceGate";
 import { AgentTimeline } from "../components/AgentTimeline";
 import { DecisionPanel } from "../components/DecisionPanel";
 import { EvidenceMatrix } from "../components/EvidenceMatrix";
@@ -249,15 +250,7 @@ function InvestigationDetail({ investigation, onChange }: { investigation: Inves
           Go to decision
         </a>
       </div>
-      {investigation.escalationReason ? (
-        <p className="mb-3 rounded border border-mps-warn bg-mps-panel px-3 py-2" role="status">
-          Evidence gate: <strong>escalate</strong>. <Explain text={plainNarrative(investigation.escalationReason)} spellOut={false} />
-        </p>
-      ) : (
-        <p className="mb-3 rounded border border-mps-ok bg-mps-panel px-3 py-2">
-          Evidence gate: <strong>sufficient</strong> for a recommendation. Records that look related but are not the cause are listed as ruled out.
-        </p>
-      )}
+      <EvidenceGate investigation={investigation} />
       <DecisionPanel investigation={investigation} onChange={onChange} />
       <section className={`${panel} mb-3`}>
         <AgentTimeline investigation={investigation} />
@@ -292,5 +285,38 @@ function InvestigationDetail({ investigation, onChange }: { investigation: Inves
         </section>
       </div>
     </div>
+  );
+}
+
+function EvidenceGate({ investigation }: { investigation: Investigation }) {
+  const state = evidenceGateState(investigation);
+  if (state === "escalate") {
+    return (
+      <p className="mb-3 rounded border border-mps-warn bg-mps-panel px-3 py-2" role="status" data-gate="escalate">
+        Evidence gate: <strong>escalate</strong>. <Explain text={plainNarrative(investigation.escalationReason ?? "")} spellOut={false} />
+      </p>
+    );
+  }
+
+  if (state === "sufficient") {
+    return (
+      <p className="mb-3 rounded border border-mps-ok bg-mps-panel px-3 py-2" role="status" data-gate="sufficient">
+        Evidence gate: <strong>sufficient</strong> for a recommendation. Records that look related but are not the cause are listed as ruled out.
+      </p>
+    );
+  }
+
+  if (state === "pending") {
+    return (
+      <p className="mb-3 rounded border border-mps-line bg-mps-panel px-3 py-2" role="status" data-gate="pending">
+        Evidence gate: <strong>pending</strong>. Triage is still gathering evidence; the gate is checked once the evidence pack is complete.
+      </p>
+    );
+  }
+
+  return (
+    <p className="mb-3 rounded border border-mps-line bg-mps-panel px-3 py-2" role="status" data-gate="notEvaluated">
+      Evidence gate: <strong>not evaluated</strong>. The investigation ended before the gate was checked.
+    </p>
   );
 }

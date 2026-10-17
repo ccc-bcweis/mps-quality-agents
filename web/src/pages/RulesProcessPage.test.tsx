@@ -68,7 +68,7 @@ describe("rules and process", () => {
     expect(stages).toEqual(["readings", "rules", "alert", "ticket", "investigation", "decision", "capa", "containment", "close"]);
     const choices = within(map).getByRole("list", { name: "Decision choices" });
     expect(within(choices).getAllByRole("listitem").map((item) => item.textContent?.split(" → ")[0])).toEqual([
-      "Approve CAPA + containment",
+      "Approve CAPA",
       "Request more evidence",
       "Override with justification",
       "Reject",

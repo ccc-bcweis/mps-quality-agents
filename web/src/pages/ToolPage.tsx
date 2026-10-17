@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import { FAMILY_PROCESS, formatStamp } from "../api/labels";
+import { FAMILY_PROCESS, INVESTIGATION_STAGE_LABEL, formatStamp } from "../api/labels";
 import type { Alert, Incident, Investigation, ManualReading, Ticket, Tool } from "../api/types";
 import type { SchematicReading } from "../components/ToolSchematic";
 import type { FleetSensor } from "../fleet/sensors";
@@ -311,12 +311,11 @@ export function ToolPage() {
                   <Link className={btnSm} to={`/investigations/${investigation.id}`}>
                     Investigation
                   </Link>
-                  <span className="min-w-0 flex-1 break-words">{investigation.statusLabel ?? investigation.stage}</span>
+                  <span className="min-w-0 flex-1 break-words">{investigation.statusLabel ?? INVESTIGATION_STAGE_LABEL[investigation.stage] ?? investigation.stage}</span>
                 </li>
               ))}
             </ul>
           )}
-          <p className="mt-3 font-mono text-mps-micro text-mps-muted">Fixed rule checks draw this chart. The AI has not written anything here.</p>
           <div className="mt-3 flex gap-2">
             <Link className={btn} to="/alerts">
               Alerts
