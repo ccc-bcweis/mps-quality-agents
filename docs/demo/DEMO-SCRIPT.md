@@ -10,7 +10,7 @@ How to read this script:
 - **Say**: your narrative.
 - **They see**: what should appear on screen. If it doesn't appear, go to "If something breaks" at the end.
 
-Control names were checked against the live app on 2026-10-16.
+Control names were checked against the code on `main` on 2026-10-17.
 
 ---
 
@@ -18,9 +18,9 @@ Control names were checked against the live app on 2026-10-16.
 
 | # | Click | Check |
 |---|---|---|
-| 1 | Open the hosted app, sign in | Navy and gold presenter bar on top, charcoal console below |
+| 1 | Open the hosted app → **Log in** on the landing page | Navy and gold presenter bar on top, charcoal console below |
 | 2 | **Expand harness** (top right of the bar) | Controls row opens |
-| 3 | **Hard reset** → **Confirm hard reset** | Wait until the progress note finishes. Production line: every tool **Nominal**. Alerts, Tickets, Investigation, Approval, CAPA lists are empty. Tool charts show 7 days of healthy history |
+| 3 | **Hard reset** → **Confirm hard reset** | Wait until the progress note finishes. Production line: every tool **Nominal**. Alerts, Tickets, Investigation and CAPA lists are empty. Speed is back at 1x. Tool charts show 7 days of healthy history |
 | 4 | **Speed** = **1x**, **Sample every** = **5 s** | 1x is real time: the plant clock matches the wall clock |
 | 5 | Plant data: **Live** (not **Replay**) | Live follows the running plant. Replay shows a recorded scenario |
 | 6 | AI engine: **Replay (saved answers, free, repeatable)** or **Live (real model)** | Replay is safest. Live costs a few cents a run; the gateway stops at $2 a day and falls back to saved answers |
@@ -38,7 +38,7 @@ Do not open **What the AI should find** on the scenario card while sharing. It h
 
 **Click:** nothing.
 
-**Say:** "Two things on screen. The navy and gold bar at the top is my presenter control panel. I use it to trigger events, change speed and reset. Everything below it is Meridian's console, the screens your engineers would use every day: Sites, Production line, Tool, Alerts, Tickets, Investigation, Approval, CAPA, and Rules & Process."
+**Say:** "Two things on screen. The navy and gold bar at the top is my presenter control panel. I use it to trigger events, change speed and reset. Everything below it is Meridian's console, the screens your engineers would use every day: Sites, Production line, Tool, Alerts, Tickets, Investigation, CAPA, and Rules & Process. The decision on each investigation is made on the Investigation page itself."
 
 **They see:** the presenter bar and the console tabs.
 
@@ -73,8 +73,9 @@ Do not open **What the AI should find** on the scenario card while sharing. It h
 
 1. **Click:** scenario picker → **SC-4 · Slow chamber seasoning drift** → **Run scenario**.
    - **Say:** "I've started the event. From here, nothing I do touches the outcome. The plant streams, and the rules decide."
-2. **Click:** **Tool** → E-01 (or the E-01 tile). Wait about 2 minutes at 1x.
-   - **They see:** the etch rate on chamber A ramps down and then crosses the lower control limit. The E-01 tile turns **Watch** and then **Alarm**.
+2. **Click:** **Speed** → **10x**, then **Tool** → E-01 (or the E-01 tile). The plant clock stays real time; 10x only makes the slow drift develop faster.
+   - **They see:** within about 15 seconds the E-01 tile turns **Watch** (a run of readings below the centre line). After about a minute more rules join and the tile goes to **Alarm**. By about 2 minutes the etch rate on chamber A crosses the lower control limit. At 1x the first alert takes about 4 minutes and the ramp about 20.
+   - **Click:** **Speed** → **1x** once the alert is up.
 3. **Click:** **Alerts**.
    - **They see:** one row per active alert: status, tool, time, the rule in plain words, the ticket button (for example **TKT-1001**) and **Open**. No evidence on this list.
    - **Say:** "The rules engine raised this from the live stream. It's deterministic code, not AI. A ticket opened automatically."
@@ -112,11 +113,11 @@ Optional cross-plant variant: **SC-5 · Precursor lot on two plants**. Depositio
 
 Continue from SC-3 (or SC-1 · Edge ring revision C on E-02 if you prefer an engineering-change story).
 
-1. **Click:** **Approval** → **Open** on the investigation.
-   - **They see:** **Recommended action**, the evidence pack, the agent steps, and the buttons **Approve CAPA + containment**, **Reject** and **Request info**. The approver is the signed-in user.
+1. **Click:** **Investigation** → **Open** on the investigation, then scroll to the **Decision** section.
+   - **They see:** **Recommended action** (one containment and one preventive step), and the buttons **Approve CAPA**, **Request more evidence** and **Reject**. The approver is the signed-in user.
    - **Say:** "The agent can recommend. It can't act. Only a person opens a CAPA."
-2. **Click:** **Approve CAPA + containment** and add a short comment.
-   - **They see:** a plain sentence such as "Approved by Bryan Weis at 9:42 AM". No tokens or hashes on screen.
+2. Type a short note in **Note or justification**, then **Click:** **Approve CAPA**. In the **Confirm approval** dialog, type the confirmation word it asks for, then **Approve and create CAPA**.
+   - **They see:** the decision record, read-only, such as "Approved by Bryan Weis at 9:42 AM" with the note. The buttons are gone: a decision is final. No tokens or hashes on screen.
 3. **Click:** **CAPA** → the new corrective action.
    - **They see:** the stages **Open → Containment → Root cause confirmed → Corrective action → Verification → Closed**, and the **Advance stage** button.
 4. **Click:** **Advance stage** once, to **Containment**.
@@ -159,9 +160,10 @@ Also under **Tickets → Operator report**: pick a **Tool**. The **Parameter** l
 1. **Click:** **Return on investment** (presenter bar).
    - **Say:** "Illustrative figures, with the assumptions stated."
 2. **Click:** **Metrics**.
-   - **They see:** completion rate and grounding score, category accuracy (from 24 graded test cases that run on every build), cost per successful investigation (n/a until one succeeds), spend today against the $2 cap.
-3. **Click:** **Rules & Process** → **Current state** / **Future state**.
-   - **Say:** "Here's how an issue moves today, with its hand-offs and error risks, and how it moves with the agents, with a human still approving."
+   - **They see:** completion rate and grounding score, category accuracy (from 27 graded test cases that run on every build), cost per successful investigation (n/a until one succeeds), spend today against the $2 cap.
+3. **Click:** **Rules & Process**.
+   - **They see:** the thresholds and settings, each business rule's conditions and actions, and the **Process map**: readings → rules check → alert → ticket → investigation → decision → CAPA → containment clears the alarm → close, with its numbers filled from the settings.
+   - **Say:** "Every number the system acts on is on this page, in plain words. Nothing is buried in code."
 4. Deck: architecture, security, 90-day plan, close.
 
 ---
@@ -190,7 +192,7 @@ Also under **Tickets → Operator report**: pick a **Tool**. The **Parameter** l
 | Symptom | Recovery |
 |---|---|
 | Nothing moves after **Run scenario** | Check **Speed** is 1x or higher and Plant data is **Live**. Wait 30 seconds. Then **Stop scenario**, **Soft reset**, and run again |
-| Need it faster | **Speed** → **2x** or **5x**. Set it back to **1x** before the next step |
+| Need it faster | **Speed** → **2x**, **5x** or **10x**. The plant clock stays real time; only the fault develops faster. Set it back to **1x** before the next step |
 | Wrong scenario running | **Stop scenario**, pick the right one, **Run scenario** |
 | Leftover alerts or tickets from a rehearsal | **Hard reset** → **Confirm hard reset**; wait for it to finish (about 30 seconds) |
 | Investigation slow, or the live model errors | AI engine → **Replay (saved answers, free, repeatable)**, then re-open. Plant data is unchanged |
