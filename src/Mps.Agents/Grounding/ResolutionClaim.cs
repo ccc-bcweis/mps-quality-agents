@@ -20,7 +20,8 @@ public sealed class ResolutionClaim
         IReadOnlyList<string> actions,
         IReadOnlyList<GroundedStatement> claims,
         IReadOnlyList<CitedEvidence>? explanations = null,
-        IReadOnlyList<EvidenceMatrixEntry>? evidenceMatrix = null)
+        IReadOnlyList<EvidenceMatrixEntry>? evidenceMatrix = null,
+        string? shape = null)
     {
         ArgumentNullException.ThrowIfNull(evidenceIds);
         ArgumentNullException.ThrowIfNull(counterEvidence);
@@ -36,6 +37,7 @@ public sealed class ResolutionClaim
         Claims = claims.ToArray();
         Explanations = explanations?.ToArray() ?? [];
         EvidenceMatrix = evidenceMatrix?.ToArray() ?? [];
+        Shape = string.IsNullOrWhiteSpace(shape) ? null : shape.Trim();
     }
 
     public RootCauseCategory? Category { get; }
@@ -55,4 +57,7 @@ public sealed class ResolutionClaim
     public IReadOnlyList<CitedEvidence> Explanations { get; }
 
     public IReadOnlyList<EvidenceMatrixEntry> EvidenceMatrix { get; }
+
+    /// <summary>The signal shape the agent reports, an id from the signal shape catalog. The cause check compares it with the measured shape.</summary>
+    public string? Shape { get; }
 }

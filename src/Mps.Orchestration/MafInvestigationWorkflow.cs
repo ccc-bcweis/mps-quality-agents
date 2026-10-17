@@ -197,7 +197,7 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
             return false;
         }
 
-        // A cause whose shape word contradicts the measured shape gets one retry with that shape fed back.
+        // A reported shape (the structured "shape" field) that is not the measured shape gets one retry with that shape fed back.
         // Grounding and the cause guard still run on every answer; a second miss escalates.
         string? feedback = null;
         ResolutionClaim? accepted;
@@ -231,14 +231,14 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
                 return false;
             }
 
-            if (CauseGuard.Check(accepted.Cause, gathered.Pack) is not { } guarded)
+            if (CauseGuard.Check(accepted, gathered.Pack) is not { } guarded)
             {
                 break;
             }
 
-            if (attempt < ShapeRetries && CauseGuard.ShapeConflict(accepted.Cause, gathered.Pack) is { } word)
+            if (attempt < ShapeRetries && CauseGuard.ShapeMismatch(accepted.Shape, gathered.Pack) is not null)
             {
-                feedback = CauseGuard.ShapeFeedback(word, gathered.Pack);
+                feedback = CauseGuard.ShapeFeedback(accepted.Shape, gathered.Pack);
                 continue;
             }
 

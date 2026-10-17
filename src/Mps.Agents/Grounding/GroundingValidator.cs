@@ -46,7 +46,8 @@ public static class GroundingValidator
                 claim.Actions,
                 claim.Claims,
                 claim.Explanations.Where(Keep).ToArray(),
-                claim.EvidenceMatrix);
+                claim.EvidenceMatrix,
+                claim.Shape);
         }
 
         var failures = new List<string>();
@@ -169,7 +170,8 @@ public static class GroundingValidator
             claim.Actions,
             claim.Claims,
             explanations,
-            matrix);
+            matrix,
+            claim.Shape);
         return new GroundingResult(true, [], replacement, true);
     }
 
