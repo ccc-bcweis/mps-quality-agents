@@ -5,6 +5,7 @@ import { SpeedControl } from "./SpeedControl";
 import { readRunning, readScenario, RUNNING_EVENT, storeRunning, storeScenario } from "./harnessSession";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
+import { hubConnected, onHub } from "../live/fleetHub";
 import type { AdminSession, ResetKind, ScriptedScenario } from "../api/types";
 import { useConsole, type BannerMode } from "../context/ConsoleContext";
 import { HARNESS_LINKS } from "../shell/navigation";
@@ -13,6 +14,9 @@ import { ModeBanner } from "./ModeBanner";
 import { ScenarioControl } from "./ScenarioControl";
 import { Term } from "./Term";
 import { btn } from "./ui";
+
+/** Reset progress read while the hub is down; a reset lasts seconds, so this is faster than the page fallback. */
+const RESET_FALLBACK_POLL_MS = 2000;
 
 /** Missing or any other value means collapsed. Each browser remembers its own choice. */
 export const HARNESS_STORAGE_KEY = "mps.harness";
@@ -132,7 +136,13 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
     setResetPending(true);
     setResetMessage(null);
     let active = true;
+    // Progress streams over the fleet hub (resetProgress). Only when the stream is down does the page read it, slowly.
+    const stopProgress = onHub("resetProgress", (payload) => {
+      const message = (payload as { message?: string } | null)?.message;
+      if (active && message) setResetMessage(message);
+    });
     const poll = () => {
+      if (hubConnected()) return;
       api
         .getResetProgress()
         .then((progress) => {
@@ -143,7 +153,7 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
         });
     };
     poll();
-    const timer = window.setInterval(poll, 400);
+    const timer = window.setInterval(poll, RESET_FALLBACK_POLL_MS);
     try {
       const result = await api.resetDemo(kind);
       storeRunning("");
@@ -160,6 +170,7 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
       setResetMessage("The reset was not accepted.");
     } finally {
       window.clearInterval(timer);
+      stopProgress();
       setResetPending(false);
     }
   }

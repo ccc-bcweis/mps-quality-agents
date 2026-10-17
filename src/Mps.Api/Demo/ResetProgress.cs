@@ -3,12 +3,16 @@
 namespace Mps.Api.Demo;
 
 /// <summary>
-/// Latest reset phase. The reset request updates it. The harness polls it so the page stays usable.
+/// Latest reset phase. The reset request updates it and the live stream pushes each change to the harness
+/// (resetProgress), so the page stays usable without polling.
 /// </summary>
 public sealed class ResetProgress
 {
     private readonly object _gate = new();
     private ResetProgressSnapshot _current = ResetProgressSnapshot.Idle;
+
+    /// <summary>Raised after every change, outside the lock.</summary>
+    public event Action<ResetProgressSnapshot>? Changed;
 
     public ResetProgressSnapshot Current
     {
@@ -28,6 +32,8 @@ public sealed class ResetProgress
         {
             _current = new ResetProgressSnapshot(true, kind, "starting", "Reset started.");
         }
+
+        Changed?.Invoke(Current);
     }
 
     public void Report(string phase, string message)
@@ -37,6 +43,8 @@ public sealed class ResetProgress
         {
             _current = _current with { Running = true, Phase = phase, Message = message };
         }
+
+        Changed?.Invoke(Current);
     }
 
     public void Complete(string kind)
@@ -45,6 +53,8 @@ public sealed class ResetProgress
         {
             _current = new ResetProgressSnapshot(false, kind, "done", "Reset finished.");
         }
+
+        Changed?.Invoke(Current);
     }
 
     public void Fail(string message)
@@ -54,6 +64,8 @@ public sealed class ResetProgress
             var text = string.IsNullOrWhiteSpace(message) ? "Reset failed." : message.Trim();
             _current = new ResetProgressSnapshot(false, _current.Kind, "failed", text);
         }
+
+        Changed?.Invoke(Current);
     }
 }
 

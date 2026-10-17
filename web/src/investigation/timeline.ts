@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import type { Investigation, InvestigationStage } from "../api/types";
 
-export const INVESTIGATION_POLL_MS = 5000;
-
 export type StepStatus = "queued" | "running" | "done" | "escalated";
 export type StepActor = "rules" | "agent" | "human";
 

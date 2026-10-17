@@ -5,7 +5,6 @@
 import { http, HttpResponse } from "msw";
 import { handlers as contractHandlers } from "../../../contracts/msw/handlers";
 import type { Alert, BusinessRule, CapabilityType, FaultInjectionRequest, HumanDecisionKind, Incident, Investigation, MetadataLine, MetadataSite, MetadataToolCard, OpenIncidentRequest, PrintoutConfirmRequest, PrintoutInspection, ProcessMap, RuleSetting, ScenarioRun, Ticket } from "../api/types";
-import { telemetryForTool } from "../fleet/telemetry";
 import { latestInvestigationForIncident } from "../investigation/ticketRoute";
 import { incidents, investigationFor, investigations, tools } from "./demoData";
 import { toolInPlant } from "../sites/selection";
@@ -432,14 +431,6 @@ export const handlers = [
     const tool = tools.find((item) => item.id === toolId) ?? toolRecord(toolId);
     if (!tool) return problem("Tool was not found.", 404);
     return HttpResponse.json(clone(tool));
-  }),
-
-  http.get("/api/tools/:toolId/telemetry", ({ params }) => {
-    const toolId = String(params.toolId);
-    const faulted = allAlerts().some((alert) => alert.toolId === toolId);
-    const rows = telemetryForTool(toolId, { applyDemoFault: faulted });
-    if (rows.length === 0) return problem("Tool was not found.", 404);
-    return HttpResponse.json(rows);
   }),
 
   http.get("/api/fleet/live", () => HttpResponse.json({ simulatedNow: "2026-09-01T00:02:00Z", tools: [] })),

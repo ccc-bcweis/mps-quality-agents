@@ -1,11 +1,12 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { describe, expect, it } from "vitest";
 import { investigations } from "../mocks/demoData";
-import { buildAgentSteps, INVESTIGATION_POLL_MS } from "./timeline";
+import { FALLBACK_POLL_MS } from "../live/fleetHub";
+import { buildAgentSteps } from "./timeline";
 
 describe("agent step timeline", () => {
-  it("keeps the poll slower than a page render and covers every stage chip", () => {
-    expect(INVESTIGATION_POLL_MS).toBeGreaterThanOrEqual(5000);
+  it("reloads only slowly while the stream is down and covers every stage chip", () => {
+    expect(FALLBACK_POLL_MS).toBeGreaterThanOrEqual(5000);
     const s1 = buildAgentSteps(investigations[0]);
     expect(s1.map((step) => step.status)).toEqual([
       "done",

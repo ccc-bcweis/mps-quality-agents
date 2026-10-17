@@ -5,6 +5,7 @@ import { btnSm } from "./ui";
 import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { ApiProblem, api } from "../api/client";
+import { useSimClock } from "../live/useLive";
 import { entryRedirect } from "../auth/signOut";
 import type { AdminSession } from "../api/types";
 import { useConsole } from "../context/ConsoleContext";
@@ -21,26 +22,9 @@ export type ShellOutletContext = {
   session: AdminSession | null;
 };
 
-/** Plant simulation clock, polled so the header shows the time every record is stamped with. */
+/** Plant simulation clock: read once, then the hub's clock message keeps the header current. */
 function useSimNow(): string | null {
-  const [now, setNow] = useState<string | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const read = () =>
-      api
-        .listFleetLive()
-        .then((live) => {
-          if (!cancelled && live?.simulatedNow) setNow(live.simulatedNow);
-        })
-        .catch(() => undefined);
-    void read();
-    const timer = window.setInterval(read, 15000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-    };
-  }, []);
-  return now;
+  return useSimClock();
 }
 
 function useAdminSession(): AdminSession | null {

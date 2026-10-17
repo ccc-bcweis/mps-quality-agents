@@ -7,7 +7,10 @@ using Mps.Simulator.Telemetry;
 
 namespace Mps.Api.Http;
 
-/// <summary>Shapes the decimated simulator log into the payloads the console polls.</summary>
+/// <summary>One kept sample on its way to the toolLive hub message.</summary>
+public readonly record struct LiveStreamPoint(string ChamberId, string Parameter, DateTimeOffset At, double Value);
+
+/// <summary>Shapes the decimated simulator log into the console's live payloads (first load and hub deltas).</summary>
 public static class LiveResponses
 {
     public static FleetLiveResponse Fleet(PlantSimulation plant, IReadOnlyDictionary<string, string>? alertStatus = null)
@@ -57,6 +60,73 @@ public static class LiveResponses
         {
             RecipeName = plant.RecipeNameAt(toolId, plant.SimulatedNow),
         };
+    }
+
+    /// <summary>
+    /// The toolLive hub message: the tool's latest readings and only the new points per series.
+    /// </summary>
+    public static ToolLiveDelta? ToolDelta(
+        PlantSimulation plant,
+        string toolId,
+        IReadOnlyDictionary<string, string>? alertStatus,
+        IReadOnlyList<LiveStreamPoint> points,
+        bool resync,
+        bool manual = false)
+    {
+        ArgumentNullException.ThrowIfNull(plant);
+        ArgumentNullException.ThrowIfNull(points);
+        if (string.IsNullOrWhiteSpace(toolId) || plant.FindTool(toolId) is null)
+        {
+            return null;
+        }
+
+        var mapped = MapAll(plant, plant.Log.SnapshotForTool(toolId));
+        var series = resync
+            ? []
+            : points
+                .GroupBy(point => (point.Parameter, point.ChamberId))
+                .OrderBy(group => group.Key.Parameter, StringComparer.Ordinal)
+                .ThenBy(group => group.Key.ChamberId, StringComparer.Ordinal)
+                .Select(group =>
+                {
+                    var ordered = group.OrderBy(point => point.At).ToArray();
+                    var last = ordered[^1];
+                    var window = IsCounter(last.Parameter, null) ? null : plant.WindowAt(toolId, last.Parameter, last.At);
+                    return new LiveSeriesResponse(
+                        last.Parameter,
+                        last.ChamberId,
+                        ordered.Select(point => new LivePointResponse(point.At, point.Value)).ToArray(),
+                        window?.Nominal,
+                        window is null ? null : Math.Max(window.Sigma, 1e-6));
+                })
+                .ToArray();
+        return new ToolLiveDelta(
+            toolId,
+            SiteOf(plant, toolId),
+            plant.SimulatedNow,
+            alertStatus is null ? mapped.Status : ToolAlertStatus.Of(alertStatus, toolId),
+            mapped.Readings,
+            series,
+            plant.RecipeNameAt(toolId, plant.SimulatedNow),
+            resync,
+            manual);
+    }
+
+    /// <summary>The fleetLive hub message rows for the tools whose readings changed.</summary>
+    public static IReadOnlyList<FleetLiveToolResponse> FleetRows(
+        PlantSimulation plant,
+        IEnumerable<string> toolIds,
+        IReadOnlyDictionary<string, string>? alertStatus)
+    {
+        ArgumentNullException.ThrowIfNull(plant);
+        ArgumentNullException.ThrowIfNull(toolIds);
+        return toolIds
+            .Distinct(StringComparer.Ordinal)
+            .Select(toolId => (toolId, readings: plant.Log.SnapshotForTool(toolId)))
+            .Where(row => row.readings.Count > 0)
+            .Select(row => ToolRow(plant, row.toolId, row.readings, alertStatus))
+            .OrderBy(tool => tool.ToolId, StringComparer.Ordinal)
+            .ToArray();
     }
 
     private static FleetLiveToolResponse ToolRow(PlantSimulation plant, string toolId, IReadOnlyList<LiveReading> readings, IReadOnlyDictionary<string, string>? alertStatus)

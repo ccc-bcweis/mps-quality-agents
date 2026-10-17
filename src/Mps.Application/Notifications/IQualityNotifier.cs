@@ -16,6 +16,12 @@ public interface IQualityNotifier
 
     Task InvestigationChangedAsync(InvestigationSnapshot snapshot, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// An investigation started gathering evidence. Only the console hears it (no lifecycle event): the saved record
+    /// follows through <see cref="InvestigationChangedAsync"/> when gathering ends.
+    /// </summary>
+    Task InvestigationRunningAsync(InvestigationSnapshot placeholder, CancellationToken cancellationToken) => Task.CompletedTask;
+
     Task CapaChangedAsync(CapaAction capa, string eventName, CancellationToken cancellationToken);
 
     Task FaultInjectedAsync(Guid faultId, string correlationId, string toolId, CancellationToken cancellationToken);

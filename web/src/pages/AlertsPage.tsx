@@ -15,6 +15,7 @@ import { byNewestTime, toolPlainName } from "../history/order";
 import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
 import { parameterLabel } from "../sites/parameters";
+import { useRecordPatches } from "../live/useLive";
 
 /** "1 sample out of limits", "12 samples out of limits". Counts distinct readings, not rule checks. */
 export function samplesOutOfLimits(count: number): string {
@@ -35,6 +36,12 @@ export function AlertsPage() {
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const injected = params.get("injected") === "1";
+  // New and cleared alerts, tickets and incidents stream in over the fleet hub; a reset or reconnect reloads.
+  const [reloadVersion, setReloadVersion] = useState(0);
+  useRecordPatches(
+    { alerts: setAlerts, tickets: setTickets, incidents: setIncidents },
+    { siteId, onReload: () => setReloadVersion((version) => version + 1) },
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -63,7 +70,7 @@ export function AlertsPage() {
     return () => {
       cancelled = true;
     };
-  }, [injected, localAlerts, siteId]);
+  }, [injected, localAlerts, siteId, reloadVersion]);
 
   const merged = [...localAlerts, ...alerts]
     // One row per alert. Two tools in one scenario share a correlation id but each has its own alert.

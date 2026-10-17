@@ -4,6 +4,8 @@ import { mpsColor } from "../brand/colors";
 export function Sparkline({ values, color = mpsColor.nominal }: { values: number[]; color?: string }) {
   const width = 220;
   const height = 28;
+  // Fewer than two live values: an empty strip of the same height, no made-up line.
+  if (values.length < 2) return <svg className="mt-2 h-7 w-full" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden="true" data-empty="true" />;
   const min = Math.min(...values);
   const max = Math.max(...values);
   const span = max - min || 1;

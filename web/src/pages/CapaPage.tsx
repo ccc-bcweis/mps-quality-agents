@@ -1,6 +1,9 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useRecordPatches } from "../live/useLive";
+import { useHubEvent } from "../live/fleetHub";
+import { isRecord } from "../live/stream";
 import { api, ApiProblem } from "../api/client";
 import { approvalSentence, CAPA_STAGE_LABEL, formatStamp } from "../api/labels";
 import type { Capa, CapaStage, Incident, Investigation, Tool } from "../api/types";
@@ -39,6 +42,11 @@ export function CapaPage() {
   const [pending, setPending] = useState(false);
   const [ready, setReady] = useState(false);
   const [capaTools, setCapaTools] = useState<Record<string, string>>({});
+  // New and advanced CAPAs stream in over the fleet hub; the open CAPA updates in place. A reset or reconnect reloads.
+  const [reloadVersion, setReloadVersion] = useState(0);
+  useRecordPatches({ capas: setListed, incidents: setIncidents }, { onReload: () => setReloadVersion((version) => version + 1) });
+  useHubEvent("capaAdvanced", (payload) => setCapa((current) => (current && isRecord(payload) && payload.id === current.id ? { ...current, ...(payload as Capa) } : current)));
+  useHubEvent("capaChanged", (payload) => setCapa((current) => (current && isRecord(payload) && payload.id === current.id ? { ...current, ...(payload as Capa) } : current)));
 
   useEffect(() => {
     let cancelled = false;
@@ -60,7 +68,7 @@ export function CapaPage() {
     return () => {
       cancelled = true;
     };
-  }, [syncCapas]);
+  }, [syncCapas, reloadVersion]);
 
   useEffect(() => {
     let cancelled = false;

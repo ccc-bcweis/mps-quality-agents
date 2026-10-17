@@ -174,6 +174,9 @@ public static class QualityHost
         builder.Services.AddHostedService<EventLogSubscriber>();
         builder.Services.AddHostedService<PlantCommandSubscriber>();
         builder.Services.AddHostedService<BusSignalRBridge>();
+        builder.Services.AddSingleton<LiveSubscriptions>();
+        builder.Services.AddSingleton<LiveStreamPublisher>();
+        builder.Services.AddHostedService(services => services.GetRequiredService<LiveStreamPublisher>());
         builder.Services.AddHostedService<SimulationTickService>();
     }
 

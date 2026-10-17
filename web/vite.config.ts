@@ -73,25 +73,8 @@ function glossaryPlugin(): Plugin {
   };
 }
 
-function offlineFloorPlugin(): Plugin {
-  const virtualId = "virtual:offline-floor";
-  const resolvedId = "\0virtual:offline-floor";
-  return {
-    name: "mps-offline-floor",
-    resolveId(id) {
-      return id === virtualId ? resolvedId : null;
-    },
-    load(id) {
-      if (id !== resolvedId) return null;
-      const file = path.resolve(root, "../data/metadata/offline-floor.json");
-      if (!fs.existsSync(file)) throw new Error("data/metadata/offline-floor.json is required for the offline teaching floor.");
-      return `export const offlineFloor = ${fs.readFileSync(file, "utf8")};\n`;
-    },
-  };
-}
-
 export default defineConfig({
-  plugins: [react(), glossaryPlugin(), fleetSensorPlugin(), offlineFloorPlugin()],
+  plugins: [react(), glossaryPlugin(), fleetSensorPlugin()],
   resolve: {
     alias: {
       // contracts/msw/handlers.ts lives outside this package and imports "msw".
