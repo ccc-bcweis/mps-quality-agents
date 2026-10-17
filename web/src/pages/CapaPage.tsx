@@ -5,7 +5,8 @@ import { useRecordPatches } from "../live/useLive";
 import { useHubEvent } from "../live/fleetHub";
 import { isRecord } from "../live/stream";
 import { api, ApiProblem } from "../api/client";
-import { approvalSentence, CAPA_STAGE_LABEL, formatStamp } from "../api/labels";
+import { approvalSentence, formatStamp } from "../api/labels";
+import { CAPA_STAGES, capaStageLabel } from "../labels";
 import type { Capa, CapaStage, Incident, Investigation, Tool } from "../api/types";
 import { AgentTimeline } from "../components/AgentTimeline";
 import { EvidencePack } from "../components/EvidencePack";
@@ -20,7 +21,7 @@ import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
 import { splitBySite } from "../sites/splitBySite";
 import { formatLocalWhen } from "../investigation/format";
-import { CAPA_STAGES, nextCapaStage } from "../lifecycle";
+import { nextCapaStage } from "../lifecycle";
 
 export function CapaPage() {
   useSetLifecycle("capa");
@@ -204,7 +205,7 @@ export function CapaPage() {
     const toolId = toolFor(item);
     return {
       id: item.id,
-      status: CAPA_STAGE_LABEL[item.stage],
+      status: capaStageLabel(item.stage),
       toolName: toolPlainName(tools, toolId),
       toolId,
       time: formatStamp(item.openedAt),

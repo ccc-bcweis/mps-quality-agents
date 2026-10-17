@@ -129,7 +129,7 @@ public sealed class CapaLifecycleService : ICapaLifecycleService
         if (active > 0)
         {
             throw new LifecycleConflictException(
-                $"Readings on {incident.ToolId} {Mps.Domain.Telemetry.ParameterNames.Display(incident.Parameter)} are not back in control yet. {active} alert(s) still active; an alert clears after {Mps.Application.Spc.AlertClearing.InControlReadings} in-control readings in a row.");
+                $"Readings on {incident.ToolId} {Mps.Application.Metadata.ParameterNames.Display(incident.Parameter)} are not back in control yet. {active} alert(s) still active; an alert clears after {Mps.Application.Spc.SpcRuleSettings.Shared.Clearing.Readings} in-control readings in a row.");
         }
     }
 

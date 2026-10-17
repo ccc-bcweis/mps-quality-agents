@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import { FAMILY_PROCESS, INVESTIGATION_STAGE_LABEL, formatStamp } from "../api/labels";
+import { formatStamp } from "../api/labels";
+import { FAMILY_PROCESS, INVESTIGATION_STAGE_LABEL } from "../labels";
 import type { Alert, Incident, Investigation, ManualReading, Ticket, Tool } from "../api/types";
 
 /** Linked records shown on the tool page, newest first. */
@@ -11,7 +12,7 @@ import type { SchematicReading } from "../components/ToolSchematic";
 import type { FleetSensor } from "../fleet/sensors";
 import { linkedForTool, orderedLinked, type LinkedEntry } from "../fleet/linkedRecords";
 import { AttachmentViewer } from "../components/AttachmentViewer";
-import { ruleLabel } from "../api/labels";
+import { ruleLabel } from "../labels";
 import { SpcChart, axisNumber } from "../components/SpcChart";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
@@ -24,8 +25,9 @@ import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
 import { statusTone, WAITING_FOR_READINGS } from "../fleet/catalog";
 import { sensorsForTool } from "../fleet/sensors";
-import { sensorLabel } from "../fleet/schematic";
-import { liveReadingMap, overlayWindows, parameterLabel, recipeLabel, seriesLimits, seriesPoints, toolTile } from "../live/overlay";
+import { pointLabel } from "../fleet/schematic";
+import { parameterLabel } from "../labels";
+import { liveReadingMap, overlayWindows, recipeLabel, seriesLimits, seriesPoints, toolTile } from "../live/overlay";
 import { useLiveResource, useRecordPatches, useToolLive } from "../live/useLive";
 import { clearAlert, upsertRecord, type AlertCleared, type ToolLiveDelta } from "../live/stream";
 import { latestManual, manualMarker, manualTile, seriesFor } from "../live/manual";
@@ -145,7 +147,7 @@ export function ToolPage() {
   const livePoints = seriesPoints(live, seriesParameter, selected?.chamberId);
   const serverLimits = seriesLimits(live, seriesParameter, selected?.chamberId);
   const pointCount = livePoints?.length ?? 0;
-  const chartLabel = selected ? sensorLabel(selected.schematicAnchor) : parameterLabel(seriesParameter);
+  const chartLabel = selected ? pointLabel(selected.schematicAnchor) : parameterLabel(seriesParameter);
   const chartUnit = selected?.unit ?? "";
   const cumulative = selected?.kind === "cumulative";
   const finding = seriesFinding(alerts, seriesParameter, selected?.chamberId);

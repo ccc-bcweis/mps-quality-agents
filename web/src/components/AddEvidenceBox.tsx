@@ -1,20 +1,17 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { useState } from "react";
 import type { Investigation } from "../api/types";
+import { limits } from "../labels";
 import { HarnessPrintout } from "./HarnessPrintout";
 import { btn, btnInfo } from "./ui";
 
-/** Matches InvestigationRounds.MaxEvidenceLength. */
-export const MAX_EVIDENCE_LENGTH = 4000;
-/** Matches EvidenceRoundSettings.DefaultMaxRounds when an older record has no maxRounds. */
-export const DEFAULT_MAX_ROUNDS = 5;
 
 export function roundOf(investigation: Investigation): number {
   return investigation.round && investigation.round > 0 ? investigation.round : 1;
 }
 
 export function maxRoundsOf(investigation: Investigation): number {
-  return investigation.maxRounds && investigation.maxRounds > 0 ? investigation.maxRounds : DEFAULT_MAX_ROUNDS;
+  return investigation.maxRounds && investigation.maxRounds > 0 ? investigation.maxRounds : (limits()?.maxEvidenceRounds ?? 0);
 }
 
 /** True while another round is allowed on this ticket. */
@@ -64,7 +61,7 @@ export function AddEvidenceBox({
           aria-label="Evidence to add"
           className="mt-1 block w-full rounded border border-mps-line bg-transparent p-2"
           rows={4}
-          maxLength={MAX_EVIDENCE_LENGTH}
+          maxLength={limits()?.maxEvidenceChars}
           value={text}
           onChange={(event) => setText(event.target.value)}
         />

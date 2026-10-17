@@ -109,7 +109,7 @@ public sealed partial class StreamSpcPublisher
     /// <summary>Signals whose fault was removed. Watched for a while so their alerts can clear; never re-raised.</summary>
     private readonly ConcurrentDictionary<string, (string ToolId, string Chamber, string Parameter, DateTimeOffset Onset, DateTimeOffset LastSeen)> _watch = new(StringComparer.Ordinal);
 
-    private static readonly TimeSpan WatchFor = TimeSpan.FromMinutes(30);
+    private static TimeSpan WatchFor => Mps.Application.Spc.SpcRuleSettings.Shared.RecoveryWatch;
 
     private List<SpcSample> Capture()
     {

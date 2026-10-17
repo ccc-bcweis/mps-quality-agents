@@ -11,7 +11,8 @@ import type { AdminSession } from "../api/types";
 import { useConsole } from "../context/ConsoleContext";
 import { SiteProvider, useSite } from "../context/SiteContext";
 import { CONSOLE_TABS } from "../shell/navigation";
-import { PLANTS } from "../sites/selection";
+import { plantOptions } from "../sites/selection";
+import { countWord, loadCatalog, plants, useCatalog } from "../labels";
 import { Explain } from "./Explain";
 import { GlossaryScope } from "./GlossaryScope";
 import { HarnessBar } from "./HarnessBar";
@@ -72,6 +73,12 @@ export function ConsoleFrame() {
   const { dataMode, dataScenarioId } = useConsole();
   const { siteId, setSiteId } = useSite();
   const [healthOn, setHealthOn] = useState(false);
+  useCatalog();
+
+  useEffect(() => {
+    // Usually loaded before the first render (main.tsx). A signed-out first load retries once the session is known.
+    void loadCatalog(api.consoleCatalog).catch(() => undefined);
+  }, [session]);
 
   function chooseSite(next: string) {
     setSiteId(next);
@@ -108,7 +115,7 @@ export function ConsoleFrame() {
           <img src="/logo-concept-1.svg" width={32} height={32} alt="Meridian Precision Systems mark" />
           <span>
             <strong className="block text-mps-body">Meridian Precision Systems</strong>
-            <span className="block font-mono text-mps-micro uppercase tracking-wider text-mps-muted">Fab ops console · three plants</span>
+            <span className="block font-mono text-mps-micro uppercase tracking-wider text-mps-muted">Fab ops console · {countWord(plants().length)} plants</span>
           </span>
         </Link>
         <div className="ml-auto flex flex-wrap items-center gap-4 font-mono text-mps-micro text-mps-muted">
@@ -120,7 +127,7 @@ export function ConsoleFrame() {
               value={siteId}
               onChange={(event) => chooseSite(event.target.value)}
             >
-              {PLANTS.map((plant) => (
+              {plantOptions().map((plant) => (
                 <option key={plant.id} value={plant.id}>
                   {plant.name}
                 </option>
@@ -131,7 +138,7 @@ export function ConsoleFrame() {
             <Led tone={healthOn ? "nominal" : "off"} /> Plant time <b className="font-medium text-mps-secondary" title="Readings are stamped as they arrive, in your local time.">{simNow ? formatStamp(simNow) : "…"}</b>
           </span>
           <span className="whitespace-nowrap">
-            Plants <b className="font-medium text-mps-secondary">3</b>
+            Plants <b className="font-medium text-mps-secondary">{plants().length || "…"}</b>
           </span>
           <UserMenu session={session} />
           <Link

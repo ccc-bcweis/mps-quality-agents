@@ -16,7 +16,7 @@ const northwaterAlert = {
   toolId: "E-01",
   parameter: "gasFlow",
   severity: "high",
-  rule: "westernElectric1",
+  rule: "western-electric-1",
   raisedAt: "2026-10-14T15:00:00Z",
   correlationId: "corr-nw",
 };
@@ -26,7 +26,7 @@ const ironwoodAlert = {
   toolId: "I-E-01",
   parameter: "gasFlow",
   severity: "high",
-  rule: "westernElectric1",
+  rule: "western-electric-1",
   raisedAt: "2026-10-14T15:01:00Z",
   correlationId: "corr-iw",
 };

@@ -25,14 +25,14 @@ public sealed class SitePlantTests
         Fleet.Tools.Should().HaveCount(8);
 
         var original = world.FindTool("D-01");
-        original!.SiteId.Should().Be(SiteIds.Northwater);
+        original!.SiteId.Should().Be("northwater");
         original.BayId.Should().Be("Bay-1");
         original.Status.Should().Be("nominal");
         world.FindTool("D-03")!.Status.Should().Be("nominal");
         world.FindTool("I-D-01")!.Status.Should().Be("nominal");
         world.FindTool("I-E-01")!.Status.Should().Be("warning");
-        world.FindTool("E-01")!.SiteId.Should().Be(SiteIds.Northwater);
-        world.FindTool("P-S-01")!.SiteId.Should().Be(SiteIds.Lumen);
+        world.FindTool("E-01")!.SiteId.Should().Be("northwater");
+        world.FindTool("P-S-01")!.SiteId.Should().Be("lumen");
         world.FindTool("I-D-01")!.Spec.Sensors.Should().OnlyContain(sensor => sensor.Id.StartsWith("I-D-01", StringComparison.Ordinal));
         world.Sites.Should().OnlyContain(site => site.Name == SiteIds.NameFor(site.Id));
         world.Find("northwater")!.Flows.Should().NotBeEmpty();
@@ -52,7 +52,7 @@ public sealed class SitePlantTests
 
         var etch = SiteComparison.Compare(first, ToolFamily.Etch, Rules.ControlLimitSigma, Rules.WatchSigma);
         var again = SiteComparison.Compare(second, ToolFamily.Etch, Rules.ControlLimitSigma, Rules.WatchSigma);
-        etch.ReferenceSiteId.Should().Be(SiteIds.Northwater);
+        etch.ReferenceSiteId.Should().Be("northwater");
         Flagged(etch).Should().Equal(Flagged(again));
         Flagged(etch).Should().BeEquivalentTo("escTemperature@ironwood", "wallTemperature@ironwood");
         Flagged(SiteComparison.Compare(first, ToolFamily.Deposition, Rules.ControlLimitSigma, Rules.WatchSigma)).Should().BeEmpty();
@@ -60,8 +60,8 @@ public sealed class SitePlantTests
         Flagged(SiteComparison.Compare(first, ToolFamily.Clean, Rules.ControlLimitSigma, Rules.WatchSigma)).Should().BeEmpty();
 
         var esc = etch.Parameters.Should().ContainSingle(row => row.Parameter == "escTemperature").Subject;
-        esc.Sites.Should().ContainSingle(row => row.SiteId == SiteIds.Northwater && !row.Discrepancy && row.Reason == null);
-        var iron = esc.Sites.Should().ContainSingle(row => row.SiteId == SiteIds.Ironwood && row.Discrepancy).Subject;
+        esc.Sites.Should().ContainSingle(row => row.SiteId == "northwater" && !row.Discrepancy && row.Reason == null);
+        var iron = esc.Sites.Should().ContainSingle(row => row.SiteId == "ironwood" && row.Discrepancy).Subject;
         iron.Reason.Should().Contain("electrostatic chuck temperature");
         iron.Reason.Should().Contain("hotter");
         iron.Reason.Should().Contain("Ironwood Fab");
@@ -69,8 +69,8 @@ public sealed class SitePlantTests
         iron.Reason.Should().Contain("spread is wider");
         iron.Reason.Should().Contain("alarm rate");
         iron.Reason.Should().Contain("Uptime and yield");
-        iron.Mean.Should().BeGreaterThan(esc.Sites.Single(row => row.SiteId == SiteIds.Northwater).Mean);
-        esc.Sites.Should().Contain(row => row.SiteId == SiteIds.Lumen && !row.Discrepancy);
+        iron.Mean.Should().BeGreaterThan(esc.Sites.Single(row => row.SiteId == "northwater").Mean);
+        esc.Sites.Should().Contain(row => row.SiteId == "lumen" && !row.Discrepancy);
 
         foreach (var site in first.Sites)
         {

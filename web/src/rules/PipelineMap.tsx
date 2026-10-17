@@ -2,7 +2,7 @@
 import type { ReactNode } from "react";
 import type { BusinessRule, RuleSetting } from "../api/types";
 import { Explain } from "../components/Explain";
-import { CAPA_STAGES } from "../lifecycle";
+import { CAPA_STAGES } from "../labels";
 
 /** Small line pictograms, one per station. Stroke only, so they follow the text colour. */
 const ICONS: Record<string, ReactNode> = {
@@ -93,14 +93,16 @@ const TONE = {
 
 /** The stations of the real flow, filled from the rule settings and business rules the server is running with. */
 export function pipelineStations(settings: RuleSetting[], rules: BusinessRule[]): Station[] {
-  const value = (id: string, fallback: string) => settings.find((setting) => setting.id === id)?.value ?? fallback;
-  const on = (id: string) => value(id, "true") === "true";
+  // Every number is the running value from the server. A setting that did not load shows a dash, never a guess.
+  const value = (id: string) => settings.find((setting) => setting.id === id)?.value ?? "—";
+  const on = (id: string) => settings.find((setting) => setting.id === id)?.value === "true";
+  const brief = (id: string) => settings.find((setting) => setting.id === id)?.help?.replace(/\.$/, "") ?? "—";
   const ruleParts = [
-    on("spc.we1.on") ? `Western Electric rule 1: one reading beyond ${value("spc.we1.sigma", "3")} sigma` : null,
-    on("spc.we2.on") ? `Western Electric rule 2: ${settings.find((setting) => setting.id === "spc.we2.count")?.help?.replace(/\.$/, "") ?? "2 of 3 beyond 2 sigma"}` : null,
-    on("spc.we3.on") ? `Western Electric rule 3: ${settings.find((setting) => setting.id === "spc.we3.count")?.help?.replace(/\.$/, "") ?? "4 of 5 beyond 1 sigma"}` : null,
-    on("spc.we4.on") ? `Western Electric rule 4: ${value("spc.we4.count", "8")} readings in a row on one side` : null,
-    on("spc.nelson.on") ? `Nelson rule 6: ${value("spc.nelson.count", "6")} readings in a row, each higher` : null,
+    on("spc.we1.on") ? `Western Electric rule 1: ${brief("spc.we1.on")}` : null,
+    on("spc.we2.on") ? `Western Electric rule 2: ${brief("spc.we2.on")}` : null,
+    on("spc.we3.on") ? `Western Electric rule 3: ${brief("spc.we3.on")}` : null,
+    on("spc.we4.on") ? `Western Electric rule 4: ${brief("spc.we4.on")}` : null,
+    on("spc.nelson.on") ? `Nelson rule 6: ${brief("spc.nelson.on")}` : null,
   ].filter((part): part is string => part !== null);
   const ticketRules = rules.filter((rule) => rule.actions.some((action) => action.type === "open-ticket"));
   const queues = [...new Set(ticketRules.flatMap((rule) => rule.actions.filter((action) => action.type === "route-to-queue" && action.queue).map((action) => action.queue as string)))];
@@ -115,13 +117,13 @@ export function pipelineStations(settings: RuleSetting[], rules: BusinessRule[])
     {
       id: "rules",
       title: "Rules check every reading",
-      text: `Each reading is compared with the recipe spec for the step that was running and with SPC control limits at ${value("spc.controlLimitSigma", "3")} sigma. These patterns count as a rule break:`,
+      text: `Each reading is compared with the recipe spec for the step that was running and with SPC control limits at ${value("spc.controlLimitSigma")} sigma. These patterns count as a rule break:`,
       parts: ruleParts,
     },
     {
       id: "alert",
       title: "One alert per tool and parameter",
-      text: `A repeat break updates the same alert instead of opening a new one. The tool shows watch when a rule breaks or a reading is past ${value("spc.watchSigma", "2")} sigma while still inside the recipe spec, and alarm once a reading is outside the recipe spec. At ${value("spc.criticalSigma", "4")} sigma the alert is critical.`,
+      text: `A repeat break updates the same alert instead of opening a new one. The tool shows watch when a rule breaks or a reading is past ${value("spc.watchSigma")} sigma while still inside the recipe spec, and alarm once a reading is outside the recipe spec. At ${value("spc.criticalSigma")} sigma the alert is critical.`,
     },
     {
       id: "ticket",
@@ -132,7 +134,7 @@ export function pipelineStations(settings: RuleSetting[], rules: BusinessRule[])
       id: "investigation",
       title: "The investigation gathers evidence",
       text: waits
-        ? `It waits until ${value("investigation.wait.minReadings", "20")} readings have arrived since the first rule break, so the signal shape is clear. Then:`
+        ? `It waits until ${value("investigation.wait.minReadings")} readings have arrived since the first rule break, so the signal shape is clear. Then:`
         : "It starts at once. Then:",
       parts: [
         "Triage plans which records to read",
@@ -149,10 +151,10 @@ export function pipelineStations(settings: RuleSetting[], rules: BusinessRule[])
         { label: "Approve CAPA", result: "opens the CAPA", tone: "ok" },
         {
           label: "Request more evidence",
-          result: `the engineer adds evidence, the round closes, and the agents run the next round with it, up to ${value("decision.maxEvidenceRounds", "5")} rounds per ticket`,
+          result: `the engineer adds evidence, the round closes, and the agents run the next round with it, up to ${value("decision.maxEvidenceRounds")} rounds per ticket`,
           tone: "info",
         },
-        { label: "Override with justification", result: `only for an escalated case, with at least ${value("decision.overrideMin", "20")} characters of reason; opens the CAPA`, tone: "warn" },
+        { label: "Override with justification", result: `only for an escalated case, with at least ${value("decision.overrideMin")} characters of reason; opens the CAPA`, tone: "warn" },
         { label: "Reject", result: "no CAPA; the ticket closes with no action and the case stays on record", tone: "alarm" },
       ],
     },
@@ -164,7 +166,7 @@ export function pipelineStations(settings: RuleSetting[], rules: BusinessRule[])
     {
       id: "containment",
       title: "Containment clears the alarm",
-      text: `Moving the CAPA to Containment removes the fault. The alert clears after ${value("clear.readings", "8")} readings in a row within ${value("clear.sigma", "2")} sigma, and the tool goes back to nominal.`,
+      text: `Moving the CAPA to Containment removes the fault. The alert clears after ${value("clear.readings")} readings in a row within ${value("clear.sigma")} sigma, and the tool goes back to nominal.`,
     },
     {
       id: "close",

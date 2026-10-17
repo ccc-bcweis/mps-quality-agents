@@ -34,7 +34,7 @@ public static class EvidencePackFactory
                 violation.Parameter,
                 violation.At.ToString("O", CultureInfo.InvariantCulture),
                 violation.Rule);
-            items.Add(Item(incident, EvidenceSource.Spc, Mps.Application.Spc.SpcRuleNames.Plain(violation.Rule) + " on " + Mps.Domain.Telemetry.ParameterNames.Display(violation.Parameter), reference, violation.At, violation.ToolId.Value, Text($"{Mps.Application.Spc.SpcRuleNames.Plain(violation.Rule)} broke on {violation.ToolId.Value} {violation.ChamberId ?? string.Empty} {Mps.Domain.Telemetry.ParameterNames.Display(violation.Parameter)} at {Stamp(violation.At)}: value {Num(violation.Value)} (one sigma is {Num(violation.Sigma)}){LimitsText(violation)}, severity {violation.Severity}."), violation.ChamberId, violation.Value, Limits.From(violation)));
+            items.Add(Item(incident, EvidenceSource.Spc, Mps.Application.Spc.SpcRuleNames.Plain(violation.Rule) + " on " + Mps.Application.Metadata.ParameterNames.Display(violation.Parameter), reference, violation.At, violation.ToolId.Value, Text($"{Mps.Application.Spc.SpcRuleNames.Plain(violation.Rule)} broke on {violation.ToolId.Value} {violation.ChamberId ?? string.Empty} {Mps.Application.Metadata.ParameterNames.Display(violation.Parameter)} at {Stamp(violation.At)}: value {Num(violation.Value)} (one sigma is {Num(violation.Sigma)}){LimitsText(violation)}, severity {violation.Severity}."), violation.ChamberId, violation.Value, Limits.From(violation)));
             observations.Add(new ImpactObservation(violation.ToolId.Value, violation.ChamberId, null, null));
         }
 
@@ -51,7 +51,7 @@ public static class EvidencePackFactory
             var latest = window.Points.Count == 0 ? (double?)null : window.Points[^1].Value;
             var lastAt = window.Points.Count == 0 ? window.To : window.Points[^1].At;
             var judged = harvest.Violations.LastOrDefault(item => string.Equals(item.Parameter, window.Parameter, StringComparison.Ordinal));
-            items.Add(Item(incident, EvidenceSource.Telemetry, Mps.Domain.Telemetry.ParameterNames.Display(window.Parameter) + " readings", reference, lastAt, window.ToolId.Value, DescribeWindow(window, shape), incident.ChamberId, latest, judged is null ? null : Limits.From(judged)));
+            items.Add(Item(incident, EvidenceSource.Telemetry, Mps.Application.Metadata.ParameterNames.Display(window.Parameter) + " readings", reference, lastAt, window.ToolId.Value, DescribeWindow(window, shape), incident.ChamberId, latest, judged is null ? null : Limits.From(judged)));
         }
 
         foreach (var eco in harvest.Ecos)
@@ -210,7 +210,7 @@ public static class EvidencePackFactory
         var points = window.Points;
         if (points.Count == 0)
         {
-            return Text($"{Mps.Domain.Telemetry.ParameterNames.Display(window.Parameter)} on {window.ToolId.Value}: no samples between {Stamp(window.From)} and {Stamp(window.To)}.");
+            return Text($"{Mps.Application.Metadata.ParameterNames.Display(window.Parameter)} on {window.ToolId.Value}: no samples between {Stamp(window.From)} and {Stamp(window.To)}.");
         }
 
         var head = points.Take(Math.Max(1, points.Count / 3)).Select(point => point.Value).ToArray();
@@ -219,7 +219,7 @@ public static class EvidencePackFactory
         var sd = Math.Sqrt(head.Select(value => (value - mean) * (value - mean)).Average());
         var late = tail.Average();
         var shift = sd > 1e-9 ? (late - mean) / sd : 0d;
-        return Text($"{Mps.Domain.Telemetry.ParameterNames.Display(window.Parameter)} on {window.ToolId.Value}, {points.Count} samples {Stamp(window.From)} to {Stamp(window.To)}: early mean {Num(mean)} (sd {Num(sd)}), late mean {Num(late)}, min {Num(points.Min(point => point.Value))}, max {Num(points.Max(point => point.Value))}, last {Num(points[^1].Value)}; late shift {Num(shift)} baseline sigmas. Shape from the data since the first rule break: {ShapeWords(shape)}.");
+        return Text($"{Mps.Application.Metadata.ParameterNames.Display(window.Parameter)} on {window.ToolId.Value}, {points.Count} samples {Stamp(window.From)} to {Stamp(window.To)}: early mean {Num(mean)} (sd {Num(sd)}), late mean {Num(late)}, min {Num(points.Min(point => point.Value))}, max {Num(points.Max(point => point.Value))}, last {Num(points[^1].Value)}; late shift {Num(shift)} baseline sigmas. Shape from the data since the first rule break: {ShapeWords(shape)}.");
     }
 
     /// <summary>

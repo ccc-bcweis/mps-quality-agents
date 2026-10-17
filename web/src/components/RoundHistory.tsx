@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
-import { CATEGORY_LABEL, INVESTIGATION_STAGE_LABEL } from "../api/labels";
+import { CATEGORY_LABEL, INVESTIGATION_STAGE_LABEL } from "../labels";
 import type { HumanDecisionKind, Investigation } from "../api/types";
 import { Explain } from "./Explain";
 import { panel } from "./ui";

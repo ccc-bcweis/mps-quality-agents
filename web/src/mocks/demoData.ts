@@ -53,7 +53,7 @@ export const alerts: Alert[] = [
     chamberId: "C1",
     parameter: "chamberPressure",
     severity: "high",
-    rule: "westernElectric1",
+    rule: "western-electric-1",
     raisedAt: "2026-10-14T14:40:00Z",
     correlationId: "corr-s2",
   },

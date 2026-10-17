@@ -3,6 +3,7 @@
 using Mps.Agents.Evidence;
 using Mps.Agents.Impact;
 using Mps.Application.Spc;
+using Mps.Domain;
 using Mps.Domain.Incidents;
 using Mps.Domain.Telemetry;
 

@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 # Control-chart settings, loaded at startup. Sigma is the recipe window's noise sigma (window width / 6).
+# Every number here is shown on Rules & Process and used in the rule sentences; no copy lives in code.
 controlLimitSigma: 3          # control limits: centre plus or minus this many sigma
 watchSigma: 2                 # live tile turns amber (watch) past this many sigma from nominal
 criticalSigma: 4              # Western Electric rule 1 is critical at or past this many sigma
@@ -9,3 +10,10 @@ westernElectric:
   rule3: { sigma: 1, count: 4, window: 5 }   # 4 of 5 beyond 1 sigma, one side
   rule4: { count: 8 }                        # 8 in a row on one side
 nelsonRising: { count: 6 }                   # 6 in a row strictly rising
+limitCheck:
+  recentReadings: 20          # every live series: a limit check (controlLimitSigma or the recipe window) looks at this many recent readings
+clearing:
+  readings: 8                 # an alert clears after this many readings in a row ...
+  sigma: 2                    # ... inside plus or minus this many sigma of the centre
+alertDebounceMinutes: 10      # a repeat break inside this time updates the same alert instead of opening a new one
+recoveryWatchMinutes: 30      # a signal whose fault was removed is watched this long so its alert can clear

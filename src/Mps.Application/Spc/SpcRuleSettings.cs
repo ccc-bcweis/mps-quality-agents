@@ -1,5 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Domain;
+
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -22,6 +24,18 @@ public sealed class SpcRuleSettings
 
     public RunSetting NelsonRising { get; set; } = new();
 
+    public LimitCheckSettings LimitCheck { get; set; } = new();
+
+    public ClearingSettings Clearing { get; set; } = new();
+
+    public double AlertDebounceMinutes { get; set; }
+
+    public double RecoveryWatchMinutes { get; set; }
+
+    public TimeSpan AlertDebounce => TimeSpan.FromMinutes(AlertDebounceMinutes);
+
+    public TimeSpan RecoveryWatch => TimeSpan.FromMinutes(RecoveryWatchMinutes);
+
     public (double Low, double High) ControlLimits(double center, double sigma) =>
         (center - (ControlLimitSigma * sigma), center + (ControlLimitSigma * sigma));
 
@@ -36,7 +50,9 @@ public sealed class SpcRuleSettings
             .Deserialize<SpcRuleSettings>(File.ReadAllText(path))
             ?? throw new InvalidOperationException("spc-rules.yaml is empty.");
         if (settings.ControlLimitSigma <= 0 || settings.WatchSigma <= 0 || settings.WesternElectric.Rule1.Sigma <= 0
-            || settings.WesternElectric.Rule4.Count <= 0 || settings.NelsonRising.Count <= 0)
+            || settings.WesternElectric.Rule4.Count <= 0 || settings.NelsonRising.Count <= 0
+            || settings.LimitCheck.RecentReadings <= 0 || settings.Clearing.Readings <= 0 || settings.Clearing.Sigma <= 0
+            || settings.AlertDebounceMinutes <= 0 || settings.RecoveryWatchMinutes <= 0)
         {
             throw new InvalidOperationException("spc-rules.yaml is missing a threshold.");
         }
@@ -68,31 +84,18 @@ public sealed class SpcRuleSettings
     {
         public int Count { get; set; }
     }
-}
 
-/// <summary>Finds a file under the data folder: Mps__DataDirectory first, then the nearest data/ folder above the app.</summary>
-public static class DataFiles
-{
-    public static string? Find(string relative)
+    /// <summary>The limit check every live series gets: how many recent readings it looks at.</summary>
+    public sealed class LimitCheckSettings
     {
-        var configured = Environment.GetEnvironmentVariable("Mps__DataDirectory");
-        if (!string.IsNullOrWhiteSpace(configured) && File.Exists(Path.Combine(configured, relative)))
-        {
-            return Path.Combine(configured, relative);
-        }
+        public int RecentReadings { get; set; }
+    }
 
-        foreach (var seed in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
-        {
-            for (var dir = string.IsNullOrWhiteSpace(seed) ? null : new DirectoryInfo(seed); dir is not null; dir = dir.Parent)
-            {
-                var candidate = Path.Combine(dir.FullName, "data", relative);
-                if (File.Exists(candidate))
-                {
-                    return candidate;
-                }
-            }
-        }
+    /// <summary>When an alert clears on its own: this many readings in a row inside plus or minus this many sigma.</summary>
+    public sealed class ClearingSettings
+    {
+        public int Readings { get; set; }
 
-        return null;
+        public double Sigma { get; set; }
     }
 }

@@ -127,7 +127,7 @@ public sealed record InvestigationResponse(
     public int Round { get; init; } = 1;
 
     /// <summary>The most rounds a ticket can have (data/metadata/investigation.yaml evidenceRounds.max).</summary>
-    public int MaxRounds { get; init; } = Mps.Application.Decisions.EvidenceRoundSettings.DefaultMaxRounds;
+    public int MaxRounds { get; init; } = Mps.Application.Decisions.EvidenceRoundSettings.Shared.MaxRounds;
 }
 
 public sealed record CapaResponse(

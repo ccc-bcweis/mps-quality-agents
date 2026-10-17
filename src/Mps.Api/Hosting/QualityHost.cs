@@ -134,7 +134,7 @@ public static class QualityHost
         builder.Services.AddScoped<IIntakeService>(services => ActivatorUtilities.CreateInstance<IntakeService>(services, (TimeProvider)services.GetRequiredService<Mps.Application.RecordClock>()));
         builder.Services.AddScoped(services =>
         {
-            var minutes = services.GetRequiredService<IConfiguration>().GetValue("Spc:DebounceMinutes", 10);
+            var minutes = services.GetRequiredService<IConfiguration>().GetValue<double?>("Spc:DebounceMinutes") ?? SpcRuleSettings.Shared.AlertDebounceMinutes;
             var debounce = TimeSpan.FromMinutes(minutes < 0 ? 0 : minutes);
             return new SpcAlertService(
                 services.GetRequiredService<IAlertLog>(),

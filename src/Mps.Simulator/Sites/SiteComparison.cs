@@ -21,7 +21,7 @@ public static class SiteComparison
     public static FamilyComparison Compare(SiteWorld world, ToolFamily family, double controlSigma, double apartSigma)
     {
         ArgumentNullException.ThrowIfNull(world);
-        var reference = world.Sites.FirstOrDefault(site => site.Id == SiteIds.Northwater) ?? world.Sites[0];
+        var reference = world.Sites.FirstOrDefault(site => site.Id == SiteIds.Default) ?? world.Sites[0];
         var limits = FamilyParameterCatalog.For(family);
         var parameters = new List<ParameterComparison>();
         foreach (var name in limits.Keys.Order(StringComparer.Ordinal))

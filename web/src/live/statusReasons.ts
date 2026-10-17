@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { ruleLabel } from "../api/labels";
+import { ruleLabel } from "../labels";
 import type { Alert, ManualReading } from "../api/types";
 
 export type StatusReason = { alertId: string; text: string };

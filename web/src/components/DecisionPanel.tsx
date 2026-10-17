@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import { CATEGORY_LABEL, INVESTIGATION_STAGE_LABEL } from "../api/labels";
+import { CATEGORY_LABEL, INVESTIGATION_STAGE_LABEL, limitText, limits } from "../labels";
 import type { DecisionRecord, HumanDecisionKind, Investigation } from "../api/types";
 import { ApprovalDialog, type DecisionMode } from "./ApprovalDialog";
 import { AddEvidenceBox, canAddRound, maxRoundsOf, roundOf } from "./AddEvidenceBox";
@@ -14,7 +14,6 @@ import { useConsole } from "../context/ConsoleContext";
 import { visibleProblem } from "../history/copy";
 
 /** Matches HumanDecisionService.MinOverrideJustification (ADR-005). */
-export const OVERRIDE_MIN = 20;
 
 /**
  * The human decision for the current round: approve, reject, add evidence (request more evidence), or override an
@@ -73,7 +72,7 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
 
   const problem = visibleProblem(error);
   const escalated = investigation.stage === "escalated";
-  const justified = note.trim().length >= OVERRIDE_MIN;
+  const justified = note.trim().length >= (limits()?.overrideMinChars ?? Number.POSITIVE_INFINITY);
   const top = investigation.hypotheses.slice().sort((a, b) => b.confidence - a.confidence)[0];
   const record = recordedDecision(investigation);
   const round = roundOf(investigation);
@@ -179,7 +178,7 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
           Reject
         </button>
       </div>
-      {escalated && !justified ? <p className="mt-2 font-mono text-mps-micro text-mps-muted">Override needs at least {OVERRIDE_MIN} characters of justification.</p> : null}
+      {escalated && !justified ? <p className="mt-2 font-mono text-mps-micro text-mps-muted">Override needs at least {limitText(limits()?.overrideMinChars)} characters of justification.</p> : null}
       {showAddEvidence ? (
         <AddEvidenceBox
           investigation={investigation}

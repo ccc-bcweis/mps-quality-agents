@@ -1,0 +1,245 @@
+[
+  {
+    "id": "spc.controlLimitSigma",
+    "group": "Control chart",
+    "label": "Control limits",
+    "kind": "number",
+    "value": "3",
+    "unit": "sigma",
+    "help": "Centre line plus or minus this many sigma."
+  },
+  {
+    "id": "spc.watchSigma",
+    "group": "Control chart",
+    "label": "Watch level",
+    "kind": "number",
+    "value": "2",
+    "unit": "sigma",
+    "help": "A tile turns amber past this distance from nominal."
+  },
+  {
+    "id": "spc.criticalSigma",
+    "group": "Control chart",
+    "label": "Critical level",
+    "kind": "number",
+    "value": "4",
+    "unit": "sigma",
+    "help": "A reading this far out makes the alert critical."
+  },
+  {
+    "id": "spc.limitCheck.readings",
+    "group": "Control chart",
+    "label": "Limit check looks at",
+    "kind": "number",
+    "value": "20",
+    "unit": "readings",
+    "help": "The most recent readings of every live series, checked against the control limits and the recipe spec."
+  },
+  {
+    "id": "spc.debounce",
+    "group": "Control chart",
+    "label": "A repeat break updates the same alert within",
+    "kind": "number",
+    "value": "10",
+    "unit": "minutes",
+    "help": null
+  },
+  {
+    "id": "spc.we1.on",
+    "group": "Western Electric and Nelson rules",
+    "label": "Rule 1 on",
+    "kind": "toggle",
+    "value": "true",
+    "unit": null,
+    "help": "one reading beyond 3 sigma."
+  },
+  {
+    "id": "spc.we1.sigma",
+    "group": "Western Electric and Nelson rules",
+    "label": "Rule 1: one reading beyond",
+    "kind": "number",
+    "value": "3",
+    "unit": "sigma",
+    "help": null
+  },
+  {
+    "id": "spc.we2.on",
+    "group": "Western Electric and Nelson rules",
+    "label": "Rule 2 on",
+    "kind": "toggle",
+    "value": "true",
+    "unit": null,
+    "help": "2 of 3 beyond 2 sigma, one side."
+  },
+  {
+    "id": "spc.we2.count",
+    "group": "Western Electric and Nelson rules",
+    "label": "Rule 2: readings out of the window",
+    "kind": "number",
+    "value": "2",
+    "unit": "readings",
+    "help": "2 of 3 beyond 2 sigma, one side."
+  },
+  {
+    "id": "spc.we2.sigma",
+    "group": "Western Electric and Nelson rules",
+    "label": "Rule 2: beyond",
+    "kind": "number",
+    "value": "2",
+    "unit": "sigma",
+    "help": null
+  },
+  {
+    "id": "spc.we3.on",
+    "group": "Western Electric and Nelson rules",
+    "label": "Rule 3 on",
+    "kind": "toggle",
+    "value": "true",
+    "unit": null,
+    "help": "4 of 5 beyond 1 sigma, one side."
+  },
+  {
+    "id": "spc.we3.count",
+    "group": "Western Electric and Nelson rules",
+    "label": "Rule 3: readings out of the window",
+    "kind": "number",
+    "value": "4",
+    "unit": "readings",
+    "help": "4 of 5 beyond 1 sigma, one side."
+  },
+  {
+    "id": "spc.we3.sigma",
+    "group": "Western Electric and Nelson rules",
+    "label": "Rule 3: beyond",
+    "kind": "number",
+    "value": "1",
+    "unit": "sigma",
+    "help": null
+  },
+  {
+    "id": "spc.we4.on",
+    "group": "Western Electric and Nelson rules",
+    "label": "Rule 4 on",
+    "kind": "toggle",
+    "value": "true",
+    "unit": null,
+    "help": "8 readings in a row on one side."
+  },
+  {
+    "id": "spc.we4.count",
+    "group": "Western Electric and Nelson rules",
+    "label": "Rule 4: readings in a row on one side",
+    "kind": "number",
+    "value": "8",
+    "unit": "readings",
+    "help": null
+  },
+  {
+    "id": "spc.nelson.on",
+    "group": "Western Electric and Nelson rules",
+    "label": "Nelson rising run on",
+    "kind": "toggle",
+    "value": "true",
+    "unit": null,
+    "help": "6 readings in a row, each higher."
+  },
+  {
+    "id": "spc.nelson.count",
+    "group": "Western Electric and Nelson rules",
+    "label": "Nelson: readings in a row, each higher",
+    "kind": "number",
+    "value": "6",
+    "unit": "readings",
+    "help": null
+  },
+  {
+    "id": "clear.readings",
+    "group": "Alert clearing",
+    "label": "Readings in control before an alert clears",
+    "kind": "number",
+    "value": "8",
+    "unit": "readings",
+    "help": null
+  },
+  {
+    "id": "clear.sigma",
+    "group": "Alert clearing",
+    "label": "In control means within",
+    "kind": "number",
+    "value": "2",
+    "unit": "sigma",
+    "help": null
+  },
+  {
+    "id": "clear.watch",
+    "group": "Alert clearing",
+    "label": "Keep watching a signal after its fault is removed for",
+    "kind": "number",
+    "value": "30",
+    "unit": "minutes",
+    "help": null
+  },
+  {
+    "id": "investigation.wait.on",
+    "group": "Investigation",
+    "label": "Wait for a clear signal shape",
+    "kind": "toggle",
+    "value": "true",
+    "unit": null,
+    "help": null
+  },
+  {
+    "id": "investigation.wait.minReadings",
+    "group": "Investigation",
+    "label": "Readings since the first rule break",
+    "kind": "number",
+    "value": "20",
+    "unit": "readings",
+    "help": null
+  },
+  {
+    "id": "investigation.wait.maxReadings",
+    "group": "Investigation",
+    "label": "Stop waiting for a clear shape after",
+    "kind": "number",
+    "value": "180",
+    "unit": "readings",
+    "help": null
+  },
+  {
+    "id": "investigation.wait.attempts",
+    "group": "Investigation",
+    "label": "Tries",
+    "kind": "number",
+    "value": "30",
+    "unit": null,
+    "help": null
+  },
+  {
+    "id": "investigation.wait.delay",
+    "group": "Investigation",
+    "label": "Time between tries",
+    "kind": "number",
+    "value": "20",
+    "unit": "seconds",
+    "help": null
+  },
+  {
+    "id": "decision.overrideMin",
+    "group": "Decision",
+    "label": "Shortest override justification",
+    "kind": "number",
+    "value": "20",
+    "unit": "characters",
+    "help": null
+  },
+  {
+    "id": "decision.maxEvidenceRounds",
+    "group": "Decision",
+    "label": "Most rounds per ticket (Add evidence)",
+    "kind": "number",
+    "value": "5",
+    "unit": "rounds",
+    "help": "Each time a person adds evidence the agents run again as the next round. At the last round only approve, override or reject remain."
+  }
+]

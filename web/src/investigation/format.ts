@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import type { EvidenceItem, EvidenceSource } from "../api/types";
-import { parameterLabel, unitLabel, PARAMETER_LABEL } from "../sites/parameters";
+import { unitLabel } from "../sites/parameters";
+import { parameterIds, parameterLabel } from "../labels";
 
 export const SOURCE_LABEL: Record<EvidenceSource, string> = {
   telemetry: "Tool sensors",
@@ -159,8 +160,7 @@ export function oneSentence(text: string): string {
 
 export function parameterName(item: { title: string; excerpt: string; signalId?: string | null }): string | null {
   const compact = `${item.signalId ?? ""} ${item.title} ${item.excerpt}`.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const keys = Object.keys(PARAMETER_LABEL).sort((left, right) => right.length - left.length);
-  for (const key of keys) {
+  for (const key of parameterIds()) {
     if (compact.includes(key.toLowerCase())) return parameterLabel(key);
   }
   return null;

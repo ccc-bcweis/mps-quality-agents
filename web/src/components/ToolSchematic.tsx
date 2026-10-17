@@ -10,7 +10,7 @@ import {
   chamberGridTemplate,
   counterGridTemplate,
   schematicPanels,
-  sensorLabel,
+  pointLabel,
   slotWord,
   type AnchorBox,
   type SchematicPanel,
@@ -26,7 +26,7 @@ export type SchematicReading = {
   manual?: { label: string; title: string };
 };
 import { PanelDrawing } from "./schematicArt";
-import { FAMILY_PROCESS } from "../api/labels";
+import { FAMILY_PROCESS } from "../labels";
 
 const TONE: Record<SensorStatus, string> = {
   inSpec: "border-mps-ok text-mps-ok",
@@ -99,7 +99,7 @@ function SensorButton({
     >
       <span className="block text-mps-secondary">
         <span className={`mr-1 inline-block h-2 w-2 rounded-full align-middle ${reading ? DOT[reading.status] : "bg-mps-line"}`} />
-        <span className="font-mono">{slotWord(sensor.schematicAnchor)}</span> <SensorWords text={sensorLabel(sensor.schematicAnchor)} />
+        <span className="font-mono">{slotWord(sensor.schematicAnchor)}</span> <SensorWords text={pointLabel(sensor.schematicAnchor)} />
       </span>
       <span className="block break-words font-mono text-[12px] leading-tight">
         {reading ? (
@@ -251,7 +251,7 @@ export function ToolSchematic({
         <ul className="mt-2 text-mps-body text-mps-secondary">
           {unbound.map((sensor) => (
             <li key={sensor.id}>
-              {sensorLabel(sensor.schematicAnchor)} is not on the drawing.
+              {pointLabel(sensor.schematicAnchor)} is not on the drawing.
             </li>
           ))}
         </ul>

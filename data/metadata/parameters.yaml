@@ -1,0 +1,38 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Display names for telemetry parameter ids. The id stays the contract value; the console and server text show the name.
+# Served at /api/metadata/catalog; the server (ParameterNames) and the console read only this list.
+parameters:
+  - { id: ambientPressure, displayName: Room pressure }
+  - { id: arFlow, displayName: Argon flow }
+  - { id: ashRate, displayName: Ash rate }
+  - { id: bathTemperature, displayName: Chemical bath temperature }
+  - { id: cf4Flow, displayName: CF4 flow }
+  - { id: chamberPressure, displayName: Chamber pressure }
+  - { id: chf3Flow, displayName: CHF3 flow }
+  - { id: diwFlow, displayName: DIW flow }
+  - { id: edgeRingHeight, displayName: Edge ring height }
+  - { id: endpointTime, displayName: Endpoint time }
+  - { id: escTemperature, displayName: ESC temperature }
+  - { id: etchRate, displayName: Etch rate }
+  - { id: filmThickness, displayName: Film thickness }
+  - { id: filmUniformity, displayName: Film uniformity }
+  - { id: heaterTemperature, displayName: Heater temperature }
+  - { id: megasonicPower, displayName: Megasonic power }
+  - { id: n2h2Flow, displayName: N2H2 flow }
+  - { id: n2oFlow, displayName: N2O flow }
+  - { id: nh3Flow, displayName: NH3 flow }
+  - { id: o2Flow, displayName: O2 flow }
+  - { id: particlesAdders, displayName: Particle adders }
+  - { id: remotePlasmaPower, displayName: Remote plasma power }
+  - { id: residueCount, displayName: Residue count }
+  - { id: rfBiasPower, displayName: Bias RF power }
+  - { id: rfPower, displayName: RF power }
+  - { id: rfSourcePower, displayName: Source RF power }
+  - { id: sc1Flow, displayName: SC1 flow }
+  - { id: sc2Flow, displayName: SC2 flow }
+  - { id: sih4Flow, displayName: SiH4 flow }
+  - { id: spinChuckRunout, displayName: Spin chuck runout }
+  - { id: temperature, displayName: Temperature }
+  - { id: vibrationRms, displayName: Vibration }
+  - { id: waferCenterOffset, displayName: Wafer center offset }
+  - { id: wallTemperature, displayName: Chamber wall temperature }

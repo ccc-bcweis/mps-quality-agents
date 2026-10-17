@@ -870,6 +870,18 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/RuleSetting"
+  /api/metadata/catalog:
+    get:
+      tags: [metadata]
+      operationId: getConsoleCatalog
+      summary: Labels, limits and rule sentences the console shows, read from data/ at startup
+      responses:
+        "200":
+          description: Parameter names, plants and tool prefixes, rule numbers and the rule sentences built from them. Read-only.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsoleCatalog"
   /api/trace/{eventId}:
     get:
       tags: [trace]
@@ -2481,3 +2493,85 @@ components:
         help:
           type: string
           nullable: true
+    ConsoleCatalog:
+      type: object
+      additionalProperties: false
+      required: [limits, rules, parameters, sites]
+      properties:
+        limits:
+          $ref: "#/components/schemas/CatalogLimits"
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/CatalogRule"
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/CatalogParameter"
+        sites:
+          type: array
+          items:
+            $ref: "#/components/schemas/CatalogSite"
+    CatalogLimits:
+      type: object
+      additionalProperties: false
+      required: [controlLimitSigma, watchSigma, criticalSigma, limitCheckReadings, clearReadings, clearSigma, overrideMinChars, maxEvidenceRounds, maxEvidenceChars, zoneSigmas]
+      properties:
+        controlLimitSigma:
+          type: number
+        watchSigma:
+          type: number
+        criticalSigma:
+          type: number
+        limitCheckReadings:
+          type: integer
+        clearReadings:
+          type: integer
+        clearSigma:
+          type: number
+        overrideMinChars:
+          type: integer
+        maxEvidenceRounds:
+          type: integer
+          description: Most rounds one ticket can have (investigation.yaml evidenceRounds.max).
+        maxEvidenceChars:
+          type: integer
+          description: Longest evidence text a person can add.
+        zoneSigmas:
+          type: array
+          description: Chart zones in sigma, inner to outer (Western Electric rules 3, 2 and 1).
+          items:
+            type: number
+    CatalogRule:
+      type: object
+      additionalProperties: false
+      required: [id, label, plain, brief]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        plain:
+          type: string
+        brief:
+          type: string
+    CatalogParameter:
+      type: object
+      additionalProperties: false
+      required: [id, label]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+    CatalogSite:
+      type: object
+      additionalProperties: false
+      required: [id, name, toolPrefix]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        toolPrefix:
+          type: string

@@ -105,7 +105,7 @@ describe("tool detail on the fleet stream", () => {
   });
 
   it("states the server's finding for the charted series and marks a cleared alert", async () => {
-    const alert = { id: "a-1", toolId: "E-01", chamberId: "E-01-A", parameter: "etchRate", severity: "high", rule: "westernElectric1", raisedAt: T0, correlationId: "c-1", status: "active" };
+    const alert = { id: "a-1", toolId: "E-01", chamberId: "E-01-A", parameter: "etchRate", severity: "high", rule: "western-electric-1", raisedAt: T0, correlationId: "c-1", status: "active" };
     server.use(http.get("/api/alerts", () => HttpResponse.json([alert])));
     counted("/api/tools/:toolId/live", () => liveBody([{ at: T0, value: 250 }]));
     renderConsole("/tools/E-01?parameter=etchRate");

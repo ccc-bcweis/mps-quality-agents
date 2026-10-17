@@ -3,7 +3,8 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useRecordPatches } from "../live/useLive";
 import { api, ApiProblem } from "../api/client";
-import { formatStamp, STAGE_LABEL, severityTone, severityWord } from "../api/labels";
+import { formatStamp, severityTone, severityWord } from "../api/labels";
+import { STAGE_LABEL } from "../labels";
 import type { Incident, PrintoutConfirmation, PrintoutConfirmRequest, Severity, Ticket, Tool } from "../api/types";
 import { CaseBriefs } from "../components/CaseBriefs";
 import { Chip } from "../components/Chip";
@@ -21,7 +22,7 @@ import { useSite } from "../context/SiteContext";
 import { pathForIncident, pathForTicket } from "../investigation/ticketRoute";
 import { toolInPlant } from "../sites/selection";
 import { isClosedStage, lifecycleForIncident } from "../lifecycle";
-import { parameterLabel } from "../sites/parameters";
+import { parameterLabel } from "../labels";
 
 export function TicketsPage() {
   useSetLifecycle("ticket");

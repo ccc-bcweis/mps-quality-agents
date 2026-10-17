@@ -2,6 +2,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { api } from "./api/client";
+import { loadCatalog } from "./labels";
 import "./index.css";
 
 async function enableMocks(): Promise<void> {
@@ -14,10 +16,13 @@ async function enableMocks(): Promise<void> {
 const root = document.getElementById("root");
 if (!root) throw new Error("Root element is missing.");
 
-void enableMocks().then(() => {
-  createRoot(root).render(
-    <StrictMode>
-      <App />
-    </StrictMode>,
-  );
-});
+// Labels, limits and rule sentences come from the server. A failed load (signed out) is retried by the console shell.
+void enableMocks()
+  .then(() => loadCatalog(api.consoleCatalog).catch(() => undefined))
+  .then(() => {
+    createRoot(root).render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+  });
