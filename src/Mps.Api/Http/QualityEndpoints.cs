@@ -201,7 +201,7 @@ public static class QualityEndpoints
         });
         app.MapGet("/api/investigations", async (
             string? siteId,
-            IInvestigationLog investigations,
+            IInvestigationService investigations,
             IInvestigationNarrativeLog narratives,
             IIncidentLog incidents,
             CancellationToken cancellationToken) =>
