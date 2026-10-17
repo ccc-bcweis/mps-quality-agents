@@ -84,7 +84,12 @@ public static class QualityHost
         builder.Services.AddScoped<IApprovalLog>(services => services.GetRequiredService<EfQualityStore>());
         builder.Services.AddScoped<IInvestigationNarrativeLog>(services => services.GetRequiredService<EfQualityStore>());
         builder.Services.AddScoped<ITicketingPort>(services => services.GetRequiredService<EfQualityStore>());
-        builder.Services.AddSingleton(ApprovalPolicyLoader.Load(builder.Configuration));
+        var configuration = builder.Configuration;
+        var environment = builder.Environment;
+        builder.Services.AddSingleton(services => ApprovalPolicyLoader.Load(
+            configuration,
+            environment,
+            services.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(ApprovalPolicyLoader).FullName!)));
         builder.Services.AddSingleton(new InjectorPolicy(builder.Configuration.GetValue("Mps:Injector:DirectTicket", false)));
         builder.Services.AddSingleton(new MetricsPolicy(
             builder.Configuration.GetValue("Metrics:CostPerInvestigationUsd", 0d),
@@ -183,6 +188,9 @@ public static class QualityHost
     public static void UseQualityApi(this WebApplication app)
     {
         ArgumentNullException.ThrowIfNull(app);
+
+        // Resolve the approval key now: outside Development a missing key stops startup instead of the first approval.
+        _ = app.Services.GetRequiredService<Mps.Application.Decisions.ApprovalPolicy>();
         app.UseExceptionHandler();
         app.UseCors("console");
 

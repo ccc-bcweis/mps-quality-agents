@@ -45,6 +45,9 @@ param budgetContactEmail string = ''
 @description('Budget window start. Must be the first day of a month.')
 param budgetStart string = '2026-10-01'
 
+@description('Key Vault secret that holds the approval signing key (hex, 32 bytes). It is created by hand, never by this template. Empty leaves the key unset.')
+param approvalKeySecretName string = 'approval-signing-key'
+
 @description('Budget window end.')
 param budgetEnd string = '2027-09-30'
 
@@ -138,6 +141,7 @@ module apps 'modules/container-apps.bicep' = {
     entraClientId: entraClientId
     openIdIssuer: openIdIssuer
     appInsightsConnectionString: insights.outputs.connectionString
+    approvalKeySecretUri: empty(approvalKeySecretName) ? '' : '${vault.outputs.uri}secrets/${approvalKeySecretName}'
   }
 }
 

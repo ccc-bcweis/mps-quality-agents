@@ -25,7 +25,7 @@ public sealed class ApprovalDecisionTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 14, 12, 0, 0, TimeSpan.Zero);
 
-    private static readonly byte[] Key = ApprovalPolicy.DemoSigningKey();
+    private static readonly byte[] Key = [.. Enumerable.Range(1, 32).Select(value => (byte)value)];
 
     [Fact]
     public async Task AnEscalatedInvestigationCannotBeApprovedDirectly()

@@ -19,3 +19,4 @@ param monthlyBudgetUsd = 40
 param budgetContactEmail = ''
 param budgetStart = '2026-10-01'
 param budgetEnd = '2027-09-30'
+param approvalKeySecretName = 'approval-signing-key'

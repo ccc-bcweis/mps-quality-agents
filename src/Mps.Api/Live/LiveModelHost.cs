@@ -98,7 +98,8 @@ public static class LiveModelHost
                 enterprise,
                 provider.GetRequiredService<HybridDocumentSearch>(),
                 signals);
-            var key = System.Text.Encoding.UTF8.GetBytes(config["Mps:Approval:SigningKey"] ?? Guid.NewGuid().ToString("N"));
+            // The same key HumanDecisionService signs with (ApprovalPolicyLoader), so tokens minted there are accepted here.
+            var key = provider.GetRequiredService<Mps.Application.Decisions.ApprovalPolicy>().SigningKey;
             return new MafInvestigationWorkflow(
                 new StoreIncidentSource(provider.GetRequiredService<IServiceScopeFactory>()),
                 new InvestigationAgent(
