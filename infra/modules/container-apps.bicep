@@ -27,6 +27,9 @@ param adminEmails string = 'bcweis@commonconsulting.us'
 @secure()
 param appInsightsConnectionString string
 
+@description('Key Vault secret URI for the approval signing key (hex, 32 bytes). The app identity reads it. Empty leaves it unset, and the app will not start in Production.')
+param approvalKeySecretUri string = ''
+
 resource environment 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: envName
   location: location
@@ -66,12 +69,19 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
           identity: identityId
         }
       ]
-      secrets: [
+      secrets: concat([
         {
           name: 'appinsights'
           value: appInsightsConnectionString
         }
-      ]
+      ], empty(approvalKeySecretUri) ? [] : [
+        {
+          // Key Vault reference: the value never passes through the deployment or Git.
+          name: 'approval-signing-key'
+          keyVaultUrl: approvalKeySecretUri
+          identity: identityId
+        }
+      ])
     }
     template: {
       containers: [
@@ -82,7 +92,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             cpu: json('0.25')
             memory: '0.5Gi'
           }
-          env: [
+          env: concat([
             {
               name: 'ASPNETCORE_ENVIRONMENT'
               value: 'Production'
@@ -160,7 +170,13 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
               name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
               secretRef: 'appinsights'
             }
-          ]
+          ], empty(approvalKeySecretUri) ? [] : [
+            {
+              // ASP.NET configuration key Mps:Approval:SigningKey, read once by ApprovalPolicyLoader.
+              name: 'Mps__Approval__SigningKey'
+              secretRef: 'approval-signing-key'
+            }
+          ])
         }
       ]
       scale: {

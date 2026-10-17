@@ -101,6 +101,8 @@ Container Apps Easy Auth (Microsoft Entra) runs with anonymous requests allowed,
 
 SQLite stays inside the container (`/app/data/mps.db`), is seeded on start, and disappears when the replica stops, so **every deploy wipes the demo data**. `deploySql` and `deployStaticWeb` default to **false**. Azure OpenAI is keyless: local auth is off, and the app's managed identity has Cognitive Services OpenAI User. The app settings are the endpoint, the `gpt-5.4-mini` deployment, `Mps__Model__Mode=Live`, and `Mps__Model__DailyCapUsd=2`. The registry is Basic and its admin user is off. The same identity has AcrPull.
 
+**Approval signing key.** Approval tokens are signed with one key, `Mps:Approval:SigningKey` (hex, at least 32 bytes). There is no built-in key. The hosted app reads it from Key Vault secret `approval-signing-key` in `mpsdemokv` through a Container Apps Key Vault reference, using the app identity (Key Vault Secrets User). The secret was created by hand and is not in Git or in the template; a new environment needs it created before the app deploy (`az keyvault secret set --vault-name <vault> --name approval-signing-key --file <(openssl rand -hex 32 | tr -d '\n') -o none`). Outside Development the app will not start without the key. In Development it makes a random key per process, so approvals do not survive a restart.
+
 GitHub environment **secrets** (OIDC login):
 
 - `AZURE_CLIENT_ID`

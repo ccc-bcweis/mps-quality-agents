@@ -3,7 +3,7 @@
 namespace Mps.Application.Decisions;
 
 /// <summary>
-/// Local signing material for approval tokens. The demo key is not a production secret.
+/// Signing material for approval tokens. The key comes from configuration; there is no built-in key.
 /// </summary>
 public sealed class ApprovalPolicy
 {
@@ -29,6 +29,4 @@ public sealed class ApprovalPolicy
     public ReadOnlyMemory<byte> SigningKey => _signingKey;
 
     public TimeSpan Lifetime { get; }
-
-    public static byte[] DemoSigningKey() => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 }
