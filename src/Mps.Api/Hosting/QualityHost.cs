@@ -51,7 +51,7 @@ public static class QualityHost
         builder.Services.AddSingleton(new ReplayStore(replayDirectory));
         builder.Services.AddSingleton<ConsoleDataMode>();
         builder.Services.AddSingleton<ScenarioReplayRecorder>();
-        var plantSeed = builder.Configuration.GetValue("Mps:Demo:Seed", SiteIds.DefaultSeed);
+        var plantSeed = Mps.Simulator.Demo.DemoDefaults.PlantSeedFrom(builder.Configuration);
         builder.Services.AddSingleton(SitePlantGenerator.Load(dataDirectory, plantSeed));
         builder.Services.AddSingleton(new CrossSiteMaterialCatalog(Path.Combine(dataDirectory, "seed", "enterprise.json")));
         var connectionString = builder.Configuration.GetConnectionString("Mps") ?? "Data Source=mps.db";

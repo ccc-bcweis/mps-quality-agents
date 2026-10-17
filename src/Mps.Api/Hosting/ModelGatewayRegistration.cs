@@ -20,7 +20,7 @@ public static class ModelGatewayRegistration
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(time);
         ArgumentNullException.ThrowIfNull(scenarioHint);
-        var demoSeed = configuration.GetValue("Mps:Demo:Seed", 4242);
+        var demoSeed = Mps.Simulator.Demo.DemoDefaults.PlantSeedFrom(configuration);
         var options = new ModelGatewayOptions
         {
             Mode = Route(configuration["LLM_MODE"]),

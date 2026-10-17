@@ -53,7 +53,7 @@ public sealed record FleetKpiSnapshot(
 /// </summary>
 public static class FleetKpiCalculator
 {
-    public const int DemoSeed = 20261014;
+    public const int DemoSeed = Demo.DemoDefaults.EnterpriseSeed;
 
     public const int PlannedHours = 2160;
 

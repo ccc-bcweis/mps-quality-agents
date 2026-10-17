@@ -33,7 +33,7 @@ public sealed class PlantSimulation : Mps.Application.Lifecycle.IPlantFaultContr
         ArgumentNullException.ThrowIfNull(options);
         World = world;
         _options = options;
-        var seed = configuration.GetValue("Mps:Demo:Seed", DemoRuntime.DefaultSeed);
+        var seed = DemoDefaults.PlantSeedFrom(configuration);
         var tools = world.Sites
             .SelectMany(site => site.Tools)
             .Select(tool => tool.Spec)

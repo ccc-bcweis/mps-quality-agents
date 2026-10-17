@@ -17,7 +17,7 @@ namespace Mps.Api.Bus;
 /// </summary>
 public sealed class NominalHistorySeeder : INominalHistorySeeder
 {
-    private const int ChunkSize = 2000;
+    private const int ChunkSize = EventBatch.Size;
     private const int SampleRows = 8000;
     private const int RecentStrideSeconds = 25;
     private const int OlderStrideSeconds = 900;

@@ -14,7 +14,7 @@ public static class DemoRuntimeLoader
     {
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(time);
-        var seed = configuration.GetValue("Mps:Demo:Seed", DemoRuntime.DefaultSeed);
+        var seed = DemoDefaults.PlantSeedFrom(configuration);
         var fleet = FleetCatalogLoader.Load(FindDirectory("fleet"));
         return new DemoRuntime(fleet, seed, time);
     }

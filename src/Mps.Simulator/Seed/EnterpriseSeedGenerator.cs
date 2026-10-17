@@ -17,7 +17,7 @@ namespace Mps.Simulator.Seed;
 /// </summary>
 public static class EnterpriseSeedGenerator
 {
-    public const int DemoSeed = 20261014;
+    public const int DemoSeed = Demo.DemoDefaults.EnterpriseSeed;
 
     public const int HistoryDays = 90;
 
