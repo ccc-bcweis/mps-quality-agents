@@ -1,0 +1,42 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Weekly update PRs. CI (build, vulnerable-package and npm audit gates) must pass before a merge.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      microsoft-runtime:
+        patterns: ["Microsoft.AspNetCore.*", "Microsoft.EntityFrameworkCore*", "Microsoft.Data.Sqlite", "Microsoft.Extensions.*", "SQLitePCLRaw.*"]
+        update-types: ["minor", "patch"]
+      agents-ai:
+        patterns: ["Microsoft.Agents.AI*", "Microsoft.Extensions.AI*"]
+      test-tooling:
+        patterns: ["xunit*", "Microsoft.NET.Test.Sdk", "coverlet.*", "FluentAssertions", "NetArchTest.Rules"]
+    ignore:
+      # FluentAssertions 8 changed its licence; stay on 7.x.
+      - dependency-name: FluentAssertions
+        update-types: ["version-update:semver-major"]
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      web-dev-tooling:
+        dependency-type: development
+        update-types: ["minor", "patch"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+  - package-ecosystem: docker
+    directory: /deploy
+    schedule:
+      interval: weekly
+      day: monday
