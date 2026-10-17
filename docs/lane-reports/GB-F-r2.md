@@ -12,7 +12,7 @@ Detail is in `docs/lane-reports/GB-F-r2.md`. No contract file was changed.
 |---|---|
 | Z1 (#36) | One container for the API and the built console. Easy Auth on that origin. SQLite in the container. SQL and Static Web Apps off unless a parameter turns them on. Manual OIDC workflow. |
 
-`deploy/app.Dockerfile` builds the console in live API mode and publishes `Mps.Api` into a non-root `aspnet:8.0` image. The API serves `wwwroot` and falls back to `index.html` only when that folder exists. The registry is Basic with admin disabled and AcrPull on the app identity. Azure OpenAI is keyless (`gpt-4o-mini`, capacity 20). Container settings include `Mps__Model__Mode=Live` and `Mps__Model__DailyCapUsd=2`. Anonymous `/health` is expected to be 401 or 302.
+`deploy/app.Dockerfile` builds the console in live API mode and publishes `Mps.Api` into a non-root `aspnet:8.0` image. The API serves `wwwroot` and falls back to `index.html` only when that folder exists. The registry is Basic with admin disabled and AcrPull on the app identity. Azure OpenAI is keyless (`gpt-4o-mini`, capacity 20). Container settings include `Mps__Model__Mode=Live` and `Mps__Model__DailyCapUsd=2`. Anonymous `/health` was expected to be 401 or 302 (since Oct 17: health 200, API 401, console redirected to the landing page).
 
 ## How it was verified
 

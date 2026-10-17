@@ -132,26 +132,24 @@ jobs:
           echo "fqdn=${fqdn}" >> "$GITHUB_OUTPUT"
           echo "Demo URL: https://${fqdn}"
 
-      - name: Smoke check anonymous health
+      - name: Smoke check anonymous access
         shell: bash
         run: |
           set -euo pipefail
-          url="https://${{ steps.app.outputs.fqdn }}/health"
-          code="000"
+          # Easy Auth allows anonymous requests; the app gates them. Health is open, the API answers 401,
+          # and a signed-out browser opening the console is sent to the landing page.
+          base="https://${{ steps.app.outputs.fqdn }}"
+          health="000"; api="000"; console="000"
           for attempt in $(seq 1 10); do
-            set +e
-            code="$(curl --silent --show-error --output /tmp/mps-health-body --write-out "%{http_code}" --max-time 45 "$url")"
-            status=$?
-            set -e
-            if [ "$status" -ne 0 ] || [ -z "$code" ]; then
-              code="000"
-            fi
-            echo "attempt ${attempt} ${url} -> ${code}"
-            if [ "$code" = "401" ] || [ "$code" = "302" ]; then
-              echo "Demo URL: https://${{ steps.app.outputs.fqdn }}"
+            health="$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 45 "$base/health" || echo 000)"
+            api="$(curl --silent --output /dev/null --write-out "%{http_code}" --max-time 45 "$base/api/tools" || echo 000)"
+            console="$(curl --silent --output /dev/null --write-out "%{http_code} %{redirect_url}" --max-time 45 -H 'Accept: text/html' "$base/" || echo 000)"
+            echo "attempt ${attempt}: health ${health}, api ${api}, console ${console}"
+            if [ "$health" = "200" ] && [ "$api" = "401" ] && [ "$console" = "302 $base/landing.html" ]; then
+              echo "Demo URL: $base"
               exit 0
             fi
             sleep 15
           done
-          echo "Expected 401 or 302 from ${url} because Easy Auth is on. Last status was ${code}."
+          echo "Expected health 200, API 401 and the console redirected to /landing.html for an anonymous caller."
           exit 1
