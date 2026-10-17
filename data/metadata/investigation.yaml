@@ -1,7 +1,10 @@
 # Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 # Investigation settings, loaded at startup.
-# When the readings do not show a shape yet (too soon after onset), the investigation re-reads the signal this many
-# times, this many seconds apart, before it hands the pack to the resolution agent. 0 attempts turns waiting off.
+# The investigation re-reads the signal and its rule breaks until the shape is clear AND at least
+# minReadingsSinceOnset readings have arrived since the first rule break (20 readings at 15 s = 5 minutes,
+# about two cycles of an injected oscillation), trying this many times, this many seconds apart.
+# 0 attempts turns waiting off.
 shapeWait:
   attempts: 30
   delaySeconds: 20
+  minReadingsSinceOnset: 20

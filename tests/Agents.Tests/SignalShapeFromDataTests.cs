@@ -111,6 +111,23 @@ public sealed class SignalShapeFromDataTests
         wait.Delay.Should().BePositive();
     }
 
+    [Fact]
+    public void TheInvestigationWaitsForEnoughReadingsSinceOnsetBeforeJudgingTheShape()
+    {
+        // Live D-01-A at the moment the first investigation ran: half a cycle after the first rule break.
+        var wait = new Mps.Agents.Investigation.ShapeWait(30, TimeSpan.FromSeconds(20), 20);
+        var points = LiveA.Select((value, i) => new TelemetryPoint(Start.AddSeconds(15 * i), value)).ToArray();
+        var nominals = LiveA.Select((_, i) => i < 24 ? 3.5d : 3.0d).ToArray();
+        SpcViolation[] violations = [new SpcViolation("western-electric-1", new ToolId("D-01"), "D-01-A", "chamberPressure", Start.AddSeconds(15 * 48), 4.458d, 0.25d, Severity.High)];
+
+        var early = new TelemetryWindow(new ToolId("D-01"), "chamberPressure", Start, points[55].At, points.Take(56).ToArray()) { Nominals = nominals.Take(56).ToArray() };
+        var full = new TelemetryWindow(new ToolId("D-01"), "chamberPressure", Start, points[^1].At, points) { Nominals = nominals };
+
+        wait.NeedsMoreReadings(early, violations).Should().BeTrue();
+        wait.NeedsMoreReadings(full, violations).Should().BeFalse();
+        EvidencePackFactory.ShapeOf(full, violations).Should().Be(SignalShape.Oscillation);
+    }
+
     private static string RepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
