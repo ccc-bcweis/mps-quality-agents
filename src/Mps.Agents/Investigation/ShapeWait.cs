@@ -35,7 +35,9 @@ public sealed record ShapeWait(int Attempts, TimeSpan Delay, int MinReadingsSinc
             return false;
         }
 
-        var onset = violations.Min(violation => violation.At);
+        // Onset is the first serious break: a low-severity trend rule can fire on ordinary noise long before the fault.
+        var serious = violations.Where(violation => violation.Severity >= Severity.High).ToArray();
+        var onset = (serious.Length > 0 ? serious : violations).Min(violation => violation.At);
         return window.Points.Count(point => point.At >= onset) < MinReadingsSinceOnset;
     }
 
