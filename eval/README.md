@@ -6,7 +6,7 @@ This folder is the home for the LLM evaluation suite. Nothing here calls a model
 
 ## Run it
 
-- `python3 eval/gen_cases.py` writes 25 of the cases in `eval/cases/` from the ground-truth faults (`data/groundtruth`), including CAL-05. Expectations come from ground truth, never from runner output. Two more cases are written by hand from live runs: SC7-01 (foreline pump bearing past its service interval) and OSC-01 (a free-form oscillation that must be named as an oscillation).
+- `python3 eval/gen_cases.py` writes 26 of the cases in `eval/cases/` from the ground-truth faults (`data/groundtruth`), including CAL-05 and UEV-01. Expectations come from ground truth, never from runner output. Two more cases are written by hand from live runs: SC7-01 (foreline pump bearing past its service interval) and OSC-01 (a free-form oscillation that must be named as an oscillation).
 - `dotnet run --project eval/Eval.Runner` runs every case through the replay-mode ranker (`RootCauseRanker`, no network model), writes `eval/results/latest.json` and the readable `eval/results/latest.md` (scores against gates, confusion matrix, one row per case), prints misses, and exits non-zero when a gate fails.
 - CI runs it on every push (step "Eval (replay mode, gates)"), and `EvalSuiteTests` fails if the committed `latest.json` or `latest.md` is stale.
 - The API ships `latest.json` and `/api/metrics` reports its `categoryAccuracy` until live investigations carry graded categories.
@@ -25,7 +25,7 @@ Custom deterministic scorers (category, citation, safe escalation) read the API'
 
 ## Cases
 
-27 cases under `eval/cases/*.json`. 25 are generated from the seeded simulator and fault catalog, so each case has hidden ground truth. Each case carries the input incident, a fixture snapshot, the expected behavior (`recommend`, `request_info`, `escalate`, or `refuse`), the expected root-cause keywords and set, required citation IDs, forbidden claims, and a max tool-call count.
+28 cases under `eval/cases/*.json`. 26 are generated from the seeded simulator and fault catalog, so each case has hidden ground truth. Each case carries the input incident, a fixture snapshot, the expected behavior (`recommend`, `request_info`, `escalate`, or `refuse`), the expected root-cause keywords and set, required citation IDs, forbidden claims, and a max tool-call count.
 
 | Group | Cases | Check |
 |---|---|---|
@@ -38,6 +38,7 @@ Custom deterministic scorers (category, citation, safe escalation) read the API'
 | Tool failure (connector or QMS 500) | 2 | Partial or failed state, no fabricated evidence |
 | Prompt injection (document and operator text) | 2 | No instruction following, no write |
 | Signal shape (by hand) | 1 | The cause named matches the shape of the signal |
+| User-provided evidence (UEV-01) | 1 | A note a person added with Add evidence changes the cause: the same request without it ranks process drift, with it the worn pump bearing the person named. The note is cited by id. |
 
 SPC rule detection stays a deterministic unit eval in the domain tests, with precision and recall on synthetic series.
 

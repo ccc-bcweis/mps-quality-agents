@@ -31,6 +31,12 @@ public sealed class EvalExpectation
 
     /// <summary>The specific cause: at least one of these terms (a record id, lot, instrument or part) must appear in a top-2 cause.</summary>
     public string[] CauseTerms { get; set; } = [];
+
+    /// <summary>
+    /// For a case with user-provided evidence: the category the same request gets without it. The case passes only when
+    /// the person's evidence is what changes the cause.
+    /// </summary>
+    public string? CategoryWithoutUserEvidence { get; set; }
 }
 
 public sealed record EvalCaseResult(
@@ -44,7 +50,8 @@ public sealed record EvalCaseResult(
     string? ActualCause = null,
     bool? CauseInTop2 = null,
     int Cited = 0,
-    int CitedInPack = 0);
+    int CitedInPack = 0,
+    string? CategoryWithoutUserEvidence = null);
 
 /// <summary>Rows are the expected category, columns the category the ranker returned. "none" is an escalation or no category.</summary>
 public sealed record ConfusionMatrix(IReadOnlyList<string> Labels, IReadOnlyList<IReadOnlyList<int>> Counts);
@@ -167,7 +174,19 @@ public static class EvalSuite
         var category = decision.Claim is null ? null : JsonNamingPolicy.CamelCase.ConvertName(decision.Claim.Category.ToString() ?? string.Empty);
         var cause = decision.Claim?.Cause ?? string.Empty;
         var clean = item.Expected.ForbiddenInCause.All(term => !cause.Contains(term, StringComparison.OrdinalIgnoreCase));
-        var passed = behavior == item.Expected.Behavior && category == item.Expected.Category && clean;
+        string? without = null;
+        var changedByUser = true;
+        if (item.Expected.CategoryWithoutUserEvidence is { } expectedWithout)
+        {
+            var bare = JsonSerializer.Deserialize<ResolutionRequest>(JsonSerializer.Serialize(item.Request))!;
+            bare.UserEvidence = [];
+            bare.UserEvidenceIds = [];
+            var baseline = RootCauseRanker.Rank(bare).Claim;
+            without = baseline is null ? null : JsonNamingPolicy.CamelCase.ConvertName(baseline.Category.ToString() ?? string.Empty);
+            changedByUser = item.Request.UserEvidence.Length > 0 && without == expectedWithout && without != category;
+        }
+
+        var passed = behavior == item.Expected.Behavior && category == item.Expected.Category && clean && changedByUser;
         var top2 = Top2(decision, item.Request);
         bool? causeInTop2 = item.Expected.CauseTerms.Length == 0
             ? null
@@ -175,7 +194,7 @@ public static class EvalSuite
         var pack = Pack(item.Request);
         var citedIds = decision.Claim?.EvidenceIds.Select(id => id.Value.ToString("D")).ToArray() ?? [];
         var inPack = citedIds.Count(pack.Contains);
-        return new EvalCaseResult(item.Id, item.Group, item.Expected.Behavior, item.Expected.Category, behavior, category, passed, decision.Claim?.Cause, causeInTop2, citedIds.Length, inPack);
+        return new EvalCaseResult(item.Id, item.Group, item.Expected.Behavior, item.Expected.Category, behavior, category, passed, decision.Claim?.Cause, causeInTop2, citedIds.Length, inPack, without);
     }
 
     /// <summary>
@@ -206,7 +225,8 @@ public static class EvalSuite
             .Concat(request.AlignmentEvidenceIds)
             .Concat(request.LotEvidenceIds)
             .Concat(request.SignalEvidenceIds)
-            .Concat(request.PmEvidenceIds);
+            .Concat(request.PmEvidenceIds)
+            .Concat(request.UserEvidenceIds);
         return new HashSet<string>(ids.Where(id => Guid.TryParse(id, out _)).Select(id => Guid.Parse(id).ToString("D")), StringComparer.OrdinalIgnoreCase);
     }
 }

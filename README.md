@@ -89,7 +89,7 @@ cd web; npm test; npm run lint; npm run build
 - [docs/demo/REPRODUCIBILITY.md](docs/demo/REPRODUCIBILITY.md): seed, resets, clock, replay
 - [docs/operations/runbook.md](docs/operations/runbook.md): deploy, smoke, reset, rollback, teardown
 - [docs/TESTING.md](docs/TESTING.md): test harness
-- [eval/README.md](eval/README.md): replay eval (27 cases, CI gate)
+- [eval/README.md](eval/README.md): replay eval (28 cases, CI gate)
 
 ## Deploy to Azure
 
