@@ -18,6 +18,9 @@ public static class MetadataEndpoints
             return tool is null ? Results.NotFound() : Results.Ok(ToTool(tool, store));
         });
         app.MapGet("/api/metadata/rules", (IMetadataStore store) => Results.Ok(store.Rules.Select(ToRule).ToArray()));
+        app.MapGet("/api/metadata/settings", () => Results.Ok(RuleSettings.Read(
+            Mps.Application.Spc.SpcRuleSettings.Shared,
+            Mps.Agents.Investigation.ShapeWait.Load())));
         app.MapGet("/api/metadata/process-maps", (IMetadataStore store) => Results.Ok(store.ProcessMaps.Select(ToMap).ToArray()));
     }
 
@@ -117,7 +120,10 @@ public static class MetadataEndpoints
             rule.ThenPlain,
             rule.Why,
             rule.Order,
-            rule.Actions.Select(action => new RuleActionResponse(action.Type, action.Priority, action.Queue)).ToArray());
+            rule.Actions.Select(action => new RuleActionResponse(action.Type, action.Priority, action.Queue)).ToArray())
+        {
+            Conditions = RuleSettings.Conditions(rule.When),
+        };
     }
 
     private static ProcessMapResponse ToMap(ProcessMap map)
@@ -212,7 +218,11 @@ public sealed record BusinessRuleResponse(
     string ThenPlain,
     string Why,
     int Order,
-    IReadOnlyList<RuleActionResponse> Actions);
+    IReadOnlyList<RuleActionResponse> Actions)
+{
+    /// <summary>The rule's configured conditions, so the screen can show each threshold as a field.</summary>
+    public IReadOnlyList<RuleConditionResponse> Conditions { get; init; } = [];
+}
 
 public sealed record ProcessStepResponse(
     string Id,

@@ -824,6 +824,20 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/BusinessRule"
+  /api/metadata/settings:
+    get:
+      tags: [metadata]
+      operationId: listRuleSettings
+      summary: Rule thresholds and settings, read from the loaded configuration
+      responses:
+        "200":
+          description: Control-chart, rule, alert-clearing, investigation and decision settings. Read-only.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RuleSetting"
   /api/metadata/process-maps:
     get:
       tags: [metadata]
@@ -2365,6 +2379,46 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/RuleAction"
+        conditions:
+          type: array
+          items:
+            $ref: "#/components/schemas/RuleCondition"
+    RuleCondition:
+      type: object
+      additionalProperties: false
+      required: [field, label, kind, value]
+      properties:
+        field:
+          type: string
+        label:
+          type: string
+        kind:
+          type: string
+          enum: [text, number, toggle]
+        value:
+          type: string
+    RuleSetting:
+      type: object
+      additionalProperties: false
+      required: [id, group, label, kind, value]
+      properties:
+        id:
+          type: string
+        group:
+          type: string
+        label:
+          type: string
+        kind:
+          type: string
+          enum: [number, toggle]
+        value:
+          type: string
+        unit:
+          type: string
+          nullable: true
+        help:
+          type: string
+          nullable: true
     ProcessStep:
       type: object
       additionalProperties: false

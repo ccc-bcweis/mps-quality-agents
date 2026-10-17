@@ -4,7 +4,7 @@
 
 import { http, HttpResponse } from "msw";
 import { handlers as contractHandlers } from "../../../contracts/msw/handlers";
-import type { Alert, BusinessRule, CapabilityType, FaultInjectionRequest, Incident, Investigation, MetadataLine, MetadataSite, MetadataToolCard, OpenIncidentRequest, PrintoutConfirmRequest, PrintoutInspection, ProcessMap, ScenarioRun, Ticket } from "../api/types";
+import type { Alert, BusinessRule, CapabilityType, FaultInjectionRequest, Incident, Investigation, MetadataLine, MetadataSite, MetadataToolCard, OpenIncidentRequest, PrintoutConfirmRequest, PrintoutInspection, ProcessMap, RuleSetting, ScenarioRun, Ticket } from "../api/types";
 import { telemetryForTool } from "../fleet/telemetry";
 import { latestInvestigationForIncident } from "../investigation/ticketRoute";
 import { incidents, investigationFor, investigations, tools } from "./demoData";
@@ -171,6 +171,7 @@ const metadataRules: BusinessRule[] = [
     whenPlain: "When the severity is critical.",
     thenPlain: "Open a ticket, set the priority to critical, send it to the shift lead, ask a person to review it, and start an investigation.",
     why: "A critical signal can affect the wafers or the tool, so a person reviews it before any corrective action.",
+    conditions: [{ field: "severity", label: "Severity is", kind: "text", value: "critical" }],
     actions: [
       { type: "open-ticket" },
       { type: "set-priority", priority: "critical" },
@@ -186,6 +187,11 @@ const metadataRules: BusinessRule[] = [
     whenPlain: "When a high alert is on chuck temperature at the etch tool in bay two.",
     thenPlain: "Open a ticket, set the priority to high, send it to process engineering, and start an investigation.",
     why: "That pattern matches an edge ring or an engineering change on one chamber. A person is not required yet.",
+    conditions: [
+      { field: "severityAtLeast", label: "Severity at least", kind: "text", value: "high" },
+      { field: "parameterId", label: "Signal", kind: "text", value: "chuckTemperature" },
+      { field: "toolId", label: "Tool", kind: "text", value: "E-02" },
+    ],
     actions: [
       { type: "open-ticket" },
       { type: "set-priority", priority: "high" },
@@ -193,6 +199,32 @@ const metadataRules: BusinessRule[] = [
       { type: "auto-investigate" },
     ],
   },
+];
+
+/** Same values as data/metadata/spc-rules.yaml and investigation.yaml, as the API returns them. */
+export const metadataSettings: RuleSetting[] = [
+  { id: "spc.controlLimitSigma", group: "Control chart", label: "Control limits", kind: "number", value: "3", unit: "sigma", help: "Centre line plus or minus this many sigma." },
+  { id: "spc.watchSigma", group: "Control chart", label: "Watch level", kind: "number", value: "2", unit: "sigma", help: null },
+  { id: "spc.criticalSigma", group: "Control chart", label: "Critical level", kind: "number", value: "4", unit: "sigma", help: null },
+  { id: "spc.we1.on", group: "Western Electric and Nelson rules", label: "Rule 1 on", kind: "toggle", value: "true" },
+  { id: "spc.we1.sigma", group: "Western Electric and Nelson rules", label: "Rule 1: one reading beyond", kind: "number", value: "3", unit: "sigma" },
+  { id: "spc.we2.on", group: "Western Electric and Nelson rules", label: "Rule 2 on", kind: "toggle", value: "true" },
+  { id: "spc.we2.count", group: "Western Electric and Nelson rules", label: "Rule 2: readings out of the window", kind: "number", value: "2", unit: "readings", help: "2 of 3 beyond 2 sigma, one side." },
+  { id: "spc.we2.sigma", group: "Western Electric and Nelson rules", label: "Rule 2: beyond", kind: "number", value: "2", unit: "sigma" },
+  { id: "spc.we3.on", group: "Western Electric and Nelson rules", label: "Rule 3 on", kind: "toggle", value: "true" },
+  { id: "spc.we3.count", group: "Western Electric and Nelson rules", label: "Rule 3: readings out of the window", kind: "number", value: "4", unit: "readings", help: "4 of 5 beyond 1 sigma, one side." },
+  { id: "spc.we3.sigma", group: "Western Electric and Nelson rules", label: "Rule 3: beyond", kind: "number", value: "1", unit: "sigma" },
+  { id: "spc.we4.on", group: "Western Electric and Nelson rules", label: "Rule 4 on", kind: "toggle", value: "true" },
+  { id: "spc.we4.count", group: "Western Electric and Nelson rules", label: "Rule 4: readings in a row on one side", kind: "number", value: "8", unit: "readings" },
+  { id: "spc.nelson.on", group: "Western Electric and Nelson rules", label: "Nelson rising run on", kind: "toggle", value: "true" },
+  { id: "spc.nelson.count", group: "Western Electric and Nelson rules", label: "Nelson: readings in a row, each higher", kind: "number", value: "6", unit: "readings" },
+  { id: "clear.readings", group: "Alert clearing", label: "Readings in control before an alert clears", kind: "number", value: "8", unit: "readings" },
+  { id: "clear.sigma", group: "Alert clearing", label: "In control means within", kind: "number", value: "2", unit: "sigma" },
+  { id: "investigation.wait.on", group: "Investigation", label: "Wait for a clear signal shape", kind: "toggle", value: "true" },
+  { id: "investigation.wait.minReadings", group: "Investigation", label: "Readings since the first rule break", kind: "number", value: "20", unit: "readings" },
+  { id: "investigation.wait.attempts", group: "Investigation", label: "Tries", kind: "number", value: "30" },
+  { id: "investigation.wait.delay", group: "Investigation", label: "Time between tries", kind: "number", value: "20", unit: "seconds" },
+  { id: "decision.overrideMin", group: "Decision", label: "Shortest override justification", kind: "number", value: "20", unit: "characters" },
 ];
 
 const metadataMaps: ProcessMap[] = [
@@ -714,6 +746,7 @@ export const handlers = [
     }),
   ),
   http.get("/api/metadata/rules", () => HttpResponse.json(metadataRules)),
+  http.get("/api/metadata/settings", () => HttpResponse.json(metadataSettings)),
   http.get("/api/metadata/process-maps", () => HttpResponse.json(metadataMaps)),
 
   ...contractHandlers,

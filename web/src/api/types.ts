@@ -675,6 +675,26 @@ export type BusinessRule = {
   why: string;
   order: number;
   actions: RuleAction[];
+  /** The rule's configured conditions (from business-rules.yaml), one field each. */
+  conditions?: RuleCondition[];
+};
+
+export type RuleCondition = {
+  field: string;
+  label: string;
+  kind: "text" | "number" | "toggle";
+  value: string;
+};
+
+/** A rule threshold or setting from the loaded configuration. Value is text; toggles are "true" or "false". */
+export type RuleSetting = {
+  id: string;
+  group: string;
+  label: string;
+  kind: "number" | "toggle";
+  value: string;
+  unit?: string | null;
+  help?: string | null;
 };
 
 export type ProcessStep = {

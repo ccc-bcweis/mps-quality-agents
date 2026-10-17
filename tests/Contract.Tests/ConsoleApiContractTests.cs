@@ -52,6 +52,7 @@ public sealed class ConsoleApiContractTests
         "/api/metadata/sites",
         "/api/metadata/tools/{toolId}",
         "/api/metadata/rules",
+        "/api/metadata/settings",
         "/api/metadata/process-maps",
         "/api/trace/{eventId}",
     ];
@@ -116,6 +117,7 @@ public sealed class ConsoleApiContractTests
         Expect(OperationType.Get, "/api/metadata/sites", "listMetadataSites", "200");
         Expect(OperationType.Get, "/api/metadata/tools/{toolId}", "getMetadataTool", "200");
         Expect(OperationType.Get, "/api/metadata/rules", "listBusinessRules", "200");
+        Expect(OperationType.Get, "/api/metadata/settings", "listRuleSettings", "200");
         Expect(OperationType.Get, "/api/metadata/process-maps", "listProcessMaps", "200");
         Expect(OperationType.Get, "/api/trace/{eventId}", "getCausalTrace", "200");
 
