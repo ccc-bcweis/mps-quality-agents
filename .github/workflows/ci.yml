@@ -24,6 +24,14 @@ jobs:
       - name: Restore
         run: dotnet restore MPS.sln
 
+      - name: Vulnerable packages (direct and transitive)
+        run: |
+          dotnet list MPS.sln package --vulnerable --include-transitive 2>&1 | tee "$RUNNER_TEMP/vulnerable.txt"
+          if grep -q "has the following vulnerable packages" "$RUNNER_TEMP/vulnerable.txt"; then
+            echo "::error::A NuGet package has a known vulnerability. Pin a fixed version in Directory.Packages.props."
+            exit 1
+          fi
+
       - name: Build
         run: dotnet build MPS.sln --configuration Release --no-restore
 
@@ -71,6 +79,11 @@ jobs:
         if: hashFiles('web/package.json') != ''
         working-directory: web
         run: npm ci && npm run lint && npm test && npm run build
+
+      - name: Production dependency audit
+        if: hashFiles('web/package.json') != ''
+        working-directory: web
+        run: npm audit --omit=dev --audit-level=high
 
   gitleaks:
     name: gitleaks

@@ -24,6 +24,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Transitive security pins (central transitive pinning is on). Keep them at or above the fixed versions:
+         SQLitePCLRaw <= 2.1.11 is GHSA-2m69-gcr7-jv3q; SignalR.Common <= 10.0.12 is GHSA-334f-vvp4-7g6p (CVE-2026-70159). -->
+    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.13" />
+    <PackageVersion Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.13" />
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Common" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- GB-5 contract and integration tests.  -->
     <PackageVersion Include="JsonSchema.Net" Version="7.4.0" />
     <PackageVersion Include="Microsoft.OpenApi.Readers" Version="1.6.31" />
