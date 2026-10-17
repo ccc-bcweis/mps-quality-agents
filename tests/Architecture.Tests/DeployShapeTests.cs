@@ -98,7 +98,7 @@ public sealed class DeployShapeTests
         workflow.Should().Contain("vars.BUDGET_EMAIL");
         workflow.Should().Contain("secrets.AZURE_CLIENT_ID");
         workflow.Should().Contain("\"401\"");
-        workflow.Should().Contain("\"302\"");
+        workflow.Should().Contain("302 $base/landing.html", "a signed-out browser is sent to the landing page");
         workflow.Should().NotContain("pull_request:");
         workflow.Should().NotContain("push:");
         workflow.Should().Contain("github.sha");
