@@ -46,6 +46,9 @@ public sealed class ResolutionRequest
 
     public EvidenceNote[] Notes { get; set; } = [];
 
+    /// <summary>Set only on a retry: what was wrong with the previous answer for this same pack.</summary>
+    public string? Feedback { get; set; }
+
     public static ResolutionRequest From(EvidencePack pack, ImpactFeatures features)
     {
         ArgumentNullException.ThrowIfNull(pack);
