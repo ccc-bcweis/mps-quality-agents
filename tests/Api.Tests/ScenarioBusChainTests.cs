@@ -122,6 +122,7 @@ public sealed class ScenarioBusChainTests
                 && row.CausationId == faultEventId)
             .ToArray();
         readings.Should().NotBeEmpty(scenarioId + " should stream readings from the fault");
+        var reached = new List<string>();
         foreach (var reading in readings)
         {
             var alert = LinkedChild(store, reading.EventId, LifecycleTypes.AlertRaised);
@@ -133,23 +134,27 @@ public sealed class ScenarioBusChainTests
             var rule = LinkedChild(store, alert.EventId, LifecycleTypes.RuleMatched);
             if (rule is null)
             {
+                reached.Add("alert");
                 continue;
             }
 
             var ticket = LinkedChild(store, rule.EventId, LifecycleTypes.TicketCreated);
             if (ticket is null)
             {
+                reached.Add("rule");
                 continue;
             }
 
             var investigation = LinkedChild(store, ticket.EventId, LifecycleTypes.InvestigationStart);
             if (investigation is null)
             {
+                reached.Add("ticket");
                 continue;
             }
 
             if (LinkedChild(store, investigation.EventId, LifecycleTypes.InvestigationStep) is null)
             {
+                reached.Add("investigation");
                 continue;
             }
 
@@ -159,7 +164,7 @@ public sealed class ScenarioBusChainTests
             return rule;
         }
 
-        throw new InvalidOperationException(scenarioId + " did not link a reading, an alert, a business rule, a ticket, and an investigation.");
+        throw new InvalidOperationException(scenarioId + " did not link a reading, an alert, a business rule, a ticket, and an investigation. Deepest links: " + string.Join(", ", reached.Distinct()));
     }
 
     private static StoredEvent? LinkedChild(SqliteEventStore store, string parentId, string type)

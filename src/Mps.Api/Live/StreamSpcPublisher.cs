@@ -2,6 +2,7 @@
 
 using System.Collections.Concurrent;
 
+using Mps.Application.Bus;
 using Mps.Application.Errors;
 using Mps.Application.Lifecycle;
 using Mps.Application.Spc;
@@ -88,8 +89,12 @@ public sealed partial class StreamSpcPublisher
 
             // Run it off the stream: the investigation may wait for more readings to classify the shape,
             // and those readings come from this stream.
+            // Capture the ticket it hangs off now, before the next tool moves the shared step pointer.
             var incidentId = outcome.Incident.Id;
-            _pending.Enqueue(Task.Run(() => InvestigateAsync(incidentId), CancellationToken.None));
+            var hints = scope.ServiceProvider.GetService<ICascadeDirectory>();
+            var correlation = outcome.Incident.CorrelationId;
+            var parent = hints?.FindStep(correlation, "ticket") ?? hints?.FindStep(correlation, "alert");
+            _pending.Enqueue(InvestigationParent.Run(parent, () => InvestigateAsync(incidentId)));
         }
     }
 
