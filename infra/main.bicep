@@ -13,7 +13,7 @@ param location string = resourceGroup().location
 param namePrefix string = 'mpsdemo'
 
 @description('Container image. The workflow passes <acr>/mps-app:<tag> after the first bootstrap deploy.')
-param apiImage string = 'mcr.microsoft.com/dotnet/aspnet:8.0'
+param apiImage string = 'mcr.microsoft.com/dotnet/aspnet:10.0'
 
 @description('Create Azure SQL. The demo uses SQLite inside the container, so this stays false.')
 param deploySql bool = false

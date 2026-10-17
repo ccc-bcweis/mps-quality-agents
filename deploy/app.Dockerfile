@@ -17,7 +17,7 @@ ENV VITE_USE_MSW=$VITE_USE_MSW
 ENV VITE_API_BASE=$VITE_API_BASE
 RUN npm run build
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS api
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS api
 WORKDIR /src
 COPY Directory.Build.props Directory.Packages.props global.json nuget.config ./
 COPY src/ src/
@@ -26,7 +26,7 @@ COPY eval/results/ eval/results/
 RUN dotnet restore src/Mps.Api/Mps.Api.csproj
 RUN dotnet publish src/Mps.Api/Mps.Api.csproj --configuration Release --no-restore --output /app/publish /p:UseAppHost=false
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=api /app/publish .
 COPY --from=web /src/web/dist ./wwwroot

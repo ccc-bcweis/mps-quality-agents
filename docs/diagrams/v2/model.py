@@ -72,7 +72,7 @@ def physical():
     items=[('Azure Front Door and WAF',['Global entry, TLS, rate limits'],True),('Microsoft Entra ID',['Single-tenant app, assignment','required, B2B guests']),
            ('API Management AI gateway',['Token limits, model routing'],True)]
     ns,yb2=stack('f',1,top+56,items,'sec'); el.append(G('gF',col(1),top,COLW,yb2-top+4,'Edge and identity','sec')); el+=ns
-    items=[('Web console',['React, served by the API container']),('API service',['.NET 8, SignalR, scale 1 to 3'],True),('Investigation workers',['Scale on queue depth'],True),
+    items=[('Web console',['React, served by the API container']),('API service',['.NET 10, SignalR, scale 1 to 3'],True),('Investigation workers',['Scale on queue depth'],True),
            ('Simulator service',['Telemetry and scenarios, 1 replica'],True),('Mock enterprise APIs',['MES, QMS, PLM, ERP, maintenance'])]
     ns,yb3=stack('c',2,top+56,items,'det'); el.append(G('gC',col(2),top,COLW,yb3-top+4,'Container Apps environment','det')); el+=ns
     items=[('Azure IoT Hub',['Device ingress from gateways'],True),('Azure Event Hubs',['Telemetry stream, per-tool partitions'],True),('Azure Service Bus',['Command and domain event topics'],True),

@@ -205,9 +205,9 @@ public static class SignalShapeClassifier
     }
 
     /// <summary>How far a straight-line fit moves from the first reading to the last.</summary>
-    private static double FittedDrift(IReadOnlyList<double> values)
+    private static double FittedDrift(double[] values)
     {
-        var count = values.Count;
+        var count = values.Length;
         var meanX = (count - 1) / 2d;
         var meanY = values.Average();
         double sxx = 0d;

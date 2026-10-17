@@ -165,7 +165,7 @@ public static class EnterpriseSeedGenerator
         draft.Ncrs.Add(new NcrRecord("NCR-S-01-052", "S-01", "Ash endpoint delayed on one cassette.", RecordDates.Shift(new DateTimeOffset(2026, 9, 2, 9, 30, 0, TimeSpan.Zero)), "LOT-S-01-W06"));
     }
 
-    private static void AddHistory(EnterpriseDraft draft, IReadOnlyList<ToolSpec> tools, IReadOnlyList<ProcessRun> faultRuns, int seed)
+    private static void AddHistory(EnterpriseDraft draft, ToolSpec[] tools, IReadOnlyList<ProcessRun> faultRuns, int seed)
     {
         var salt = seed % 7;
         if (salt < 0)
@@ -173,7 +173,7 @@ public static class EnterpriseSeedGenerator
             salt += 7;
         }
 
-        for (var toolIndex = 0; toolIndex < tools.Count; toolIndex++)
+        for (var toolIndex = 0; toolIndex < tools.Length; toolIndex++)
         {
             var tool = tools[toolIndex];
             if (tool.Recipes.Count == 0)

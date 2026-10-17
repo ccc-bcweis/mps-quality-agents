@@ -29,7 +29,7 @@ All companies, equipment, people and data in this repo are **fictional and synth
 
 ## Stack
 
-.NET 8 / C# with `TreatWarningsAsErrors`, Microsoft Agent Framework (`Microsoft.Agents.AI.Workflows`) behind `IInvestigationWorkflow` with a LangGraph seam ([docs/langgraph-compat.md](docs/langgraph-compat.md)), `Microsoft.Extensions.AI`, SQLite, SignalR, OpenTelemetry. React 19, TypeScript, Vite, Tailwind and Recharts. Azure Container Apps with Easy Auth (Microsoft Entra), Azure OpenAI `gpt-5.4-mini` through managed identity, Azure Container Registry, Application Insights and a cost budget.
+.NET 10 / C# with `TreatWarningsAsErrors`, Microsoft Agent Framework (`Microsoft.Agents.AI.Workflows`) behind `IInvestigationWorkflow` with a LangGraph seam ([docs/langgraph-compat.md](docs/langgraph-compat.md)), `Microsoft.Extensions.AI`, SQLite, SignalR, OpenTelemetry. React 19, TypeScript, Vite, Tailwind and Recharts. Azure Container Apps with Easy Auth (Microsoft Entra), Azure OpenAI `gpt-5.4-mini` through managed identity, Azure Container Registry, Application Insights and a cost budget.
 
 ## Clone and run
 
@@ -48,7 +48,7 @@ docker compose up --build
 - API health: http://localhost:8080/health
 - Aspire dashboard (traces): http://localhost:18888
 
-**Without Docker** (.NET 8 SDK and Node 22), in two terminals from the repo root:
+**Without Docker** (.NET 10 SDK and Node 22), in two terminals from the repo root:
 
 ```powershell
 dotnet run --project src/Mps.Api
@@ -62,7 +62,7 @@ $env:VITE_USE_MSW = "false"; npm run dev
 
 Open http://localhost:5173. Vite forwards `/api`, `/health` and `/hubs` to the API on port 8080. Plain `npm run dev` without `VITE_USE_MSW=false` runs the console against the mock service worker only, with no API.
 
-In VS Code, F5 runs the **API** configuration and opens `/health`. The dev container is `.devcontainer/devcontainer.json` (.NET 8 and Node 22).
+In VS Code, F5 runs the **API** configuration and opens `/health`. The dev container is `.devcontainer/devcontainer.json` (.NET 10 and Node 22).
 
 **Live model locally.** Set `LLM_MODE=live` and the Azure OpenAI or OpenAI values in the untracked `.env`. A model key belongs only in that file.
 

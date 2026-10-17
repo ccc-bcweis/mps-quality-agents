@@ -151,8 +151,8 @@ public static class EvidenceMatrixBuilder
 
     private static EvidenceId Pick(
         RootCauseCategory category,
-        IReadOnlyList<EvidenceId> own,
-        IReadOnlyList<EvidenceId> signal,
+        List<EvidenceId> own,
+        List<EvidenceId> signal,
         EvidenceId fallback)
     {
         if (own.Count > 0)
@@ -168,7 +168,7 @@ public static class EvidenceMatrixBuilder
         return fallback;
     }
 
-    private static EvidenceStance Stance(RootCauseCategory category, RootCauseCategory? chosen, IReadOnlyList<EvidenceId> own)
+    private static EvidenceStance Stance(RootCauseCategory category, RootCauseCategory? chosen, List<EvidenceId> own)
     {
         if (chosen == category)
         {
