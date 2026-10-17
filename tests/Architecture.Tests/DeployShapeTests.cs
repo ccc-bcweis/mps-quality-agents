@@ -58,7 +58,8 @@ public sealed class DeployShapeTests
         apps.Should().Contain("targetPort: 8080");
         apps.Should().Contain("external: true");
         apps.Should().Contain("Microsoft.App/containerApps/authConfigs@2024-03-01");
-        apps.Should().Contain("unauthenticatedClientAction: 'RedirectToLoginPage'");
+        apps.Should().Contain("unauthenticatedClientAction: 'AllowAnonymous'", "the app gates the API and sends signed-out browsers to the landing page");
+        apps.Should().Contain("redirectToProvider: 'azureactivedirectory'");
         apps.Should().Contain("entraClientId");
         apps.Should().Contain("openIdIssuer");
         apps.Should().Contain("name: 'Mps__Model__Mode'");

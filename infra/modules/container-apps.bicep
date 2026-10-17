@@ -1,8 +1,9 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 // One container serves the API and the console. It pulls from ACR with its user-assigned identity.
-// Easy Auth requires a sign-in. The 2024-03-01 schema has no requireAuthentication property.
-// platform.enabled plus unauthenticatedClientAction RedirectToLoginPage is that gate.
-// Anonymous callers get a redirect (302). Some clients get 401. There is no model key.
+// Easy Auth signs people in with the existing Entra app. Anonymous requests reach the app (AllowAnonymous) so a signed-out
+// browser lands on the branded /landing.html instead of a raw login redirect. The app enforces sign-in: the API and hub
+// answer 401 without an Easy Auth principal (AccessGate), and console pages redirect to the landing page (ConsoleEntryGate).
+// There is no model key.
 
 param location string
 param envName string
@@ -179,12 +180,7 @@ resource auth 'Microsoft.App/containerApps/authConfigs@2024-03-01' = if (!empty(
     }
     globalValidation: {
       redirectToProvider: 'azureactivedirectory'
-      unauthenticatedClientAction: 'RedirectToLoginPage'
-      // The signed-out splash and its logo load without sign-in, so signing out does not bounce straight back to login.
-      excludedPaths: [
-        '/signed-out.html'
-        '/logo-concept-1.svg'
-      ]
+      unauthenticatedClientAction: 'AllowAnonymous'
     }
     httpSettings: {
       requireHttps: true
