@@ -1,0 +1,30 @@
+{
+  "id": "SC7-01",
+  "group": "equipmentCalibrationOrAlignment",
+  "groundTruth": "SC-7 foreline pump bearing past its service interval on D-02 (live run 2026-10-17 filed it as process drift)",
+  "expected": {
+    "behavior": "recommend",
+    "category": "equipmentCalibrationOrAlignment",
+    "forbiddenInCause": ["SIH4-088"]
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "D-02/D-02-A",
+    "signalShape": "ramp",
+    "pmSummaries": [
+      "WO-PMP-D02-BRG maintenance: Foreline pump bearing hours are past the service interval on D-02. Vibration has been rising. The bearing was not replaced."
+    ],
+    "pmEvidenceIds": [
+      "00000000-0000-0000-0000-000000000900"
+    ],
+    "signalEvidenceIds": [
+      "00000000-0000-0000-0000-000000000910"
+    ],
+    "noticeIds": ["SN-SIH4-088"],
+    "notes": [
+      {"id": "00000000-0000-0000-0000-000000000900", "source": "cmms", "title": "Work order WO-PMP-D02-BRG", "detail": "Foreline pump bearing hours are past the service interval on D-02. Vibration has been rising. The bearing was not replaced.", "externalRef": "WO-PMP-D02-BRG"},
+      {"id": "00000000-0000-0000-0000-000000000910", "source": "telemetry", "title": "Pump vibration on D-02-A", "detail": "Shape from the data since the first rule break: a gradual drift in one direction.", "externalRef": "TEL-D-02-pumpVibration"},
+      {"id": "00000000-0000-0000-0000-000000000920", "source": "erp", "title": "Ruled out: Supplier notice SN-SIH4-088", "detail": "Silane lot SIH4-088 matches the purchase specification.", "externalRef": "SN-SIH4-088"}
+    ]
+  }
+}

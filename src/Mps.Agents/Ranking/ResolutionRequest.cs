@@ -20,6 +20,9 @@ public sealed class ResolutionRequest
 
     public string SignalShape { get; set; } = "unknown";
 
+    /// <summary>Which class a cited record implies, from data/metadata/category-evidence.yaml ("description: class").</summary>
+    public string[] CategoryRules { get; set; } = [];
+
     /// <summary>The shape ids the reply's "shape" field may use, from the signal shape catalog.</summary>
     public string[] ShapeOptions { get; set; } = [];
 
@@ -63,6 +66,9 @@ public sealed class ResolutionRequest
             ScopeKey = features.Key,
             SignalShape = SignalShapeCatalog.Shared.Of(features.Shape).Id,
             ShapeOptions = [.. SignalShapeCatalog.Shared.Ids],
+            CategoryRules = Mps.Agents.Grounding.CategoryEvidenceRules.Shared.Rules
+                .Select(rule => rule.Description + ": " + System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(rule.Implies.ToString()))
+                .ToArray(),
             EcoIds = pack.Ecos.Select(eco => eco.EcoId).ToArray(),
             EcoEvidenceIds = Ids(pack, pack.Ecos.Select(eco => eco.EcoId)),
             PmSummaries = pack.WorkOrders.Where(order => !IsAlignment(order)).Select(DescribeOrder).ToArray(),

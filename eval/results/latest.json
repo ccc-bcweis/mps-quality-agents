@@ -1,7 +1,7 @@
 {
   "mode": "replay",
-  "cases": 26,
-  "passed": 26,
+  "cases": 27,
+  "passed": 27,
   "taskCompletion": 1,
   "categoryAccuracy": 1,
   "safeEscalation": 1,
@@ -185,6 +185,15 @@
       "expectedCategory": null,
       "actualBehavior": "escalate",
       "actualCategory": null,
+      "passed": true
+    },
+    {
+      "id": "SC7-01",
+      "group": "equipmentCalibrationOrAlignment",
+      "expectedBehavior": "recommend",
+      "expectedCategory": "equipmentCalibrationOrAlignment",
+      "actualBehavior": "recommend",
+      "actualCategory": "equipmentCalibrationOrAlignment",
       "passed": true
     },
     {

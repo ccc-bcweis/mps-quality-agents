@@ -36,7 +36,7 @@ public sealed class PromptCatalogTests
         catalog.Investigation.Body.Should().Contain("do not diagnose, write, or approve");
         catalog.Investigation.Body.Should().Contain("whyItMatters");
         catalog.Resolution.Id.Should().Be("resolution");
-        catalog.Resolution.Version.Should().Be("1.9.0");
+        catalog.Resolution.Version.Should().Be("1.10.0");
         catalog.Resolution.Body.Should().Contain("bearing");
         catalog.Resolution.Body.Should().Contain("recipe setpoint");
         catalog.Resolution.Body.Should().Contain("precursor");
@@ -417,7 +417,7 @@ public sealed class ResolutionAgentTests
 
         result.Escalated.Should().BeFalse();
         result.ModelCalls.Should().Be(1);
-        result.PromptVersion.Should().Be("1.9.0");
+        result.PromptVersion.Should().Be("1.10.0");
         result.Claim!.Category.Should().Be(RootCauseCategory.EngineeringChange);
         result.Claim.EvidenceIds.Should().Contain(id);
         result.Claim.CounterEvidence.Should().NotBeEmpty();
