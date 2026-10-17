@@ -128,6 +128,7 @@ export const tickets: Ticket[] = [
     toolId: "E-02",
     title: "ESC temperature oscillation after a recipe revision.",
     openedAt: "2026-10-14T15:00:00Z",
+    status: "open",
   },
   {
     id: S2_TICKET_ID,
@@ -136,6 +137,7 @@ export const tickets: Ticket[] = [
     toolId: "D-01",
     title: "Chamber pressure step. PLM and MES revisions disagree.",
     openedAt: "2026-10-14T14:41:00Z",
+    status: "open",
   },
   {
     id: NCR_TICKET_ID,
@@ -144,6 +146,7 @@ export const tickets: Ticket[] = [
     toolId: "C-01",
     title: "NCR-772 residue count, closed, unrelated.",
     openedAt: "2026-10-10T11:00:00Z",
+    status: "closed",
   },
   {
     id: SUPPLIER_TICKET_ID,
@@ -152,6 +155,7 @@ export const tickets: Ticket[] = [
     toolId: "E-01",
     title: "Supplier notice: gas lot NF-3317 moisture out of spec.",
     openedAt: "2026-10-13T09:12:00Z",
+    status: "open",
   },
 ];
 

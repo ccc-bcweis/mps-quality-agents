@@ -225,6 +225,8 @@ public sealed class DemoResetTests
         investigation.GetProperty("stage").GetString().Should().Be("closedByDemoReset");
         investigation.GetProperty("statusLabel").GetString().Should().Be("Closed by reset");
         tickets.EnumerateArray().Select(row => row.GetProperty("number").GetString()).Should().Contain(ticketNumber);
+        tickets.EnumerateArray().Single(row => row.GetProperty("number").GetString() == ticketNumber)
+            .GetProperty("status").GetString().Should().Be("closed", "a ticket whose incident was closed is no longer open");
         plant.Runtime.Simulator.ActiveFaults.Should().BeEmpty();
         audit.GetProperty("entries").EnumerateArray().Select(row => row.GetProperty("summary").GetString())
             .Should().Contain(summary => summary != null && summary.Contains("Closed by reset", StringComparison.Ordinal));

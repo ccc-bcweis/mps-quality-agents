@@ -42,8 +42,10 @@ public static class ContractMapper
             alert.LastSeenAt,
             alert.Occurrences);
 
-    public static TicketResponse ToResponse(Ticket ticket) =>
-        new(ticket.Id.Value, ticket.Number, ticket.IncidentId.Value, ticket.ToolId.ToString(), ticket.Title, ticket.OpenedAt, SiteForTool(ticket.ToolId.ToString()));
+    public static TicketResponse ToResponse(Ticket ticket) => ToResponse(ticket, null);
+
+    public static TicketResponse ToResponse(Ticket ticket, IncidentStage? incidentStage) =>
+        new(ticket.Id.Value, ticket.Number, ticket.IncidentId.Value, ticket.ToolId.ToString(), ticket.Title, ticket.OpenedAt, SiteForTool(ticket.ToolId.ToString()), TicketStatus.For(incidentStage));
 
     public static IncidentResponse ToResponse(Incident incident) =>
         new(
