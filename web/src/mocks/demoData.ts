@@ -260,6 +260,16 @@ export const investigations: Investigation[] = [
     correlationId: "corr-s1",
     escalationReason: null,
     evidence: s1Evidence,
+    // Mock layer only: the live app gets this matrix from the server (data/evidence-matrix.yaml).
+    evidenceMatrix: [
+      { category: "engineeringChange", evidenceId: S1_EVIDENCE_ID, stance: "supports" },
+      { category: "engineeringChange", evidenceId: MES_ID, stance: "supports" },
+      { category: "equipmentCalibrationOrAlignment", evidenceId: TEL_ID, stance: "rulesOut" },
+      { category: "processDrift", evidenceId: TEL_ID, stance: "rulesOut" },
+      { category: "equipmentCalibrationOrAlignment", evidenceId: CAL_ID, stance: "rulesOut" },
+      { category: "equipmentCalibrationOrAlignment", evidenceId: PM_ID, stance: "rulesOut" },
+      { category: "supplyChainMaterial", evidenceId: ERP_ID, stance: "rulesOut" },
+    ],
     hypotheses: [
       {
         id: S1_HYPOTHESIS_ID,
@@ -345,6 +355,10 @@ export const investigations: Investigation[] = [
         specHigh: 6,
         ...depA,
       },
+    ],
+    evidenceMatrix: [
+      { category: "engineeringChange", evidenceId: "c1111111-1111-4111-8111-111111111111", stance: "supports" },
+      { category: "engineeringChange", evidenceId: "c2222222-2222-4222-8222-222222222222", stance: "rulesOut" },
     ],
     hypotheses: [],
   },

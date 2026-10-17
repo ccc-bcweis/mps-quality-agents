@@ -11,8 +11,10 @@ describe("tool detail", () => {
   it("draws an SPC chart and the etch windows for E-02", async () => {
     renderConsole("/tools/E-02");
     expect(await screen.findByRole("heading", { name: /Tool E-02/ })).toBeInTheDocument();
-    const chart = await screen.findByRole("figure", { name: /SPC chart of ESC temperature/ });
-    expect(chart).toHaveAccessibleName(/SPC chart of ESC temperature/i);
+    // No live points yet: an honest waiting state, never a generated series.
+    expect(await screen.findByRole("figure", { name: /Waiting for readings/ })).toBeInTheDocument();
+    expect(screen.queryByRole("figure", { name: /SPC chart of/ })).not.toBeInTheDocument();
+    expect(screen.getAllByText("Waiting for readings…").length).toBeGreaterThan(0);
     expect(screen.getByText("No live readings with a recipe window yet.")).toBeInTheDocument();
     expect(screen.queryByText("40–60 °C")).not.toBeInTheDocument();
     expect(screen.queryByText("53.1 °C osc")).not.toBeInTheDocument();
@@ -27,23 +29,23 @@ describe("tool detail", () => {
     renderConsole("/tools/E-02");
     expect(await screen.findByRole("region", { name: /plasma etch schematic/i })).toBeInTheDocument();
     const esc = screen.getByRole("button", { name: /E-02-A-TC-ESC/ });
+    // No frozen reading before the stream: a dash, muted.
     expect(esc).not.toHaveTextContent("53.1");
-    expect(esc).toHaveTextContent("C");
-    expect(esc).toHaveAttribute("data-status", "inSpec");
+    expect(esc).toHaveTextContent("—");
+    expect(esc).toHaveAttribute("data-status", "waiting");
     expect(esc).toHaveAttribute("data-anchor", "a.chuck.esc");
     expect(screen.getByRole("button", { name: /E-02-A-OUT-ENDPOINT/ })).toHaveAttribute("data-anchor", "a.chamber.endpoint");
     expect(screen.queryByText(/is not on the drawing/)).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /E-02-A-PT-CHAMBER/ }));
-    expect(await screen.findByRole("figure", { name: /SPC chart of Chamber pressure/ })).toBeInTheDocument();
+    expect(await screen.findByRole("figure", { name: /Chamber pressure\. Waiting for readings/ })).toBeInTheDocument();
   });
 
   it("keeps deposition chamber pressure inside the window", async () => {
     renderConsole("/tools/D-01");
     const pressure = await screen.findByRole("button", { name: /D-01-A-PT-CHAMBER/ });
     expect(pressure).not.toHaveTextContent("6.52");
-    expect(pressure).toHaveTextContent("Torr");
-    expect(pressure).toHaveAttribute("data-status", "inSpec");
-    expect(screen.getAllByText("4.10 Torr").length).toBeGreaterThan(0);
+    expect(pressure).toHaveAttribute("data-status", "waiting");
+    expect(screen.queryByText("4.10 Torr")).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: /thin-film deposition schematic/i })).toBeInTheDocument();
   });
 
@@ -104,7 +106,9 @@ describe("tool detail", () => {
     );
     renderConsole("/tools/E-01?streaming=1&parameter=etchRate");
     expect(await screen.findByRole("status", { name: "Streaming trace" })).toHaveTextContent(/streaming/i);
-    expect(await screen.findByRole("figure", { name: /SPC chart of Etch rate/ })).toHaveAccessibleName(/beyond 3 sigma/i);
+    const chart = await screen.findByRole("figure", { name: /SPC chart of Etch rate/ });
+    expect(chart).toHaveAccessibleName(/Mean 350\.00 nm\/min, sigma 20\.00/);
+    expect(chart).not.toHaveAccessibleName(/Client check/);
     const etch = screen.getByRole("button", { name: /E-01-A-OUT-ETCH/ });
     expect(etch).toHaveAttribute("data-status", "outOfSpec");
     expect(etch).toHaveTextContent("250");

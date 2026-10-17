@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import type { FleetLiveTool, LiveReading, LiveSeries, ToolLive } from "../api/types";
 import type { Tone } from "../api/labels";
-import type { ToolStory, WindowRow } from "../fleet/catalog";
+import { statusFromAlerts, type ToolTile, type WindowRow } from "../fleet/catalog";
 import { formatValue, type SensorStatus } from "../fleet/telemetry";
 import type { SpcPoint } from "../spc/series";
 import { LIMIT_LABEL, limitTone, rangeLabel } from "../investigation/limits";
@@ -56,30 +56,25 @@ function toneFor(status: LiveReading["status"]): Tone | undefined {
   return undefined;
 }
 
-/** A spark needs two points. One live sample is drawn as a flat line. */
-export function sparkLine(values: number[] | undefined, fallback: number[]): number[] {
-  if (!values || values.length === 0) return fallback;
+/** A spark needs two points. One live sample is drawn as a flat line; none draws nothing. */
+export function sparkLine(values: number[] | undefined): number[] {
+  if (!values || values.length === 0) return [];
   if (values.length === 1) return [values[0], values[0]];
   return values;
 }
 
 /**
- * Live readings replace the frozen tile only when this tool has samples.
- * An empty fleet snapshot leaves the teaching-floor story in place.
+ * The tile for a tool from live data only: status, the first three readings and the spark. Before the first reading
+ * the status comes from the alert log and the tile has no values (the page shows "Waiting for readings…").
  */
-export function storyWithLive(story: ToolStory, live: FleetLiveTool | undefined, spark?: number[]): ToolStory {
-  if (!live || live.readings.length === 0) return story;
+export function toolTile(toolId: string, alerts: { toolId: string; status?: string }[], live: FleetLiveTool | undefined, spark?: number[]): ToolTile {
+  if (!live || live.readings.length === 0) return { status: statusFromAlerts(toolId, alerts), params: [], spark: [] };
   const params = live.readings.slice(0, 3).map((reading) => ({
     label: parameterLabel(reading.parameter),
     value: `${formatValue(reading.value, reading.unit)} ${unitLabel(reading.unit)}`,
     tone: toneFor(reading.status),
   }));
-  return {
-    ...story,
-    status: live.status,
-    params,
-    spark: sparkLine(spark, story.spark),
-  };
+  return { status: live.status, params, spark: sparkLine(spark) };
 }
 
 /**
@@ -135,7 +130,7 @@ export function seriesLimits(live: ToolLive | null, parameter: string, chamberId
   return { mean: match.center, sigma: match.sigma };
 }
 
-/** The running recipe's readable name from the fleet data; the offline tile label only when there is no live API. */
-export function recipeLabel(live: { recipeName?: string | null } | null | undefined, offline: string | undefined): string {
-  return live?.recipeName ?? offline ?? "—";
+/** The running recipe's readable name from the fleet data; a dash until the first live load. */
+export function recipeLabel(live: { recipeName?: string | null } | null | undefined): string {
+  return live?.recipeName ?? "—";
 }

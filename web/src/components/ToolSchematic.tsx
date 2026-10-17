@@ -16,7 +16,7 @@ import {
   type SchematicPanel,
   type ViewBox,
 } from "../fleet/schematic";
-import { formatValue, readingFor, type SensorStatus } from "../fleet/telemetry";
+import { formatValue, type SensorStatus } from "../fleet/telemetry";
 
 export type SchematicReading = {
   value: number;
@@ -39,6 +39,9 @@ const DOT: Record<SensorStatus, string> = {
   warning: "bg-mps-warn",
   outOfSpec: "bg-mps-alarm",
 };
+
+/** A sensor with no live reading yet: muted, a dash for the value, never a made-up number. */
+const WAITING_TONE = "border-mps-line text-mps-muted";
 
 function SensorWords({ text }: { text: string }) {
   if (lookupTerm(text)) return <Term id={text} spellOut={false} focusable={false} />;
@@ -81,26 +84,32 @@ function SensorButton({
   style?: CSSProperties;
   live?: SchematicReading;
 }) {
-  const reading: SchematicReading = live ?? readingFor(sensor);
+  const reading: SchematicReading | undefined = live;
   return (
     <button
       type="button"
       data-anchor={sensor.schematicAnchor}
       data-sensor-id={sensor.id}
-      title={reading.manual ? `Sensor ${sensor.id}. ${reading.manual.title}` : `Sensor ${sensor.id}`}
-      data-status={reading.status}
+      title={reading?.manual ? `Sensor ${sensor.id}. ${reading.manual.title}` : reading ? `Sensor ${sensor.id}` : `Sensor ${sensor.id}. Waiting for readings.`}
+      data-status={reading?.status ?? "waiting"}
       aria-pressed={selected}
-      className={`flex min-w-0 flex-col justify-center rounded border bg-mps-panel/95 px-1.5 py-0.5 text-left text-[11px] leading-tight focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mps-nominal ${TONE[reading.status]} ${selected ? "ring-2 ring-mps-nominal" : ""} ${className}`}
+      className={`flex min-w-0 flex-col justify-center rounded border bg-mps-panel/95 px-1.5 py-0.5 text-left text-[11px] leading-tight focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mps-nominal ${reading ? TONE[reading.status] : WAITING_TONE} ${selected ? "ring-2 ring-mps-nominal" : ""} ${className}`}
       style={style}
       onClick={() => onSelect(sensor)}
     >
       <span className="block text-mps-secondary">
-        <span className={`mr-1 inline-block h-2 w-2 rounded-full align-middle ${DOT[reading.status]}`} />
+        <span className={`mr-1 inline-block h-2 w-2 rounded-full align-middle ${reading ? DOT[reading.status] : "bg-mps-line"}`} />
         <span className="font-mono">{slotWord(sensor.schematicAnchor)}</span> <SensorWords text={sensorLabel(sensor.schematicAnchor)} />
       </span>
       <span className="block break-words font-mono text-[12px] leading-tight">
-        {formatValue(reading.value, reading.unit)} <Unit unit={reading.unit} />
-        {reading.manual ? (
+        {reading ? (
+          <>
+            {formatValue(reading.value, reading.unit)} <Unit unit={reading.unit} />
+          </>
+        ) : (
+          <span aria-label="Waiting for readings">—</span>
+        )}
+        {reading?.manual ? (
           <span data-manual-badge="true" className="ml-1 rounded bg-mps-warn px-1 align-middle font-sans text-[10px] font-semibold uppercase text-mps-panel">
             {reading.manual.label}
           </span>

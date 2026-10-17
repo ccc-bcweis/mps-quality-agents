@@ -236,7 +236,11 @@ public sealed class SpcAlertService
                         at,
                         new
                         {
+                            // The console marks the alert cleared from this message instead of reloading its list.
+                            signal = "alertCleared",
                             alertId = alert.Id.Value,
+                            toolId = sample.ToolId.ToString(),
+                            clearedAt = at,
                             parameter = sample.Parameter,
                             readings = run.Count,
                             why = $"{run.Count} readings in a row inside +/-{AlertClearing.ZoneSigma:0} sigma",

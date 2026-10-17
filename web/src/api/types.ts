@@ -273,6 +273,17 @@ export type Investigation = {
   statusLabel?: string | null;
   /** The recorded human decision, once made. A decision is final. */
   decision?: DecisionRecord | null;
+  /** Root-cause class to evidence stance, built by the server from data/evidence-matrix.yaml. Empty until ranked. */
+  evidenceMatrix?: EvidenceMatrixEntry[];
+};
+
+export type EvidenceStance = "supports" | "rulesOut" | "neutral";
+
+export type EvidenceMatrixEntry = {
+  category: RootCauseCategory;
+  evidenceId: string;
+  stance: EvidenceStance;
+  whyItMatters?: string | null;
 };
 
 export type DecisionRecord = {

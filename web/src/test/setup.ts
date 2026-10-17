@@ -2,6 +2,7 @@
 import { cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { afterAll, afterEach, beforeAll, beforeEach } from "vitest";
+import { setHubConnected } from "../live/fleetHub";
 import { resetMockState } from "../mocks/state";
 import { server } from "./server";
 
@@ -24,6 +25,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  setHubConnected(false);
   server.resetHandlers();
 });
 afterAll(() => server.close());

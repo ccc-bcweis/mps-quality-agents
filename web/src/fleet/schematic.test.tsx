@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { ToolFamily } from "../api/types";
 import { ToolSchematic } from "../components/ToolSchematic";
 import { fleetSensors } from "virtual:fleet-sensors";
-import { formatValue, readingFor } from "./telemetry";
+import { formatValue } from "./telemetry";
 import {
   CHAMBER_MIN_PX,
   COUNTER_MIN_PX,
@@ -37,8 +37,9 @@ function faceplateText(anchor: string) {
   const id = sensors.map((sensor) => sensor.id).sort((left, right) => right.length - left.length)[0] ?? anchor;
   const value = sensors
     .map((sensor) => {
-      const reading = readingFor(sensor);
-      return `${formatValue(reading.value, reading.unit)} ${reading.unit}`;
+      // Widest value the sensor can show: its own limits, formatted the way a live reading is.
+      const widest = Math.abs(sensor.limits.maximum) >= Math.abs(sensor.limits.minimum) ? sensor.limits.maximum : sensor.limits.minimum;
+      return `${formatValue(widest, sensor.unit)} ${sensor.unit}`;
     })
     .sort((left, right) => right.length - left.length)[0] ?? "";
   return { label: `${slotWord(anchor)} ${sensorLabel(anchor)}`, id, value };

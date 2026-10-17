@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { CATEGORY_LABEL, CHANNEL_LABEL, STAGE_LABEL } from "../api/labels";
@@ -19,7 +19,7 @@ import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
 import { placeLabel, plainFinding, plainNarrative } from "../investigation/format";
 import { lifecycleForIncident, lifecycleForInvestigation } from "../lifecycle";
-import { INVESTIGATION_POLL_MS } from "../investigation/timeline";
+import { FALLBACK_POLL_MS, onHubState, useHubConnected, useHubEvent } from "../live/fleetHub";
 import { parameterLabel } from "../sites/parameters";
 
 type LoadResult = "ready" | "missing" | "failed";
@@ -141,25 +141,40 @@ export function InvestigationPage() {
     };
   }, [listing, routeIncidentId, routeInvestigationId]);
 
+  // The investigation streams in over the fleet hub: investigationChanged carries the whole record. The running
+  // placeholder and the saved record have different ids, so the match is on the incident. A reconnect or resync reloads;
+  // while the stream is down the page reloads every FALLBACK_POLL_MS.
   const liveId = investigation?.id ?? "";
+  const liveIncident = investigation?.incidentId ?? incident?.id ?? "";
+  useHubEvent("investigationChanged", (payload) => {
+    const next = payload as Investigation | null;
+    if (!next || !liveIncident || next.incidentId !== liveIncident) return;
+    setInvestigation((current) => (current && current.id !== next.id && current.stage !== "started" && next.stage === "started" ? current : next));
+  });
+  const connected = useHubConnected();
+  const reloadRef = useRef<() => void>(() => undefined);
+  reloadRef.current = () => {
+    if (!liveId) return;
+    api
+      .getInvestigation(liveId)
+      .then((next) => setInvestigation(next))
+      .catch(() => {
+        // A missed reload keeps the last snapshot on screen.
+      });
+  };
+  useHubEvent("resync", () => reloadRef.current());
+  useEffect(
+    () =>
+      onHubState((_up, reconnected) => {
+        if (reconnected) reloadRef.current();
+      }),
+    [],
+  );
   useEffect(() => {
-    if (!liveId) return undefined;
-    let cancelled = false;
-    const timer = window.setInterval(() => {
-      api
-        .getInvestigation(liveId)
-        .then((next) => {
-          if (!cancelled) setInvestigation(next);
-        })
-        .catch(() => {
-          // A missed poll keeps the last snapshot on screen.
-        });
-    }, INVESTIGATION_POLL_MS);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-    };
-  }, [liveId]);
+    if (!liveId || connected) return undefined;
+    const timer = window.setInterval(() => reloadRef.current(), FALLBACK_POLL_MS);
+    return () => window.clearInterval(timer);
+  }, [liveId, connected]);
 
   async function onStart() {
     if (!incident || starting) return;
@@ -280,9 +295,11 @@ function InvestigationDetail({ investigation, onChange }: { investigation: Inves
             ))}
           </ul>
         </section>
-        <section className={panel}>
-          <EvidenceMatrix investigationId={investigation.id} />
-        </section>
+        {(investigation.evidenceMatrix?.length ?? 0) > 0 ? (
+          <section className={panel}>
+            <EvidenceMatrix investigation={investigation} />
+          </section>
+        ) : null}
       </div>
     </div>
   );

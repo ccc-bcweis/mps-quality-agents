@@ -1,19 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { describe, expect, it } from "vitest";
-import type { ToolStory } from "../fleet/catalog";
 import type { FleetLiveTool, ToolLive } from "../api/types";
-import { recipeLabel, seriesPoints, sparkLine, storyWithLive } from "./overlay";
-
-const story: ToolStory = {
-  status: "nominal",
-  recipe: "DEP-SIO-2",
-  note: "In window.",
-  lifecycle: "alert",
-  escalated: false,
-  params: [{ label: "Chamber P", value: "4.05 Torr" }],
-  spark: [1, 2, 3],
-  chart: { parameter: "chamberPressure", label: "Chamber pressure", unit: "Torr", mean: 4, sigma: 0.35, shape: "nominal" },
-};
+import { recipeLabel, seriesPoints, sparkLine, toolTile } from "./overlay";
 
 const liveTool: FleetLiveTool = {
   toolId: "D-02",
@@ -33,19 +21,19 @@ const liveTool: FleetLiveTool = {
 };
 
 describe("live overlay", () => {
-  it("leaves the teaching story in place when the live list is empty", () => {
-    expect(storyWithLive(story, undefined)).toBe(story);
-    expect(storyWithLive(story, { ...liveTool, readings: [] })).toBe(story);
-    expect(sparkLine(undefined, story.spark)).toEqual([1, 2, 3]);
-    expect(sparkLine([9.5], story.spark)).toEqual([9.5, 9.5]);
+  it("shows no values before the first reading; status comes from the alert log", () => {
+    expect(toolTile("D-02", [], undefined)).toEqual({ status: "nominal", params: [], spark: [] });
+    expect(toolTile("D-02", [{ toolId: "D-02", status: "active" }], { ...liveTool, readings: [] })).toEqual({ status: "alarm", params: [], spark: [] });
+    expect(toolTile("D-02", [{ toolId: "D-02", status: "cleared" }], undefined).status).toBe("nominal");
+    expect(sparkLine(undefined)).toEqual([]);
+    expect(sparkLine([9.5])).toEqual([9.5, 9.5]);
   });
 
-  it("replaces status and the reading when the stream has a sample", () => {
-    const next = storyWithLive(story, liveTool, [4, 9.5]);
+  it("takes status, readings and the spark from the stream once it has a sample", () => {
+    const next = toolTile("D-02", [], liveTool, [4, 9.5]);
     expect(next.status).toBe("alarm");
     expect(next.params[0]).toMatchObject({ label: "Chamber pressure", value: "9.50 Torr", tone: "alarm" });
     expect(next.spark).toEqual([4, 9.5]);
-    expect(next.recipe).toBe(story.recipe);
   });
 
   it("plots only the series for the parameter on screen", () => {
@@ -77,9 +65,9 @@ describe("live overlay", () => {
 });
 
 describe("recipeLabel", () => {
-  it("shows the readable recipe name from the live data, not a recipe id", () => {
-    expect(recipeLabel({ recipeName: "PECVD oxide" }, "DEP-SIO-2")).toBe("PECVD oxide");
-    expect(recipeLabel(undefined, "PECVD oxide")).toBe("PECVD oxide");
-    expect(recipeLabel(null, undefined)).toBe("—");
+  it("shows the readable recipe name from the live data and a dash before it loads", () => {
+    expect(recipeLabel({ recipeName: "PECVD oxide" })).toBe("PECVD oxide");
+    expect(recipeLabel(undefined)).toBe("—");
+    expect(recipeLabel(null)).toBe("—");
   });
 });

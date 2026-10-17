@@ -12,7 +12,7 @@ import { FloorPlan } from "../sites/FloorPlan";
 import { PlantStructure } from "../sites/PlantStructure";
 import { formatPct } from "../sites/floorLayout";
 import { withLiveStatus } from "../sites/liveStatus";
-import { usePolled } from "../live/usePolled";
+import { useFleetLive } from "../live/useLive";
 
 function RoleLine({ role }: { role: SiteDetail["role"] }) {
   if (role === "Strip, clean, and pilot line") {
@@ -37,7 +37,8 @@ export function SitesPage() {
   const linked = params.get("site");
   const [sites, setSites] = useState<SiteSummary[] | null>(null);
   const [detail, setDetail] = useState<SiteDetail | null>(null);
-  const live = usePolled(() => api.listFleetLive(), "fleet");
+  // Floor-plan status follows the fleetLive stream for the selected plant.
+  const live = useFleetLive(siteId);
   const [listError, setListError] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [structure, setStructure] = useState<MetadataSite[] | null>(null);

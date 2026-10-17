@@ -25,6 +25,15 @@ public sealed class SimulationOptions
 
     public int MaxPointsPerSeries { get; init; } = 960;
 
+    /// <summary>Shortest wall time between two live hub messages for the same page (toolLive, fleetLive).</summary>
+    public int PushIntervalMilliseconds { get; init; } = 1000;
+
+    /// <summary>Shortest wall time between two clock messages to every page.</summary>
+    public int ClockIntervalSeconds { get; init; } = 5;
+
+    /// <summary>More new points than this on one series in one message sends a resync instead (a page reloads the tool).</summary>
+    public int MaxPushPointsPerSeries { get; init; } = 120;
+
     public static SimulationOptions From(IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
@@ -38,6 +47,9 @@ public sealed class SimulationOptions
             PrimeSeconds = NonNegative(section.GetValue("PrimeSeconds", 600)),
             SampleStrideSeconds = Positive(section.GetValue("SampleStrideSeconds", 15), 15),
             MaxPointsPerSeries = Positive(section.GetValue("MaxPointsPerSeries", 960), 960),
+            PushIntervalMilliseconds = Positive(section.GetValue("PushIntervalMilliseconds", 1000), 1000),
+            ClockIntervalSeconds = Positive(section.GetValue("ClockIntervalSeconds", 5), 5),
+            MaxPushPointsPerSeries = Positive(section.GetValue("MaxPushPointsPerSeries", 120), 120),
         };
     }
 

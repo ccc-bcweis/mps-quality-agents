@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { useEffect, useState } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { FAMILY_PROCESS } from "../api/labels";
@@ -13,9 +13,9 @@ import { btnPrimary, panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
 import { visibleProblem } from "../history/copy";
 import { useSite } from "../context/SiteContext";
-import { bayCaption, statusTone, storyFor } from "../fleet/catalog";
-import { storyWithLive } from "../live/overlay";
-import { usePolled } from "../live/usePolled";
+import { bayCaption, statusTone, WAITING_FOR_READINGS } from "../fleet/catalog";
+import { toolTile } from "../live/overlay";
+import { useFleetLive, useRecordPatches } from "../live/useLive";
 import { PLANTS, toolInPlant } from "../sites/selection";
 
 export function FleetPage() {
@@ -26,7 +26,16 @@ export function FleetPage() {
   const [ticketRows, setTicketRows] = useState<Ticket[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sparks, setSparks] = useState<Record<string, number[]>>({});
-  const live = usePolled(() => api.listFleetLive(), "fleet");
+  // Before the first load there is no list to patch; the load brings the record.
+  const patchTickets: Dispatch<SetStateAction<Ticket[]>> = (update) =>
+    setTicketRows((rows) => (rows === null ? rows : typeof update === "function" ? update(rows) : update));
+  // Tiles follow the fleetLive stream for this plant; alerts and tickets patch in from record events.
+  const live = useFleetLive(siteId);
+  const [reloadVersion, setReloadVersion] = useState(0);
+  useRecordPatches(
+    { alerts: setAlerts, tickets: patchTickets },
+    { siteId, onReload: () => setReloadVersion((version) => version + 1) },
+  );
   // Bay names come from data/fleet/sites.yaml through /api/sites, the same source as the floor plans.
   const [bayNames, setBayNames] = useState<Map<string, string>>(new Map());
   useEffect(() => {
@@ -57,7 +66,7 @@ export function FleetPage() {
     return () => {
       cancelled = true;
     };
-  }, [siteId]);
+  }, [siteId, reloadVersion]);
 
   useEffect(() => {
     if (!live || live.tools.length === 0) {
@@ -84,7 +93,7 @@ export function FleetPage() {
   // Count only open tickets, from the ticket status the API derives from the incident.
   const tickets = ticketRows === null ? null : ticketRows.filter((ticket) => toolInPlant(siteId, ticket.toolId) && ticket.status !== "closed").length;
   const liveById = new Map((live?.tools ?? []).map((tool) => [tool.toolId, tool]));
-  const stories = rows.map((tool) => ({ tool, story: storyWithLive(storyFor(tool, visibleAlerts), liveById.get(tool.id), sparks[tool.id]) }));
+  const stories = rows.map((tool) => ({ tool, story: toolTile(tool.id, visibleAlerts, liveById.get(tool.id), sparks[tool.id]) }));
   const plantName = PLANTS.find((plant) => plant.id === siteId)?.name ?? "All sites";
   const bays = [...new Set(rows.map((tool) => tool.bay))];
   const families = new Set(rows.map((tool) => tool.family)).size;
@@ -143,6 +152,7 @@ export function FleetPage() {
                         {tool.model} · {FAMILY_PROCESS[tool.family]}
                       </p>
                       <div className="mt-2 space-y-1 font-mono text-mps-micro">
+                        {story.params.length === 0 ? <p className="text-mps-muted">{WAITING_FOR_READINGS}</p> : null}
                         {story.params.map((param) => (
                           <div key={param.label} className="flex min-w-0 justify-between gap-2">
                             <span className="min-w-0 break-words text-left text-mps-muted">

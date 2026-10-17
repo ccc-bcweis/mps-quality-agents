@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.SignalR;
 
 using Mps.Api.Http;
 using Mps.Application.Bus;
+using Mps.Application.Evidence;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
 using Mps.Domain.Capa;
@@ -15,25 +16,65 @@ using Mps.Domain.Investigations;
 namespace Mps.Api.Hubs;
 
 /// <summary>
-/// Fleet stream at /hubs/fleet. Events: alertRaised, ticketOpened, incidentChanged, investigationChanged, capaChanged, faultInjected.
+/// Fleet stream at /hubs/fleet. Every connection gets the record events (alertRaised, alertCleared, ticketOpened,
+/// ticketChanged, incidentChanged, investigationChanged, capaChanged, capaAdvanced, faultInjected), the plant clock,
+/// reset progress and resync. Telemetry goes only to pages that subscribe: toolLive to a tool, fleetLive to a plant.
 /// </summary>
 public sealed class FleetHub : Hub
 {
     public const string FleetGroup = "fleet";
 
+    private readonly LiveSubscriptions _subscriptions;
+
+    public FleetHub(LiveSubscriptions subscriptions)
+    {
+        ArgumentNullException.ThrowIfNull(subscriptions);
+        _subscriptions = subscriptions;
+    }
+
     public override Task OnConnectedAsync() => Groups.AddToGroupAsync(Context.ConnectionId, FleetGroup);
+
+    public override Task OnDisconnectedAsync(Exception? exception)
+    {
+        _subscriptions.Drop(Context.ConnectionId);
+        return base.OnDisconnectedAsync(exception);
+    }
 
     public Task SubscribeTool(string toolId)
     {
-        if (string.IsNullOrWhiteSpace(toolId))
-        {
-            throw new HubException("Tool id is required.");
-        }
-
-        return Groups.AddToGroupAsync(Context.ConnectionId, ToolGroup(toolId));
+        var group = ToolGroup(Required(toolId, "Tool id"));
+        _subscriptions.Add(Context.ConnectionId, group);
+        return Groups.AddToGroupAsync(Context.ConnectionId, group);
     }
 
-    public static string ToolGroup(string toolId) => "tool:" + toolId.Trim();
+    public Task UnsubscribeTool(string toolId)
+    {
+        var group = ToolGroup(Required(toolId, "Tool id"));
+        _subscriptions.Remove(Context.ConnectionId, group);
+        return Groups.RemoveFromGroupAsync(Context.ConnectionId, group);
+    }
+
+    /// <summary>Plant live tiles; <see cref="LiveSubscriptions.AllSites"/> watches every plant.</summary>
+    public Task SubscribeSite(string siteId)
+    {
+        var group = SiteGroup(Required(siteId, "Plant id"));
+        _subscriptions.Add(Context.ConnectionId, group);
+        return Groups.AddToGroupAsync(Context.ConnectionId, group);
+    }
+
+    public Task UnsubscribeSite(string siteId)
+    {
+        var group = SiteGroup(Required(siteId, "Plant id"));
+        _subscriptions.Remove(Context.ConnectionId, group);
+        return Groups.RemoveFromGroupAsync(Context.ConnectionId, group);
+    }
+
+    public static string ToolGroup(string toolId) => LiveSubscriptions.ToolKey(toolId);
+
+    public static string SiteGroup(string siteId) => LiveSubscriptions.SiteKey(siteId);
+
+    private static string Required(string value, string name) =>
+        string.IsNullOrWhiteSpace(value) ? throw new HubException(name + " is required.") : value;
 }
 
 public sealed class SignalRQualityNotifier : IQualityNotifier
@@ -42,13 +83,21 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
     private readonly ICascadeDirectory _cascade;
     private readonly IInvestigationNarrativeLog _narratives;
     private readonly IIncidentLog _incidents;
+    private readonly ITicketLog _tickets;
+    private readonly IHubContext<FleetHub> _hub;
 
     public SignalRQualityNotifier(
         ILifecycleEventSink events,
         ICascadeDirectory cascade,
         IInvestigationNarrativeLog narratives,
-        IIncidentLog incidents)
+        IIncidentLog incidents,
+        ITicketLog tickets,
+        IHubContext<FleetHub> hub)
     {
+        ArgumentNullException.ThrowIfNull(tickets);
+        ArgumentNullException.ThrowIfNull(hub);
+        _tickets = tickets;
+        _hub = hub;
         ArgumentNullException.ThrowIfNull(events);
         ArgumentNullException.ThrowIfNull(cascade);
         ArgumentNullException.ThrowIfNull(narratives);
@@ -115,7 +164,7 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
             cancellationToken).ConfigureAwait(false);
     }
 
-    public Task IncidentChangedAsync(Incident incident, CancellationToken cancellationToken)
+    public async Task IncidentChangedAsync(Incident incident, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(incident);
         var parent = _cascade.FindStep(incident.CorrelationId, "approval")
@@ -124,7 +173,13 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
             ?? _cascade.FindStep(incident.CorrelationId, "ticket")
             ?? _cascade.FindStep(incident.CorrelationId, "alert")
             ?? CommandAmbient.EventId;
-        return PublishAsync(
+        // The ticket's open/closed status follows its incident, so the changed ticket rides along for the Tickets list.
+        var tickets = await _tickets.ListAsync(cancellationToken).ConfigureAwait(false);
+        var related = tickets
+            .Where(ticket => ticket.IncidentId == incident.Id)
+            .Select(ticket => new { signal = "ticketChanged", body = ContractMapper.ToResponse(ticket, incident.Stage) })
+            .ToArray();
+        await PublishAsync(
             LifecycleTypes.IncidentChanged,
             incident.CorrelationId,
             parent,
@@ -137,9 +192,10 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
                 signal = "incidentChanged",
                 toolId = incident.ToolId.ToString(),
                 body = ContractMapper.ToResponse(incident),
+                related,
             },
             "incident",
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
     }
 
     public async Task InvestigationChangedAsync(InvestigationSnapshot snapshot, CancellationToken cancellationToken)
@@ -171,6 +227,16 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
             },
             null,
             cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task InvestigationRunningAsync(InvestigationSnapshot placeholder, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(placeholder);
+        var stored = await _incidents.GetAsync(placeholder.IncidentId, cancellationToken).ConfigureAwait(false);
+        var site = ContractMapper.SiteForTool(stored?.Incident.ToolId.ToString());
+        await _hub.Clients.Group(FleetHub.FleetGroup)
+            .SendAsync("investigationChanged", ContractMapper.ToResponse(placeholder, InvestigationNarrative.Empty, site), cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public async Task CapaChangedAsync(CapaAction capa, string eventName, CancellationToken cancellationToken)

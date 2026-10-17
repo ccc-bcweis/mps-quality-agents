@@ -10,8 +10,10 @@ using Mps.Bus;
 namespace Mps.Api.Bus;
 
 /// <summary>
-/// Forwards a bus fact to the fleet hub when the payload names a signal.
-/// Telemetry batches push one latest value per tool and parameter. Polling remains the fallback.
+/// Forwards a bus fact to the fleet hub when the payload names a signal. Each message carries the changed record
+/// (its "body"), so a page patches its list instead of downloading it again. A payload may also carry "related"
+/// records, for example the ticket whose status follows an incident. Telemetry is not sent here: the
+/// <see cref="Live.LiveStreamPublisher"/> sends throttled deltas to the pages that watch a tool or plant.
 /// </summary>
 public sealed class BusSignalRBridge : IHostedService, IDisposable
 {
@@ -32,7 +34,6 @@ public sealed class BusSignalRBridge : IHostedService, IDisposable
     {
         _ = cancellationToken;
         _subscriptions.Add(_bus.Subscribe("*", OnEvent));
-        _subscriptions.Add(_bus.SubscribeBatch(EventTypes.TelemetryReading, OnTelemetry));
         return Task.CompletedTask;
     }
 
@@ -79,53 +80,20 @@ public sealed class BusSignalRBridge : IHostedService, IDisposable
         var body = envelope.Payload.TryGetProperty("body", out var raw) && raw.ValueKind == JsonValueKind.Object
             ? raw
             : envelope.Payload;
-        await SendAsync(signal, envelope.ToolId, body, cancellationToken).ConfigureAwait(false);
-    }
-
-    private async ValueTask OnTelemetry(IReadOnlyList<EventEnvelope> batch, CancellationToken cancellationToken)
-    {
-        if (batch.Count == 0)
+        var fleet = _hub.Clients.Group(FleetHub.FleetGroup);
+        await fleet.SendAsync(signal, body, cancellationToken).ConfigureAwait(false);
+        if (!envelope.Payload.TryGetProperty("related", out var related) || related.ValueKind != JsonValueKind.Array)
         {
             return;
         }
 
-        var latest = new Dictionary<string, TelemetryPush>(StringComparer.Ordinal);
-        foreach (var envelope in batch)
+        foreach (var item in related.EnumerateArray())
         {
-            var parameter = PayloadReader.String(envelope.Payload, "parameter");
-            var value = PayloadReader.Number(envelope.Payload, "value");
-            if (string.IsNullOrWhiteSpace(envelope.ToolId) || parameter is null || value is null)
+            var name = item.ValueKind == JsonValueKind.Object ? PayloadReader.String(item, "signal") : null;
+            if (name is not null && item.TryGetProperty("body", out var relatedBody) && relatedBody.ValueKind == JsonValueKind.Object)
             {
-                continue;
+                await fleet.SendAsync(name, relatedBody, cancellationToken).ConfigureAwait(false);
             }
-
-            latest[envelope.ToolId + "|" + parameter] = new TelemetryPush(
-                envelope.ToolId,
-                parameter,
-                value.Value,
-                envelope.OccurredAt,
-                envelope.EventId);
         }
-
-        if (latest.Count == 0)
-        {
-            return;
-        }
-
-        await SendAsync("telemetry", null, new { points = latest.Values.ToArray() }, cancellationToken).ConfigureAwait(false);
     }
-
-    private Task SendAsync(string eventName, string? toolId, object payload, CancellationToken cancellationToken)
-    {
-        var fleet = _hub.Clients.Group(FleetHub.FleetGroup).SendAsync(eventName, payload, cancellationToken);
-        if (string.IsNullOrWhiteSpace(toolId))
-        {
-            return fleet;
-        }
-
-        var tool = _hub.Clients.Group(FleetHub.ToolGroup(toolId)).SendAsync(eventName, payload, cancellationToken);
-        return Task.WhenAll(fleet, tool);
-    }
-
-    private sealed record TelemetryPush(string ToolId, string Parameter, double Value, DateTimeOffset At, string EventId);
 }

@@ -266,6 +266,31 @@ public sealed record LiveSeriesResponse(string Parameter, string ChamberId, IRea
 
 public sealed record LivePointResponse(DateTimeOffset At, double Value);
 
+/// <summary>
+/// Hub message toolLive, sent to the pages watching one tool. Readings are the tool's latest values (a full,
+/// small set). Series carry only the points kept since the last message, with the limits the rules engine uses.
+/// Resync asks the page to load GET /api/tools/{toolId}/live again because more points arrived than one message carries.
+/// </summary>
+public sealed record ToolLiveDelta(
+    string ToolId,
+    string SiteId,
+    DateTimeOffset SimulatedNow,
+    string Status,
+    IReadOnlyList<LiveReadingResponse> Readings,
+    IReadOnlyList<LiveSeriesResponse> Series,
+    string? RecipeName,
+    bool Resync,
+    bool Manual = false);
+
+/// <summary>Hub message fleetLive, sent to the pages watching a plant: only the tools whose readings changed.</summary>
+public sealed record FleetLiveDelta(DateTimeOffset SimulatedNow, IReadOnlyList<FleetLiveToolResponse> Tools);
+
+/// <summary>Hub message clock: the plant clock every record is stamped with.</summary>
+public sealed record LiveClockMessage(DateTimeOffset SimulatedNow);
+
+/// <summary>Hub message resync: live data was rebuilt (a reset), so every page loads its data again.</summary>
+public sealed record LiveResyncMessage(string Reason);
+
 public sealed record SiteBayDetailResponse(string Id, string Name, IReadOnlyList<PlacedToolResponse> Tools, ThroughputResponse Kpis);
 
 public sealed record WaferFlowResponse(string FromBayId, string ToBayId, string Label);

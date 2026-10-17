@@ -94,6 +94,8 @@ public sealed class InvestigationService : IInvestigationService
             return running;
         }
 
+        await _notifier.InvestigationRunningAsync(placeholder, cancellationToken).ConfigureAwait(false);
+
         InvestigationId? saved = null;
         try
         {

@@ -3,47 +3,48 @@ import { CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceDot, Refere
 import type { ManualMarker } from "../live/manual";
 import { mpsColor } from "../brand/colors";
 import { Term } from "./Term";
-import { buildSeries, limits, seedFrom, violatesWesternElectric1, violatesWesternElectric2, type SeriesShape, type SpcPoint } from "../spc/series";
+import { limits, type SpcPoint } from "../spc/series";
+import { WAITING_FOR_READINGS } from "../fleet/catalog";
 
 export function SpcChart({
-  seedKey,
   label,
   unit,
-  mean,
-  sigma,
-  shape,
-  endValue,
+  center,
   points: livePoints,
+  finding,
   cumulative = false,
   manual,
 }: {
-  seedKey: string;
   label: string;
   unit: string;
-  mean: number;
-  sigma: number;
-  shape: SeriesShape;
-  endValue?: number;
-  /** Live samples from the plant tick. When absent, the chart draws the frozen teaching series. */
+  /** Center and sigma the server's rules engine checks this series against. Absent for counters. */
+  center?: { mean: number; sigma: number };
+  /** Live samples from the plant. No points: the chart says it is waiting for readings. */
   points?: SpcPoint[];
+  /** What the server's rules engine says about this series (from the alert log). */
+  finding: string;
   /** A running count. Drawn as a trend with no SPC limits or rule checks. */
   cumulative?: boolean;
   /** A confirmed bench reading, drawn as its own marker. */
   manual?: ManualMarker;
 }) {
-  const points = livePoints && livePoints.length > 0 ? livePoints : buildSeries({ seed: seedFrom(seedKey), mean, sigma, shape, endValue });
+  const points = livePoints ?? [];
+  // Until the first live points arrive the chart says so; it never draws a generated series.
+  if (points.length === 0) {
+    return (
+      <figure aria-label={`${label}. ${WAITING_FOR_READINGS}`} className="w-full" data-waiting="true">
+        <div className="flex h-[240px] w-full items-center justify-center rounded border border-dashed border-mps-line">
+          <p role="status" className="text-mps-muted">
+            {WAITING_FOR_READINGS}
+          </p>
+        </div>
+      </figure>
+    );
+  }
   const values = points.map((point) => point.value);
-  // Limits come from the parameter's own window, the same ones the server's rules check, so a point drawn past the
-  // UCL is a point the rules engine also sees past 3 sigma.
-  const center = { mean, sigma };
-  const band = limits(center.mean, center.sigma);
-  const rule1 = violatesWesternElectric1(values, center.mean, center.sigma);
-  const rule2 = violatesWesternElectric2(values, center.mean, center.sigma);
-  const finding = rule1
-    ? "Western Electric rule 1: a point is beyond 3 sigma."
-    : rule2
-      ? "Western Electric rule 2: two of three points are beyond 2 sigma."
-      : "Western Electric rules 1 and 2 are clear on this series.";
+  // Limits come from the server for this series, the same ones its rules check, so a point drawn past the UCL is a
+  // point the rules engine also sees past the control limit.
+  const band = center ? limits(center.mean, center.sigma) : null;
   if (cumulative) {
     const trendCaption = `Trend of ${label}, a running count in ${unit}. Counts climb by design, so they have no SPC limits. The rate is charted with limits as run rate.`;
     return (
@@ -62,7 +63,10 @@ export function SpcChart({
       </figure>
     );
   }
-  const caption = `SPC chart of ${label}. Mean ${center.mean.toFixed(2)} ${unit}, sigma ${center.sigma.toFixed(2)}. ${finding} Client check on the drawn series.`;
+  const sigma = center?.sigma ?? 0;
+  const caption = center
+    ? `SPC chart of ${label}. Mean ${center.mean.toFixed(2)} ${unit}, sigma ${center.sigma.toFixed(2)}. ${finding}`
+    : `SPC chart of ${label}. ${finding}`;
 
   return (
     <figure aria-label={caption} className="w-full">
@@ -73,27 +77,31 @@ export function SpcChart({
           <XAxis dataKey="index" tick={{ fill: mpsColor.muted, fontSize: 10 }} stroke={mpsColor.line} />
           <YAxis
             domain={[
-              Math.min(band.lcl3 - center.sigma, ...values, ...(manual ? [manual.value] : [])),
-              Math.max(band.ucl3 + center.sigma, ...values, ...(manual ? [manual.value] : [])),
+              Math.min(...(band ? [band.lcl3 - sigma] : []), ...values, ...(manual ? [manual.value] : [])),
+              Math.max(...(band ? [band.ucl3 + sigma] : []), ...values, ...(manual ? [manual.value] : [])),
             ]}
             tick={{ fill: mpsColor.muted, fontSize: 10 }}
-            tickFormatter={(value: number) => axisNumber(value, center.sigma)}
+            tickFormatter={(value: number) => axisNumber(value, sigma)}
             tickCount={6}
             stroke={mpsColor.line}
             width={64}
             label={{ value: unit, angle: -90, position: "insideLeft", fill: mpsColor.muted, fontSize: 10 }}
           />
           <Tooltip
-            formatter={(value: number) => `${axisNumber(value, center.sigma)} ${unit}`}
+            formatter={(value: number) => `${axisNumber(value, sigma)} ${unit}`}
             contentStyle={{ background: mpsColor.panel, border: `1px solid ${mpsColor.line}`, fontSize: 12 }}
             labelStyle={{ color: mpsColor.muted }}
           />
-          <ReferenceArea y1={band.lcl3} y2={band.ucl3} fill={mpsColor.alarm} fillOpacity={0.08} />
-          <ReferenceArea y1={band.lcl2} y2={band.ucl2} fill={mpsColor.warn} fillOpacity={0.08} />
-          <ReferenceArea y1={band.lcl1} y2={band.ucl1} fill={mpsColor.nominal} fillOpacity={0.1} />
-          <ReferenceLine y={band.ucl3} stroke={mpsColor.alarm} strokeDasharray="4 3" label={{ value: "UCL 3σ", fill: mpsColor.alarm, fontSize: 10, position: "right" }} />
-          <ReferenceLine y={band.lcl3} stroke={mpsColor.alarm} strokeDasharray="4 3" />
-          <ReferenceLine y={band.mean} stroke={mpsColor.muted} label={{ value: "mean", fill: mpsColor.muted, fontSize: 10, position: "right" }} />
+          {band ? (
+            <>
+              <ReferenceArea y1={band.lcl3} y2={band.ucl3} fill={mpsColor.alarm} fillOpacity={0.08} />
+              <ReferenceArea y1={band.lcl2} y2={band.ucl2} fill={mpsColor.warn} fillOpacity={0.08} />
+              <ReferenceArea y1={band.lcl1} y2={band.ucl1} fill={mpsColor.nominal} fillOpacity={0.1} />
+              <ReferenceLine y={band.ucl3} stroke={mpsColor.alarm} strokeDasharray="4 3" label={{ value: "UCL 3σ", fill: mpsColor.alarm, fontSize: 10, position: "right" }} />
+              <ReferenceLine y={band.lcl3} stroke={mpsColor.alarm} strokeDasharray="4 3" />
+              <ReferenceLine y={band.mean} stroke={mpsColor.muted} label={{ value: "mean", fill: mpsColor.muted, fontSize: 10, position: "right" }} />
+            </>
+          ) : null}
           <Line type="monotone" dataKey="value" stroke={mpsColor.secondary} strokeWidth={1.4} dot={false} isAnimationActive={false} />
           {manual ? (
             <ReferenceDot

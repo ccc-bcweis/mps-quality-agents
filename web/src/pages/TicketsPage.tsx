@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useRecordPatches } from "../live/useLive";
 import { api, ApiProblem } from "../api/client";
 import { formatStamp, STAGE_LABEL, severityTone, severityWord } from "../api/labels";
 import type { Incident, PrintoutConfirmation, PrintoutConfirmRequest, Severity, Ticket, Tool } from "../api/types";
@@ -55,6 +56,9 @@ export function TicketsPage() {
       },
     );
   }, [siteId]);
+
+  // New tickets, status changes and incidents stream in over the fleet hub; a reset or reconnect reloads.
+  useRecordPatches({ tickets: setTickets, incidents: setIncidents }, { siteId, onReload: () => void reload().catch(() => undefined) });
 
   useEffect(() => {
     let cancelled = false;

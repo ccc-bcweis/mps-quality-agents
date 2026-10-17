@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { FAMILY_PROCESS, INVESTIGATION_STAGE_LABEL, formatStamp } from "../api/labels";
@@ -10,10 +10,9 @@ const LINKED_LIMIT = 12;
 import type { SchematicReading } from "../components/ToolSchematic";
 import type { FleetSensor } from "../fleet/sensors";
 import { linkedForTool, orderedLinked, type LinkedEntry } from "../fleet/linkedRecords";
-import { useRecordEvents } from "../live/fleetHub";
 import { AttachmentViewer } from "../components/AttachmentViewer";
 import { ruleLabel } from "../api/labels";
-import { SpcChart } from "../components/SpcChart";
+import { SpcChart, axisNumber } from "../components/SpcChart";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
 import { PlainMetrics } from "../components/PlainMetrics";
@@ -23,11 +22,12 @@ import { useSetLifecycle } from "../context/ConsoleContext";
 import { visibleProblem } from "../history/copy";
 import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
-import { chartSpec } from "../fleet/chartSpec";
-import { statusTone, storyFor } from "../fleet/catalog";
+import { statusTone, WAITING_FOR_READINGS } from "../fleet/catalog";
 import { sensorsForTool } from "../fleet/sensors";
-import { liveReadingMap, overlayWindows, recipeLabel, seriesLimits, seriesPoints, storyWithLive } from "../live/overlay";
-import { usePolled } from "../live/usePolled";
+import { sensorLabel } from "../fleet/schematic";
+import { liveReadingMap, overlayWindows, parameterLabel, recipeLabel, seriesLimits, seriesPoints, toolTile } from "../live/overlay";
+import { useLiveResource, useRecordPatches, useToolLive } from "../live/useLive";
+import { clearAlert, upsertRecord, type AlertCleared, type ToolLiveDelta } from "../live/stream";
 import { latestManual, manualMarker, manualTile, seriesFor } from "../live/manual";
 import { statusReasons } from "../live/statusReasons";
 import { fleetSensors, fleetTemplates } from "virtual:fleet-sensors";
@@ -39,17 +39,31 @@ export function ToolPage() {
   const focusParameter = searchParams.get("parameter");
   const { siteId } = useSite();
   const [tool, setTool] = useState<Tool | null>(null);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [records, setRecords] = useState<{ tickets: Ticket[]; incidents: Incident[]; investigations: Investigation[] }>({ tickets: [], incidents: [], investigations: [] });
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [investigations, setInvestigations] = useState<Investigation[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [viewing, setViewing] = useState<ManualReading | null>(null);
   const focused = useRef(false);
-  const live = usePolled(() => api.getToolLive(toolId), toolId);
-  const manualReadings = usePolled(() => api.listManualReadings(toolId), `manual:${toolId}`);
-  const liveAlerts = usePolled(() => api.listAlerts(toolId, "all"), `alerts:${toolId}`);
-  const story = tool ? storyFor(tool, alerts) : null;
-  useSetLifecycle(story?.lifecycle ?? "alert", story?.escalated ?? false);
+  // Live data streams over the fleet hub (toolLive, record events); nothing here polls while the stream is up.
+  const live = useToolLive(toolId);
+  const manualReadings = useLiveResource(`manual:${toolId}`, () => api.listManualReadings(toolId), {
+    events: [
+      { name: "toolLive", apply: (previous, payload) => ((payload as ToolLiveDelta).toolId === toolId && (payload as ToolLiveDelta).manual ? "reload" : previous) },
+      // A bench reading drives its tile only while its alert is active, so an alert change reloads this short list.
+      { name: "alertRaised", apply: (previous, payload) => ((payload as Alert).toolId === toolId ? "reload" : previous) },
+      { name: "alertCleared", apply: (previous, payload) => ((payload as AlertCleared).toolId === toolId ? "reload" : previous) },
+    ],
+  });
+  const liveAlerts = useLiveResource(`alerts:${toolId}`, () => api.listAlerts(toolId, "all"), {
+    events: [
+      { name: "alertRaised", apply: (previous, payload) => ((payload as Alert).toolId === toolId ? upsertRecord(previous ?? [], payload as Alert) : previous) },
+      { name: "alertCleared", apply: (previous, payload) => (previous ? clearAlert(previous, payload as AlertCleared) : previous) },
+    ],
+  });
+  const alerts = liveAlerts ?? [];
+  useSetLifecycle("alert", false);
   const toolSensors = useMemo(
     () => (tool ? sensorsForTool(tool.id, fleetSensors, fleetTemplates) : []),
     [tool],
@@ -58,15 +72,12 @@ export function ToolPage() {
   useEffect(() => {
     let cancelled = false;
     setTool(null);
-    setAlerts([]);
     setError(null);
     setSelectedId(null);
-    Promise.all([api.getTool(toolId), api.listAlerts(toolId, siteId).catch(() => [] as Alert[])])
-      .then(([next, nextAlerts]) => {
-        if (!cancelled) {
-          setTool(next);
-          setAlerts(nextAlerts);
-        }
+    api
+      .getTool(toolId)
+      .then((next) => {
+        if (!cancelled) setTool(next);
       })
       .catch((reason: unknown) => {
         if (!cancelled) {
@@ -77,11 +88,12 @@ export function ToolPage() {
     return () => {
       cancelled = true;
     };
-  }, [toolId, siteId]);
+  }, [toolId]);
 
-  // Alerts, tickets, incidents and investigations arrive over the fleet stream; reload the linked records when one changes.
+  // Linked records load once; each record event then patches its list in place (newest first), so they stream in.
   const [recordsVersion, setRecordsVersion] = useState(0);
-  useRecordEvents(() => setRecordsVersion((version) => version + 1));
+  const reloadRecords = useCallback(() => setRecordsVersion((version) => version + 1), []);
+  useRecordPatches({ tickets: setTickets, incidents: setIncidents, investigations: setInvestigations }, { siteId, onReload: reloadRecords });
 
   useEffect(() => {
     let cancelled = false;
@@ -89,8 +101,11 @@ export function ToolPage() {
       api.listTickets(siteId).catch(() => [] as Ticket[]),
       api.listIncidents(siteId).catch(() => [] as Incident[]),
       api.listInvestigations(siteId).catch(() => [] as Investigation[]),
-    ]).then(([tickets, incidents, investigations]) => {
-      if (!cancelled) setRecords({ tickets, incidents, investigations });
+    ]).then(([nextTickets, nextIncidents, nextInvestigations]) => {
+      if (cancelled) return;
+      setTickets(nextTickets);
+      setIncidents(nextIncidents);
+      setInvestigations(nextInvestigations);
     });
     return () => {
       cancelled = true;
@@ -112,7 +127,7 @@ export function ToolPage() {
   }, [focusParameter, toolSensors]);
 
   if (error) return <p className="text-mps-alarm-text">{error}</p>;
-  if (!tool || !story) return <p className="text-mps-muted">Loading {toolId}…</p>;
+  if (!tool) return <p className="text-mps-muted">Loading {toolId}…</p>;
   if (!toolInPlant(siteId, tool.id, tool.siteId)) {
     return (
       <div>
@@ -123,24 +138,27 @@ export function ToolPage() {
   }
 
   const liveTile = live && live.readings.length > 0 ? live : undefined;
-  const shown = storyWithLive(story, liveTile, liveTile ? liveTile.readings.slice(0, 12).map((reading) => reading.value) : undefined);
+  const shown = toolTile(tool.id, alerts, liveTile);
   const tone = statusTone(shown.status);
-  const selected = toolSensors.find((sensor) => sensor.id === selectedId) ?? null;
-  const chart = selected ? chartSpec(selected, story) : story.chart;
-  const seriesParameter = selected?.parameter ?? focusParameter ?? chart.parameter;
+  const selected = toolSensors.find((sensor) => sensor.id === selectedId) ?? defaultSensor(toolSensors, alerts, focusParameter);
+  const seriesParameter = selected?.parameter ?? focusParameter ?? "";
   const livePoints = seriesPoints(live, seriesParameter, selected?.chamberId);
   const serverLimits = seriesLimits(live, seriesParameter, selected?.chamberId);
-  const pointCount = livePoints && livePoints.length > 0 ? livePoints.length : 60;
+  const pointCount = livePoints?.length ?? 0;
+  const chartLabel = selected ? sensorLabel(selected.schematicAnchor) : parameterLabel(seriesParameter);
+  const chartUnit = selected?.unit ?? "";
+  const cumulative = selected?.kind === "cumulative";
+  const finding = seriesFinding(alerts, seriesParameter, selected?.chamberId);
   const readings = withManualTiles(liveReadingMap(live?.readings), toolSensors, manualReadings);
   const chartManual = manualMarker(
     seriesFor(live, seriesParameter, selected?.chamberId),
     latestManual(manualReadings, seriesParameter, selected?.chamberId),
   );
-  const reasons = statusReasons(shown.status, liveAlerts ?? alerts, manualReadings ?? []);
+  const reasons = statusReasons(shown.status, alerts, manualReadings ?? []);
   const windows = overlayWindows(live?.readings);
-  const recipe = recipeLabel(live, story?.recipe);
-  const linked = linkedForTool(tool.id, { ...records, alerts: liveAlerts ?? alerts });
-  const entries = orderedLinked(linked, records.incidents, manualReadings ?? [], LINKED_LIMIT);
+  const recipe = recipeLabel(live);
+  const linked = linkedForTool(tool.id, { tickets, incidents, investigations, alerts });
+  const entries = orderedLinked(linked, incidents, manualReadings ?? [], LINKED_LIMIT);
 
   function showSensor(sensor: (typeof toolSensors)[number]) {
     setSelectedId(sensor.id);
@@ -159,7 +177,7 @@ export function ToolPage() {
             Tool {tool.id} · {FAMILY_PROCESS[tool.family]}
           </h1>
           <p className="max-w-3xl text-mps-secondary">
-            {tool.chambers.map((chamber) => chamber.name).join(", ")} · recipe {recipe}. {story.note}
+            {tool.chambers.map((chamber) => chamber.name).join(", ")} · recipe {recipe}.
           </p>
         </div>
       </div>
@@ -179,6 +197,14 @@ export function ToolPage() {
             <Chip tone={tone}>{shown.status === "watch" ? "WATCH" : shown.status === "alarm" ? "ALARM" : "NOMINAL"}</Chip>
           </div>
         </div>
+        {shown.params.length === 0 ? (
+          <div className={panel}>
+            <div className="font-mono text-mps-micro uppercase text-mps-muted">Readings</div>
+            <div className="mt-1 text-mps-muted" role="status">
+              {WAITING_FOR_READINGS}
+            </div>
+          </div>
+        ) : null}
         {shown.params.map((param) => (
           <div key={param.label} className={panel}>
             <div className="font-mono text-mps-micro uppercase text-mps-muted">
@@ -211,24 +237,21 @@ export function ToolPage() {
       </div>
       <div id="spc-chart" className={`${panel} mt-3 scroll-mt-16`}>
         <h2 className="mb-2 text-mps-title font-semibold">
-          <Explain text={`${selected?.kind === "cumulative" ? "Count" : "SPC"} · ${chart.label}`} />{" "}
+          <Explain text={`${cumulative ? "Count" : "SPC"} · ${chartLabel}`} />{" "}
           <span className="float-right font-mono text-mps-micro font-normal text-mps-muted">
-            σ = {chart.sigma} {chart.unit} · n = {pointCount}
+            σ = {serverLimits ? axisNumber(serverLimits.sigma, serverLimits.sigma) : "—"} {chartUnit} · n = {pointCount}
           </span>
         </h2>
         <SpcChart
-          seedKey={`${tool.id}:${chart.parameter}`}
-          label={chart.label}
-          unit={chart.unit}
-          mean={serverLimits?.mean ?? chart.mean}
-          sigma={serverLimits?.sigma ?? chart.sigma}
-          shape={chart.shape}
-          endValue={chart.endValue}
+          label={chartLabel}
+          unit={chartUnit}
+          center={serverLimits}
           points={livePoints}
-          cumulative={selected?.kind === "cumulative"}
-          manual={selected?.kind === "cumulative" ? undefined : chartManual}
+          finding={finding}
+          cumulative={cumulative}
+          manual={cumulative ? undefined : chartManual}
         />
-        {selected?.kind === "cumulative" ? (
+        {cumulative ? (
           <p className="mt-2">
             {(() => {
               const rate = toolSensors.find((sensor) => sensor.type === "runRate");
@@ -377,4 +400,34 @@ function LinkedEntryRow({ entry, onOpen }: { entry: LinkedEntry; onOpen: (readin
       );
     }
   }
+}
+
+/**
+ * The chart's series before the user picks a sensor: the focused parameter, else the parameter of an active alert,
+ * else the tool's first charted sensor (chamber A first).
+ */
+function defaultSensor(sensors: FleetSensor[], alerts: Alert[], focusParameter: string | null): FleetSensor | null {
+  const charted = sensors.filter((sensor) => sensor.parameter && sensor.kind !== "cumulative");
+  const forParameter = (parameter: string, chamberId?: string | null) =>
+    charted.find((sensor) => sensor.parameter === parameter && (!chamberId || sensor.chamberId === chamberId)) ??
+    charted.find((sensor) => sensor.parameter === parameter && sensor.chamberId?.endsWith("-A")) ??
+    charted.find((sensor) => sensor.parameter === parameter);
+  if (focusParameter) {
+    const focused = forParameter(focusParameter);
+    if (focused) return focused;
+  }
+  const active = alerts.find((alert) => alert.status !== "cleared");
+  if (active) {
+    const alerted = forParameter(active.parameter, active.chamberId);
+    if (alerted) return alerted;
+  }
+  return charted.find((sensor) => sensor.chamberId?.endsWith("-A")) ?? charted[0] ?? null;
+}
+
+/** What the server's rules engine says about the charted series: its active alert, or that none is active. */
+function seriesFinding(alerts: Alert[], parameter: string, chamberId?: string | null): string {
+  const active = alerts.find(
+    (alert) => alert.status !== "cleared" && alert.parameter === parameter && (!chamberId || !alert.chamberId || alert.chamberId === chamberId),
+  );
+  return active ? `Active alert: ${ruleLabel(active.rule)}.` : "No active SPC alert on this series.";
 }

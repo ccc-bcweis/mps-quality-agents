@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { describe, expect, it } from "vitest";
 import type { FleetLive, SiteDetail } from "../api/types";
-import { storyWithLive } from "../live/overlay";
+import { toolTile } from "../live/overlay";
 import { statusWord } from "./floorLayout";
 import { withLiveStatus } from "./liveStatus";
 
@@ -25,8 +25,8 @@ describe("one tool status for Sites, Production line and tool page", () => {
     const words: Record<string, string> = { nominal: "Nominal", watch: "Watch", alarm: "Alarm" };
     for (const row of live.tools) {
       const onSites = statusWord(sites.find((tool) => tool.id === row.toolId)!.status);
-      // Production line tiles and the tool page both render storyWithLive(...).status.
-      const story = storyWithLive({ status: "nominal", params: [], spark: [] } as never, row as never);
+      // Production line tiles and the tool page both render toolTile(...).status.
+      const story = toolTile(row.toolId, [], row as never);
       expect(onSites).toBe(words[row.status]);
       expect(words[story.status]).toBe(onSites);
     }
