@@ -17,7 +17,7 @@
   "stories": {
     "D-01": {
       "status": "nominal",
-      "recipe": "DEP-SIO-2",
+      "recipe": "PECVD oxide",
       "note": "In window.",
       "lifecycle": "alert",
       "escalated": false,
@@ -60,7 +60,7 @@
     },
     "D-02": {
       "status": "nominal",
-      "recipe": "DEP-SIO-2",
+      "recipe": "PECVD oxide",
       "note": "In window.",
       "lifecycle": "alert",
       "escalated": false,
@@ -103,7 +103,7 @@
     },
     "E-01": {
       "status": "nominal",
-      "recipe": "ETCH-OX-14",
+      "recipe": "Oxide main etch",
       "note": "In window. Same gas lot as E-02.",
       "lifecycle": "alert",
       "escalated": false,
@@ -146,7 +146,7 @@
     },
     "E-02": {
       "status": "nominal",
-      "recipe": "ETCH-OX-14",
+      "recipe": "Oxide main etch",
       "note": "In window.",
       "lifecycle": "alert",
       "escalated": false,
@@ -189,7 +189,7 @@
     },
     "S-01": {
       "status": "nominal",
-      "recipe": "ASH-O2-7",
+      "recipe": "Standard ash",
       "note": "In window.",
       "lifecycle": "alert",
       "escalated": false,
@@ -232,7 +232,7 @@
     },
     "S-02": {
       "status": "nominal",
-      "recipe": "ASH-O2-7",
+      "recipe": "Standard ash",
       "note": "In window.",
       "lifecycle": "alert",
       "escalated": false,
@@ -275,7 +275,7 @@
     },
     "C-01": {
       "status": "nominal",
-      "recipe": "CLN-SC1-3",
+      "recipe": "SC1 SC2 clean",
       "note": "In window.",
       "lifecycle": "alert",
       "escalated": false,
@@ -318,7 +318,7 @@
     },
     "C-02": {
       "status": "nominal",
-      "recipe": "CLN-SC1-3",
+      "recipe": "SC1 SC2 clean",
       "note": "In window.",
       "lifecycle": "alert",
       "escalated": false,
@@ -363,7 +363,7 @@
   "faultStories": {
     "D-01": {
       "status": "alarm",
-      "recipe": "DEP-SIO-2",
+      "recipe": "PECVD oxide",
       "note": "Chamber pressure stepped up.",
       "lifecycle": "alert",
       "escalated": false,
@@ -408,7 +408,7 @@
     },
     "E-02": {
       "status": "watch",
-      "recipe": "ETCH-OX-14",
+      "recipe": "Oxide main etch",
       "note": "Western Electric rule 2 on ESC temperature.",
       "lifecycle": "alert",
       "escalated": false,

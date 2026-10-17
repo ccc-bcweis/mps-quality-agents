@@ -21,7 +21,7 @@ import { toolInPlant } from "../sites/selection";
 import { chartSpec } from "../fleet/chartSpec";
 import { statusTone, storyFor } from "../fleet/catalog";
 import { sensorsForTool } from "../fleet/sensors";
-import { liveReadingMap, overlayWindows, seriesLimits, seriesPoints, storyWithLive } from "../live/overlay";
+import { liveReadingMap, overlayWindows, recipeLabel, seriesLimits, seriesPoints, storyWithLive } from "../live/overlay";
 import { usePolled } from "../live/usePolled";
 import { latestManual, manualMarker, manualTile, seriesFor } from "../live/manual";
 import { statusReasons } from "../live/statusReasons";
@@ -128,6 +128,7 @@ export function ToolPage() {
   );
   const reasons = statusReasons(shown.status, liveAlerts ?? alerts, manualReadings ?? []);
   const windows = overlayWindows(live?.readings);
+  const recipe = recipeLabel(live, story?.recipe);
   const linked = linkedForTool(tool.id, { ...records, alerts });
 
   function showSensor(sensor: (typeof toolSensors)[number]) {
@@ -147,7 +148,7 @@ export function ToolPage() {
             Tool {tool.id} · {FAMILY_PROCESS[tool.family]}
           </h1>
           <p className="max-w-3xl text-mps-secondary">
-            {tool.chambers.map((chamber) => chamber.name).join(", ")} · recipe {story.recipe}. {story.note}
+            {tool.chambers.map((chamber) => chamber.name).join(", ")} · recipe {recipe}. {story.note}
           </p>
         </div>
       </div>
@@ -231,7 +232,7 @@ export function ToolPage() {
       </div>
       <div className="mt-3 grid gap-3 lg:grid-cols-2">
         <div className={panel}>
-          <h2 className="mb-2 text-mps-title font-semibold">Operating windows (recipe {story.recipe})</h2>
+          <h2 className="mb-2 text-mps-title font-semibold">Operating windows (recipe {recipe})</h2>
           {windows.length === 0 ? (
             <p className="text-mps-muted">No live readings with a recipe window yet.</p>
           ) : (

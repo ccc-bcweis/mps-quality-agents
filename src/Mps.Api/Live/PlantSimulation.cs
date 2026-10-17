@@ -260,6 +260,21 @@ public sealed class PlantSimulation : Mps.Application.Lifecycle.IPlantFaultContr
         return tool?.Chambers.Count > 0 ? tool.Chambers[0].Id : toolId + "-A";
     }
 
+    /// <summary>Readable name of the recipe the tool runs at <paramref name="at"/>, from the fleet data; null for an unknown tool.</summary>
+    public string? RecipeNameAt(string toolId, DateTimeOffset at)
+    {
+        try
+        {
+            var tool = Runtime.Fleet.GetRequired(toolId);
+            var elapsed = (int)Math.Max(0, (at - Runtime.Simulator.Origin).TotalSeconds);
+            return RecipeSchedule.Locate(tool, elapsed).Recipe.Name;
+        }
+        catch (FleetSpecException)
+        {
+            return null;
+        }
+    }
+
     public OperatingWindow? WindowAt(string toolId, string parameter, DateTimeOffset at)
     {
         ToolSpec tool;

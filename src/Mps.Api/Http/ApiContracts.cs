@@ -217,7 +217,11 @@ public sealed record ToolLiveResponse(
     DateTimeOffset SimulatedNow,
     string Status,
     IReadOnlyList<LiveReadingResponse> Readings,
-    IReadOnlyList<LiveSeriesResponse> Series);
+    IReadOnlyList<LiveSeriesResponse> Series)
+{
+    /// <summary>Readable name of the recipe running now, from the fleet data (e.g. "PECVD oxide").</summary>
+    public string? RecipeName { get; init; }
+}
 
 /// <summary>
 /// One live reading with the recipe-step window it is judged against. Spec is the recipe minimum and maximum; control
