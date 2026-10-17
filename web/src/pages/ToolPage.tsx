@@ -2,11 +2,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
-import { FAMILY_PROCESS, formatStamp } from "../api/labels";
+import { FAMILY_PROCESS, INVESTIGATION_STAGE_LABEL, formatStamp } from "../api/labels";
 import type { Alert, Incident, Investigation, ManualReading, Ticket, Tool } from "../api/types";
+
+/** Linked records shown on the tool page, newest first. */
+const LINKED_LIMIT = 12;
 import type { SchematicReading } from "../components/ToolSchematic";
 import type { FleetSensor } from "../fleet/sensors";
-import { linkedForTool } from "../fleet/linkedRecords";
+import { linkedForTool, orderedLinked, type LinkedEntry } from "../fleet/linkedRecords";
+import { useRecordEvents } from "../live/fleetHub";
+import { AttachmentViewer } from "../components/AttachmentViewer";
 import { ruleLabel } from "../api/labels";
 import { SpcChart } from "../components/SpcChart";
 import { Chip } from "../components/Chip";
@@ -38,6 +43,7 @@ export function ToolPage() {
   const [records, setRecords] = useState<{ tickets: Ticket[]; incidents: Incident[]; investigations: Investigation[] }>({ tickets: [], incidents: [], investigations: [] });
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<ManualReading | null>(null);
   const focused = useRef(false);
   const live = usePolled(() => api.getToolLive(toolId), toolId);
   const manualReadings = usePolled(() => api.listManualReadings(toolId), `manual:${toolId}`);
@@ -73,6 +79,10 @@ export function ToolPage() {
     };
   }, [toolId, siteId]);
 
+  // Alerts, tickets, incidents and investigations arrive over the fleet stream; reload the linked records when one changes.
+  const [recordsVersion, setRecordsVersion] = useState(0);
+  useRecordEvents(() => setRecordsVersion((version) => version + 1));
+
   useEffect(() => {
     let cancelled = false;
     Promise.all([
@@ -85,7 +95,7 @@ export function ToolPage() {
     return () => {
       cancelled = true;
     };
-  }, [toolId, siteId]);
+  }, [toolId, siteId, recordsVersion]);
 
   useEffect(() => {
     focused.current = false;
@@ -129,7 +139,8 @@ export function ToolPage() {
   const reasons = statusReasons(shown.status, liveAlerts ?? alerts, manualReadings ?? []);
   const windows = overlayWindows(live?.readings);
   const recipe = recipeLabel(live, story?.recipe);
-  const linked = linkedForTool(tool.id, { ...records, alerts });
+  const linked = linkedForTool(tool.id, { ...records, alerts: liveAlerts ?? alerts });
+  const entries = orderedLinked(linked, records.incidents, manualReadings ?? [], LINKED_LIMIT);
 
   function showSensor(sensor: (typeof toolSensors)[number]) {
     setSelectedId(sensor.id);
@@ -270,53 +281,20 @@ export function ToolPage() {
         </div>
         <div className={panel}>
           <h2 className="mb-2 text-mps-title font-semibold">Linked records</h2>
-          {linked.tickets.length + linked.alerts.length + linked.investigations.length + (manualReadings?.length ?? 0) === 0 ? (
+          {entries.length === 0 ? (
             <p className="text-mps-muted">No tickets, alerts or investigations on this tool yet.</p>
           ) : (
             <ul aria-label="Linked records" className="grid gap-1.5">
-              {linked.tickets.slice(0, 5).map((ticket) => (
-                <li key={ticket.id} className="flex flex-wrap items-center gap-2">
-                  <Link className={btnSm} to={`/tickets/${encodeURIComponent(ticket.id)}`}>
-                    {ticket.number}
-                  </Link>
-                  <span className="min-w-0 flex-1 break-words">{ticket.title}</span>
-                </li>
-              ))}
-              {linked.alerts.slice(0, 5).map((alert) => (
-                <li key={alert.id} className="flex flex-wrap items-center gap-2">
-                  <Link className={btnSm} to={`/alerts/${alert.id}`}>
-                    Alert
-                  </Link>
-                  <span className="min-w-0 flex-1 break-words"><Explain text={ruleLabel(alert.rule)} /></span>
-                </li>
-              ))}
-              {(manualReadings ?? []).slice(0, 5).map((reading) => (
-                <li key={reading.evidenceId} className="flex flex-wrap items-center gap-2" data-manual-reading="true">
-                  {reading.fileUrl ? (
-                    <a className={btnSm} href={reading.fileUrl} target="_blank" rel="noreferrer">
-                      Printout
-                    </a>
-                  ) : (
-                    <span className="font-mono text-mps-micro uppercase text-mps-muted">Manual</span>
-                  )}
-                  <span className={`min-w-0 flex-1 break-words ${reading.outOfSpec ? "text-mps-alarm-text" : ""}`}>
-                    {reading.source} Observed {formatStamp(reading.observedAt)}
-                    {reading.printedObservedAt ? ` (printed ${formatStamp(reading.printedObservedAt)}, set to now by the user)` : ""}.
-                    {reading.olderThanWindow ? " Older than the chart window." : ""}
-                  </span>
-                </li>
-              ))}
-              {linked.investigations.slice(0, 5).map((investigation) => (
-                <li key={investigation.id} className="flex flex-wrap items-center gap-2">
-                  <Link className={btnSm} to={`/investigations/${investigation.id}`}>
-                    Investigation
-                  </Link>
-                  <span className="min-w-0 flex-1 break-words">{investigation.statusLabel ?? investigation.stage}</span>
+              {entries.map((entry) => (
+                <li key={`${entry.kind}-${entry.id}`} className="flex flex-wrap items-center gap-2" data-linked-kind={entry.kind} data-manual-reading={entry.kind === "manual" ? "true" : undefined}>
+                  <LinkedEntryRow entry={entry} onOpen={setViewing} />
                 </li>
               ))}
             </ul>
           )}
-          <p className="mt-3 font-mono text-mps-micro text-mps-muted">Fixed rule checks draw this chart. The AI has not written anything here.</p>
+          {viewing && viewing.fileUrl ? (
+            <AttachmentViewer url={viewing.fileUrl} fileName={viewing.fileName} title={viewing.fileName ?? "Printout"} onClose={() => setViewing(null)} />
+          ) : null}
           <div className="mt-3 flex gap-2">
             <Link className={btn} to="/alerts">
               Alerts
@@ -346,4 +324,57 @@ function withManualTiles(
     if (reading && reading.active && (!reading.chamberId || !sensor.chamberId || reading.chamberId === sensor.chamberId)) next.set(sensor.id, manualTile(reading));
   }
   return next;
+}
+
+function LinkedEntryRow({ entry, onOpen }: { entry: LinkedEntry; onOpen: (reading: ManualReading) => void }) {
+  switch (entry.kind) {
+    case "investigation":
+      return (
+        <>
+          <Link className={btnSm} to={`/investigations/${entry.record.id}`}>
+            Investigation
+          </Link>
+          <span className="min-w-0 flex-1 break-words">{entry.record.statusLabel ?? INVESTIGATION_STAGE_LABEL[entry.record.stage] ?? entry.record.stage}</span>
+        </>
+      );
+    case "ticket":
+      return (
+        <>
+          <Link className={btnSm} to={`/tickets/${encodeURIComponent(entry.record.id)}`}>
+            {entry.record.number}
+          </Link>
+          <span className="min-w-0 flex-1 break-words">{entry.record.title}</span>
+        </>
+      );
+    case "alert":
+      return (
+        <>
+          <Link className={btnSm} to={`/alerts/${entry.record.id}`}>
+            Alert
+          </Link>
+          <span className="min-w-0 flex-1 break-words">
+            <Explain text={ruleLabel(entry.record.rule)} />
+          </span>
+        </>
+      );
+    case "manual": {
+      const reading = entry.record;
+      return (
+        <>
+          {reading.fileUrl ? (
+            <button type="button" className={btnSm} onClick={() => onOpen(reading)}>
+              Printout
+            </button>
+          ) : (
+            <span className="font-mono text-mps-micro uppercase text-mps-muted">Manual</span>
+          )}
+          <span className={`min-w-0 flex-1 break-words ${reading.outOfSpec ? "text-mps-alarm-text" : ""}`}>
+            {reading.source} Observed {formatStamp(reading.observedAt)}
+            {reading.printedObservedAt ? ` (printed ${formatStamp(reading.printedObservedAt)}, set to now by the user)` : ""}.
+            {reading.olderThanWindow ? " Older than the chart window." : ""}
+          </span>
+        </>
+      );
+    }
+  }
 }

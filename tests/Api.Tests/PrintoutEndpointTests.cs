@@ -47,6 +47,38 @@ public sealed class PrintoutEndpointTests
     }
 
     [Theory]
+    [InlineData("oscilloscope-e01.pdf", "application/octet-stream", "application/pdf")]
+    [InlineData("thermocouple-logger-e01.png", "application/octet-stream", "image/png")]
+    public async Task ThePrintoutFileOpensInlineWithItsRealType(string fileName, string uploadedAs, string expected)
+    {
+        await using var factory = new ApiFactory();
+        var client = factory.CreateClient();
+        var inspection = await InspectAsync(client, fileName, uploadedAs);
+        var body = JsonSerializer.SerializeToNode(ConfirmBody(inspection), Json)!.AsObject();
+        body["fileId"] = inspection.GetProperty("fileId").GetString();
+        var confirmed = await client.PostAsJsonAsync("/api/printouts/confirm", body);
+        confirmed.StatusCode.Should().Be(HttpStatusCode.OK);
+        var readings = await client.GetFromJsonAsync<JsonElement>("/api/manual-readings");
+        var url = readings.EnumerateArray().Single().GetProperty("fileUrl").GetString()!;
+
+        var file = await client.GetAsync(url);
+
+        file.StatusCode.Should().Be(HttpStatusCode.OK);
+        file.Content.Headers.ContentType!.MediaType.Should().Be(expected);
+        file.Content.Headers.ContentDisposition!.DispositionType.Should().Be("inline");
+        file.Content.Headers.ContentDisposition.FileNameStar.Should().Be(fileName);
+        file.Headers.GetValues("X-Content-Type-Options").Should().Contain("nosniff");
+        (await file.Content.ReadAsByteArrayAsync()).Should().Equal(await File.ReadAllBytesAsync(Path.Combine(Root(), "data", "samples", fileName)));
+    }
+
+    [Fact]
+    public void UnknownBytesDownloadInsteadOfOpening()
+    {
+        Mps.Api.Printouts.PrintoutContentType.Detect("<html>"u8).Should().Be("application/octet-stream");
+        Mps.Api.Printouts.PrintoutContentType.ShowsInline("application/octet-stream").Should().BeFalse();
+    }
+
+    [Theory]
     [InlineData(null)]
     [InlineData("mock")]
     public async Task ThermocoupleScanParseIsDeterministic(string? mode)

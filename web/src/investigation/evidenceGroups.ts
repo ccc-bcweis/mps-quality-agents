@@ -36,7 +36,10 @@ function signalKey(item: EvidenceItem): string {
   return `spc|${item.toolId ?? ""}|${parameterOf(item)}`;
 }
 
-/** One row per SPC signal (tool + parameter) listing the rules that broke, with real reading counts. Other evidence stays one row per item. */
+/**
+ * One row per SPC signal (tool + parameter) listing the rules that broke, with real reading counts. Other evidence stays
+ * one row per item. Rows run oldest to newest by the time they show (the start of a grouped row).
+ */
 export function groupEvidence(items: EvidenceItem[]): EvidenceRow[] {
   const rows = new Map<string, EvidenceRow>();
   const seen = new Map<string, Set<string>>();
@@ -65,7 +68,12 @@ export function groupEvidence(items: EvidenceItem[]): EvidenceRow[] {
       row.item = item;
     }
   }
-  return [...rows.values()];
+  return [...rows.values()].sort((left, right) => timeOf(left.first) - timeOf(right.first));
+}
+
+function timeOf(stamp: string): number {
+  const at = Date.parse(stamp);
+  return Number.isNaN(at) ? Number.POSITIVE_INFINITY : at;
 }
 
 export function rangeText(row: EvidenceRow): string {
