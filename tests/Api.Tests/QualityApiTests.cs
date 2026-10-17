@@ -157,6 +157,27 @@ public sealed class QualityApiTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task TheListAndTheTicketShowAnInvestigationThatIsStillGathering()
+    {
+        await using var factory = new ApiFactory();
+        var client = factory.CreateClient();
+        var opened = await OpenIncidentAsync(client, "E-02", "escTemperature");
+        var incidentId = new IncidentId(opened.GetProperty("id").GetGuid());
+        var placeholder = new Mps.Domain.Investigations.InvestigationSnapshot(
+            InvestigationId.New(), incidentId, Mps.Domain.Investigations.InvestigationStage.Started, [], [], null, opened.GetProperty("correlationId").GetString()!);
+        factory.Services.GetRequiredService<Mps.Application.Lifecycle.InvestigationsInFlight>().TryBegin(placeholder, out _).Should().BeTrue();
+
+        var list = await client.GetFromJsonAsync<JsonElement>("/api/investigations");
+        var latest = await client.GetFromJsonAsync<JsonElement>("/api/incidents/" + incidentId.Value.ToString("D") + "/investigation");
+        var manual = await client.PostAsync("/api/incidents/" + incidentId.Value.ToString("D") + "/investigations", null);
+        var manualBody = await manual.Content.ReadFromJsonAsync<JsonElement>(Json);
+
+        list.EnumerateArray().Should().ContainSingle(row => row.GetProperty("id").GetGuid() == placeholder.Id.Value && row.GetProperty("stage").GetString() == "started");
+        latest.GetProperty("id").GetGuid().Should().Be(placeholder.Id.Value);
+        manualBody.GetProperty("id").GetGuid().Should().Be(placeholder.Id.Value, "a second Start returns the running one at once instead of running again");
+    }
+
+    [Fact]
     public async Task InvestigationListIsNewestFirst()
     {
         await using var factory = new ApiFactory();
