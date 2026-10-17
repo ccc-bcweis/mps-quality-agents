@@ -29,7 +29,6 @@ public sealed class MetadataStoreTests
         Store.Capabilities.Count(capability => capability.Simulated).Should().Be(3);
         Store.Lines.Should().HaveCount(15);
         Store.Tools.Should().HaveCount(33);
-        Store.ProcessMaps.Select(map => map.State).Should().Equal("current", "future");
         _ = Store.Company;
         Store.LoadCount.Should().Be(1);
     }
@@ -101,10 +100,6 @@ public sealed class MetadataStoreTests
                     "Every case still gets a ticket.",
                     new RuleWhen(),
                     [new RuleAction("open-ticket", null, null)]),
-            ],
-            [
-                new ProcessMap("current", "Today", "current", [new ProcessStep("notice", "Someone notices the excursion", 1, null, [])], [new ProcessTransition("notice", "notice", "Then")]),
-                new ProcessMap("future", "Next", "future", [new ProcessStep("rule", "A rule opens the ticket", 1, null, ["TicketOpened"])], [new ProcessTransition("rule", "rule", "Then")]),
             ]);
 
         var errors = MetadataIntegrity.Check(catalog);
@@ -140,7 +135,6 @@ public sealed class MetadataStoreTests
         ExpectValid(contracts, "capabilities.schema.json", Path.Combine(data, "capabilities.yaml"));
         ExpectValid(contracts, "lines.schema.json", Path.Combine(data, "lines.yaml"));
         ExpectValid(contracts, "business-rules.schema.json", Path.Combine(data, "business-rules.yaml"));
-        ExpectValid(contracts, "process-maps.schema.json", Path.Combine(data, "process-maps.yaml"));
         foreach (var file in Directory.GetFiles(Path.Combine(data, "tools"), "*.yaml"))
         {
             ExpectValid(contracts, "tools.schema.json", file);
@@ -165,10 +159,6 @@ public sealed class MetadataStoreTests
                     "Every case still gets a ticket.",
                     new RuleWhen(),
                     [new RuleAction("open-ticket", null, null)]),
-            ],
-            [
-                new ProcessMap("current", "Today", "current", [new ProcessStep("notice", "Someone notices the excursion", 1, null, [])], [new ProcessTransition("notice", "notice", "Then")]),
-                new ProcessMap("future", "Next", "future", [new ProcessStep("rule", "A rule opens the ticket", 1, null, ["TicketOpened"])], [new ProcessTransition("rule", "rule", "Then")]),
             ]);
     }
 
@@ -483,8 +473,6 @@ public sealed class BusinessRuleEngineTests
         public IReadOnlyList<ToolProfile> Tools => [];
 
         public IReadOnlyList<BusinessRule> Rules { get; }
-
-        public IReadOnlyList<ProcessMap> ProcessMaps => [];
 
         public TimeSpan LoadDuration => TimeSpan.Zero;
 

@@ -21,7 +21,6 @@ public static class MetadataEndpoints
         app.MapGet("/api/metadata/settings", () => Results.Ok(RuleSettings.Read(
             Mps.Application.Spc.SpcRuleSettings.Shared,
             Mps.Agents.Investigation.ShapeWait.Load())));
-        app.MapGet("/api/metadata/process-maps", (IMetadataStore store) => Results.Ok(store.ProcessMaps.Select(ToMap).ToArray()));
     }
 
     private static CompanyMetadataResponse ToCompany(IMetadataStore store)
@@ -125,24 +124,6 @@ public static class MetadataEndpoints
             Conditions = RuleSettings.Conditions(rule.When),
         };
     }
-
-    private static ProcessMapResponse ToMap(ProcessMap map)
-    {
-        return new ProcessMapResponse(
-            map.Id,
-            map.Name,
-            map.State,
-            map.Steps
-                .OrderBy(step => step.Order)
-                .Select(step => new ProcessStepResponse(
-                    step.Id,
-                    step.Name,
-                    step.Order,
-                    step.Detail,
-                    step.HighlightStages.Select(stage => Enum.Parse<IncidentStage>(stage)).ToArray()))
-                .ToArray(),
-            map.Transitions.Select(transition => new ProcessTransitionResponse(transition.From, transition.To, transition.Name)).ToArray());
-    }
 }
 
 public sealed record CompanyMetadataResponse(
@@ -223,19 +204,3 @@ public sealed record BusinessRuleResponse(
     /// <summary>The rule's configured conditions, so the screen can show each threshold as a field.</summary>
     public IReadOnlyList<RuleConditionResponse> Conditions { get; init; } = [];
 }
-
-public sealed record ProcessStepResponse(
-    string Id,
-    string Name,
-    int Order,
-    string? Detail,
-    IReadOnlyList<IncidentStage> HighlightStages);
-
-public sealed record ProcessTransitionResponse(string From, string To, string Name);
-
-public sealed record ProcessMapResponse(
-    string Id,
-    string Name,
-    string State,
-    IReadOnlyList<ProcessStepResponse> Steps,
-    IReadOnlyList<ProcessTransitionResponse> Transitions);

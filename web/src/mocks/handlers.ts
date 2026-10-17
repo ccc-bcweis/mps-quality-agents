@@ -4,7 +4,7 @@
 
 import { http, HttpResponse } from "msw";
 import { handlers as contractHandlers } from "../../../contracts/msw/handlers";
-import type { Alert, BusinessRule, CapabilityType, FaultInjectionRequest, HumanDecisionKind, Incident, Investigation, MetadataLine, MetadataSite, MetadataToolCard, OpenIncidentRequest, PrintoutConfirmRequest, PrintoutInspection, ProcessMap, RuleSetting, ScenarioRun, Ticket } from "../api/types";
+import type { Alert, BusinessRule, CapabilityType, FaultInjectionRequest, HumanDecisionKind, Incident, Investigation, MetadataLine, MetadataSite, MetadataToolCard, OpenIncidentRequest, PrintoutConfirmRequest, PrintoutInspection, RuleSetting, ScenarioRun, Ticket } from "../api/types";
 import { latestInvestigationForIncident } from "../investigation/ticketRoute";
 import { incidents, investigationFor, investigations, tools } from "./demoData";
 import { toolInPlant } from "../sites/selection";
@@ -225,56 +225,6 @@ export const metadataSettings: RuleSetting[] = [
   { id: "investigation.wait.attempts", group: "Investigation", label: "Tries", kind: "number", value: "30" },
   { id: "investigation.wait.delay", group: "Investigation", label: "Time between tries", kind: "number", value: "20", unit: "seconds" },
   { id: "decision.overrideMin", group: "Decision", label: "Shortest override justification", kind: "number", value: "20", unit: "characters" },
-];
-
-const metadataMaps: ProcessMap[] = [
-  {
-    id: "current-quality-path",
-    name: "How a quality issue moves today",
-    state: "current",
-    steps: [
-      { id: "notice", name: "Someone notices the excursion", order: 1, highlightStages: [] },
-      { id: "search", name: "Search each system", order: 2, highlightStages: [] },
-      { id: "email", name: "Hand off by email", order: 3, highlightStages: [] },
-      { id: "draft", name: "Draft a cause", order: 4, highlightStages: [] },
-      { id: "ask", name: "Ask a manager", order: 5, highlightStages: [] },
-      { id: "write", name: "Write the corrective action", order: 6, highlightStages: [] },
-    ],
-    transitions: [
-      { from: "notice", to: "search", name: "Then" },
-      { from: "search", to: "email", name: "Then" },
-      { from: "search", to: "ask", name: "The records disagree, so the engineer stops and asks." },
-      { from: "email", to: "draft", name: "Then" },
-      { from: "draft", to: "ask", name: "Then" },
-      { from: "ask", to: "write", name: "Then" },
-    ],
-  },
-  {
-    id: "future-quality-path",
-    name: "How a quality issue moves with rules",
-    state: "future",
-    steps: [
-      { id: "rule", name: "A rule opens the ticket", order: 1, highlightStages: ["ticketOpened"] },
-      { id: "investigate", name: "The investigation gathers evidence", order: 2, highlightStages: ["investigating"] },
-      { id: "rank", name: "A ranked cause is ready", order: 3, highlightStages: ["recommendationReady"] },
-      {
-        id: "person",
-        name: "A person decides",
-        order: 4,
-        detail: "An escalated case cannot skip this step.",
-        highlightStages: ["escalated", "awaitingApproval", "rejected"],
-      },
-      { id: "action", name: "The corrective action opens", order: 5, highlightStages: ["approved", "closed"] },
-    ],
-    transitions: [
-      { from: "rule", to: "investigate", name: "Then" },
-      { from: "investigate", to: "rank", name: "The evidence is enough" },
-      { from: "investigate", to: "person", name: "The evidence is thin or the records disagree" },
-      { from: "rank", to: "person", name: "Then" },
-      { from: "person", to: "action", name: "The person approves" },
-      { from: "person", to: "investigate", name: "The person asks for more evidence." },
-    ],
-  },
 ];
 
 /** Live queue only. Scripted S1 and S2 records stay available by id for a direct link. */
@@ -747,7 +697,6 @@ export const handlers = [
   ),
   http.get("/api/metadata/rules", () => HttpResponse.json(metadataRules)),
   http.get("/api/metadata/settings", () => HttpResponse.json(metadataSettings)),
-  http.get("/api/metadata/process-maps", () => HttpResponse.json(metadataMaps)),
 
   ...contractHandlers,
 ];

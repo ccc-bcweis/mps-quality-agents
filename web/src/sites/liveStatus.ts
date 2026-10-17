@@ -2,7 +2,7 @@
 import type { FleetLive, SiteDetail, ToolStatus } from "../api/types";
 
 /** Live tool status is the one source: Sites, Production line tiles and the tool page all read it. */
-export function siteStatusOf(liveStatus: string | undefined): ToolStatus | undefined {
+function siteStatusOf(liveStatus: string | undefined): ToolStatus | undefined {
   if (liveStatus === undefined) return undefined;
   if (liveStatus === "watch") return "warning";
   return liveStatus as ToolStatus;

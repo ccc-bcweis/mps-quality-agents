@@ -118,22 +118,6 @@ public sealed record BusinessRule(
     RuleWhen When,
     IReadOnlyList<RuleAction> Actions);
 
-public sealed record ProcessStep(
-    string Id,
-    string Name,
-    int Order,
-    string? Detail,
-    IReadOnlyList<string> HighlightStages);
-
-public sealed record ProcessTransition(string From, string To, string Name);
-
-public sealed record ProcessMap(
-    string Id,
-    string Name,
-    string State,
-    IReadOnlyList<ProcessStep> Steps,
-    IReadOnlyList<ProcessTransition> Transitions);
-
 public sealed class MetadataCatalog
 {
     public MetadataCatalog(
@@ -142,8 +126,7 @@ public sealed class MetadataCatalog
         IReadOnlyList<CapabilityProfile> capabilities,
         IReadOnlyList<ProductionLine> lines,
         IReadOnlyList<ToolProfile> tools,
-        IReadOnlyList<BusinessRule> rules,
-        IReadOnlyList<ProcessMap> processMaps)
+        IReadOnlyList<BusinessRule> rules)
     {
         ArgumentNullException.ThrowIfNull(company);
         ArgumentNullException.ThrowIfNull(sites);
@@ -151,14 +134,12 @@ public sealed class MetadataCatalog
         ArgumentNullException.ThrowIfNull(lines);
         ArgumentNullException.ThrowIfNull(tools);
         ArgumentNullException.ThrowIfNull(rules);
-        ArgumentNullException.ThrowIfNull(processMaps);
         Company = company;
         Sites = sites;
         Capabilities = capabilities;
         Lines = lines;
         Tools = tools;
         Rules = rules;
-        ProcessMaps = processMaps;
     }
 
     public CompanyProfile Company { get; }
@@ -172,6 +153,4 @@ public sealed class MetadataCatalog
     public IReadOnlyList<ToolProfile> Tools { get; }
 
     public IReadOnlyList<BusinessRule> Rules { get; }
-
-    public IReadOnlyList<ProcessMap> ProcessMaps { get; }
 }

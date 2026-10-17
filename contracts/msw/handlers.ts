@@ -543,7 +543,6 @@ export const handlers = [
   ),
   http.get("/api/metadata/rules", () => HttpResponse.json([])),
   http.get("/api/metadata/settings", () => HttpResponse.json([])),
-  http.get("/api/metadata/process-maps", () => HttpResponse.json([])),
   http.get("/api/trace/:eventId", () =>
     HttpResponse.json({
       focusEventId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",

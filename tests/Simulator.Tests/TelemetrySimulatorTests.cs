@@ -73,23 +73,6 @@ public sealed class TelemetrySimulatorTests
     }
 
     [Fact]
-    public async Task HostedPumpEmitsEveryTool()
-    {
-        var simulator = new FleetSimulator(Catalog, 20261014, Origin);
-        var service = new FleetSimulatorService(simulator, new CancelTicker());
-
-        await service.PumpAsync(CancellationToken.None);
-
-        var tools = new HashSet<string>(StringComparer.Ordinal);
-        while (simulator.Frames.TryRead(out var frame))
-        {
-            tools.Add(frame.ToolId);
-        }
-
-        tools.Should().BeEquivalentTo(Catalog.Tools.Select(tool => tool.Id));
-    }
-
-    [Fact]
     public void ScaleSixtyMapsOneRealSecondToOneSimulatedMinute()
     {
         var real = new DateTimeOffset(2026, 10, 14, 12, 0, 0, TimeSpan.Zero);
@@ -168,14 +151,6 @@ public sealed class TelemetrySimulatorTests
         typeof(FaultSignal).GetProperties().Select(property => property.Name)
             .Should()
             .NotContain(name => name.Contains("Cause", StringComparison.Ordinal) || name.Contains("Category", StringComparison.Ordinal));
-    }
-
-    private sealed class CancelTicker : ISimTicker
-    {
-        public Task WaitAsync(CancellationToken cancellationToken)
-        {
-            return Task.FromCanceled(new CancellationToken(canceled: true));
-        }
     }
 
     private sealed class FixedTime : TimeProvider

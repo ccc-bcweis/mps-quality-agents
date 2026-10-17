@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 // The harness scenario choice and the running scenario survive tab changes and reloads in this browser tab.
 
-export const SCENARIO_KEY = "mps.harness.scenario";
-export const RUNNING_KEY = "mps.harness.running";
+const SCENARIO_KEY = "mps.harness.scenario";
+const RUNNING_KEY = "mps.harness.running";
 export const RUNNING_EVENT = "mps-harness-running";
 
 function read(key: string): string {

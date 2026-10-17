@@ -2,7 +2,7 @@
 import type { AdminSession } from "../api/types";
 
 /** Branded landing page. The app sends signed-out browsers here (ConsoleEntryGate on the server, the shell in the browser). */
-export const LANDING_PAGE = "/landing.html";
+const LANDING_PAGE = "/landing.html";
 
 /** After sign-out: the landing page with "You are signed out." */
 export const SIGNED_OUT_PAGE = `${LANDING_PAGE}?signedOut=1`;

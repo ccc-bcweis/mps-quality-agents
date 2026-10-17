@@ -41,7 +41,6 @@ import type {
   CompanyMetadata,
   MetadataSite,
   MetadataTool,
-  ProcessMap,
 } from "./types";
 
 const base = import.meta.env.VITE_API_BASE ?? "";
@@ -60,7 +59,7 @@ export class ApiProblem extends Error {
   }
 }
 
-export async function apiSend<T>(path: string, init?: RequestInit): Promise<T> {
+async function apiSend<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   headers.set("accept", "application/json");
   if (init?.body !== undefined && !(init.body instanceof FormData) && !headers.has("content-type")) {
@@ -164,7 +163,6 @@ export const api = {
   metadataTool: (toolId: string) => apiSend<MetadataTool>(`/api/metadata/tools/${encodeURIComponent(toolId)}`),
   businessRules: () => apiSend<BusinessRule[]>("/api/metadata/rules"),
   ruleSettings: () => apiSend<RuleSetting[]>("/api/metadata/settings"),
-  processMaps: () => apiSend<ProcessMap[]>("/api/metadata/process-maps"),
   listScenarios: () => apiSend<ScriptedScenario[]>("/api/injector/scenarios"),
   runScenario: (scenarioId: string) =>
     apiSend<ScenarioRun>(`/api/injector/scenarios/${encodeURIComponent(scenarioId)}`, { method: "POST" }),
