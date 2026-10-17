@@ -3,12 +3,12 @@
 scenarios:
   - id: SC-1
     whatsHappening: "An edge ring is the ring around the wafer that shapes the process at the wafer edge. Etch tool E-02 received revision C of that ring. The electrostatic chuck temperature, the temperature of the plate that holds the wafer, now swings up and down."
-    whatWeSimulate: "The chuck temperature sensor on E-02 chamber A oscillates by about 3.5 standard deviations. One full swing takes about 20 seconds of real time, which the demo clock counts as 20 minutes."
+    whatWeSimulate: "The chuck temperature sensor on E-02 chamber A oscillates by about 3.5 standard deviations. One full swing takes about 3 minutes at 1x speed, or 20 seconds at 10x."
     whatAiShouldFind: "The temperature swing lines up with the engineering change that installed edge ring revision C. A maintenance note from the same week is a distractor."
     expectedCause: "Edge ring revision C on E-02."
   - id: SC-2
     whatsHappening: "The electrostatic chuck is the plate that holds the wafer. Its thermocouple, the sensor that reports wafer temperature, is overdue for calibration on etch tool E-01. The reading drifts away from the true temperature."
-    whatWeSimulate: "Chuck temperature on E-01 chamber A ramps about 4 standard deviations high. The ramp takes about 2 minutes of real time, which the demo clock counts as 2 hours."
+    whatWeSimulate: "Chuck temperature on E-01 chamber A ramps about 4 standard deviations high. The ramp takes about 20 minutes at 1x speed, or 2 minutes at 10x."
     whatAiShouldFind: "The drift matches an overdue thermocouple calibration. The work order says the calibration was deferred."
     expectedCause: "Overdue electrostatic chuck thermocouple calibration on E-01."
   - id: SC-3
@@ -18,7 +18,7 @@ scenarios:
     expectedCause: "Precursor gas lot PL-2044 is out of specification."
   - id: SC-4
     whatsHappening: "After a chamber clean, the etch chamber slowly seasons. The walls collect a thin film, and the etch rate falls even though nobody changed the recipe."
-    whatWeSimulate: "Etch rate on E-01 chamber A ramps down by about 3.5 standard deviations over about 2 minutes of real time."
+    whatWeSimulate: "Etch rate on E-01 chamber A ramps down by about 3.5 standard deviations over about 20 minutes at 1x speed, or 2 minutes at 10x."
     whatAiShouldFind: "The slow ramp has no engineering change, no overdue calibration, and no bad material lot. The cause is process drift after the clean."
     expectedCause: "Chamber seasoning after a clean on E-01."
   - id: SC-6
@@ -33,7 +33,7 @@ scenarios:
     expectedCause: "Precursor lot MX4419 is thin at both plants."
   - id: SC-7
     whatsHappening: "The foreline pump is the vacuum pump that pulls gas out of the chamber. Its bearing is a wearing part with a service interval. On deposition tool D-02 the bearing has run past that interval, and pump vibration climbs."
-    whatWeSimulate: "Pump vibration on D-02 ramps up by about 5 standard deviations over about two and a half minutes of real time."
+    whatWeSimulate: "Pump vibration on D-02 ramps up by about 5 standard deviations over about 25 minutes at 1x speed, or two and a half minutes at 10x."
     whatAiShouldFind: "The maintenance record says the bearing hours are past the service interval. That equipment record explains the rising vibration."
     expectedCause: "Foreline pump bearing wear on D-02."
   - id: SC-8
