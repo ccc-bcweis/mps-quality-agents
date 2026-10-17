@@ -2,10 +2,10 @@
 import { formatStamp } from "../api/labels";
 import { UserMenu } from "./UserMenu";
 import { btnSm } from "./ui";
-import {  } from "./ui";
 import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate, useOutletContext } from "react-router-dom";
-import { api } from "../api/client";
+import { ApiProblem, api } from "../api/client";
+import { entryRedirect } from "../auth/signOut";
 import type { AdminSession } from "../api/types";
 import { useConsole } from "../context/ConsoleContext";
 import { SiteProvider, useSite } from "../context/SiteContext";
@@ -47,13 +47,20 @@ function useAdminSession(): AdminSession | null {
   const [session, setSession] = useState<AdminSession | null>(null);
   useEffect(() => {
     let cancelled = false;
+    const here = () => `${window.location.pathname}${window.location.search}`;
     api
       .getAdminSession()
       .then((next) => {
-        if (!cancelled) setSession(next);
+        if (cancelled) return;
+        const target = entryRedirect({ session: next }, here());
+        if (target) window.location.replace(target);
+        else setSession(next);
       })
-      .catch(() => {
-        if (!cancelled) setSession(null);
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        const target = error instanceof ApiProblem ? entryRedirect({ status: error.status }, here()) : null;
+        if (target) window.location.replace(target);
+        else setSession(null);
       });
     return () => {
       cancelled = true;
@@ -229,16 +236,6 @@ export function AppShell() {
   const session = useAdminSession();
   const { revision } = useConsole();
   const outlet: ShellOutletContext = { session };
-  if (session && session.member === false) {
-    return (
-      <div className="flex h-full items-center justify-center bg-mps-canvas p-6">
-        <section className="max-w-lg rounded border border-mps-line bg-mps-panel p-6">
-          <h1 className="text-mps-display font-semibold">Not part of this workspace yet</h1>
-          <p className="mt-3">You are signed in as {session.displayName}, but this account has not been invited. Ask the owner for a join link.</p>
-        </section>
-      </div>
-    );
-  }
   return (
     <SiteProvider>
       <GlossaryScope key={location.pathname}>

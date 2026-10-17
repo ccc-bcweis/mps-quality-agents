@@ -186,6 +186,7 @@ public static class QualityHost
         // The Azure image copies web/dist here. Local `dotnet run` has no wwwroot, so the API stays API-only.
         if (HasWebRoot(app.Environment))
         {
+            app.UseMiddleware<Mps.Api.Access.ConsoleEntryGate>();
             app.UseDefaultFiles();
             app.UseStaticFiles();
         }

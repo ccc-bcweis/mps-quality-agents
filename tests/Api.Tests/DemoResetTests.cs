@@ -98,7 +98,7 @@ public sealed class DemoResetTests
         var localSession = await local.CreateClient().GetFromJsonAsync<JsonElement>("/api/admin/session");
 
         denied.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-        missing.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        missing.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         allowed.StatusCode.Should().Be(HttpStatusCode.OK);
         session.GetProperty("isAdmin").GetBoolean().Should().BeTrue();
         session.GetProperty("mode").GetString().Should().Be("azure");

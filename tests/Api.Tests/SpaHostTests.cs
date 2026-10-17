@@ -23,6 +23,7 @@ public sealed class SpaHostTests : IDisposable
         Directory.CreateDirectory(Path.Combine(_webRoot, "assets"));
         File.WriteAllText(Path.Combine(_webRoot, "index.html"), "<!doctype html><html data-mps-spa=\"console\"></html>");
         File.WriteAllText(Path.Combine(_webRoot, "assets", "app.js"), "/* mps-console */");
+        File.WriteAllText(Path.Combine(_webRoot, "landing.html"), "<!doctype html><html data-mps-landing></html>");
     }
 
     [Fact]
@@ -65,6 +66,63 @@ public sealed class SpaHostTests : IDisposable
         health.GetProperty("service").GetString().Should().Be("Mps.Api");
     }
 
+    [Fact]
+    public async Task HostedSignedOutBrowsersLandOnTheLandingPageAndTheApiRejectsThem()
+    {
+        await using var factory = new SpaFactory(_webRoot, _databasePath, hosted: true);
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        var root = await client.GetAsync(new Uri("/", UriKind.Relative));
+        var screen = await client.GetAsync(new Uri("/tools/E-02?tab=alerts", UriKind.Relative));
+        var landing = await client.GetAsync(new Uri("/landing.html", UriKind.Relative));
+        var asset = await client.GetAsync(new Uri("/assets/app.js", UriKind.Relative));
+        var api = await client.GetAsync(new Uri("/api/tools", UriKind.Relative));
+        var hub = await client.PostAsync(new Uri("/hubs/fleet/negotiate?negotiateVersion=1", UriKind.Relative), null);
+        var session = await client.GetAsync(new Uri("/api/admin/session", UriKind.Relative));
+
+        root.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        root.Headers.Location!.OriginalString.Should().Be("/landing.html");
+        screen.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        screen.Headers.Location!.OriginalString.Should().Be("/landing.html?next=" + Uri.EscapeDataString("/tools/E-02?tab=alerts"));
+        landing.StatusCode.Should().Be(HttpStatusCode.OK);
+        asset.StatusCode.Should().Be(HttpStatusCode.OK);
+        api.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        hub.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        session.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task HostedSignedInUsersGetAnUncachedConsoleAndAccountsWithoutAccessGetTheLandingPage()
+    {
+        await using var factory = new SpaFactory(_webRoot, _databasePath, hosted: true);
+        var member = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        member.DefaultRequestHeaders.Add("X-MS-CLIENT-PRINCIPAL", Principal("home-tenant", "11111111-1111-1111-1111-111111111111"));
+        var outsider = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        outsider.DefaultRequestHeaders.Add("X-MS-CLIENT-PRINCIPAL", Principal("outsider", "22222222-2222-2222-2222-222222222222"));
+
+        var console = await member.GetAsync(new Uri("/", UriKind.Relative));
+        var denied = await outsider.GetAsync(new Uri("/tools/E-02", UriKind.Relative));
+        var join = await outsider.GetAsync(new Uri("/join/some-token", UriKind.Relative));
+        var deniedApi = await outsider.GetAsync(new Uri("/api/tools", UriKind.Relative));
+
+        console.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await console.Content.ReadAsStringAsync()).Should().Contain("data-mps-spa=\"console\"");
+        console.Headers.CacheControl!.NoStore.Should().BeTrue("a signed-out browser must not reopen a cached console");
+        denied.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        denied.Headers.Location!.OriginalString.Should().Be("/landing.html?noAccess=1");
+        join.StatusCode.Should().Be(HttpStatusCode.OK, "a join link opens for a signed-in guest");
+        deniedApi.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    private static string Principal(string name, string tenantId)
+    {
+        var json = "{\"auth_typ\":\"aad\",\"claims\":[{\"typ\":\"name\",\"val\":\"" + name + "\"},"
+            + "{\"typ\":\"http://schemas.microsoft.com/identity/claims/tenantid\",\"val\":\"" + tenantId + "\"},"
+            + "{\"typ\":\"http://schemas.microsoft.com/identity/claims/objectidentifier\",\"val\":\"" + Guid.NewGuid() + "\"},"
+            + "{\"typ\":\"preferred_username\",\"val\":\"" + name + "@example.com\"}],\"role_typ\":\"roles\"}";
+        return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(json));
+    }
+
     public void Dispose()
     {
         TryDeleteFile(_databasePath);
@@ -102,11 +160,13 @@ public sealed class SpaHostTests : IDisposable
     {
         private readonly string _webRoot;
         private readonly string _databasePath;
+        private readonly bool _hosted;
 
-        public SpaFactory(string webRoot, string databasePath)
+        public SpaFactory(string webRoot, string databasePath, bool hosted = false)
         {
             _webRoot = webRoot;
             _databasePath = databasePath;
+            _hosted = hosted;
         }
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -115,6 +175,13 @@ public sealed class SpaHostTests : IDisposable
             builder.UseSetting("Otel:Enabled", "false");
             builder.UseSetting("Mps:Simulation:RealTime", "false");
             builder.UseWebRoot(_webRoot);
+            if (_hosted)
+            {
+                builder.UseSetting("Mps:Auth:Mode", "azure");
+                builder.UseSetting("Mps:Auth:HomeTenantId", "11111111-1111-1111-1111-111111111111");
+                builder.UseSetting("Mps:Auth:AdminEmails", "owner@example.com");
+            }
+
             builder.ConfigureServices(services =>
             {
                 var descriptors = services.Where(service =>

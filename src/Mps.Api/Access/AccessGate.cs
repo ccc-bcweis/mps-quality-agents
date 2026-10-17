@@ -5,8 +5,8 @@ using Mps.Api.Auth;
 namespace Mps.Api.Access;
 
 /// <summary>
-/// Hosted demo only: lets home-tenant users and invited members reach the API. Others get a 403 that tells them to ask for a join link.
-/// Entra (Easy Auth) has already signed the caller in; this is the app-side allowlist.
+/// Hosted demo only: lets home-tenant users and invited members reach the API. A call with no signed-in caller gets a 401;
+/// a signed-in caller who is not allowed gets a 403 that tells them to ask for a join link.
 /// </summary>
 public sealed class AccessGate
 {
@@ -23,7 +23,27 @@ public sealed class AccessGate
         var path = http.Request.Path;
         var gated = path.StartsWithSegments("/api") || path.StartsWithSegments("/hubs");
         var open = path.StartsWithSegments("/api/join") || path.StartsWithSegments("/api/admin/session");
-        if (!gated || open || !Hosted(configuration) || await IsAllowedAsync(http, configuration, store, http.RequestAborted).ConfigureAwait(false))
+        if (!gated || !Hosted(configuration))
+        {
+            await _next(http).ConfigureAwait(false);
+            return;
+        }
+
+        // The platform lets anonymous browsers reach the landing page; the API itself still needs a signed-in caller.
+        // Easy Auth sets the principal header for a session cookie or a valid bearer token and strips any sent by the client.
+        if (string.IsNullOrWhiteSpace(http.Request.Headers[EasyAuthPrincipal.HeaderName].ToString()))
+        {
+            http.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await http.Response.WriteAsJsonAsync(new
+            {
+                type = "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+                title = "Log in to use the console.",
+                status = 401,
+            }).ConfigureAwait(false);
+            return;
+        }
+
+        if (open || await IsAllowedAsync(http, configuration, store, http.RequestAborted).ConfigureAwait(false))
         {
             await _next(http).ConfigureAwait(false);
             return;
@@ -53,7 +73,7 @@ public sealed class AccessGate
         var header = http.Request.Headers[EasyAuthPrincipal.HeaderName].ToString();
         if (string.IsNullOrWhiteSpace(header))
         {
-            // Bearer calls (CLI smoke tests) carry no principal header here; Easy Auth already required an assigned home-tenant user.
+            // Only reached for local callers; hosted API calls without a principal are rejected before this check.
             return true;
         }
 
