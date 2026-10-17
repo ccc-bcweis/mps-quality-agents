@@ -126,10 +126,15 @@ public static class QualityEndpoints
             var rows = await alerts.ListAsync(filter, cancellationToken).ConfigureAwait(false);
             return Results.Ok(rows.Select(ContractMapper.ToResponse).Where(row => MatchesSite(siteId, row.SiteId)).ToArray());
         });
-        app.MapGet("/api/tickets", async (string? siteId, ITicketLog tickets, CancellationToken cancellationToken) =>
+        app.MapGet("/api/tickets", async (string? siteId, ITicketLog tickets, IIncidentLog incidents, CancellationToken cancellationToken) =>
         {
             var rows = await tickets.ListAsync(cancellationToken).ConfigureAwait(false);
-            return Results.Ok(rows.Select(ContractMapper.ToResponse).Where(row => MatchesSite(siteId, row.SiteId)).ToArray());
+            var stages = (await incidents.ListAsync(cancellationToken).ConfigureAwait(false))
+                .ToDictionary(row => row.Incident.Id.Value, row => row.Incident.Stage);
+            return Results.Ok(rows
+                .Select(row => ContractMapper.ToResponse(row, stages.TryGetValue(row.IncidentId.Value, out var stage) ? stage : null))
+                .Where(row => MatchesSite(siteId, row.SiteId))
+                .ToArray());
         });
         app.MapGet("/api/incidents", async (string? siteId, IIncidentLog incidents, CancellationToken cancellationToken) =>
         {

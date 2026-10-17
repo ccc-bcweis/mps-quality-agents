@@ -32,6 +32,20 @@ describe("fleet overview", () => {
     expect(await screen.findByRole("tooltip")).toHaveTextContent(/good-wafer rate/i);
   });
 
+  it("counts only open tickets", async () => {
+    server.use(
+      http.get("/api/tickets", () =>
+        HttpResponse.json([
+          { id: "a1", number: "TKT-2001", incidentId: "b1", toolId: "E-01", title: "Open one", openedAt: "2026-09-01T00:00:00Z", status: "open" },
+          { id: "a2", number: "TKT-2002", incidentId: "b2", toolId: "E-01", title: "Closed one", openedAt: "2026-09-01T00:00:00Z", status: "closed" },
+        ]),
+      ),
+    );
+    renderConsole("/");
+    const kpi = (await screen.findByText("Open tickets")).parentElement!;
+    await waitFor(() => expect(kpi).toHaveTextContent(/^Open tickets1queue$/));
+  });
+
   it("replaces a tile when that tool has a live reading", async () => {
     server.use(
       http.get("/api/fleet/live", () =>
