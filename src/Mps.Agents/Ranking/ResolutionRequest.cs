@@ -20,6 +20,9 @@ public sealed class ResolutionRequest
 
     public string SignalShape { get; set; } = "unknown";
 
+    /// <summary>The shape ids the reply's "shape" field may use, from the signal shape catalog.</summary>
+    public string[] ShapeOptions { get; set; } = [];
+
     public string[] EcoIds { get; set; } = [];
 
     public string[] EcoEvidenceIds { get; set; } = [];
@@ -58,7 +61,8 @@ public sealed class ResolutionRequest
         {
             ScopeKind = ScopeName(features.Kind),
             ScopeKey = features.Key,
-            SignalShape = ShapeName(features.Shape),
+            SignalShape = SignalShapeCatalog.Shared.Of(features.Shape).Id,
+            ShapeOptions = [.. SignalShapeCatalog.Shared.Ids],
             EcoIds = pack.Ecos.Select(eco => eco.EcoId).ToArray(),
             EcoEvidenceIds = Ids(pack, pack.Ecos.Select(eco => eco.EcoId)),
             PmSummaries = pack.WorkOrders.Where(order => !IsAlignment(order)).Select(DescribeOrder).ToArray(),
@@ -132,18 +136,6 @@ public sealed class ResolutionRequest
             ImpactScopeKind.Recipe => "recipe",
             ImpactScopeKind.MaterialLot => "materialLot",
             _ => "tool",
-        };
-    }
-
-    private static string ShapeName(Mps.Agents.Impact.SignalShape shape)
-    {
-        return shape switch
-        {
-            Mps.Agents.Impact.SignalShape.Step => "step",
-            Mps.Agents.Impact.SignalShape.Ramp => "ramp",
-            Mps.Agents.Impact.SignalShape.Oscillation => "oscillation",
-            Mps.Agents.Impact.SignalShape.Intermittent => "intermittent",
-            _ => "unknown",
         };
     }
 }

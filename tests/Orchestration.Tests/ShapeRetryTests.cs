@@ -26,8 +26,9 @@ public sealed class ShapeRetryTests
         started.Hypotheses.Should().ContainSingle();
         rig.Resolution.Calls.Should().Be(2);
         resolution.Requests.Should().HaveCount(2);
-        resolution.Requests[0].Should().NotContain("Your previous cause");
-        resolution.Requests[1].Should().Contain("Your previous cause described the signal as");
+        resolution.Requests[0].Should().NotContain("Your previous answer");
+        resolution.Requests[0].Should().Contain("shapeOptions");
+        resolution.Requests[1].Should().Contain("Your previous answer set shape to");
         resolution.Requests[1].Should().Contain("measured shape");
         resolution.Requests[1].Should().Contain("not even to say the signal is not like that", "a contrast such as \"a step, not a drift\" still reads as the wrong shape");
         resolution.Requests[1].Should().Contain("gradual, drift");
@@ -63,6 +64,21 @@ public sealed class ShapeRetryTests
         rig.Resolution.Calls.Should().Be(1);
     }
 
+    [Fact]
+    public async Task ContrastingProseWithTheMeasuredShapeFieldRecommendsWithoutARetry()
+    {
+        var resolution = new ProseContrastChat(WorkflowRig.MockChat());
+        var rig = new WorkflowRig(ScenarioKind.EngineeringChange, WorkflowRig.MockChat(), resolution);
+        var incident = Oscillation("corr-shape-prose");
+        rig.Incidents.Add(incident);
+
+        var started = await rig.Workflow.StartAsync(incident.Id, CancellationToken.None);
+
+        started.Stage.Should().Be(InvestigationStage.AwaitingApproval);
+        started.Hypotheses[0].Cause.Should().Contain("rather than a gradual drift");
+        rig.Resolution.Calls.Should().Be(1);
+    }
+
     private static Incident Oscillation(string correlationId)
     {
         return Incident.Open(
@@ -77,7 +93,41 @@ public sealed class ShapeRetryTests
             WorkflowRig.At);
     }
 
-    /// <summary>Returns the real mock answer, but the first calls describe the signal with a shape the pack does not show.</summary>
+    /// <summary>Keeps the measured shape in the shape field but adds a contrast sentence naming another shape.</summary>
+    private sealed class ProseContrastChat : IChatClient
+    {
+        private readonly IChatClient _inner;
+
+        public ProseContrastChat(IChatClient inner)
+        {
+            _inner = inner;
+        }
+
+        public async Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+        {
+            var response = await _inner.GetResponseAsync(messages, options, cancellationToken);
+            var claim = JsonNode.Parse(response.Text)!.AsObject();
+            claim["cause"] = claim["cause"]!.GetValue<string>() + " The reading shows " + claim["shape"]!.GetValue<string>() + " behaviour rather than a gradual drift.";
+            return new ChatResponse(new ChatMessage(ChatRole.Assistant, claim.ToJsonString()));
+        }
+
+        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+        {
+            throw new NotSupportedException();
+        }
+
+        public object? GetService(Type serviceType, object? serviceKey = null)
+        {
+            return serviceType.IsInstanceOfType(this) ? this : null;
+        }
+
+        public void Dispose()
+        {
+            _inner.Dispose();
+        }
+    }
+
+    /// <summary>Returns the real mock answer, but the first calls report a shape the pack does not show in the shape field.</summary>
     private sealed class ShapeContradictingChat : IChatClient
     {
         private readonly IChatClient _inner;
@@ -103,9 +153,8 @@ public sealed class ShapeRetryTests
             }
 
             var shape = JsonNode.Parse(request)?["signalShape"]?.GetValue<string>() ?? "unknown";
-            var wrong = shape == "ramp" ? "a sudden step" : "a gradual drift";
             var claim = JsonNode.Parse(response.Text)!.AsObject();
-            claim["cause"] = claim["cause"]!.GetValue<string>() + " The signal shows " + wrong + ".";
+            claim["shape"] = shape == "ramp" ? "step" : "ramp";
             return new ChatResponse(new ChatMessage(ChatRole.Assistant, claim.ToJsonString()));
         }
 

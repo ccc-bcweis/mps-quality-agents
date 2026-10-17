@@ -59,6 +59,7 @@ public static class ResolutionJson
         {
             ["category"] = Wire(claim.Category!.Value),
             ["cause"] = claim.Cause,
+            ["shape"] = claim.Shape,
             ["confidence"] = claim.Confidence,
             ["evidenceIds"] = claim.EvidenceIds.Select(id => id.ToString()).ToArray(),
             ["counterEvidence"] = claim.CounterEvidence,
@@ -163,7 +164,8 @@ public static class ResolutionJson
                 ReadStrings(root, "actions"),
                 [],
                 explanations,
-                matrix);
+                matrix,
+                root.TryGetProperty("shape", out var shapeElement) ? Str(shapeElement) : null);
             return true;
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException)

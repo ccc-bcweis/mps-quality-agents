@@ -1,0 +1,22 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Signal shape catalog, loaded at startup.
+# The shape check measures one of these shapes from the readings since the first rule break. The resolution agent
+# reports one of these ids in its "shape" field (sent to it as shapeOptions), and the cause check compares that field
+# with the measured shape. Every id must name a shape the classifier can measure.
+# words: terms that describe the shape; a retry note asks the agent not to use other shapes' words in its cause.
+shapes:
+  - id: step
+    description: a step (a sudden jump that stays)
+    words: [step, stepped, sudden]
+  - id: ramp
+    description: a gradual drift in one direction
+    words: [gradual, drift, drifting, ramp, rise, rising, creep]
+  - id: oscillation
+    description: an oscillation (the reading swings up and down repeatedly)
+    words: [oscillation, oscillating, swing]
+  - id: intermittent
+    description: intermittent spikes that come and go
+    words: [spike, spikes, intermittent]
+  - id: unknown
+    description: no clear shape
+    words: []

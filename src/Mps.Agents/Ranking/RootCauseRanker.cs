@@ -293,7 +293,7 @@ public static class RootCauseRanker
         var catalog = WhyItMattersCatalog.Shared;
         var explanations = CitedEvidenceFactory.ForRequest(request, ids, catalog);
         var matrix = EvidenceMatrixBuilder.FromRequest(request, category, ids, catalog);
-        var claim = new ResolutionClaim(category, cause, confidence, ids, counterEvidence, actions, [], explanations, matrix);
+        var claim = new ResolutionClaim(category, cause, confidence, ids, counterEvidence, actions, [], explanations, matrix, request.SignalShape);
         return RankDecision.Recommendation(claim);
     }
 
