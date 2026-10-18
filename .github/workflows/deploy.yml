@@ -2,8 +2,9 @@
 # Manual only. The trigger is workflow_dispatch. Nothing else starts this workflow.
 # Environment azure-demo needs a required reviewer, which Bob configures in GitHub.
 # OIDC uses secrets AZURE_CLIENT_ID, AZURE_TENANT_ID, and AZURE_SUBSCRIPTION_ID.
-# Easy Auth uses variables RESOURCE_GROUP, ENTRA_CLIENT_ID, ENTRA_ISSUER, and BUDGET_EMAIL.
-# Admins: input adminEmails, else variable ADMIN_EMAILS, else the list on the running app. With none, it stops before any change.
+# Variables: RESOURCE_GROUP, ENTRA_CLIENT_ID, ENTRA_ISSUER, BUDGET_EMAIL, ADMIN_EMAILS, and optional NAME_PREFIX, LOCATION, CUSTOM_DOMAIN, CUSTOM_DOMAIN_CERT_ID.
+# Easy Auth uses ENTRA_CLIENT_ID and ENTRA_ISSUER. Admins: input adminEmails, else ADMIN_EMAILS, else the list on the running app. With none, it stops before any change.
+# CUSTOM_DOMAIN (host name) and CUSTOM_DOMAIN_CERT_ID (managed certificate resource id) stay blank for no custom domain. Set both or neither. Both template runs pass them so a binding is kept.
 # A fork or clone without these secrets and variables skips cleanly: the OIDC credential only trusts this repo's azure-demo environment.
 
 name: Deploy
@@ -39,6 +40,9 @@ jobs:
       # Optional, for your own copy: resource name prefix (registry and vault names are global) and region. Blank keeps infra/main.bicepparam.
       NAME_PREFIX: ${{ vars.NAME_PREFIX }}
       LOCATION: ${{ vars.LOCATION }}
+      # Optional. Both blank means no custom domain. Set both so each template run keeps the binding.
+      CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
+      CUSTOM_DOMAIN_CERT_ID: ${{ vars.CUSTOM_DOMAIN_CERT_ID }}
       ADMIN_EMAILS_INPUT: ${{ inputs.adminEmails || vars.ADMIN_EMAILS }}
       IMAGE_TAG: ${{ inputs.imageTag || github.sha }}
       BOOTSTRAP_IMAGE: mcr.microsoft.com/dotnet/aspnet:10.0
@@ -88,6 +92,10 @@ jobs:
           if [ "$missing" -ne 0 ]; then
             exit 1
           fi
+          if { [ -n "$CUSTOM_DOMAIN" ] && [ -z "$CUSTOM_DOMAIN_CERT_ID" ]; } || { [ -z "$CUSTOM_DOMAIN" ] && [ -n "$CUSTOM_DOMAIN_CERT_ID" ]; }; then
+            echo "Set both CUSTOM_DOMAIN and CUSTOM_DOMAIN_CERT_ID, or leave both blank. One without the other stops the deploy so the custom domain binding is not dropped."
+            exit 1
+          fi
 
       - name: Resolve admin emails
         if: steps.setup.outputs.ready == 'true'
@@ -135,6 +143,8 @@ jobs:
               openIdIssuer="$ENTRA_ISSUER" \
               adminEmails="$ADMIN_EMAILS" \
               budgetContactEmail="$BUDGET_EMAIL" \
+              customDomainName="$CUSTOM_DOMAIN" \
+              customDomainCertificateId="$CUSTOM_DOMAIN_CERT_ID" \
               "${overrides[@]}" \
               deploySql=false \
               deployStaticWeb=false
@@ -201,6 +211,8 @@ jobs:
               openIdIssuer="$ENTRA_ISSUER" \
               adminEmails="$ADMIN_EMAILS" \
               budgetContactEmail="$BUDGET_EMAIL" \
+              customDomainName="$CUSTOM_DOMAIN" \
+              customDomainCertificateId="$CUSTOM_DOMAIN_CERT_ID" \
               "${overrides[@]}" \
               deploySql=false \
               deployStaticWeb=false
