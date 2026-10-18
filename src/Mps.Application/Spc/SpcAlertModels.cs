@@ -61,7 +61,8 @@ public sealed class SpcAlertOutcome
         Incident? incident,
         Ticket? ticket,
         bool debounced,
-        RuleDecision? decision = null)
+        RuleDecision? decision = null,
+        bool ticketSuppressed = false)
     {
         ArgumentNullException.ThrowIfNull(violations);
         Violations = violations.ToArray();
@@ -70,6 +71,7 @@ public sealed class SpcAlertOutcome
         Ticket = ticket;
         Debounced = debounced;
         Decision = decision;
+        TicketSuppressed = ticketSuppressed;
     }
 
     public IReadOnlyList<SpcViolation> Violations { get; }
@@ -83,4 +85,7 @@ public sealed class SpcAlertOutcome
     public bool Debounced { get; }
 
     public RuleDecision? Decision { get; }
+
+    /// <summary>The alert was raised and the per-tool hourly cap refused the ticket.</summary>
+    public bool TicketSuppressed { get; }
 }

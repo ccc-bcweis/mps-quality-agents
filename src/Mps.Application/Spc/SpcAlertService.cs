@@ -13,7 +13,7 @@ using Mps.Domain.Telemetry;
 namespace Mps.Application.Spc;
 
 /// <summary>
-/// Evaluates a sample, debounces per tool and parameter, and opens one intake ticket when a business rule says to.
+/// Writes an alert only when the rule engine reports a state change, then asks the business rules whether that opens a ticket.
 /// </summary>
 public sealed class SpcAlertService
 {
@@ -24,6 +24,8 @@ public sealed class SpcAlertService
     private readonly IBusinessRuleEngine _rules;
     private readonly ICascadeDirectory? _hints;
     private readonly ILifecycleEventSink? _events;
+    private readonly SpcTicketCap? _cap;
+    private readonly SpcRuleSettings _settings;
 
     public SpcAlertService(
         IAlertLog alerts,
@@ -32,7 +34,9 @@ public sealed class SpcAlertService
         TimeSpan debounce,
         IBusinessRuleEngine rules,
         ICascadeDirectory? hints = null,
-        ILifecycleEventSink? events = null)
+        ILifecycleEventSink? events = null,
+        SpcTicketCap? ticketCap = null,
+        SpcRuleSettings? settings = null)
     {
         ArgumentNullException.ThrowIfNull(alerts);
         ArgumentNullException.ThrowIfNull(intake);
@@ -50,90 +54,124 @@ public sealed class SpcAlertService
         _rules = rules;
         _hints = hints;
         _events = events;
+        _cap = ticketCap;
+        _settings = settings ?? SpcRuleSettings.Shared;
     }
 
-    public async Task<SpcAlertOutcome> RaiseAsync(SpcSample sample, CancellationToken cancellationToken)
+    public async Task<SpcAlertOutcome> ApplyAsync(SpcObservation observation, SpcDisplay? display, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(sample);
-        var violations = WesternElectricEvaluator.Evaluate(
-            sample.ToolId,
-            sample.ChamberId,
-            sample.Parameter,
-            sample.Baseline,
-            sample.Points);
-        if (violations.Count == 0)
+        ArgumentNullException.ThrowIfNull(observation);
+        if (observation.Action == SpcAction.None)
         {
-            // Only a series that is back in control may clear: a live violation keeps the alert active.
-            await ClearRecoveredAsync(sample, cancellationToken).ConfigureAwait(false);
-            return new SpcAlertOutcome(violations, null, null, null, debounced: false);
+            return Empty();
         }
 
-        var history = await _alerts.ListBySignalAsync(sample.ToolId, sample.Parameter, sample.ChamberId, cancellationToken)
-            .ConfigureAwait(false);
-
-        // A point alerts once. Violations that end at or before the newest alert on this signal were already raised
-        // (and may since have cleared); a later window that still contains them must not raise them again.
-        if (history.Count > 0)
-        {
-            // The cutoff is the newest violation already folded into an alert (last seen), or its clear time.
-            var newest = history.Max(alert => alert.ClearedAt is { } cleared && cleared > alert.LastSeenAt ? cleared : alert.LastSeenAt);
-            violations = violations.Where(violation => violation.At > newest).ToArray();
-            if (violations.Count == 0)
-            {
-                await ClearRecoveredAsync(sample, cancellationToken).ConfigureAwait(false);
-                return new SpcAlertOutcome(violations, null, null, null, debounced: true);
-            }
-        }
-
-        var at = violations.Max(violation => violation.At);
-        var severity = WesternElectricEvaluator.Highest(violations);
-
-        // One active alert per signal (tool, chamber, parameter). While it is active, new violations update it in place.
-        // A new alert is raised only after the previous one cleared.
+        var reading = observation.Reading;
+        var toolId = new ToolId(reading.ToolId);
+        var history = await _alerts.ListBySignalAsync(toolId, reading.Parameter, reading.ChamberId, cancellationToken).ConfigureAwait(false);
         var active = history.Where(item => item.IsActive).OrderByDescending(item => item.RaisedAt).FirstOrDefault();
-        if (active is not null)
+        var violations = Violations(observation, toolId);
+        var sample = Sample(observation, toolId, display);
+
+        if (observation.Action == SpcAction.Clear)
         {
-            var rulesBefore = active.Rule;
-            var escalated = active.Update(WesternElectricEvaluator.JoinRules(violations), severity, at, DistinctSamples(violations));
-            await _alerts.UpdateAsync(active, cancellationToken).ConfigureAwait(false);
-
-            // Broadcast only a real change (a higher severity or a newly broken rule). More readings on the same
-            // alert are stored but not re-announced, so open pages do not reload on every evaluation.
-            if (escalated || !string.Equals(rulesBefore, active.Rule, StringComparison.Ordinal))
-            {
-                await _notifier.AlertRaisedAsync(active, cancellationToken).ConfigureAwait(false);
-            }
-            if (!escalated)
-            {
-                return new SpcAlertOutcome(violations, active, null, null, debounced: true);
-            }
-
-            // Watch to alarm: same alert, upgraded. The rule engine decides on a ticket as it does for a new alarm.
-            return await DecideAsync(sample, violations, active, active.Rule, active.Severity, at, active.CorrelationId, history.Count - 1, cancellationToken)
-                .ConfigureAwait(false);
+            return await ClearAsync(observation, sample, history, violations, cancellationToken).ConfigureAwait(false);
         }
 
-        if (SpcDebounce.ShouldSuppress(history, sample.ToolId, sample.ChamberId, sample.Parameter, at, _debounce, severity))
+        if (active is null && observation.Action == SpcAction.Raise
+            && SpcDebounce.ShouldSuppress(history, toolId, reading.ChamberId, reading.Parameter, reading.At, _debounce, observation.Severity))
         {
             return new SpcAlertOutcome(violations, null, null, null, debounced: true);
         }
 
-        var rule = WesternElectricEvaluator.JoinRules(violations);
-        var correlationId = _hints?.CorrelationFor(sample.ToolId.ToString(), sample.Parameter)
-            ?? "spc-" + Guid.NewGuid().ToString("N");
-        var alert = new Alert(
-            AlertId.New(),
-            sample.ToolId,
-            sample.ChamberId,
-            sample.Parameter,
-            severity,
-            rule,
-            at,
-            correlationId);
-        alert.Restore(at, DistinctSamples(violations));
-        await _alerts.AddAsync(alert, cancellationToken).ConfigureAwait(false);
-        await _notifier.AlertRaisedAsync(alert, cancellationToken).ConfigureAwait(false);
-        return await DecideAsync(sample, violations, alert, rule, severity, at, correlationId, history.Count, cancellationToken).ConfigureAwait(false);
+        if (active is null)
+        {
+            var alert = new Alert(
+                AlertId.New(),
+                toolId,
+                reading.ChamberId,
+                reading.Parameter,
+                observation.Severity,
+                observation.RuleText,
+                reading.At,
+                observation.CorrelationId);
+            await _alerts.AddAsync(alert, cancellationToken).ConfigureAwait(false);
+            await _notifier.AlertRaisedAsync(alert, cancellationToken).ConfigureAwait(false);
+            return await DecideAsync(sample, violations, alert, observation.RuleText, observation.Severity, reading.At, observation.CorrelationId, history.Count, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        var rulesBefore = active.Rule;
+        var escalated = active.Update(observation.RuleText, observation.Severity, reading.At, newSamples: 1);
+        await _alerts.UpdateAsync(active, cancellationToken).ConfigureAwait(false);
+        if (escalated || !string.Equals(rulesBefore, active.Rule, StringComparison.Ordinal))
+        {
+            await _notifier.AlertRaisedAsync(active, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (!escalated && observation.Action != SpcAction.Escalate)
+        {
+            return new SpcAlertOutcome(violations, active, null, null, debounced: true);
+        }
+
+        return await DecideAsync(sample, violations, active, active.Rule, active.Severity, reading.At, active.CorrelationId, history.Count - 1, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private async Task<SpcAlertOutcome> ClearAsync(
+        SpcObservation observation,
+        SpcSample sample,
+        IReadOnlyList<Alert> history,
+        IReadOnlyList<SpcViolation> violations,
+        CancellationToken cancellationToken)
+    {
+        var active = history.Where(alert => alert.IsActive).ToArray();
+        if (active.Length == 0)
+        {
+            return Empty();
+        }
+
+        var at = observation.Reading.At;
+        var readings = observation.ClearReason == "expiry" ? observation.QuietReadings : observation.InControlReadings;
+        var why = observation.ClearReason == "expiry"
+            ? $"watch expired after {readings} readings with no new violation"
+            : $"{readings} readings in a row inside +/-{_settings.Clearing.Sigma:0.###} sigma";
+        Alert? last = null;
+        foreach (var alert in active)
+        {
+            await _alerts.ClearAsync(alert.Id, at, cancellationToken).ConfigureAwait(false);
+            alert.Clear(at);
+            last = alert;
+            if (_events is null)
+            {
+                continue;
+            }
+
+            await _events.PublishAsync(
+                new LifecycleEvent(
+                    EventTypes.AlertCleared,
+                    alert.CorrelationId,
+                    null,
+                    _hints?.FindStep(alert.CorrelationId, "alert"),
+                    "spc",
+                    null,
+                    sample.ToolId.ToString(),
+                    sample.ChamberId,
+                    at,
+                    new
+                    {
+                        signal = "alertCleared",
+                        alertId = alert.Id.Value,
+                        toolId = sample.ToolId.ToString(),
+                        clearedAt = at,
+                        parameter = sample.Parameter,
+                        readings,
+                        why,
+                    }),
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        return new SpcAlertOutcome(violations, last, null, null, debounced: false);
     }
 
     private async Task<SpcAlertOutcome> DecideAsync(
@@ -161,6 +199,13 @@ public sealed class SpcAlertService
             return new SpcAlertOutcome(violations, alert, null, null, debounced: false, decision);
         }
 
+        var cap = _settings.TicketCap.PerToolPerHour;
+        if (_cap is not null && !_cap.TryAdmit(sample.ToolId.ToString(), at, cap))
+        {
+            await PublishCappedAsync(sample, correlationId, at, cap, cancellationToken).ConfigureAwait(false);
+            return new SpcAlertOutcome(violations, alert, null, null, debounced: false, decision, ticketSuppressed: true);
+        }
+
         await PublishRuleAsync(sample, correlationId, decision, at, cancellationToken).ConfigureAwait(false);
         var summary = SpcSummary.Describe(sample, violations);
         var intake = await _intake.AcceptAsync(
@@ -180,97 +225,71 @@ public sealed class SpcAlertService
         return new SpcAlertOutcome(violations, alert, intake.Incident, intake.Ticket, debounced: false, decision);
     }
 
-    /// <summary>Readings that broke at least one rule. Several rules on one reading count once.</summary>
-    private static int DistinctSamples(IReadOnlyList<SpcViolation> violations) =>
-        violations.Select(violation => violation.At).Distinct().Count();
+    private static SpcAlertOutcome Empty() =>
+        new([], null, null, null, debounced: false);
 
-    /// <summary>Clears active alerts on this signal once the last readings have stayed in control long enough.</summary>
-    public async Task ClearRecoveredAsync(SpcSample sample, CancellationToken cancellationToken)
+    private static SpcSample Sample(SpcObservation observation, ToolId toolId, SpcDisplay? display)
     {
-        ArgumentNullException.ThrowIfNull(sample);
-        if (sample.Points.Count < SpcRuleSettings.Shared.Clearing.Readings)
+        var reading = observation.Reading;
+        var baseline = new ControlBaseline(reading.Center, Math.Max(reading.Sigma, 1e-6d), reading.SpecLow, reading.SpecHigh);
+        return new SpcSample(toolId, reading.ChamberId, reading.Parameter, baseline, [new TelemetryPoint(reading.At, reading.RawValue)])
         {
-            return;
-        }
-
-        var history = await _alerts.ListBySignalAsync(sample.ToolId, sample.Parameter, sample.ChamberId, cancellationToken)
-            .ConfigureAwait(false);
-        var active = history.Where(alert => alert.IsActive).ToArray();
-        if (active.Length == 0)
-        {
-            return;
-        }
-
-        // A run inside the clearing zone can still be out of control (a run on one side during a slow drift).
-        var trailing = sample.Points.Skip(Math.Max(0, sample.Points.Count - SpcRuleSettings.Shared.Clearing.Readings)).ToArray();
-        if (WesternElectricEvaluator.Evaluate(sample.ToolId, sample.ChamberId, sample.Parameter, sample.Baseline, sample.Points)
-            .Any(violation => violation.At >= trailing[0].At))
-        {
-            return;
-        }
-
-        foreach (var alert in active)
-        {
-            var run = InControlRun(sample, alert.RaisedAt);
-            if (run.Count < SpcRuleSettings.Shared.Clearing.Readings)
-            {
-                continue;
-            }
-
-            var at = run.Last;
-            await _alerts.ClearAsync(alert.Id, at, cancellationToken).ConfigureAwait(false);
-            alert.Clear(at);
-            if (_events is not null)
-            {
-                await _events.PublishAsync(
-                    new LifecycleEvent(
-                        EventTypes.AlertCleared,
-                        alert.CorrelationId,
-                        null,
-                        _hints?.FindStep(alert.CorrelationId, "alert"),
-                        "spc",
-                        null,
-                        sample.ToolId.ToString(),
-                        sample.ChamberId,
-                        at,
-                        new
-                        {
-                            // The console marks the alert cleared from this message instead of reloading its list.
-                            signal = "alertCleared",
-                            alertId = alert.Id.Value,
-                            toolId = sample.ToolId.ToString(),
-                            clearedAt = at,
-                            parameter = sample.Parameter,
-                            readings = run.Count,
-                            why = $"{run.Count} readings in a row inside +/-{SpcRuleSettings.Shared.Clearing.Sigma:0.###} sigma",
-                        }),
-                    cancellationToken).ConfigureAwait(false);
-            }
-        }
+            Display = display,
+        };
     }
 
-    /// <summary>Trailing readings after <paramref name="after"/> that sit inside the clearing zone.</summary>
-    internal static (int Count, DateTimeOffset Last) InControlRun(SpcSample sample, DateTimeOffset after)
+    private static IReadOnlyList<SpcViolation> Violations(SpcObservation observation, ToolId toolId)
     {
-        var count = 0;
-        var last = DateTimeOffset.MinValue;
-        for (var index = sample.Points.Count - 1; index >= 0; index--)
+        if (observation.LiveRules.Count == 0 || observation.RuleText.Length == 0)
         {
-            var point = sample.Points[index];
-            if (point.At <= after || Math.Abs(sample.Baseline.Z(point.Value)) >= SpcRuleSettings.Shared.Clearing.Sigma)
-            {
-                break;
-            }
-
-            if (count == 0)
-            {
-                last = point.At;
-            }
-
-            count++;
+            return [];
         }
 
-        return (count, last);
+        var reading = observation.Reading;
+        return
+        [
+            new SpcViolation(observation.RuleText, toolId, reading.ChamberId, reading.Parameter, reading.At, reading.RawValue, Math.Max(reading.Sigma, 1e-6d), observation.Severity)
+            {
+                Center = reading.Center,
+                LowerSpec = reading.SpecLow,
+                UpperSpec = reading.SpecHigh,
+            },
+        ];
+    }
+
+    private async Task PublishCappedAsync(
+        SpcSample sample,
+        string correlationId,
+        DateTimeOffset at,
+        int cap,
+        CancellationToken cancellationToken)
+    {
+        if (_events is null)
+        {
+            return;
+        }
+
+        await _events.PublishAsync(
+            new LifecycleEvent(
+                EventTypes.TicketCapped,
+                correlationId,
+                null,
+                _hints?.FindStep(correlationId, "alert"),
+                "spc",
+                null,
+                sample.ToolId.ToString(),
+                sample.ChamberId,
+                at,
+                new
+                {
+                    signal = "ticketCapped",
+                    toolId = sample.ToolId.ToString(),
+                    parameter = sample.Parameter,
+                    at,
+                    cap,
+                    opened = cap,
+                }),
+            cancellationToken).ConfigureAwait(false);
     }
 
     private async Task PublishRuleAsync(

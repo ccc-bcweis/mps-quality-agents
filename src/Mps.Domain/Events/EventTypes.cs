@@ -22,6 +22,8 @@ public static class EventTypes
 
     public const string TicketCreated = "ticket.created";
 
+    public const string TicketCapped = "ticket.capped";
+
     public const string IncidentChanged = "incident.changed";
 
     public const string InvestigationStep = "investigation.step";

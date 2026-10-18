@@ -8,8 +8,9 @@ using Mps.Domain.Telemetry;
 namespace Mps.Application.Spc;
 
 /// <summary>
-/// Specification-window check plus Western Electric rules 1-4 and the optional six-point rising trend.
+/// Specification-window check plus Western Electric rules 1-4 and Nelson's rising and falling trends.
 /// Each fired rule is reported once, at its latest triggering point. In-control series produce no violations.
+/// Count rules (rule 4 and both trends) also require the mean offset from spc-rules.yaml.
 /// </summary>
 public static class WesternElectricEvaluator
 {
@@ -18,10 +19,20 @@ public static class WesternElectricEvaluator
         string? chamberId,
         string parameter,
         ControlBaseline baseline,
-        IReadOnlyList<TelemetryPoint> points)
+        IReadOnlyList<TelemetryPoint> points) =>
+        Evaluate(toolId, chamberId, parameter, baseline, points, SpcRuleSettings.Shared);
+
+    public static IReadOnlyList<SpcViolation> Evaluate(
+        ToolId toolId,
+        string? chamberId,
+        string parameter,
+        ControlBaseline baseline,
+        IReadOnlyList<TelemetryPoint> points,
+        SpcRuleSettings rules)
     {
         ArgumentNullException.ThrowIfNull(baseline);
         ArgumentNullException.ThrowIfNull(points);
+        ArgumentNullException.ThrowIfNull(rules);
         if (toolId.IsEmpty)
         {
             throw new DomainRuleException("Tool id is required.");
@@ -40,8 +51,8 @@ public static class WesternElectricEvaluator
         SpcViolation? fourOfFive = null;
         SpcViolation? eightOnOneSide = null;
         SpcViolation? rising = null;
+        SpcViolation? falling = null;
 
-        var rules = SpcRuleSettings.Shared;
         var we = rules.WesternElectric;
         for (var index = 0; index < ordered.Length; index++)
         {
@@ -96,7 +107,9 @@ public static class WesternElectricEvaluator
                     Severity.Medium);
             }
 
-            if (index >= we.Rule4.Count - 1 && RunOnOneSide(ordered, baseline, index - (we.Rule4.Count - 1), index))
+            if (index >= we.Rule4.Count - 1
+                && RunOnOneSide(ordered, baseline, index - (we.Rule4.Count - 1), index)
+                && MeanOffset(ordered, baseline, index - (we.Rule4.Count - 1), index, we.Rule4.MinMagnitudeSigma))
             {
                 eightOnOneSide = Create(
                     SpcRuleNames.WesternElectric4,
@@ -108,7 +121,9 @@ public static class WesternElectricEvaluator
                     Severity.Medium);
             }
 
-            if (index >= rules.NelsonRising.Count - 1 && StrictlyRising(ordered, index - (rules.NelsonRising.Count - 1), index))
+            if (index >= rules.NelsonRising.Count - 1
+                && StrictlyRising(ordered, index - (rules.NelsonRising.Count - 1), index)
+                && MeanOffset(ordered, baseline, index - (rules.NelsonRising.Count - 1), index, rules.NelsonRising.MinMagnitudeSigma))
             {
                 rising = Create(
                     SpcRuleNames.NelsonSixRising,
@@ -119,15 +134,36 @@ public static class WesternElectricEvaluator
                     baseline,
                     Severity.Low);
             }
+
+            if (index >= rules.NelsonFalling.Count - 1
+                && StrictlyFalling(ordered, index - (rules.NelsonFalling.Count - 1), index)
+                && MeanOffset(ordered, baseline, index - (rules.NelsonFalling.Count - 1), index, rules.NelsonFalling.MinMagnitudeSigma))
+            {
+                falling = Create(
+                    SpcRuleNames.NelsonSixFalling,
+                    toolId,
+                    chamberId,
+                    parameterName,
+                    point,
+                    baseline,
+                    Severity.Low);
+            }
         }
 
-        var violations = new List<SpcViolation>(6);
+        var violations = new List<SpcViolation>(7);
         Add(violations, window);
         Add(violations, beyondThree);
         Add(violations, twoOfThree);
         Add(violations, fourOfFive);
         Add(violations, eightOnOneSide);
         Add(violations, rising);
+        // A finished trend sits earlier than rules that are still true. Callers treat the earliest time as the
+        // start of the current excursion, so only a trend that still holds on the last point is reported.
+        if (falling is not null && ordered.Length > 0 && falling.At == ordered[^1].At)
+        {
+            Add(violations, falling);
+        }
+
         return violations;
     }
 
@@ -229,6 +265,37 @@ public static class WesternElectricEvaluator
         }
 
         return true;
+    }
+
+    private static bool StrictlyFalling(TelemetryPoint[] points, int start, int end)
+    {
+        for (var index = start + 1; index <= end; index++)
+        {
+            if (!(points[index].Value < points[index - 1].Value))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>True when the mean standard score over the run is at least <paramref name="minimum"/>, or when the gate is off.</summary>
+    private static bool MeanOffset(TelemetryPoint[] points, ControlBaseline baseline, int start, int end, double minimum)
+    {
+        if (minimum <= 0d)
+        {
+            return true;
+        }
+
+        var sum = 0d;
+        var count = (end - start) + 1;
+        for (var index = start; index <= end; index++)
+        {
+            sum += baseline.Z(points[index].Value);
+        }
+
+        return Math.Abs(sum / count) >= minimum;
     }
 
     private static SpcViolation Create(
