@@ -94,13 +94,31 @@ public sealed class EventSchemaContractTests
         payload.Select(property => property.Key).Should().BeEquivalentTo(
             "investigationId",
             "incidentId",
-            "reason");
+            "reason",
+            "evidenceIds",
+            "ruledOut",
+            "offendingId",
+            "list");
         payload.Select(property => property.Key).Should().NotContain("category");
         payload.Select(property => property.Key).Should().NotContain("cause");
 
         var missingReason = EventSamples.Create("investigationEscalated");
         missingReason["payload"]!.AsObject().Remove("reason");
         Evaluate("investigation-escalated.schema.json", missingReason).Should().BeFalse();
+
+        var missingRuledOut = EventSamples.Create("investigationEscalated");
+        missingRuledOut["payload"]!.AsObject().Remove("ruledOut");
+        Evaluate("investigation-escalated.schema.json", missingRuledOut).Should().BeFalse();
+
+        var named = EventSamples.Create("investigationEscalated");
+        var namedPayload = named["payload"]!.AsObject();
+        namedPayload["offendingId"] = "11111111-1111-4111-8111-111111111111";
+        namedPayload["list"] = "ruledOutIds";
+        Evaluate("investigation-escalated.schema.json", named).Should().BeTrue();
+
+        var badList = EventSamples.Create("investigationEscalated");
+        badList["payload"]!.AsObject()["list"] = "causes";
+        Evaluate("investigation-escalated.schema.json", badList).Should().BeFalse();
     }
 
     [Fact]
@@ -109,6 +127,10 @@ public sealed class EventSchemaContractTests
         var hypothesis = EventSamples.Create("hypothesisProposed");
         hypothesis["payload"]!["hypothesis"]!.AsObject()["evidenceIds"] = new JsonArray();
         Evaluate("hypothesis-proposed.schema.json", hypothesis).Should().BeFalse();
+
+        var missingRuledOut = EventSamples.Create("hypothesisProposed");
+        missingRuledOut["payload"]!["hypothesis"]!.AsObject().Remove("ruledOut");
+        Evaluate("hypothesis-proposed.schema.json", missingRuledOut).Should().BeFalse();
 
         var confidence = EventSamples.Create("hypothesisProposed");
         confidence["payload"]!["hypothesis"]!.AsObject()["confidence"] = 1.5;

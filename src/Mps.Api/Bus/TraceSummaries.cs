@@ -126,6 +126,7 @@ internal static class TraceSummaries
         {
             "evidence" => "Evidence was attached for " + where + " at " + when + ".",
             "recommendation" => "A recommendation was ready for " + where + " at " + when + ".",
+            "escalated" => "The investigation was escalated for " + where + " at " + when + ".",
             _ => "An investigation step was recorded for " + where + " at " + when + ".",
         };
     }

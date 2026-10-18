@@ -97,6 +97,13 @@ internal static class EventSamples
                     ["evidenceIds"] = new JsonArray(EvidenceId),
                     ["counterEvidence"] = new JsonArray("A preventive maintenance was performed the same week."),
                     ["actions"] = new JsonArray("Hold the affected lots and confirm the installed ring revision."),
+                    ["ruledOut"] = new JsonArray(
+                        new JsonObject
+                        {
+                            ["id"] = "33333333-3333-4333-8333-333333333333",
+                            ["reason"] = "The notice matches the purchase specification.",
+                            ["source"] = "record",
+                        }),
                 },
             },
             "investigationEscalated" => new JsonObject
@@ -104,6 +111,14 @@ internal static class EventSamples
                 ["investigationId"] = InvestigationId,
                 ["incidentId"] = IncidentId,
                 ["reason"] = "PLM showerhead rev C contradicts the MES run header rev B.",
+                ["evidenceIds"] = new JsonArray(EvidenceId),
+                ["ruledOut"] = new JsonArray(
+                    new JsonObject
+                    {
+                        ["id"] = "33333333-3333-4333-8333-333333333333",
+                        ["reason"] = "The notice matches the purchase specification.",
+                        ["source"] = "record",
+                    }),
             },
             "approvalGranted" => new JsonObject
             {

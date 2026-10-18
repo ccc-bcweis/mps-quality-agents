@@ -20,7 +20,7 @@
         "hypothesis": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["id", "category", "cause", "confidence", "evidenceIds", "counterEvidence", "actions"],
+          "required": ["id", "category", "cause", "confidence", "evidenceIds", "counterEvidence", "actions", "ruledOut"],
           "properties": {
             "id": { "type": "string", "format": "uuid" },
             "category": {
@@ -34,7 +34,20 @@
               "items": { "type": "string", "format": "uuid" }
             },
             "counterEvidence": { "type": "array", "items": { "type": "string" } },
-            "actions": { "type": "array", "items": { "type": "string" } }
+            "actions": { "type": "array", "items": { "type": "string" } },
+            "ruledOut": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id", "reason", "source"],
+                "properties": {
+                  "id": { "type": "string", "format": "uuid" },
+                  "reason": { "type": "string", "minLength": 1 },
+                  "source": { "enum": ["record", "agent"] }
+                }
+              }
+            }
           }
         }
       }
