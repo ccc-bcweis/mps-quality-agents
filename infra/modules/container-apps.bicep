@@ -126,9 +126,9 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
               value: modelDeployment
             }
             {
-              // ASP.NET configuration key Mps:Model:Mode. Linux env names cannot use a colon.
+              // ASP.NET configuration key Mps:Model:Mode (offline | openai | azure). Linux env names cannot use a colon.
               name: 'Mps__Model__Mode'
-              value: 'Live'
+              value: 'azure'
             }
             {
               // ASP.NET configuration key Mps:Model:DailyCapUsd.
@@ -161,10 +161,6 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'Mps__Model__Deployment'
               value: modelDeployment
-            }
-            {
-              name: 'LLM_MODE'
-              value: 'live'
             }
             {
               name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'

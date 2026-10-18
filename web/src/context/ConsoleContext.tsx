@@ -1,12 +1,13 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
 import { api } from "../api/client";
-import type { Alert, Capa, DataMode, MetricsSummary, RunMode } from "../api/types";
+import type { Alert, Capa, DataMode, MetricsSummary, ModelStatus, RunMode } from "../api/types";
 import type { LifecycleView } from "../lifecycle";
+import { onHub } from "../live/fleetHub";
 
-export type BannerMode = "replay" | "live" | "mockReasoner";
+/** Live when a real model (OpenAI or Azure OpenAI) is answering; replay for offline saved answers or a fallback. */
+export type BannerMode = "replay" | "live";
 
-const PREVIEW_KEY = "mps.previewMode";
 const CAPA_KEY = "mps.capas";
 
 type ConsoleValue = {
@@ -15,9 +16,8 @@ type ConsoleValue = {
   bannerMode: BannerMode;
   serverMode: RunMode | null;
   capReached: boolean;
-  localPreview: boolean;
-  setPreview: (mode: BannerMode) => void;
-  noteUnrecordedInjection: () => void;
+  /** The model the server is actually using, from GET /api/model/status. Null until it loads. */
+  modelStatus: ModelStatus | null;
   lifecycle: LifecycleView;
   setLifecycle: (view: LifecycleView) => void;
   capas: Capa[];
@@ -35,12 +35,6 @@ type ConsoleValue = {
 
 const ConsoleContext = createContext<ConsoleValue | null>(null);
 
-function readPreview(): BannerMode | null {
-  const stored = sessionStorage.getItem(PREVIEW_KEY);
-  if (stored === "replay" || stored === "live" || stored === "mockReasoner") return stored;
-  return null;
-}
-
 function readCapas(): Capa[] {
   try {
     const raw = sessionStorage.getItem(CAPA_KEY);
@@ -55,7 +49,7 @@ function readCapas(): Capa[] {
 export function ConsoleProvider({ children }: { children: ReactNode }) {
   const [metrics, setMetrics] = useState<MetricsSummary | null>(null);
   const [metricsError, setMetricsError] = useState<string | null>(null);
-  const [preview, setPreviewState] = useState<BannerMode | null>(() => readPreview());
+  const [modelStatus, setModelStatus] = useState<ModelStatus | null>(null);
   const [lifecycle, setLifecycleState] = useState<LifecycleView>({ current: "alert", escalated: false });
   const [capas, setCapas] = useState<Capa[]>(() => readCapas());
   const [localAlerts, setLocalAlerts] = useState<Alert[]>([]);
@@ -94,24 +88,33 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // The model status changes only when a live call fails or recovers, which happens inside an investigation: reload it
+  // when the server pushes an investigation change instead of polling.
+  const liveModel = modelStatus?.live === true;
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      api
+        .getModelStatus()
+        .then((next) => {
+          if (!cancelled) setModelStatus(next);
+        })
+        .catch(() => {
+          // The banner shows the metrics mode until the status loads.
+        });
+    };
+    load();
+    const off = liveModel ? onHub("investigationChanged", load) : () => undefined;
+    return () => {
+      cancelled = true;
+      off();
+    };
+  }, [liveModel]);
+
   const capReached = metrics !== null && metrics.spendCapUsd > 0 && metrics.spendTodayUsd >= metrics.spendCapUsd;
   const serverMode = metrics?.mode ?? null;
-  const bannerMode: BannerMode = capReached ? "replay" : (preview ?? serverMode ?? "replay");
-  const localPreview = preview !== null && !capReached && preview !== serverMode && preview !== "mockReasoner";
-
-  const setPreview = useCallback((mode: BannerMode) => {
-    sessionStorage.setItem(PREVIEW_KEY, mode);
-    setPreviewState(mode);
-  }, []);
-
-  const noteUnrecordedInjection = useCallback(() => {
-    setPreviewState((current) => {
-      const active = current ?? metrics?.mode ?? "replay";
-      if (active !== "live") return current;
-      sessionStorage.setItem(PREVIEW_KEY, "mockReasoner");
-      return "mockReasoner";
-    });
-  }, [metrics?.mode]);
+  const bannerMode: BannerMode =
+    capReached || modelStatus?.fallingBack ? "replay" : modelStatus ? (modelStatus.live ? "live" : "replay") : (serverMode ?? "replay");
 
   const setLifecycle = useCallback((view: LifecycleView) => {
     setLifecycleState(view);
@@ -160,9 +163,7 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
       bannerMode,
       serverMode,
       capReached,
-      localPreview: localPreview || (preview === "mockReasoner" && serverMode !== null),
-      setPreview,
-      noteUnrecordedInjection,
+      modelStatus,
       lifecycle,
       setLifecycle,
       capas,
@@ -182,10 +183,7 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
       bannerMode,
       serverMode,
       capReached,
-      localPreview,
-      preview,
-      setPreview,
-      noteUnrecordedInjection,
+      modelStatus,
       lifecycle,
       setLifecycle,
       capas,

@@ -78,7 +78,7 @@ test("remembers an open harness in this browser", async ({ page }) => {
   await page.goto("/");
   const harness = page.getByRole("banner", { name: "StatusNeo demo harness" });
   await expect(harness.getByRole("button", { name: "Expand harness" })).toHaveAttribute("aria-expanded", "false");
-  await expect(harness.getByRole("status", { name: "Harness status" })).toContainText(/Live · SC-1 · Saved answers/);
+  await expect(harness.getByRole("status", { name: "Harness status" })).toContainText(/Live · SC-1 · Offline (saved answers)/);
   await harness.getByRole("button", { name: "Expand harness" }).click();
   await page.reload();
   await expect(harness.getByRole("button", { name: "Collapse harness" })).toHaveAttribute("aria-expanded", "true");

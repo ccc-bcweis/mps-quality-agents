@@ -491,6 +491,17 @@ export const handlers = [
       { status: 202 },
     ),
   ),
+  http.get("/api/model/status", () =>
+    HttpResponse.json({
+      mode: "offline",
+      label: "Offline (saved answers)",
+      model: null,
+      live: false,
+      fallingBack: false,
+      detail: "No model is configured. The agents use saved answers, with no network call.",
+      lastFailureAt: null,
+    }),
+  ),
   http.get("/api/metrics", () =>
     HttpResponse.json({
       mode: "replay",

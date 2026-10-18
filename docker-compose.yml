@@ -1,6 +1,6 @@
 # Local run. Not deployed. Do not put secret values in this file.
 # One image, the same one the hosted demo runs: the built console is served by the API on port 8080.
-# Copy .env.example to .env first. Replay mode starts with the defaults below and needs no model key.
+# Copy .env.example to .env first (optional). With no model key it runs offline on saved answers; see README "Model modes".
 
 services:
   app:
@@ -18,7 +18,8 @@ services:
       ASPNETCORE_URLS: http://+:8080
       # The container must listen on all its interfaces; the port above is loopback-only, so skip the exposure warning.
       Mps__Auth__LocalNetworkWarning: "false"
-      LLM_MODE: ${LLM_MODE:-replay}
+      # offline (default, saved answers, no key), openai (OPENAI_API_KEY) or azure. Blank: openai if a key is set, else offline.
+      Mps__Model__Mode: ${MODEL_MODE:-}
       ConnectionStrings__Mps: Data Source=/app/data/mps.db
       OTEL_SERVICE_NAME: Mps.Api
       OTEL_EXPORTER_OTLP_ENDPOINT: http://aspire-dashboard:18889

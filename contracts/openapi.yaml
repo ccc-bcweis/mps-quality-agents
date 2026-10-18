@@ -800,6 +800,40 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MetricsSummary"
+  /api/model/status:
+    get:
+      tags: [metrics]
+      operationId: getModelStatus
+      summary: The model mode in use and whether live calls are failing over to saved answers
+      responses:
+        "200":
+          description: Model status for the console banner. Never includes a key or endpoint.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [mode, label, live, fallingBack]
+                properties:
+                  mode:
+                    type: string
+                    enum: [offline, openai, azure, placeholder]
+                  label:
+                    type: string
+                    description: Banner text, for example "Offline (saved answers)", "OpenAI", "Azure OpenAI".
+                  model:
+                    type: string
+                    nullable: true
+                  live:
+                    type: boolean
+                  fallingBack:
+                    type: boolean
+                  detail:
+                    type: string
+                    nullable: true
+                  lastFailureAt:
+                    type: string
+                    format: date-time
+                    nullable: true
   /api/metadata/company:
     get:
       tags: [metadata]

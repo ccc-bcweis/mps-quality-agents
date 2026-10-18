@@ -39,7 +39,7 @@ describe("demo harness and console split", () => {
     expect(within(harness).getByRole("group", { name: "Plant data" })).toBeInTheDocument();
     expect(within(harness).getByLabelText("Sample printout")).toBeInTheDocument();
     expect(within(harness).getByRole("combobox", { name: "Scenario" })).toBeInTheDocument();
-    expect(within(harness).getByRole("button", { name: "Replay (saved answers, free, repeatable)" })).toHaveAttribute("aria-pressed", "true");
+    expect(await within(harness).findByRole("status", { name: "AI engine in use" })).toHaveTextContent("Offline (saved answers)");
     expect(within(harness).getByText("Answers only. Plant data stays the same.")).toBeInTheDocument();
     expect(within(harness).getByText("$0.00 of $2.00")).toBeInTheDocument();
 

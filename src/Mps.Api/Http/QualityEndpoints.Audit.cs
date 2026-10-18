@@ -34,7 +34,7 @@ public static partial class QualityEndpoints
             var rollup = await metrics.RollupAsync(
                 time.GetUtcNow(),
                 policy.SpendCapUsd,
-                ContractMapper.ModeFrom(configuration["LLM_MODE"]),
+                ContractMapper.ModeFrom(services.GetRequiredService<Mps.Api.Live.ModelModeSettings>().Mode),
                 cancellationToken).ConfigureAwait(false);
             var spendToday = await LiveSpendAsync(services, time, rollup.SpendTodayUsd, cancellationToken).ConfigureAwait(false);
             return Results.Ok(new MetricsResponse(

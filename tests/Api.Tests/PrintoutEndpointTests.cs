@@ -85,7 +85,7 @@ public sealed class PrintoutEndpointTests
     {
         await using var factory = mode is null
             ? new ApiFactory()
-            : new ApiFactory().WithWebHostBuilder(builder => builder.UseSetting("LLM_MODE", mode));
+            : new ApiFactory().WithWebHostBuilder(builder => builder.UseSetting("Mps:Model:Mode", mode));
         var client = factory.CreateClient();
 
         var first = await InspectAsync(client, "thermocouple-logger-e01.png", "image/png");

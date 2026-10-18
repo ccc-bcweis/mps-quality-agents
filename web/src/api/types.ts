@@ -507,6 +507,17 @@ export type ScenarioRun = {
   telemetry: ScenarioTelemetryPoint[];
 };
 
+/** GET /api/model/status: the model actually answering, for the banner. Never carries a key or endpoint. */
+export type ModelStatus = {
+  mode: "offline" | "openai" | "azure" | "placeholder";
+  label: string;
+  model?: string | null;
+  live: boolean;
+  fallingBack: boolean;
+  detail?: string | null;
+  lastFailureAt?: string | null;
+};
+
 export type MetricsSummary = {
   mode: RunMode;
   completionRate?: number | null;

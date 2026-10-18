@@ -22,5 +22,7 @@ public sealed class MpsApiFactory : WebApplicationFactory<ApiHostMarker>
         builder.UseSetting("Mps:DataDirectory", Path.Combine(Path.GetTempPath(), "mps-it-" + Guid.NewGuid().ToString("N")));
         builder.UseSetting("Mps:Simulation:RealTime", "false");
         builder.UseSetting("Mps:Simulation:PrimeSeconds", "0");
+        // These tests drive the approval lifecycle; the placeholder workflow always recommends, so the offline agents (which may escalate) stay out.
+        builder.UseSetting("Mps:Model:Mode", "placeholder");
     }
 }

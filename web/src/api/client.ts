@@ -1,48 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import type {
-  ConsoleCatalog,
-  ManualReading,
-  JoinLink,
-  JoinLinks,
-  RedeemResult,
-  AdvanceCapaRequest,
-  Alert,
-  Capa,
-  DecisionResult,
-  AdminSession,
-  AuditLog,
-  CausalTrace,
-  DataMode,
-  DemoResetResult,
-  ResetKind,
-  ResetProgress,
-  FaultInjectionAccepted,
-  FaultInjectionRequest,
-  FamilyComparison,
-  FleetLive,
-  Health,
-  ScenarioRun,
-  ScriptedScenario,
-  ToolLive,
-  HumanDecisionRequest,
-  Incident,
-  Investigation,
-  MetricsSummary,
-  SiteDetail,
-  SiteSummary,
-  OpenIncidentRequest,
-  PrintoutConfirmation,
-  PrintoutConfirmRequest,
-  PrintoutInspection,
-  Problem,
-  Ticket,
-  Tool,
-  BusinessRule,
-  RuleSetting,
-  CompanyMetadata,
-  MetadataSite,
-  MetadataTool,
-} from "./types";
+import type { AdminSession, AdvanceCapaRequest, Alert, AuditLog, BusinessRule, Capa, CausalTrace, CompanyMetadata, ConsoleCatalog, DataMode, DecisionResult, DemoResetResult, FamilyComparison, FaultInjectionAccepted, FaultInjectionRequest, FleetLive, Health, HumanDecisionRequest, Incident, Investigation, JoinLink, JoinLinks, ManualReading, MetadataSite, MetadataTool, MetricsSummary, ModelStatus, OpenIncidentRequest, PrintoutConfirmRequest, PrintoutConfirmation, PrintoutInspection, Problem, RedeemResult, ResetKind, ResetProgress, RuleSetting, ScenarioRun, ScriptedScenario, SiteDetail, SiteSummary, Ticket, Tool, ToolLive } from "./types";
 
 const base = import.meta.env.VITE_API_BASE ?? "";
 
@@ -173,6 +130,7 @@ export const api = {
     apiSend<ScenarioRun>(`/api/injector/scenarios/${encodeURIComponent(scenarioId)}`, { method: "POST" }),
   stopScenario: () => apiSend<{ removed: number }>("/api/injector/stop", { method: "POST" }),
   getMetrics: () => apiSend<MetricsSummary>("/api/metrics"),
+  getModelStatus: () => apiSend<ModelStatus>("/api/model/status"),
   getTrace: (eventId: string) => apiSend<CausalTrace>(`/api/trace/${encodeURIComponent(eventId)}`),
 };
 

@@ -13,7 +13,7 @@ function metricText(value: number | null | undefined, digits = 0, suffix = ""): 
 
 export function MetricsPage() {
   useSetLifecycle("alert");
-  const { metrics, metricsError, bannerMode } = useConsole();
+  const { metrics, metricsError, modelStatus } = useConsole();
 
   return (
     <div>
@@ -25,7 +25,7 @@ export function MetricsPage() {
       </div>
       {visibleProblem(metricsError) ? <p className="mb-3 text-mps-alarm-text">{visibleProblem(metricsError)}</p> : null}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <Stat label="Mode" value={bannerMode === "mockReasoner" ? "Scripted" : (metrics?.mode ?? "—").toUpperCase()} note="gateway" />
+        <Stat label="Mode" value={modelStatus?.label ?? (metrics?.mode ?? "—").toUpperCase()} note="gateway" />
         <Stat label="Completion" value={metricText(metrics?.completionRate === null || metrics?.completionRate === undefined ? null : metrics.completionRate * 100, 0, "%")} note="task completion" />
         <Stat label="Grounding" value={metricText(metrics?.groundingScore === null || metrics?.groundingScore === undefined ? null : metrics.groundingScore * 100, 0, "%")} note="citation precision" />
         <Stat label="Category acc." value={metricText(metrics?.categoryAccuracy === null || metrics?.categoryAccuracy === undefined ? null : metrics.categoryAccuracy * 100, 0, "%")} note="top-1" />
