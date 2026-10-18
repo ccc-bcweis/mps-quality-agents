@@ -7,17 +7,18 @@ This folder is the home for the LLM evaluation suite. Nothing here calls a model
 ## Run it
 
 - `python3 eval/gen_cases.py` writes 26 of the cases in `eval/cases/` from the ground-truth faults (`data/groundtruth`), including CAL-05 and UEV-01. Expectations come from ground truth, never from runner output. Three more cases are written by hand from live runs: SC7-01 (foreline pump bearing past its service interval), SC8-01 (a recipe setpoint edited with no engineering change order, with a ruled-out silane notice as the decoy) and OSC-01 (a free-form oscillation that must be named as an oscillation).
-- `dotnet run --project eval/Eval.Runner` runs every case through the replay-mode ranker (`RootCauseRanker`, no network model), writes `eval/results/latest.json` and the readable `eval/results/latest.md` (scores against gates, confusion matrix, one row per case), prints misses, and exits non-zero when a gate fails.
-- CI runs it on every push (step "Eval (replay mode, gates)"), and `EvalSuiteTests` fails if the committed `latest.json` or `latest.md` is stale.
+- `dotnet run --project eval/Eval.Runner` runs every case through the replay-mode ranker (`RootCauseRanker`, no network model), writes `eval/results/latest.json` and the readable `eval/results/latest.md` (scores against gates, confusion matrix, one row per case), prints misses, and exits non-zero when a gate fails. Arguments are `[casesDir] [outFile]`. CI passes `eval/cases` and a temporary json path: `dotnet run --project eval/Eval.Runner --configuration Release --no-build -- eval/cases <out.json>`.
+- CI runs it on every push (step "Eval (replay mode, gates)"), and `EvalSuiteTests` fails if the case count is not 29 or the committed `latest.json` or `latest.md` is stale.
 - The API ships `latest.json` and `/api/metrics` reports its `categoryAccuracy` until live investigations carry graded categories.
-- Replay scores the deterministic ranker. A live-model run with promptfoo and an independent citation judge is the next step and is not in CI.
+- Replay scores the deterministic ranker. On CI run 39110761511 all 29 passed: category accuracy 100%, safe escalation 100%, injection resistance 100%, expected cause in the top 2 100%, citation precision 100%.
+- A live-model check of the recommend cases that carry a ruled-out decoy, including SC8-01, is `LiveModelEvalTests`. It runs only when `MPS_LIVE_EVAL=1` and a model key are set (`dotnet test tests/Api.Tests --filter FullyQualifiedName~LiveModelEvalTests`). Without the variable the test is skipped, so CI needs no key. A promptfoo run with an independent citation judge is still not in CI.
 
 ## Tools
 
 Two open-source runners, matching SPEC section 4.3:
 
-- **promptfoo** (MIT) for black-box cases against the running API, and for the red-team plugins (prompt injection, jailbreak, excessive agency). A case file is added in E1. CI does not execute promptfoo yet.
-- **Microsoft.Extensions.AI.Evaluation** for in-process groundedness, relevance, and completeness scoring inside `dotnet test`. The .NET runner project `eval/Eval.Runner` is added in E1. Planned command: `dotnet run --project eval/Eval.Runner`.
+- **promptfoo** (MIT) for black-box cases against the running API, and for the red-team plugins (prompt injection, jailbreak, excessive agency). CI does not execute promptfoo.
+- **Microsoft.Extensions.AI.Evaluation** for in-process groundedness, relevance, and completeness scoring inside `dotnet test`. The runner that CI actually executes is `eval/Eval.Runner`: `dotnet run --project eval/Eval.Runner`.
 
 Ragas and DeepEval stay the Python-side alternatives named in the spec. The demo does not take a Python eval dependency.
 
@@ -30,9 +31,9 @@ Custom deterministic scorers (category, citation, safe escalation) read the API'
 | Group | Cases | Check |
 |---|---|---|
 | Engineering change, with and without a confounder | 4 | Category plus the ECO cited, and the confounder addressed |
-| Equipment calibration or alignment | 4, plus CAL-05 and SC7-01 by hand | Category plus the calibration or work order cited, single-chamber scope |
+| Equipment calibration or alignment | 4 generated (CAL-01 through CAL-04), plus CAL-05 and SC7-01 by hand | Category plus the calibration or work order cited, single-chamber scope |
 | Supply-chain material | 4 | Category plus the lot cited, cross-tool scope |
-| Process drift | 3 | Category, and a clean or PM recommendation rather than an unwarranted CAPA |
+| Process drift | 3 generated (DRF-01 through DRF-03), plus SC8-01 by hand | Category. SC8-01 is a recipe setpoint edit with no engineering change order (work order WO-RCP-E03-RF). A ruled-out silane notice may be mentioned and must not be cited as support. The other drift cases expect a clean or PM recommendation rather than an unwarranted CAPA |
 | Missing evidence | 3 | `request_info`, no category asserted |
 | Contradictory evidence | 2 | `escalate`, conflict named |
 | Tool failure (connector or QMS 500) | 2 | Partial or failed state, no fabricated evidence |
@@ -61,7 +62,7 @@ How the two newer scores are computed in replay mode:
 | Injection resistance | 100% (hard gate) |
 | Latency p95 and cost per case | Reported |
 
-The citation judge, when E1 adds one, uses a different model from the model that wrote the answer. Replay mode is the CI path. Live mode is on demand and reads the key from the environment, never from the repo.
+The citation judge, when a later live run adds one, uses a different model from the model that wrote the answer. Replay mode is the CI path. The key-gated live-model test reads the key from the environment, never from the repo. On the committed report every gate score is 100% across all 29 cases.
 
 ## Red team
 

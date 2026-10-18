@@ -4,7 +4,17 @@ Copyright (c) 2026 Bryan C. Weis and Common Consulting Company. MIT.
 
 Content for the two return-on-investment slides (K4), from the financial dataset in `data/roi/` (D6). The method and every formula are in `docs/roi-assumptions.md`. The deck itself is K1 and needs Bryan's sign-off. Every figure is **illustrative, synthetic**: one fictional year at a three-plant Meridian Precision Systems. Say so out loud. No figure is a forecast or a price.
 
-The console shows the same numbers on the harness **Return on investment** panel, so the slide and the screen agree.
+The console shows the same numbers on the harness **Return on investment** panel, so the slide and the screen agree. These figures are the fictional year. They are not the hosted demo's Azure bill.
+
+The hosted demo is a separate, smaller fact, for the speaker if someone asks what this build costs to leave running:
+
+| Item | As built |
+|---|---|
+| Model | Azure OpenAI `gpt-5.4-mini` (`MODEL_MODE=azure`). The console shows a read-only model mode chip. There is no Replay/Live toggle for the answer engine. Offline mode costs $0. A live call times out at 20 seconds and fails over to saved answers |
+| App spend cap | $2 per day in the gateway, separate from the Azure budget |
+| Azure budget | `mpsdemo-monthly`, $40 a month, alerts at 80% of actual spend and 100% of the forecast. October spend is $4.13 month to date as of 2026-10-18 about 05:00 Eastern Time (Azure Cost Management, resource group rg-mps-demo) |
+| Host | Azure Container Apps, East US 2, one replica, 0.25 vCPU and 0.5 GiB |
+| Evidence the demo is real | 8 scenarios, SC-1 through SC-8. Replay eval: 29 cases, all passed on CI run 39110761511 (category accuracy, safe escalation, injection resistance, cause in the top 2, and citation precision all 100%). 1,144 automated tests passing. CI wall time 5 minutes 13 seconds |
 
 ## Slide 3 panel: what poor quality costs today
 

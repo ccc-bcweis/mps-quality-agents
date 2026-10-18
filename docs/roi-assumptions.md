@@ -6,7 +6,7 @@ These figures are illustrative and synthetic. They describe one fictional year a
 
 `Mps.Simulator.Roi.RoiCalculator` is the source. `tools/DataGen --roi data/roi` writes `data/roi/baseline.csv`, `data/roi/projection.csv`, and `data/roi/sensitivity.csv`. The same assumptions always produce the same bytes. Seed `20261014` is stamped on every row and does not scale the dollars. Changing the incident count changes labor by the formula below.
 
-The console ROI screen and deck slides 2 and 6 can read the three CSV files directly. Dollars are whole numbers with no thousands separators. Day and hour counts use two decimal places. Rates use four. Payback months use two decimal places and are blank when gross savings are zero.
+The console ROI screen and deck slides 3 and 9 (`docs/PLAN.md` section 7, and `docs/deck/roi-slides.md`) can read the three CSV files directly. The $180,000 platform line is this illustrative model. It is not the hosted demo's Azure budget (`mpsdemo-monthly`, $40 a month). Dollars are whole numbers with no thousands separators. Day and hour counts use two decimal places. Rates use four. Payback months use two decimal places and are blank when gross savings are zero.
 
 ## Inputs from the plan
 

@@ -2,7 +2,9 @@
 
 Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
-Measured on 2026-10-15 by `NominalWeekPublishesEveryPlantAtTheChosenStride` in `tests/Api.Tests/BusThroughputTests.cs`. The test calls `INominalHistorySeeder.SeedAsync(NominalWindow.LastWeek)`. The figures below are that run, after the stride was pinned.
+This page is the scale benchmark from 2026-10-15. It is not how the app stores telemetry now. Live data is a fixed rolling window of 600 readings per sensor (`telemetryWindow.readingsPerSensor` in `data/metadata/simulation.yaml`), in memory and in the database. Older readings roll off. A reset does not seed a week. The prime fills that window in memory and does not publish those points on the bus. A hard reset takes seconds.
+
+The figures below were measured by `NominalWeekPublishesEveryPlantAtTheChosenStride` in `tests/Api.Tests/BusThroughputTests.cs`. The test calls `INominalHistorySeeder.SeedAsync(NominalWindow.LastWeek)`. They are that run, after the stride was pinned. `LastWeek` remains the benchmark window. It is not what start or reset loads.
 
 ## What was seeded
 
@@ -51,4 +53,4 @@ A 5-second last hour, with the same older stride, would be about 797,000 rows an
 
 The stride used to follow the 8,000-row sample and an 18-second budget. On a quiet run that rule picked these same 25-second and 900-second strides (466,662 rows in 7.08 seconds, sample 34,624 rows per second). During the full test suite the sample fell to 22,340 rows per second, and the same rule would have stretched older points to 1,800 seconds (274,946 rows in 6.97 seconds). The stride is now a constant so the history other lanes seed does not change with machine load.
 
-`INominalHistorySeeder.SeedAsync` is the call other lanes use. `NominalWindow.LastWeek` is this history. `LastHour` uses the 25-second stride for the whole hour. `LastDay` uses 25 seconds for the last hour and 900 seconds before that.
+`INominalHistorySeeder.SeedAsync` is the call the benchmark uses. `NominalWindow.LastWeek` is this history. `LastHour` uses the 25-second stride for the whole hour. `LastDay` uses 25 seconds for the last hour and 900 seconds before that. The running plant does not call `LastWeek` on start or reset.
