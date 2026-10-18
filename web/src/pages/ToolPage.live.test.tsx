@@ -54,6 +54,32 @@ describe("tool detail on the fleet stream", () => {
     expect(tickets.count()).toBe(loads);
   });
 
+  it("shows one Linked records entry per investigation: the saved record replaces its Started placeholder (#378)", async () => {
+    counted("/api/tickets", () => [
+      { id: "t-old", number: "TKT-1001", incidentId: "n-old", toolId: "E-02", title: "Older ticket", openedAt: T0, status: "open" },
+    ]);
+    counted("/api/investigations", () => []);
+    renderConsole("/tools/E-02");
+    const list = await screen.findByRole("list", { name: "Linked records" });
+    expect(await within(list).findByText("Older ticket")).toBeInTheDocument();
+    const investigation = { incidentId: "n-old", toolId: "E-02", round: 1, evidence: [], hypotheses: [] };
+    // While the round gathers the server streams a placeholder with a temporary id, then the saved record.
+    act(() => emitHubEvent("investigationChanged", { ...investigation, id: "inv-placeholder", stage: "started" }));
+    expect(await within(list).findByText("Started")).toBeInTheDocument();
+    act(() => emitHubEvent("investigationChanged", { ...investigation, id: "inv-saved", stage: "recommendationReady" }));
+    expect(await within(list).findByText("Recommendation ready")).toBeInTheDocument();
+    expect(within(list).queryByText("Started")).not.toBeInTheDocument();
+    // A placeholder that arrives late never brings the duplicate back.
+    act(() => emitHubEvent("investigationChanged", { ...investigation, id: "inv-placeholder", stage: "started" }));
+    expect(within(list).queryByText("Started")).not.toBeInTheDocument();
+    const rows = within(list).getAllByRole("listitem").filter((row) => (row.textContent ?? "").startsWith("Investigation"));
+    expect(rows).toHaveLength(1);
+    // A second round is its own entry.
+    act(() => emitHubEvent("investigationChanged", { ...investigation, id: "inv-round-2", round: 2, stage: "started" }));
+    expect(await within(list).findByText("Started")).toBeInTheDocument();
+    expect(within(list).getByText("Recommendation ready")).toBeInTheDocument();
+  });
+
   it("waits for readings, then draws the points the toolLive stream appends, with no extra load", async () => {
     const live = counted("/api/tools/:toolId/live", () => liveBody([]));
     renderConsole("/tools/E-01?parameter=etchRate");

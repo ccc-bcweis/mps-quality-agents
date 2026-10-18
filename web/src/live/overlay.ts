@@ -89,7 +89,9 @@ export function chartSeriesKey(sensor: { id: string; parameter?: string; chamber
 export function seriesPoints(live: ToolLive | null, parameter: string, chamberId?: string): SpcPoint[] | undefined {
   const match = chartSeries(live, parameter, chamberId);
   if (!match) return undefined;
-  return match.points.map((point, index) => ({ index, value: point.value }));
+  // Reading numbers continue as old readings roll off, so the x labels advance with the data (#380).
+  const first = match.first ?? 0;
+  return match.points.map((point, index) => ({ index: first + index, value: point.value }));
 }
 
 /**

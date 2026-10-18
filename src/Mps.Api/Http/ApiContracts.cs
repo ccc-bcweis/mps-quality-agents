@@ -253,6 +253,12 @@ public sealed record ToolLiveResponse(
 {
     /// <summary>Readable name of the recipe running now, from the fleet data (e.g. "PECVD oxide").</summary>
     public string? RecipeName { get; init; }
+
+    /// <summary>
+    /// Readings each series keeps (data/metadata/simulation.yaml telemetryWindow.readingsPerSensor). The chart's x axis
+    /// is always this wide, so its scale never changes as the window fills (#380).
+    /// </summary>
+    public int? WindowPoints { get; init; }
 }
 
 /// <summary>

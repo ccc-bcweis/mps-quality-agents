@@ -2,9 +2,6 @@
 // Pure patches for the fleet hub messages. A page keeps its first load and applies each message to it.
 import type { FleetLive, FleetLiveTool, LiveLimitSegment, LiveReading, LiveSeries, LiveStatus, ToolLive } from "../api/types";
 
-/** Points kept per chart series; the same window GET /api/tools/{id}/live returns. */
-export const LIVE_WINDOW_POINTS = 600;
-
 /** toolLive: the tool's latest readings and only the new points per series. resync asks the page to load again. */
 export type ToolLiveDelta = {
   toolId: string;
@@ -26,8 +23,12 @@ export type AlertCleared = { alertId: string; toolId?: string; clearedAt?: strin
 
 const seriesKey = (series: { parameter: string; chamberId: string }) => `${series.parameter}|${series.chamberId}`;
 
-/** Appends the new points to each series (oldest dropped past the window). Null when there is no first load to patch. */
-export function applyToolDelta(previous: ToolLive | null, delta: ToolLiveDelta, maxPoints = LIVE_WINDOW_POINTS): ToolLive | null {
+/**
+ * Appends the new points to each series, oldest dropped past the window: the window the first load reported
+ * (windowPoints, from simulation.yaml). Each series counts the readings that rolled off in first, so reading numbers
+ * keep growing and the chart scrolls. Null when there is no first load to patch.
+ */
+export function applyToolDelta(previous: ToolLive | null, delta: ToolLiveDelta, maxPoints = previous?.windowPoints ?? Number.POSITIVE_INFINITY): ToolLive | null {
   if (!previous || delta.resync || previous.toolId !== delta.toolId) return null;
   const byKey = new Map(previous.series.map((series) => [seriesKey(series), series]));
   for (const incoming of delta.series) {
@@ -41,6 +42,7 @@ export function applyToolDelta(previous: ToolLive | null, delta: ToolLiveDelta, 
       parameter: incoming.parameter,
       chamberId: incoming.chamberId,
       points: kept,
+      first: (current?.first ?? 0) + (points.length - kept.length),
       center: incoming.center ?? null,
       sigma: incoming.sigma ?? null,
       segments: mergeSegments(current?.segments, incoming.segments, kept[0]?.at),
@@ -118,6 +120,27 @@ export function upsertRecord<T extends { id: string }>(list: T[], record: T): T[
   const next = list.slice();
   next[index] = { ...list[index], ...record };
   return next;
+}
+
+/** The fields that tell one investigation round apart: its incident and round, and its stage. */
+type InvestigationRound = { id: string; incidentId: string; round?: number; stage: string };
+
+/**
+ * Puts a changed investigation in place, one entry per incident and round (#378). While a round gathers, the server
+ * streams a "started" placeholder with a temporary id; the saved investigation then arrives with its own id. Upserting
+ * by id alone kept both, so Linked records showed "Started" next to "Recommendation ready" for one investigation.
+ * The saved record replaces the placeholder of its round, and a late placeholder never replaces a saved record.
+ */
+export function upsertInvestigation<T extends InvestigationRound>(list: T[], record: T): T[] {
+  const sameRound = (item: T) => item.id !== record.id && item.incidentId === record.incidentId && (item.round ?? 1) === (record.round ?? 1);
+  const placeholder = (item: T) => sameRound(item) && item.stage === "started";
+  if (record.stage === "started" && list.some((item) => sameRound(item) && item.stage !== "started")) return list;
+  const at = list.findIndex(placeholder);
+  if (at >= 0 && !list.some((item) => item.id === record.id)) {
+    // The saved record takes its placeholder's place, so the entry updates where it was.
+    return list.map((item, i) => (i === at ? record : item)).filter((item, i) => i === at || !placeholder(item));
+  }
+  return upsertRecord(list.filter((item) => !placeholder(item)), record);
 }
 
 /** Marks one alert cleared from the alertCleared message. */

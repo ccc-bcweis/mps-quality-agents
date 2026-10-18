@@ -18,6 +18,7 @@ export function SpcChart({
   cumulative = false,
   manual,
   steps,
+  windowPoints,
 }: {
   label: string;
   unit: string;
@@ -36,6 +37,12 @@ export function SpcChart({
    * point against. When they differ across the window the limits are drawn as steps.
    */
   steps?: StepLimit[];
+  /**
+   * Readings the window holds (simulation.yaml telemetryWindow.readingsPerSensor). When set, the x axis is always
+   * this wide: new readings enter on the right and, once the window is full, the oldest scroll off the left, so the
+   * scale and the width of a recipe step never change (#380).
+   */
+  windowPoints?: number;
 }) {
   const points = livePoints ?? [];
   // Until the first live points arrive the chart says so; it never draws a generated series.
@@ -97,7 +104,8 @@ export function SpcChart({
         };
       })
     : null;
-  const runs = stepped ? stepRuns(steps, points) : [];
+  const runs = stepped ? stepRuns(steps, points, windowPoints) : [];
+  const axis = fixedAxis(points, windowPoints);
   const sigma = center?.sigma ?? 0;
   const lastIndex = points.length - 1;
   const perStep = stepped ? " Limits are per recipe step, the same ones the rules check." : "";
@@ -135,7 +143,11 @@ export function SpcChart({
         <ResponsiveContainer width="100%" height={240} initialDimension={{ width: 720, height: 240 }}>
         <ComposedChart data={rows ?? points} margin={{ top: 16, right: 56, bottom: 8, left: 8 }}>
           <CartesianGrid stroke={mpsColor.line} strokeDasharray="3 3" />
-          <XAxis dataKey="index" tick={{ fill: mpsColor.muted, fontSize: 10 }} stroke={mpsColor.line} />
+          {axis ? (
+            <XAxis dataKey="index" type="number" domain={axis.domain} ticks={axis.ticks} allowDataOverflow interval={0} tick={{ fill: mpsColor.muted, fontSize: 10 }} stroke={mpsColor.line} />
+          ) : (
+            <XAxis dataKey="index" tick={{ fill: mpsColor.muted, fontSize: 10 }} stroke={mpsColor.line} />
+          )}
           <YAxis
             domain={[
               Math.min(...(lowest !== undefined ? [lowest] : []), ...values, ...(manual ? [manual.value] : [])),
@@ -282,7 +294,7 @@ function fitLabel(candidates: string[], room: number): { text: string; fits: boo
  * whole recipe (#376). A step label that does not fit is shortened, never dropped: the step, then the step without
  * "(idle)", then cut with an ellipsis. Only a run too narrow for three characters has no label; the hover names it.
  */
-export function stepRuns(steps: StepLimit[], points: SpcPoint[]): StepRun[] {
+export function stepRuns(steps: StepLimit[], points: SpcPoint[], windowPoints?: number): StepRun[] {
   const runs: StepRun[] = [];
   const meta: { recipe?: string; step?: string; idle: boolean }[] = [];
   for (let i = 0; i < steps.length && i < points.length; i += 1) {
@@ -294,7 +306,9 @@ export function stepRuns(steps: StepLimit[], points: SpcPoint[]): StepRun[] {
     }
     runs[runs.length - 1].length += 1;
   }
-  const room = (length: number) => Math.floor(((length / Math.max(1, points.length)) * PLOT_WIDTH_PX) / LABEL_CHAR_PX);
+  // A fixed axis is the whole window wide, so a step's share of the plot is its share of the window.
+  const span = Math.max(1, windowPoints ?? points.length, points.length);
+  const room = (length: number) => Math.floor(((length / span) * PLOT_WIDTH_PX) / LABEL_CHAR_PX);
   runs.forEach((run, r) => {
     const step = fitLabel([run.name, meta[r].idle ? (meta[r].step ?? "") : ""], room(run.length));
     run.label = step.text;
@@ -305,6 +319,27 @@ export function stepRuns(steps: StepLimit[], points: SpcPoint[]): StepRun[] {
     run.recipeLabel = fitLabel([meta[r].recipe ?? ""], room(span)).text;
   });
   return runs;
+}
+
+/** Ticks on a fixed axis: about this many, on round reading numbers, so they move left with the data. */
+const AXIS_TICKS = 12;
+
+/**
+ * The x axis for a fixed window (#380): always windowPoints readings wide and ending at the newest reading, so new
+ * readings enter on the right and the oldest scroll off the left. Ticks sit on round reading numbers inside the data,
+ * so the labels advance as the window scrolls. Undefined without a window (the axis fits the points).
+ */
+export function fixedAxis(points: SpcPoint[], windowPoints?: number): { domain: [number, number]; ticks: number[] } | undefined {
+  if (!windowPoints || windowPoints < 2 || points.length === 0) return undefined;
+  const newest = points[points.length - 1].index;
+  const oldest = points[0].index;
+  const domain: [number, number] = [newest - windowPoints + 1, newest];
+  const raw = windowPoints / AXIS_TICKS;
+  const magnitude = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 5, 10].map((m) => m * magnitude).find((candidate) => candidate >= raw) ?? raw;
+  const ticks: number[] = [];
+  for (let tick = Math.ceil(Math.max(domain[0], oldest) / step) * step; tick <= newest; tick += step) ticks.push(tick);
+  return { domain, ticks };
 }
 
 /** The recipe step of the newest reading, from the same per-reading limits the chart draws (for the chart header). */

@@ -4,7 +4,7 @@ import { api } from "../api/client";
 import type { Alert, Capa, FleetLive, Incident, Investigation, Ticket, ToolLive } from "../api/types";
 import { toolInPlant } from "../sites/selection";
 import { FALLBACK_POLL_MS, hubConnected, onHub, onHubState, watchHub, type HubEvent } from "./fleetHub";
-import { applyFleetDelta, applyToolDelta, clearAlert, isRecord, upsertRecord, type AlertCleared, type FleetLiveDelta, type ToolLiveDelta } from "./stream";
+import { applyFleetDelta, applyToolDelta, clearAlert, isRecord, upsertInvestigation, upsertRecord, type AlertCleared, type FleetLiveDelta, type ToolLiveDelta } from "./stream";
 
 /** What a message does to the loaded value: a new value, the same value, or "reload" to load it again. */
 type Apply<T> = (previous: T | null, payload: unknown) => T | null | "reload";
@@ -210,7 +210,12 @@ export function useRecordPatches(setters: RecordSetters, scope: { siteId?: strin
       onHub("ticketOpened", patch((all) => all.tickets)),
       onHub("ticketChanged", patch((all) => all.tickets)),
       onHub("incidentChanged", patch((all) => all.incidents)),
-      onHub("investigationChanged", patch((all) => all.investigations)),
+      // One entry per investigation round: the saved record replaces its "started" placeholder (#378).
+      onHub("investigationChanged", (payload) => {
+        const setter = settersRef.current.investigations;
+        if (!setter || !isRecord(payload) || !inScope(payload)) return;
+        setter((list) => upsertInvestigation(list, payload as unknown as Investigation));
+      }),
       onHub("capaChanged", patch((all) => all.capas)),
       onHub("capaAdvanced", patch((all) => all.capas)),
       onHub("resync", reload),
