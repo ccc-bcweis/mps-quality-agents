@@ -81,13 +81,19 @@ public sealed class FaultInjectionServiceTests
     }
 
     [Fact]
-    public async Task ScriptedScenariosKeepTheirOwnConfounders()
+    public async Task RecordOnlyFaultsDoNotStackConfoundersOrGroundTruth()
     {
         var fixture = new Fixture();
 
-        await fixture.Service.InjectAsync(Request(RootCauseCategory.SupplyChainMaterial, confounders: true) with { Scripted = true }, CancellationToken.None);
+        var accepted = await fixture.Service.InjectAsync(
+            Request(RootCauseCategory.SupplyChainMaterial, confounders: true) with { RecordOnly = true },
+            CancellationToken.None);
 
         fixture.Board.All.Should().BeEmpty();
+        fixture.Board.CauseIds(accepted.FaultId).Should().BeEmpty();
+        var payload = JsonSerializer.Serialize(fixture.Events.Published.Single().Payload);
+        payload.Should().Contain("\"recordOnly\":true");
+        payload.Should().NotContain("scripted");
     }
 
     [Fact]

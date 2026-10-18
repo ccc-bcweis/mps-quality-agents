@@ -114,7 +114,9 @@ public static partial class QualityEndpoints
                     body.Magnitude.Value,
                     body.RootCauseCategory.Value,
                     body.Confounders,
-                    DurationMinutes: body.DurationMinutes is > 0 ? body.DurationMinutes : null),
+                    DurationMinutes: body.DurationMinutes is > 0 ? body.DurationMinutes : null,
+                    EvidenceFaultId: string.IsNullOrWhiteSpace(body.EvidenceFaultId) ? null : body.EvidenceFaultId.Trim(),
+                    Evidence: body.Evidence?.ToAttachment()),
                 cancellationToken).ConfigureAwait(false);
             return Results.Json(new FaultAcceptedResponse(accepted.FaultId, accepted.CorrelationId), statusCode: StatusCodes.Status202Accepted);
         });

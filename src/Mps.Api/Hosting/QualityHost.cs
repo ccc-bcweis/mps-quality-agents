@@ -126,8 +126,14 @@ public static class QualityHost
         builder.Services.AddSingleton<IChatClient>(services => services.GetRequiredService<Gateway>());
         builder.Services.AddSingleton<ResetProgress>();
         builder.Services.AddScoped<DemoResetService>();
-        builder.Services.AddSingleton(ScenarioCardCatalog.Load(Path.Combine(dataDirectory, "scenarios", "catalog.yaml")));
+        var scenarioCatalog = Path.Combine(dataDirectory, "scenarios", "catalog.yaml");
+        builder.Services.AddSingleton(ScenarioCardCatalog.Load(scenarioCatalog));
+        builder.Services.AddSingleton(ScenarioManualSampleCatalog.Load(scenarioCatalog));
         builder.Services.AddSingleton<ScenarioEvidenceBoard>();
+        builder.Services.AddSingleton<IFaultEvidenceBoard>(services => services.GetRequiredService<ScenarioEvidenceBoard>());
+        builder.Services.AddSingleton<IFaultEvidenceCatalog>(services => FaultEvidenceCatalog.Load(
+            Path.Combine(dataDirectory, "faults"),
+            services.GetRequiredService<PlantSimulation>().Runtime.Fleet));
         builder.Services.AddSingleton<Mps.Application.Faults.ConfounderBoard>();
         builder.Services.AddScoped<ScenarioTrigger>(services => ActivatorUtilities.CreateInstance<ScenarioTrigger>(services, (TimeProvider)services.GetRequiredService<Mps.Application.RecordClock>()));
         builder.Services.AddSingleton<IMetadataStore>(new YamlMetadataStore(Path.Combine(dataDirectory, "metadata")));

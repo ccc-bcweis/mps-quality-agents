@@ -20,6 +20,7 @@ public sealed class ScenarioTrigger
     private readonly IFaultInjectionService _faults;
     private readonly ScriptedScenarioContext _context;
     private readonly IDocumentIntake _printouts;
+    private readonly ScenarioManualSampleCatalog _printoutSteps;
     private readonly ScenarioEvidenceBoard? _board;
     private readonly ILifecycleEventSink? _events;
     private readonly TimeProvider? _time;
@@ -29,6 +30,7 @@ public sealed class ScenarioTrigger
         IFaultInjectionService faults,
         ScriptedScenarioContext context,
         IDocumentIntake printouts,
+        ScenarioManualSampleCatalog printoutSteps,
         ScenarioEvidenceBoard? board = null,
         ILifecycleEventSink? events = null,
         ICascadeDirectory? cascade = null,
@@ -38,11 +40,13 @@ public sealed class ScenarioTrigger
         ArgumentNullException.ThrowIfNull(faults);
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(printouts);
+        ArgumentNullException.ThrowIfNull(printoutSteps);
         _ = cascade;
         _plant = plant;
         _faults = faults;
         _context = context;
         _printouts = printouts;
+        _printoutSteps = printoutSteps;
         _board = board;
         _events = events;
         _time = time;
@@ -55,17 +59,14 @@ public sealed class ScenarioTrigger
             return null;
         }
 
+        // The hint is only for scripted model replay during this request. Evidence is keyed by fault correlation.
         _context.Set(scenario.Id);
-        _board?.Activate(scenario.Id, _plant.SimulatedNow);
+        var activatedAt = _plant.SimulatedNow;
         var opened = await OpenCommandAsync(scenario, cancellationToken).ConfigureAwait(false);
         using var command = CommandAmbient.Adopt(opened);
         try
         {
-            if (string.Equals(scenario.Id, "SC-6", StringComparison.OrdinalIgnoreCase))
-            {
-                // The oscilloscope sheet is evidence that enters as one manual sample, the same path as any reading.
-                await AddOscilloscopePrintoutAsync(cancellationToken).ConfigureAwait(false);
-            }
+            await ApplyPrintoutsAsync(scenario.Id, cancellationToken).ConfigureAwait(false);
 
             var telemetry = Rebase(ScriptedScenarioCatalog.Sample(scenario, _plant.Runtime.Fleet, _plant.Runtime.Seed), _plant.SimulatedNow);
             FaultAccepted? first = null;
@@ -80,8 +81,9 @@ public sealed class ScenarioTrigger
                         SigmaOf(scenario),
                         scenario.Category,
                         scenario.Confounders,
-                        Scripted: true),
+                        RecordOnly: true),
                     cancellationToken).ConfigureAwait(false);
+                _board?.RegisterScenario(accepted.CorrelationId, scenario.Id, activatedAt);
                 first ??= accepted;
             }
 
@@ -103,34 +105,43 @@ public sealed class ScenarioTrigger
     private static double SigmaOf(ScriptedScenario scenario) =>
         scenario.MagnitudeKind == MagnitudeKind.Percent ? Math.CopySign(4.5d, scenario.Magnitude) : scenario.Magnitude;
 
-    /// <summary>SC-6's oscilloscope sheet, confirmed at the plant clock (the Now button) so it joins the live window.</summary>
-    private async Task AddOscilloscopePrintoutAsync(CancellationToken cancellationToken)
+    /// <summary>Each printout step in the scenario catalog, confirmed as one manual sample. Timing <c>now</c> uses the plant clock.</summary>
+    private async Task ApplyPrintoutsAsync(string scenarioId, CancellationToken cancellationToken)
     {
-        var path = FindSample("oscilloscope-e01.pdf");
-        if (path is null)
+        foreach (var step in _printoutSteps.For(scenarioId))
         {
-            return;
-        }
+            var observedAt = step.Timing switch
+            {
+                ScenarioManualSampleCatalog.TimingNow => _plant.SimulatedNow,
+                _ => throw new InvalidOperationException("Printout timing " + step.Timing + " is not supported."),
+            };
+            var path = FindSample(step.FileName);
+            if (path is null)
+            {
+                throw new InvalidOperationException("Printout file " + step.FileName + " was not found.");
+            }
 
-        var bytes = await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false);
-        var inspection = await _printouts.InspectAsync(bytes, "application/pdf", "oscilloscope-e01.pdf", cancellationToken).ConfigureAwait(false);
-        var printed = inspection.Reading;
-        var reading = new PrintoutReading(
-            printed.ToolId,
-            printed.ChamberId,
-            _plant.SimulatedNow,
-            printed.Instrument,
-            printed.Parameter,
-            printed.Value,
-            printed.Unit,
-            printed.SpecMinimum,
-            printed.SpecMaximum,
-            printed.Shape,
-            printed.OperatorInitials)
-        {
-            PrintedObservedAt = printed.ObservedAt,
-        };
-        await _printouts.ConfirmAsync(reading, cancellationToken).ConfigureAwait(false);
+            var bytes = await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false);
+            var mediaType = step.FileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "application/pdf";
+            var inspection = await _printouts.InspectAsync(bytes, mediaType, step.FileName, cancellationToken).ConfigureAwait(false);
+            var printed = inspection.Reading;
+            var reading = new PrintoutReading(
+                printed.ToolId,
+                printed.ChamberId,
+                observedAt,
+                printed.Instrument,
+                printed.Parameter,
+                printed.Value,
+                printed.Unit,
+                printed.SpecMinimum,
+                printed.SpecMaximum,
+                printed.Shape,
+                printed.OperatorInitials)
+            {
+                PrintedObservedAt = printed.ObservedAt,
+            };
+            await _printouts.ConfirmAsync(reading, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private async ValueTask<CommandAmbient.Opened?> OpenCommandAsync(ScriptedScenario scenario, CancellationToken cancellationToken)

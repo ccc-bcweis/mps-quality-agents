@@ -26,6 +26,9 @@ scenarios:
     whatWeSimulate: "We upload the oscilloscope printout. The console reads the value, the presenter confirms it, and source RF power on E-01 chamber A starts to oscillate out of spec on the next simulator ticks."
     whatAiShouldFind: "The confirmed bench reading and the RF generator calibration record point to equipment, not to a recipe or material change."
     expectedCause: "RF source power oscillation on E-01, an equipment or calibration fault."
+    printouts:
+      - file: oscilloscope-e01.pdf
+        timing: now
   - id: SC-5
     whatsHappening: "A precursor is the material that becomes the deposited film. Lot MX4419 of that precursor went to deposition tool D-03 at Northwater and tool I-D-01 at Ironwood. Film thickness on both tools steps down. A chamber clean on D-03 happened the same week and can look like the cause."
     whatWeSimulate: "Film thickness on D-03 and I-D-01 steps down by about 8 percent, about 16 nanometers on a 200 nanometer film, on the next simulator ticks."
