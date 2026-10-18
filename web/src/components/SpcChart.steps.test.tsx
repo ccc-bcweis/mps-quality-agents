@@ -48,8 +48,8 @@ describe("SpcChart limits per recipe step", () => {
       <SpcChart label="Chamber pressure" unit="mTorr" center={{ mean: 35, sigma: 0.5 }} steps={steps} points={points} finding="No active SPC alert." />,
     );
     // One constant limit for the whole window would put earlier steps' healthy points outside the band. The only
-    // reference lines are the step dividers (and the first step's label), no constant UCL/LCL/mean.
-    expect(container.querySelectorAll(".recharts-reference-line")).toHaveLength(nominals.length);
+    // reference lines are the step dividers, the first step's label and the recipe name, no constant UCL/LCL/mean.
+    expect(container.querySelectorAll(".recharts-reference-line")).toHaveLength(nominals.length + 1);
     expect(container.querySelectorAll(".spc-step-divider")).toHaveLength(nominals.length - 1);
     expect(container.querySelectorAll(".recharts-reference-area")).toHaveLength(0);
     expect(container.querySelectorAll(".recharts-area")).toHaveLength(3);
@@ -124,16 +124,67 @@ describe("SpcChart limits per recipe step", () => {
     const sameLimits = steps.map((step) => ({ ...step, mean: 50, sigma: 1 }));
     const again = render(<SpcChart label="ESC temperature" unit="C" center={{ mean: 50, sigma: 1 }} steps={sameLimits} points={points} finding="x" />);
     expect(again.container.querySelectorAll(".spc-step-divider")).toHaveLength(stepNames.length - 1);
-    // A step too short for its name keeps the divider and drops the label.
+    // A step too short for its name keeps the divider; a one-reading run has no room for a label (the hover names it).
     const runs = stepRuns(
       points.map((point) => ({ mean: 50, sigma: 1, step: point.index === 30 ? "Short" : "Long step", segment: point.index === 30 ? 1 : point.index < 30 ? 0 : 2 })),
       points,
     );
-    expect(runs.map((run) => [run.name, run.fits])).toEqual([
-      ["Long step", true],
-      ["Short", false],
-      ["Long step", true],
+    expect(runs.map((run) => [run.name, run.fits, run.label])).toEqual([
+      ["Long step", true, "Long step"],
+      ["Short", false, ""],
+      ["Long step", true, "Long step"],
     ]);
+  });
+
+  // Live (Oct 18, #376): E-02 runs Oxide main etch then Polysilicon etch, three steps each, 8 readings per step at
+  // 1x / 15 s. Oxide raises the ESC to 52 C in Main etch; Polysilicon holds 49 C (idle) in Main etch and Endpoint.
+  const cycle = [
+    { recipe: "Oxide main etch", step: "Stabilize", mean: 50, sigma: 8 / 6, idle: false },
+    { recipe: "Oxide main etch", step: "Main etch", mean: 52, sigma: 8 / 6, idle: false },
+    { recipe: "Oxide main etch", step: "Endpoint", mean: 50, sigma: 8 / 6, idle: true },
+    { recipe: "Polysilicon etch", step: "Stabilize", mean: 49, sigma: 10 / 6, idle: false },
+    { recipe: "Polysilicon etch", step: "Main etch", mean: 49, sigma: 10 / 6, idle: true },
+    { recipe: "Polysilicon etch", step: "Endpoint", mean: 49, sigma: 10 / 6, idle: true },
+  ];
+  const twoCycles = Array.from({ length: 96 }, (_, index) => ({ index, value: 50 }));
+  const twoCycleSteps = twoCycles.map((point) => {
+    const segment = Math.floor(point.index / 8);
+    return { ...cycle[segment % cycle.length], segment };
+  });
+
+  it("names the recipe where it changes and never drops a step label (#376)", () => {
+    const runs = stepRuns(twoCycleSteps, twoCycles);
+    expect(runs).toHaveLength(12);
+    expect(runs.every((run) => run.label.length > 0)).toBe(true);
+    expect(runs.filter((run) => run.recipeChange).map((run) => run.start)).toEqual([0, 24, 48, 72]);
+    expect(runs.filter((run) => run.recipeLabel).map((run) => run.recipeLabel)).toEqual(["Oxide main etch", "Polysilicon etch", "Oxide main etch", "Polysilicon etch"]);
+    // "Main etch (idle)" is too long for 8 of 96 readings: it is shortened, not dropped, and never shown as Stabilize.
+    const polyMain = runs[4];
+    expect(polyMain.name).toBe("Main etch (idle)");
+    expect(polyMain.label.startsWith("Main etch") || polyMain.label.startsWith("Main")).toBe(true);
+    // Every label names its own run's step: labels and limits come from the same per-reading segment.
+    runs.forEach((run) => {
+      const step = twoCycleSteps[run.start];
+      expect(run.name.startsWith(step.step)).toBe(true);
+      const labelStep = run.label.replace("…", "");
+      expect(step.step.startsWith(labelStep) || labelStep.startsWith(step.step)).toBe(true);
+    });
+    const wide = stepRuns(twoCycleSteps.slice(24, 48), twoCycles.slice(24, 48));
+    expect(wide[0].label).toBe("Stabilize");
+    expect(wide[0].recipeLabel).toBe("Polysilicon etch");
+    expect(wide[1].label).toBe("Main etch (idle)");
+  });
+
+  it("draws a solid divider and the recipe name where the recipe changes (#376)", () => {
+    const { container } = render(
+      <SpcChart label="ESC temperature" unit="C" center={{ mean: 49, sigma: 10 / 6 }} steps={twoCycleSteps.slice(16, 64)} points={twoCycles.slice(0, 48)} finding="x" />,
+    );
+    expect(container.querySelectorAll(".spc-step-divider")).toHaveLength(5);
+    expect(container.querySelectorAll(".spc-recipe-divider")).toHaveLength(2);
+    // The window opens in Oxide Endpoint, then Polysilicon (3 steps), then Oxide again: three recipe names.
+    expect([...container.querySelectorAll(".spc-recipe-label")].map((node) => node.textContent)).toEqual(["Oxide main etch", "Polysilicon etch", "Oxide main etch"]);
+    expect(container.textContent).toContain("Main etch (idle)");
+    expect(container.textContent).toContain("A solid line marks where the next recipe starts; its name is at the bottom.");
   });
 
   it("hover says the limits are for this recipe step, with the step's center and limits", () => {

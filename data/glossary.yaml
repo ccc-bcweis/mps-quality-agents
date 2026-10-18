@@ -396,7 +396,7 @@ terms:
   - term: "recipe step"
     expansion: "one stage of a recipe"
     plainDefinition: "One stage of the recipe a tool runs, such as Stabilize, Main etch or Endpoint. Each step sets its own center and limits for every parameter, and the SPC chart draws the limits of the step each reading was taken in."
-    whyItMatters: "A reading that is normal in one step can be abnormal in the next, so the limits change at every step boundary. A step that does not use a parameter marks it idle and keeps a sensible window for it."
+    whyItMatters: "A reading that is normal in one step can be abnormal in the next, so the limits change at every step boundary. A step that does not use a parameter marks it idle and keeps a sensible window for it. A tool runs its recipes one after another, so the chart names the recipe where it changes."
   - term: "silane"
     expansion: "silane gas (SiH4)"
     plainDefinition: "A silicon-bearing process gas used to deposit thin films on wafers."

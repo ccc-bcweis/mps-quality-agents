@@ -13,7 +13,7 @@ import type { FleetSensor } from "../fleet/sensors";
 import { linkedForTool, orderedLinked, type LinkedEntry } from "../fleet/linkedRecords";
 import { AttachmentViewer } from "../components/AttachmentViewer";
 import { ruleLabel } from "../labels";
-import { SpcChart, axisNumber } from "../components/SpcChart";
+import { SpcChart, axisNumber, newestStep } from "../components/SpcChart";
 import { Chip } from "../components/Chip";
 import { Explain } from "../components/Explain";
 import { PlainMetrics } from "../components/PlainMetrics";
@@ -27,7 +27,7 @@ import { statusTone, WAITING_FOR_READINGS } from "../fleet/catalog";
 import { sensorsForTool } from "../fleet/sensors";
 import { pointLabel } from "../fleet/schematic";
 import { parameterLabel } from "../labels";
-import { chartSeriesKey, currentStep, liveReadingMap, overlayWindows, pointLimits, recipeLabel, seriesLimits, seriesPoints, toolTile } from "../live/overlay";
+import { chartSeriesKey, liveReadingMap, overlayWindows, pointLimits, recipeLabel, seriesLimits, seriesPoints, toolTile } from "../live/overlay";
 import { useLiveResource, useRecordPatches, useToolLive } from "../live/useLive";
 import { clearAlert, upsertRecord, type AlertCleared, type ToolLiveDelta } from "../live/stream";
 import { latestManual, manualMarker, manualTile, seriesFor } from "../live/manual";
@@ -150,7 +150,8 @@ export function ToolPage() {
   const livePoints = seriesPoints(live, seriesParameter, seriesKey.chamberId);
   const serverLimits = seriesLimits(live, seriesParameter, seriesKey.chamberId);
   const stepLimits = pointLimits(live, seriesParameter, seriesKey.chamberId);
-  const nowStep = currentStep(live, seriesParameter, seriesKey.chamberId);
+  // The header names the step of the newest charted reading: the same per-reading limits the chart draws (#376).
+  const nowStep = newestStep(stepLimits);
   const pointCount = livePoints?.length ?? 0;
   const chartLabel = selected ? pointLabel(selected.schematicAnchor) : parameterLabel(seriesParameter);
   const chartUnit = selected?.unit ?? "";
