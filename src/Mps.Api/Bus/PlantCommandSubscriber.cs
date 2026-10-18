@@ -3,6 +3,7 @@
 using Mps.Api.Demo;
 using Mps.Api.Live;
 using Mps.Bus;
+using Mps.Domain.Events;
 using Mps.Simulator.Scenarios;
 
 namespace Mps.Api.Bus;

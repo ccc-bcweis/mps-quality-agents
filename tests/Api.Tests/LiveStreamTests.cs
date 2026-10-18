@@ -13,6 +13,7 @@ using Mps.Api.Demo;
 using Mps.Api.Hubs;
 using Mps.Api.Live;
 using Mps.Bus;
+using Mps.Domain.Events;
 
 namespace Mps.Api.Tests;
 

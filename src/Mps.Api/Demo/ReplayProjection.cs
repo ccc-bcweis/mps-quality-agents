@@ -6,6 +6,7 @@ using Mps.Api.Bus;
 using Mps.Api.Http;
 using Mps.Application.Bus;
 using Mps.Bus;
+using Mps.Domain.Events;
 
 namespace Mps.Api.Demo;
 
@@ -65,7 +66,7 @@ public static class ReplayProjection
         var alerts = new List<AlertResponse>();
         foreach (var message in messages)
         {
-            if (!string.Equals(message.Type, LifecycleTypes.AlertRaised, StringComparison.Ordinal)
+            if (!string.Equals(message.Type, EventTypes.AlertRaised, StringComparison.Ordinal)
                 || message.Payload.ValueKind != JsonValueKind.Object
                 || !message.Payload.TryGetProperty("body", out var body)
                 || body.ValueKind != JsonValueKind.Object)

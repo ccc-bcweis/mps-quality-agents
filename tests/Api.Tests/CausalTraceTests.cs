@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Mps.Api.Bus;
 using Mps.Application.Bus;
 using Mps.Application.Spc;
+using Mps.Domain.Events;
 using Mps.Domain.Identity;
 using Mps.Domain.Telemetry;
 
@@ -52,12 +53,12 @@ public sealed class CausalTraceTests
         var store = scope.ServiceProvider.GetRequiredService<SqliteEventStore>();
         var sink = scope.ServiceProvider.GetRequiredService<ILifecycleEventSink>();
         var spc = scope.ServiceProvider.GetRequiredService<SpcAlertService>();
-        var fault = store.FindFirst(correlationId, LifecycleTypes.FaultInject);
+        var fault = store.FindFirst(correlationId, EventTypes.FaultInject);
         fault.Should().NotBeNull();
         var now = DateTimeOffset.UtcNow;
         var readingId = await sink.PublishAsync(
             new LifecycleEvent(
-                LifecycleTypes.TelemetryReading,
+                EventTypes.TelemetryReading,
                 correlationId,
                 fault!.EventId,
                 fault.EventId,
@@ -106,15 +107,15 @@ public sealed class CausalTraceTests
         trace.GetProperty("focusEventId").GetString().Should().Be(fault.EventId);
         trace.GetProperty("rootEventId").GetString().Should().Be(fault.EventId);
         trace.GetProperty("ancestors").GetArrayLength().Should().Be(0);
-        trace.GetProperty("tree").GetProperty("type").GetString().Should().Be(LifecycleTypes.FaultInject);
+        trace.GetProperty("tree").GetProperty("type").GetString().Should().Be(EventTypes.FaultInject);
         types.Should().Contain(
         [
-            LifecycleTypes.TelemetryReading,
-            LifecycleTypes.AlertRaised,
-            LifecycleTypes.TicketCreated,
-            LifecycleTypes.InvestigationStep,
-            LifecycleTypes.ApprovalGranted,
-            LifecycleTypes.CapaCreated,
+            EventTypes.TelemetryReading,
+            EventTypes.AlertRaised,
+            EventTypes.TicketCreated,
+            EventTypes.InvestigationStep,
+            EventTypes.ApprovalGranted,
+            EventTypes.CapaCreated,
         ]);
         var storedReading = store.Find(readingId);
         storedReading.Should().NotBeNull();

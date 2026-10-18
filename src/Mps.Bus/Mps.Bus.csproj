@@ -2,4 +2,7 @@
   <PropertyGroup>
     <RootNamespace>Mps.Bus</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Mps.Domain\Mps.Domain.csproj" />
+  </ItemGroup>
 </Project>

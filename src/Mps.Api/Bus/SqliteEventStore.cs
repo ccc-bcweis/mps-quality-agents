@@ -5,6 +5,7 @@ using System.Globalization;
 using Microsoft.Data.Sqlite;
 
 using Mps.Bus;
+using Mps.Domain.Events;
 
 namespace Mps.Api.Bus;
 

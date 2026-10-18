@@ -6,6 +6,7 @@ using Mps.Application.Metrics;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
 using Mps.Application.Workflow;
+using Mps.Domain.Events;
 using Mps.Domain.Evidence;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
@@ -304,7 +305,7 @@ public sealed class InvestigationService : IInvestigationService
 
             var eventId = await _events.PublishAsync(
                 new LifecycleEvent(
-                    LifecycleTypes.InvestigationStep,
+                    EventTypes.InvestigationStep,
                     snapshot.CorrelationId,
                     cause,
                     cause,
@@ -337,7 +338,7 @@ public sealed class InvestigationService : IInvestigationService
             ?? _hints?.FindStep(snapshot.CorrelationId, "alert");
         var eventId = await _events.PublishAsync(
             new LifecycleEvent(
-                LifecycleTypes.InvestigationStart,
+                EventTypes.InvestigationStart,
                 snapshot.CorrelationId,
                 parent,
                 parent,

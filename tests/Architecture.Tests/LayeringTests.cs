@@ -54,10 +54,11 @@ public sealed class LayeringTests
     }
 
     [Fact]
-    public void BusDependsOnNothingElse()
+    public void BusDependsOnlyOnDomain()
     {
-        AssertDoesNotDependOn(Bus, AllExcept("Mps.Bus"));
-        AssertDoesNotDependOn(Bus, "Mps.Domain", "Mps.Application", "Mps.Api");
+        // The bus reads the event names from Mps.Domain (one spelling for bus, application and API); nothing else.
+        AssertDoesNotDependOn(Bus, AllExcept("Mps.Bus", "Mps.Domain"));
+        AssertDoesNotDependOn(Bus, "Mps.Application", "Mps.Api");
     }
 
     [Fact]

@@ -8,6 +8,7 @@ using Mps.Application.Evidence;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
 using Mps.Domain.Capa;
+using Mps.Domain.Events;
 using Mps.Domain.Evidence;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
@@ -117,7 +118,7 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
             ?? _cascade.FaultEventId(toolId, alert.Parameter)
             ?? CommandAmbient.EventId;
         return PublishAsync(
-            LifecycleTypes.AlertRaised,
+            EventTypes.AlertRaised,
             alert.CorrelationId,
             parent,
             "spc",
@@ -147,7 +148,7 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
             ?? _cascade.FindStep(correlation, "alert")
             ?? CommandAmbient.EventId;
         await PublishAsync(
-            LifecycleTypes.TicketCreated,
+            EventTypes.TicketCreated,
             correlation,
             parent,
             "intake",
@@ -180,7 +181,7 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
             .Select(ticket => new { signal = "ticketChanged", body = ContractMapper.ToResponse(ticket, incident.Stage) })
             .ToArray();
         await PublishAsync(
-            LifecycleTypes.IncidentChanged,
+            EventTypes.IncidentChanged,
             incident.CorrelationId,
             parent,
             "intake",
@@ -212,7 +213,7 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
         }
 
         await PublishAsync(
-            LifecycleTypes.InvestigationChanged,
+            EventTypes.InvestigationChanged,
             snapshot.CorrelationId,
             _cascade.FindStep(snapshot.CorrelationId, "investigation") ?? CommandAmbient.EventId,
             "investigation",
@@ -252,7 +253,7 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
             ? _cascade.FindStep(correlation, "approval") ?? CommandAmbient.EventId
             : CommandAmbient.EventId ?? _cascade.FindStep(correlation, "capa");
         await PublishAsync(
-            created ? LifecycleTypes.CapaCreated : LifecycleTypes.CapaAdvanced,
+            created ? EventTypes.CapaCreated : EventTypes.CapaAdvanced,
             correlation,
             parent,
             "capa",
@@ -276,7 +277,7 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
         }
 
         await PublishAsync(
-            LifecycleTypes.FaultInject,
+            EventTypes.FaultInject,
             correlationId,
             CommandAmbient.EventId,
             "injector",
@@ -302,7 +303,7 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
             ?? _cascade.FindStep(snapshot.CorrelationId, "alert");
         var started = await _events.PublishAsync(
             new LifecycleEvent(
-                LifecycleTypes.InvestigationStep,
+                EventTypes.InvestigationStep,
                 snapshot.CorrelationId,
                 parent,
                 parent,
@@ -322,7 +323,7 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
             var causation = source ?? started;
             lastEvidence = await _events.PublishAsync(
                 new LifecycleEvent(
-                    LifecycleTypes.InvestigationStep,
+                    EventTypes.InvestigationStep,
                     snapshot.CorrelationId,
                     causation,
                     started,
@@ -349,7 +350,7 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
         {
             var recommendation = await _events.PublishAsync(
                 new LifecycleEvent(
-                    LifecycleTypes.InvestigationStep,
+                    EventTypes.InvestigationStep,
                     snapshot.CorrelationId,
                     lastEvidence ?? started,
                     lastEvidence ?? started,

@@ -12,6 +12,7 @@ using Mps.Application.Writes;
 using Mps.Domain;
 using Mps.Domain.Approval;
 using Mps.Domain.Capa;
+using Mps.Domain.Events;
 using Mps.Domain.Evidence;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
@@ -442,7 +443,7 @@ public sealed class HumanDecisionService : IHumanDecisionService
         var toolId = stored.Incident.ToolId.ToString();
         var commandId = await _events.PublishAsync(
             new LifecycleEvent(
-                LifecycleTypes.ApprovalGrant,
+                EventTypes.ApprovalGrant,
                 correlation,
                 recommendation,
                 recommendation,
@@ -455,7 +456,7 @@ public sealed class HumanDecisionService : IHumanDecisionService
             cancellationToken).ConfigureAwait(false);
         var grantedId = await _events.PublishAsync(
             new LifecycleEvent(
-                LifecycleTypes.ApprovalGranted,
+                EventTypes.ApprovalGranted,
                 correlation,
                 commandId,
                 commandId,

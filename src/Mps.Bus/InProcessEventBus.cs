@@ -5,6 +5,8 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Channels;
 
+using Mps.Domain.Events;
+
 namespace Mps.Bus;
 
 /// <summary>

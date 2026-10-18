@@ -6,6 +6,7 @@ using Mps.Application.Metadata;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
 using Mps.Application.Writes;
+using Mps.Domain.Events;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
 
@@ -171,7 +172,7 @@ public sealed class IntakeService : IIntakeService
 
         var eventId = await _events.PublishAsync(
             new LifecycleEvent(
-                LifecycleTypes.OperatorReport,
+                EventTypes.OperatorReport,
                 correlationId,
                 null,
                 null,
@@ -201,7 +202,7 @@ public sealed class IntakeService : IIntakeService
         var parent = _hints?.FindStep(correlationId, "alert") ?? CommandAmbient.EventId;
         var eventId = await _events.PublishAsync(
             new LifecycleEvent(
-                LifecycleTypes.RuleMatched,
+                EventTypes.RuleMatched,
                 correlationId,
                 parent,
                 parent,

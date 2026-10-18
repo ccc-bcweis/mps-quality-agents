@@ -19,6 +19,7 @@ using Mps.Application.Metrics;
 using Mps.Application.Persistence;
 using Mps.Application.Printouts;
 using Mps.Domain.Capa;
+using Mps.Domain.Events;
 using Mps.Domain.Hypotheses;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
@@ -154,7 +155,7 @@ public static class QualityEndpoints
                 throw new IntakeValidationException("Incident body is required.");
             }
 
-            commands.Ensure(LifecycleTypes.OperatorReport, Caller(http, configuration));
+            commands.Ensure(EventTypes.OperatorReport, Caller(http, configuration));
             var result = await intake.AcceptAsync(
                 new IntakeSubmission(
                     IncidentChannel.OperatorReport,
@@ -216,7 +217,7 @@ public static class QualityEndpoints
             IConfiguration configuration,
             CancellationToken cancellationToken) =>
         {
-            commands.Ensure(LifecycleTypes.InvestigationStart, Caller(http, configuration));
+            commands.Ensure(EventTypes.InvestigationStart, Caller(http, configuration));
             var snapshot = await investigations.StartAsync(new IncidentId(incidentId), cancellationToken).ConfigureAwait(false);
             var narrative = await narratives.GetAsync(snapshot.Id, cancellationToken).ConfigureAwait(false);
             var site = await SiteForIncidentAsync(incidents, snapshot.IncidentId, cancellationToken).ConfigureAwait(false);
@@ -279,7 +280,7 @@ public static class QualityEndpoints
             }
 
             var approvalCaller = Caller(http, configuration);
-            commands.Ensure(LifecycleTypes.ApprovalGrant, approvalCaller);
+            commands.Ensure(EventTypes.ApprovalGrant, approvalCaller);
             var id = new InvestigationId(investigationId);
 
             // One role: the approver is always the signed-in user in the hosted demo. Local runs may name one.
@@ -350,14 +351,14 @@ public static class QualityEndpoints
                 throw new IntakeValidationException("CAPA stage is required.");
             }
 
-            commands.Ensure(LifecycleTypes.CapaAdvance, Caller(http, configuration));
+            commands.Ensure(EventTypes.CapaAdvance, Caller(http, configuration));
             var current = await capas.GetAsync(new CapaId(capaId), cancellationToken).ConfigureAwait(false);
             var incident = await incidents.GetAsync(current.Capa.IncidentId, cancellationToken).ConfigureAwait(false);
             var correlation = incident?.Incident.CorrelationId ?? "capa-" + capaId.ToString("N");
             var toolId = incident?.Incident.ToolId.ToString();
             var parent = commands.Cascade.FindStep(correlation, "capa") ?? commands.Cascade.FindStep(correlation, "approval");
             var stored = await commands.RunAsync(
-                LifecycleTypes.CapaAdvance,
+                EventTypes.CapaAdvance,
                 correlation,
                 "quality",
                 toolId,
@@ -417,7 +418,7 @@ public static class QualityEndpoints
                 }
             }
 
-            commands.Ensure(hard ? LifecycleTypes.ResetHard : LifecycleTypes.ResetSoft, caller);
+            commands.Ensure(hard ? EventTypes.ResetHard : EventTypes.ResetSoft, caller);
             var baseline = await reset.ResetAsync(hard, cancellationToken).ConfigureAwait(false);
             return Results.Ok(baseline);
         });
@@ -543,7 +544,7 @@ public static class QualityEndpoints
                 throw new IntakeValidationException("Printout body is required.");
             }
 
-            commands.Ensure(LifecycleTypes.DocumentUpload, Caller(http, configuration));
+            commands.Ensure(EventTypes.DocumentUpload, Caller(http, configuration));
 
             if (body.ObservedAt is null || body.Value is null || body.SpecMinimum is null || body.SpecMaximum is null)
             {
@@ -638,7 +639,7 @@ public static class QualityEndpoints
             IConfiguration configuration,
             CancellationToken cancellationToken) =>
         {
-            commands.Ensure(LifecycleTypes.ScenarioStart, Caller(http, configuration));
+            commands.Ensure(EventTypes.ScenarioStart, Caller(http, configuration));
             var run = await scenarios.RunAsync(scenarioId, cancellationToken).ConfigureAwait(false);
             if (run is null)
             {
@@ -656,11 +657,11 @@ public static class QualityEndpoints
             IConfiguration configuration,
             CancellationToken cancellationToken) =>
         {
-            commands.Ensure(LifecycleTypes.ScenarioStart, Caller(http, configuration));
+            commands.Ensure(EventTypes.ScenarioStart, Caller(http, configuration));
             var removed = plant.ClearAll();
             await events.PublishAsync(
                 new LifecycleEvent(
-                    LifecycleTypes.ScenarioStopped,
+                    EventTypes.ScenarioStopped,
                     "stop-" + Guid.NewGuid().ToString("N"),
                     null,
                     null,
@@ -686,7 +687,7 @@ public static class QualityEndpoints
                 throw new IntakeValidationException("Fault body is required.");
             }
 
-            commands.Ensure(LifecycleTypes.FaultInject, Caller(http, configuration));
+            commands.Ensure(EventTypes.FaultInject, Caller(http, configuration));
 
             if (body.RootCauseCategory is null)
             {

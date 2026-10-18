@@ -2,6 +2,7 @@
 
 using Mps.Application.Bus;
 using Mps.Bus;
+using Mps.Domain.Events;
 
 namespace Mps.Api.Bus;
 
