@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://contracts.meridian-precision.example/metadata/business-rules.schema.json",
   "title": "BusinessRulesFile",
+  "description": "Ordered business rules, loaded at startup. The first match wins, lowest order first. whenPlain, thenPlain, and why are the sentences on Rules and Process. when and actions are the machine form.",
   "type": "object",
   "additionalProperties": false,
   "required": ["rules"],

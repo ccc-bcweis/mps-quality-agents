@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://contracts.meridian-precision.example/metadata/lines.schema.json",
   "title": "LinesMetadataFile",
+  "description": "Production lines. The end-to-end line orders the step lines: photoresist strip, clean, thin-film deposition, then wafer etch. A tool sits on a step line or attaches directly to manufacturing and has no line.",
   "type": "object",
   "additionalProperties": false,
   "required": ["lines"],
@@ -19,6 +20,7 @@
           "name": { "type": "string", "minLength": 1 },
           "lineType": {
             "type": "string",
+            "description": "end-to-end, or one step line: photoresist strip, clean, thin-film deposition, or wafer etch.",
             "enum": ["end-to-end", "photoresist-strip", "clean", "thin-film-deposition", "wafer-etch"]
           },
           "sequence": { "type": "integer", "minimum": 0 },

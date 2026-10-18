@@ -1,4 +1,7 @@
 # Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Catalog bounds, not chart control limits. lcl and ucl are the family envelope (the sensor physical floor and ceiling).
+# alertLow, alertHigh, and nominal sit inside that envelope. The chart and the rules use the recipe step window in
+# data/fleet, clamped to this physical range.
 tools:
   - id: D-01
     name: Deposition tool in bay one

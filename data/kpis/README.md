@@ -16,6 +16,6 @@ Each tool draws five values from a seeded generator keyed by `kpi|<tool id>`. Va
 
 The fleet row sums run rate, operating hours, failures, and repair hours. Uptime is total operating hours divided by 2160 times the tool count. First-pass yield is weighted by run rate. MTBF is total operating hours divided by total failures. MTTR is total repair hours divided by total failures. Fleet OEE uses the same product as a tool, with fleet uptime, the average tool run rate, and the weighted first-pass yield.
 
-The live sensor limits in the fleet files are a separate spec band. They are not these measured figures.
+Recipe-step windows and sensor physical ranges in the fleet files are separate from these measured figures. Chart limits come from the recipe step, not from these KPIs.
 
 Regenerate by running the simulator test with `MPS_EXPORT_KPI` set to `1`.

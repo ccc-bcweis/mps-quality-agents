@@ -1,5 +1,7 @@
 # Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 # Control-chart settings, loaded at startup. Sigma is the recipe window's noise sigma (window width / 6).
+# Control limits are the step center plus or minus controlLimitSigma, then clamped to the sensor's physical range.
+# They follow the recipe step of each reading, including during a fault. They are not statistics of the telemetry.
 # Every number here is shown on Rules & Process and used in the rule sentences; no copy lives in code.
 controlLimitSigma: 3          # control limits: centre plus or minus this many sigma
 watchSigma: 2                 # live tile turns amber (watch) past this many sigma from nominal
@@ -11,7 +13,7 @@ westernElectric:
   rule4: { count: 8 }                        # 8 in a row on one side
 nelsonRising: { count: 6 }                   # 6 in a row strictly rising
 limitCheck:
-  recentReadings: 20          # every live series: a limit check (controlLimitSigma or the recipe window) looks at this many recent readings
+  recentReadings: 20          # every live series: a limit check looks at this many recent readings against the recipe-step window, clamped to the physical range
 clearing:
   readings: 8                 # an alert clears after this many readings in a row ...
   sigma: 2                    # ... inside plus or minus this many sigma of the centre

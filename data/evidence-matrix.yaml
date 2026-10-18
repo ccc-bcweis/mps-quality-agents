@@ -1,5 +1,8 @@
 # Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 # Root-cause class to signal matrix. supports and rulesOut use the category keys. The sentences stay in plain language.
+# processDrift includes a recipe setpoint edit with no engineering change order (category-evidence rule
+# recipeSetpointEditWithoutEco). Supplier notices are looked up only for material lots that tool used.
+# A tool with no lots gets none.
 classes:
   - category: engineeringChange
     whyItMatters: A released part change can move the wafer even when the recipe setpoints stayed put.
