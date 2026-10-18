@@ -164,29 +164,40 @@ export function SpcChart({
           {constant ? <ReferenceLine y={constant.ucl3} stroke={mpsColor.alarm} strokeDasharray="4 3" label={{ value: `UCL ${limitText(zone[2])}σ`, fill: mpsColor.alarm, fontSize: 10, position: "right" }} /> : null}
           {constant ? <ReferenceLine y={constant.lcl3} stroke={mpsColor.alarm} strokeDasharray="4 3" /> : null}
           {constant ? <ReferenceLine y={constant.mean} stroke={mpsColor.muted} label={{ value: "mean", fill: mpsColor.muted, fontSize: 10, position: "right" }} /> : null}
-          {/* One thin divider at every recipe step change, and the step name where it fits (#366). */}
+          {/* A divider at every recipe step change (solid where the recipe changes) and a label that never disappears (#366, #376). */}
           {runs
             .filter((run) => run.start > 0)
             .map((run) => (
               <ReferenceLine
                 key={`divider-${run.start}`}
-                className="spc-step-divider"
+                className={run.recipeChange ? "spc-step-divider spc-recipe-divider" : "spc-step-divider"}
                 x={points[run.start].index}
                 stroke={mpsColor.secondary}
-                strokeOpacity={0.5}
-                strokeDasharray="2 3"
-                label={run.fits ? { value: run.name, position: "insideTopLeft", fill: mpsColor.muted, fontSize: 9 } : undefined}
+                strokeOpacity={run.recipeChange ? 0.9 : 0.5}
+                strokeDasharray={run.recipeChange ? undefined : "2 3"}
+                label={run.label ? { value: run.label, position: "insideTopLeft", fill: mpsColor.muted, fontSize: 9 } : undefined}
               />
             ))}
           {runs
-            .filter((run) => run.start === 0 && run.fits)
+            .filter((run) => run.start === 0 && run.label)
             .map((run) => (
               <ReferenceLine
                 key="step-first"
                 className="spc-step-label"
                 x={points[0].index}
                 stroke="none"
-                label={{ value: run.name, position: "insideTopLeft", fill: mpsColor.muted, fontSize: 9 }}
+                label={{ value: run.label, position: "insideTopLeft", fill: mpsColor.muted, fontSize: 9 }}
+              />
+            ))}
+          {runs
+            .filter((run) => run.recipeLabel)
+            .map((run) => (
+              <ReferenceLine
+                key={`recipe-${run.start}`}
+                className="spc-recipe-label"
+                x={points[run.start].index}
+                stroke="none"
+                label={{ value: run.recipeLabel, position: "insideBottomLeft", fill: mpsColor.secondary, fontSize: 9 }}
               />
             ))}
           {stepped ? <Area type="stepAfter" dataKey="zone3" name={`σ${limitText(zone[2])}`} fill={mpsColor.alarm} fillOpacity={0.08} stroke="none" isAnimationActive={false} /> : null}
@@ -216,7 +227,7 @@ export function SpcChart({
         <span>σ{limitText(zone[2])} <i className="inline-block h-2 w-3 bg-mps-alarm" /></span>
         {stepped ? (
           <span data-limits="per-step">
-            Limits change with each <Term id="recipe step" spellOut={false} />.{" "}
+            Limits change with each <Term id="recipe step" spellOut={false} />. A solid line marks where the next recipe starts; its name is at the bottom.{" "}
             <Link className={btnSm} to={`/glossary?q=${encodeURIComponent("recipe step")}`}>
               What is a recipe step?
             </Link>
@@ -253,18 +264,52 @@ function stepKey(step: StepLimit): string {
 const PLOT_WIDTH_PX = 640;
 const LABEL_CHAR_PX = 5.5;
 
-/** The runs of points read in one recipe step: where each starts, its name, and whether the name fits above it. */
-export function stepRuns(steps: StepLimit[], points: SpcPoint[]): { start: number; length: number; name: string; fits: boolean }[] {
-  const runs: { start: number; length: number; name: string; fits: boolean }[] = [];
+/** One recipe step on the chart: where it starts, how many readings it covers, and the labels drawn for it. */
+export type StepRun = { start: number; length: number; name: string; label: string; recipeChange: boolean; recipeLabel: string; fits: boolean };
+
+/** The longest candidate that fits in room characters, else the last one cut with an ellipsis, else nothing. */
+function fitLabel(candidates: string[], room: number): { text: string; fits: boolean } {
+  const texts = candidates.filter((text) => text.length > 0);
+  const whole = texts.find((text) => text.length <= room);
+  if (whole !== undefined) return { text: whole, fits: true };
+  const shortest = texts[texts.length - 1] ?? "";
+  return { text: room >= 3 && shortest.length > 0 ? `${shortest.slice(0, room - 1)}…` : "", fits: false };
+}
+
+/**
+ * The runs of points read in one recipe step. One tool runs several recipes in turn and their steps share names, so
+ * where the recipe changes (and at the first run) the run also carries the recipe's name, fitted to the width of the
+ * whole recipe (#376). A step label that does not fit is shortened, never dropped: the step, then the step without
+ * "(idle)", then cut with an ellipsis. Only a run too narrow for three characters has no label; the hover names it.
+ */
+export function stepRuns(steps: StepLimit[], points: SpcPoint[]): StepRun[] {
+  const runs: StepRun[] = [];
+  const meta: { recipe?: string; step?: string; idle: boolean }[] = [];
   for (let i = 0; i < steps.length && i < points.length; i += 1) {
     if (i === 0 || stepKey(steps[i]) !== stepKey(steps[i - 1])) {
+      const recipeChange = i === 0 || (steps[i].recipe ?? "") !== (steps[i - 1].recipe ?? "");
       const name = [steps[i].step, steps[i].idle ? "(idle)" : ""].filter(Boolean).join(" ");
-      runs.push({ start: i, length: 0, name, fits: false });
+      runs.push({ start: i, length: 0, name, label: "", recipeChange, recipeLabel: "", fits: false });
+      meta.push({ recipe: steps[i].recipe, step: steps[i].step, idle: steps[i].idle ?? false });
     }
     runs[runs.length - 1].length += 1;
   }
-  for (const run of runs) run.fits = run.name.length > 0 && (run.length / Math.max(1, points.length)) * PLOT_WIDTH_PX >= run.name.length * LABEL_CHAR_PX;
+  const room = (length: number) => Math.floor(((length / Math.max(1, points.length)) * PLOT_WIDTH_PX) / LABEL_CHAR_PX);
+  runs.forEach((run, r) => {
+    const step = fitLabel([run.name, meta[r].idle ? (meta[r].step ?? "") : ""], room(run.length));
+    run.label = step.text;
+    run.fits = step.fits;
+    if (!run.recipeChange || !meta[r].recipe) return;
+    let span = 0;
+    for (let next = r; next < runs.length && (next === r || !runs[next].recipeChange); next += 1) span += runs[next].length;
+    run.recipeLabel = fitLabel([meta[r].recipe ?? ""], room(span)).text;
+  });
   return runs;
+}
+
+/** The recipe step of the newest reading, from the same per-reading limits the chart draws (for the chart header). */
+export function newestStep(steps: StepLimit[] | undefined): StepLimit | undefined {
+  return steps && steps.length > 0 ? steps[steps.length - 1] : undefined;
 }
 
 /** The fields of a chart row the hover reads. */

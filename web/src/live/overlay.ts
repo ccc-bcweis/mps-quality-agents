@@ -120,14 +120,6 @@ export function pointLimits(live: ToolLive | null, parameter: string, chamberId?
   });
 }
 
-/** The recipe and step the newest reading was taken in, for the chart header. Undefined without segments. */
-export function currentStep(live: ToolLive | null, parameter: string, chamberId?: string): { recipe?: string; step?: string; idle: boolean } | undefined {
-  const match = chartSeries(live, parameter, chamberId);
-  const last = match?.segments?.[match.segments.length - 1];
-  if (!last) return undefined;
-  return { recipe: last.recipe ?? undefined, step: last.step ?? undefined, idle: last.idle ?? false };
-}
-
 /** The center and sigma the rules engine uses for this series, when the server sent them. */
 export function seriesLimits(
   live: ToolLive | null,
