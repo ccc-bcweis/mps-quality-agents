@@ -60,6 +60,7 @@ These fail the build on a pattern rather than a behavior.
 |---|---|
 | `NoHardcodedLimitsTests` (.NET) and `noHardcodedLimits.test.ts` (web) | A limit, threshold, count, timing, sigma multiplier, rule sentence with its numbers, second label map, parameter name or plant/tool prefix is written as a literal in code instead of read from `data/` (legitimate constants are listed with a reason in `tools/guards/hardcoded-allowlist.txt`; a stale entry fails) |
 | `ConsoleCatalogTests` (.NET) | The web test fixtures (`web/src/test/catalog.fixture.json`, `settings.fixture.json`) differ from what `/api/metadata/catalog` and `/api/metadata/settings` serve |
+| `SimulationSettingsTests`, `InvestigationTuningTests` (.NET) | `data/metadata/simulation.yaml` or the `shapeClassifier`/`resolution` sections of `investigation.yaml` change the simulator or classifier values by accident, or a missing setting loads silently |
 | `GlossaryTests` | An acronym or unit in `docs/` or `data/` has no glossary entry |
 | `LayeringTests` | A layer references one it must not (NetArchTest) |
 | `DeployShapeTests` | The image, compose file, Bicep or deploy workflow loses a required setting, or gains a key |

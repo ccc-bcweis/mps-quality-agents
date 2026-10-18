@@ -9,12 +9,13 @@ using Mps.Simulator.Telemetry;
 namespace Mps.Simulator.Sites;
 
 /// <summary>
-/// Compares one tool family across plants. Northwater is the reference. A plant is flagged when its
-/// sample mean sits more than two reference spreads away, or its spread is more than one and a half times wider.
+/// Compares one tool family across plants. The unprefixed plant in sites.yaml is the reference. A plant is flagged when its
+/// sample mean sits more than the watch level of reference spreads away, or its spread is wider by more than the
+/// spread ratio in data/metadata/simulation.yaml.
 /// </summary>
 public static class SiteComparison
 {
-    public const double SpreadRatio = 1.5d;
+    public static double SpreadRatio => SimulationSettings.Shared.SiteComparison.SpreadRatio;
 
     /// <param name="controlSigma">Control-limit width in sigma, from data/metadata/spc-rules.yaml.</param>
     /// <param name="apartSigma">How many sigma apart a site mean must be to be flagged (the watch level).</param>

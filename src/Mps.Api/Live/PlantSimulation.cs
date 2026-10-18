@@ -123,7 +123,7 @@ public sealed class PlantSimulation : Mps.Application.Lifecycle.IPlantFaultContr
     /// Real time keeps timestamps honest but would make a two-hour ramp take two hours. Faults injected in real time
     /// therefore develop <see cref="RealTimeFaultPace"/> x speed faster (period and ramp shortened). Readings still land at now().
     /// </summary>
-    public const double RealTimeFaultPace = 6d;
+    public static double RealTimeFaultPace => Mps.Simulator.SimulationSettings.Shared.RealTimeFaultPace;
 
     public double FaultPace => _options.RealTime ? RealTimeFaultPace * Math.Max(1, Speed) : 1d;
 

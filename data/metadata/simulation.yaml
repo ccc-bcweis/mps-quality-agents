@@ -1,0 +1,14 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# How the fictional plant generates readings, loaded at startup. These shape the simulated data, not the rules it is judged by.
+recipeSchedule:
+  stepSeconds: 120            # each recipe step lasts this many simulated seconds
+  waferSeconds: 300           # one wafer (run id) every this many simulated seconds
+  wafersPerLot: 25            # wafers per lot (lot id)
+noise:
+  phi: 0.82                   # AR(1) memory of the baseline noise
+  scale: 0.12                 # baseline noise as a share of the window sigma
+  excursionChance: 4.0e-7     # chance one kept chamber reading is a lone excursion (about 3 to 4 per wall-clock hour across 32 tools)
+  excursionSigma: 2.4         # size of a lone excursion in sigma: past the watch line, inside the control limit and the spec
+realTimeFaultPace: 6          # in real time a fault develops this many times faster per 1x of speed (period and ramp shortened)
+siteComparison:
+  spreadRatio: 1.5            # a plant is flagged when its spread is more than this many times the reference plant's

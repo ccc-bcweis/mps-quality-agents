@@ -34,25 +34,6 @@ src/Mps.Simulator/Kpi/FleetKpi.cs | PlannedHours = 2160 | KPI seed: planned hour
 src/Mps.Simulator/Scenarios/ScriptedScenarioCatalog.cs | SampleSeconds = 30 | scripted scenario sample spacing
 src/Mps.Simulator/Sites/SitePlantGenerator.cs | SampleCount = 128 | generated samples per site series
 #
-# P4, moving to data in #288 (agent and simulator thresholds). Values unchanged until then.
-src/Mps.Agents/Impact/SignalShapeClassifier.cs | StepShare = 0.7d | #288 shape classifier threshold
-src/Mps.Agents/Impact/SignalShapeClassifier.cs | FlatShare = 0.2d | #288 shape classifier threshold
-src/Mps.Agents/Impact/SignalShapeClassifier.cs | RampShare = 0.5d | #288 shape classifier threshold
-src/Mps.Agents/Impact/SignalShapeClassifier.cs | SameDirectionShare = 0.75d | #288 shape classifier threshold
-src/Mps.Agents/Impact/SignalShapeClassifier.cs | NoisyStepSigmas = 3d | #288 shape classifier threshold
-src/Mps.Agents/Impact/SignalShapeClassifier.cs | NoisyStepFitShare = 0.6d | #288 shape classifier threshold
-src/Mps.Agents/Impact/SignalShapeClassifier.cs | NoisyStepSideDrift = 0.25d | #288 shape classifier threshold
-src/Mps.Agents/Impact/SignalShapeClassifier.cs | NoisyStepMinSide = 6 | #288 shape classifier threshold
-src/Mps.Agents/Impact/SignalShapeClassifier.cs | NoisyStepSmoothing = 5 | #288 shape classifier threshold
-src/Mps.Agents/Impact/SignalShapeClassifier.cs | NoisyStepEdgeReadings = 2 * NoisyStepSmoothing | #288 shape classifier threshold
-src/Mps.Agents/Resolution/ResolutionAgent.cs | MaxModelCalls = 2 | #288 model call budget per resolution
-src/Mps.Orchestration/MafInvestigationWorkflow.cs | ShapeRetries = 1 | #288 shape/category retry count
-src/Mps.Api/Live/PlantSimulation.cs | RealTimeFaultPace = 6d | #288 fault pace at 1x (Bryan kept it; to config)
-src/Mps.Simulator/Sites/SiteComparison.cs | SpreadRatio = 1.5d | #288 site discrepancy threshold
-src/Mps.Simulator/Telemetry/RecipeSchedule.cs | StepSeconds = 120 | #288 recipe step timing to fleet YAML
-src/Mps.Simulator/Telemetry/RecipeSchedule.cs | WaferSeconds = 300 | #288 recipe wafer timing to fleet YAML
-src/Mps.Simulator/Telemetry/TelemetryMath.cs | ExcursionSigma = 2.4d | #288 simulator excursion size
-#
 # Web layout and copy.
 web/src/live/stream.ts | LIVE_WINDOW_POINTS = 600 | chart window length in points, matching the API live window; a display size, not a process limit
 web/src/fleet/schematic.ts | CHAMBER_MIN_PX = 620 | layout width in pixels, not a process limit

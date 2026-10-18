@@ -26,7 +26,7 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
     public const string ApprovalPortId = "human-approval";
 
     /// <summary>Retries the resolution allows when its shape or category disagrees with the evidence.</summary>
-    public const int ShapeRetries = 1;
+    public static int ShapeRetries => Mps.Agents.Investigation.InvestigationTuning.Shared.Resolution.ShapeRetries;
 
     private readonly IIncidentSource _incidents;
     private readonly IInvestigationAgent _investigation;

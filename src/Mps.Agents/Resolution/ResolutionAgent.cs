@@ -13,7 +13,8 @@ namespace Mps.Agents.Resolution;
 /// </summary>
 public sealed class ResolutionAgent : IResolutionAgent
 {
-    public const int MaxModelCalls = 2;
+    /// <summary>Model calls per resolution, JSON repair included (investigation.yaml resolution.maxModelCalls).</summary>
+    public static int MaxModelCalls => Mps.Agents.Investigation.InvestigationTuning.Shared.Resolution.MaxModelCalls;
 
     private readonly Microsoft.Agents.AI.ChatClientAgent _agent;
     private readonly PromptCatalog _prompts;

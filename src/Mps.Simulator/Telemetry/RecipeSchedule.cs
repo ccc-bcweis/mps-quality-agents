@@ -9,11 +9,14 @@ namespace Mps.Simulator.Telemetry;
 /// </summary>
 public static class RecipeSchedule
 {
-    public const int StepSeconds = 120;
+    /// <summary>Seconds per recipe step (data/metadata/simulation.yaml).</summary>
+    public static int StepSeconds => SimulationSettings.Shared.RecipeSchedule.StepSeconds;
 
-    public const int WaferSeconds = 300;
+    /// <summary>Seconds per wafer (data/metadata/simulation.yaml).</summary>
+    public static int WaferSeconds => SimulationSettings.Shared.RecipeSchedule.WaferSeconds;
 
-    public const int WafersPerLot = 25;
+    /// <summary>Wafers per lot (data/metadata/simulation.yaml).</summary>
+    public static int WafersPerLot => SimulationSettings.Shared.RecipeSchedule.WafersPerLot;
 
     public static RecipeCursor Locate(ToolSpec tool, int elapsedSeconds)
     {
