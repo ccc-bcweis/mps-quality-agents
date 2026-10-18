@@ -75,7 +75,7 @@ public sealed class DeployShapeTests
         apps.Should().Contain("entraClientId");
         apps.Should().Contain("openIdIssuer");
         apps.Should().Contain("name: 'Mps__Model__Mode'");
-        apps.Should().Contain("value: 'Live'");
+        apps.Should().Contain("value: 'azure'");
         apps.Should().Contain("name: 'Mps__Model__DailyCapUsd'");
         apps.Should().Contain("value: '2'");
         apps.Should().NotContain("AZURE_OPENAI_API_KEY");
