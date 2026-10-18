@@ -52,6 +52,13 @@ public sealed record OperatingWindow
     public double Nominal { get; }
 
     /// <summary>
+    /// True when the recipe step does not set this parameter (it is idle in the step). The window is still a real
+    /// window from the recipe data (usually the setting the parameter holds from its own step), never the sensor's
+    /// physical range, so the chart and the rules always have limits for it.
+    /// </summary>
+    public bool Idle { get; init; }
+
+    /// <summary>
     /// Window sigma used by fault magnitudes. Six sigma spans the whole window, so three sigma is the spec limit.
     /// </summary>
     public double Sigma => (Maximum - Minimum) / 6d;

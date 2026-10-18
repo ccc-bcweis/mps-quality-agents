@@ -16,7 +16,7 @@ All companies, equipment, people and data in this repo are **fictional and synth
 |---|---|
 | Console (React) | `web/`. Screens are listed in [docs/demo/SCREENS.md](docs/demo/SCREENS.md) |
 | API, live plant, demo harness | `src/Mps.Api` |
-| Rules engine (SPC, Western Electric, alert clearing) | `src/Mps.Application/Spc` |
+| Rules engine (SPC, Western Electric, alert clearing) | `src/Mps.Application/Spc`. Limits come from the recipe step running at each reading (every step in `data/fleet/*.yaml` defines every parameter, own window or `idle: true`), clamped to the sensor's physical range |
 | Lifecycle, approval token, CAPA | `src/Mps.Domain`, `src/Mps.Application` |
 | Agents, prompts, evidence gate, guards | `src/Mps.Agents`, `prompts/` |
 | Workflow (Microsoft Agent Framework) | `src/Mps.Orchestration` |

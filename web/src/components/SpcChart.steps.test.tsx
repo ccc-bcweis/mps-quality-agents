@@ -1,11 +1,13 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { cloneElement, type ReactElement } from "react";
-import { render, screen } from "@testing-library/react";
+import { render as rtlRender, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import { SpcChart } from "./SpcChart";
+import { SpcChart, stepHoverText, stepRuns } from "./SpcChart";
 import { mpsColor } from "../brand/colors";
 import { pointLimits } from "../live/overlay";
-import { mergeSegments } from "../live/stream";
+import { applyToolDelta, mergeSegments } from "../live/stream";
+import { limits } from "../spc/series";
 import type { ToolLive } from "../api/types";
 
 // jsdom has no layout, so give the chart a fixed size instead of measuring its container.
@@ -18,6 +20,9 @@ vi.mock("recharts", async (importOriginal) => {
   };
 });
 
+/** The chart has a glossary button, so it renders inside a router. */
+const render = (element: ReactElement) => rtlRender(<MemoryRouter>{element}</MemoryRouter>);
+
 // Live (Oct 17): E-01 chamber pressure spans recipe steps with nominals 45, 40 and 35 in one 600-point window.
 const nominals = [45, 40, 35];
 const perStep = 20;
@@ -25,7 +30,11 @@ const points = Array.from({ length: perStep * nominals.length }, (_, index) => (
   index,
   value: nominals[Math.floor(index / perStep)] + Math.sin(index) * 0.3,
 }));
-const steps = points.map((point) => ({ mean: nominals[Math.floor(point.index / perStep)], sigma: 0.5 }));
+const stepNames = ["Stabilize", "Main etch", "Endpoint"];
+const steps = points.map((point) => {
+  const step = Math.floor(point.index / perStep);
+  return { mean: nominals[step], sigma: 0.5, recipe: "Oxide main etch", step: stepNames[step], segment: step };
+});
 
 /** The distinct y values a Recharts curve passes through. */
 function levels(path: string | null | undefined): number[] {
@@ -38,8 +47,10 @@ describe("SpcChart limits per recipe step", () => {
     const { container } = render(
       <SpcChart label="Chamber pressure" unit="mTorr" center={{ mean: 35, sigma: 0.5 }} steps={steps} points={points} finding="No active SPC alert." />,
     );
-    // One constant limit for the whole window would put earlier steps' healthy points outside the band.
-    expect(container.querySelectorAll(".recharts-reference-line")).toHaveLength(0);
+    // One constant limit for the whole window would put earlier steps' healthy points outside the band. The only
+    // reference lines are the step dividers (and the first step's label), no constant UCL/LCL/mean.
+    expect(container.querySelectorAll(".recharts-reference-line")).toHaveLength(nominals.length);
+    expect(container.querySelectorAll(".spc-step-divider")).toHaveLength(nominals.length - 1);
     expect(container.querySelectorAll(".recharts-reference-area")).toHaveLength(0);
     expect(container.querySelectorAll(".recharts-area")).toHaveLength(3);
     const curves = [...container.querySelectorAll(".recharts-line-curve")];
@@ -52,7 +63,9 @@ describe("SpcChart limits per recipe step", () => {
     // Same labels as the constant lines, and the legend and summary say the limits follow the recipe step.
     expect(container.textContent).toMatch(/UCL 3σ/);
     expect(container.textContent).toMatch(/mean/);
-    expect(container.querySelector("[data-limits='per-step']")?.textContent).toBe("Limits follow the recipe step.");
+    expect(container.querySelector("[data-limits='per-step']")?.textContent).toMatch(/^Limits change with each recipe step\./);
+    const glossary = screen.getByRole("link", { name: "What is a recipe step?" });
+    expect(glossary.getAttribute("href")).toBe("/glossary?q=recipe%20step");
     expect(screen.getByRole("figure").getAttribute("aria-label")).toMatch(/Limits are per recipe step/);
   });
 
@@ -98,5 +111,94 @@ describe("SpcChart limits per recipe step", () => {
       { from: at(240), center: 35, sigma: 0.5 },
     ]);
     expect(mergeSegments(previous, [{ from: at(60), center: 1, sigma: 1 }], at(0))).toEqual(previous);
+  });
+
+  it("marks every recipe step change with a divider and names each step where it fits (#366)", () => {
+    const { container } = render(
+      <SpcChart label="ESC temperature" unit="C" center={{ mean: 35, sigma: 0.5 }} steps={steps} points={points} finding="x" />,
+    );
+    const dividers = [...container.querySelectorAll(".spc-step-divider")];
+    expect(dividers).toHaveLength(stepNames.length - 1);
+    for (const name of stepNames) expect(container.textContent).toContain(name);
+    // Two steps with the same limits are still two steps: the divider comes from the step, not from the limits.
+    const sameLimits = steps.map((step) => ({ ...step, mean: 50, sigma: 1 }));
+    const again = render(<SpcChart label="ESC temperature" unit="C" center={{ mean: 50, sigma: 1 }} steps={sameLimits} points={points} finding="x" />);
+    expect(again.container.querySelectorAll(".spc-step-divider")).toHaveLength(stepNames.length - 1);
+    // A step too short for its name keeps the divider and drops the label.
+    const runs = stepRuns(
+      points.map((point) => ({ mean: 50, sigma: 1, step: point.index === 30 ? "Short" : "Long step", segment: point.index === 30 ? 1 : point.index < 30 ? 0 : 2 })),
+      points,
+    );
+    expect(runs.map((run) => [run.name, run.fits])).toEqual([
+      ["Long step", true],
+      ["Short", false],
+      ["Long step", true],
+    ]);
+  });
+
+  it("hover says the limits are for this recipe step, with the step's center and limits", () => {
+    const row = { recipe: "Oxide main etch", step: "Main etch", idle: false, mean: 52, lcl3: 48, ucl3: 56 };
+    expect(stepHoverText(12, row, "C", 1.3)).toBe("Reading 12 · Oxide main etch · Main etch. Limits for this recipe step: center 52.0, LCL 48.0, UCL 56.0 C.");
+    expect(stepHoverText(3, { ...row, step: "Endpoint", idle: true }, "C", 1.3)).toContain("Endpoint (idle in this step)");
+  });
+
+  it("clamps every limit to what the sensor can physically read: no negative limits (#368)", () => {
+    // Bias RF reflected on live: center 10.5 W, sigma 12.5 W, sensor 0 to 75 W. Unclamped LCL was -27 W.
+    const band = limits(10.5, 12.5, 0, 75);
+    expect(band.lcl3).toBe(0);
+    expect(band.lcl2).toBe(0);
+    expect(band.ucl3).toBe(48);
+    const flow = points.map((point) => ({ index: point.index, value: 4 + Math.sin(point.index) }));
+    const clamped = points.map((point) => ({ mean: point.index < 30 ? 5 : 10.5, sigma: point.index < 30 ? 3 : 12.5, floor: 0, ceiling: 75, segment: point.index < 30 ? 0 : 1, step: point.index < 30 ? "A" : "B" }));
+    const { container } = render(<SpcChart label="Bias RF reflected" unit="W" center={{ mean: 10.5, sigma: 12.5, floor: 0, ceiling: 75 }} steps={clamped} points={flow} finding="x" />);
+    const ticks = [...container.querySelectorAll(".recharts-yAxis .recharts-cartesian-axis-tick-value")].map((tick) => Number(tick.textContent));
+    expect(ticks.length).toBeGreaterThan(0);
+    expect(Math.min(...ticks)).toBeGreaterThanOrEqual(0);
+  });
+
+  it("keeps the recipe step limits during and after a fault: limits never follow the faulty readings (#373)", () => {
+    // SC-1 on E-02 chamber A at 10x: readings every second, the fault starts mid-step and runs across two step changes.
+    const at = (second: number) => new Date(Date.UTC(2026, 9, 18, 6, 0, second)).toISOString();
+    const segment = (second: number, center: number, step: string) => ({ from: at(second), center, sigma: 4 / 3, recipe: "Oxide main etch", step, idle: false, floor: 40, ceiling: 60 });
+    const first = {
+      toolId: "E-02",
+      siteId: "northwater",
+      simulatedNow: at(59),
+      status: "nominal",
+      readings: [],
+      series: [
+        {
+          parameter: "escTemperature",
+          chamberId: "E-02-A",
+          points: Array.from({ length: 60 }, (_, second) => ({ at: at(second), value: 50 })),
+          center: 50,
+          sigma: 4 / 3,
+          segments: [segment(0, 50, "Stabilize")],
+        },
+      ],
+    } as unknown as ToolLive;
+    let live: ToolLive | null = first;
+    // The fault: readings jump to about 55 and swing; one-second deltas cross 120 s (Main etch) and 240 s (Endpoint).
+    for (let second = 60; second < 300; second += 1) {
+      const step = second < 120 ? segment(second, 50, "Stabilize") : second < 240 ? segment(second, 52, "Main etch") : segment(second, 50, "Endpoint");
+      live = applyToolDelta(live, {
+        toolId: "E-02",
+        siteId: "northwater",
+        simulatedNow: at(second),
+        status: "alarm",
+        readings: [],
+        series: [{ parameter: "escTemperature", chamberId: "E-02-A", points: [{ at: at(second), value: 55 + 4 * Math.sin(second / 3) }], center: step.center, sigma: step.sigma, segments: [step] }],
+        resync: false,
+      });
+    }
+    const limitsByPoint = pointLimits(live, "escTemperature", "E-02-A")!;
+    expect(limitsByPoint).toHaveLength(300);
+    const centers = limitsByPoint.map((limit) => limit.mean);
+    // Every point keeps the center of the step it was read in; nothing is recomputed from the faulty readings.
+    expect(centers.slice(0, 120).every((center) => center === 50)).toBe(true);
+    expect(centers.slice(120, 240).every((center) => center === 52)).toBe(true);
+    expect(centers.slice(240).every((center) => center === 50)).toBe(true);
+    expect(new Set(limitsByPoint.map((limit) => limit.step))).toEqual(new Set(["Stabilize", "Main etch", "Endpoint"]));
+    expect(new Set(limitsByPoint.map((limit) => limit.segment)).size).toBe(3);
   });
 });

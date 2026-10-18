@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Term } from "../components/Term";
 import { panel } from "../components/ui";
 import { useSetLifecycle } from "../context/ConsoleContext";
@@ -7,7 +8,9 @@ import { glossaryNote, glossarySource, glossaryTerms } from "../glossary/terms";
 
 export function GlossaryPage() {
   useSetLifecycle("alert");
-  const [query, setQuery] = useState("");
+  // A link such as /glossary?q=recipe%20step opens the page filtered to that term.
+  const [params] = useSearchParams();
+  const [query, setQuery] = useState(() => params.get("q") ?? "");
   const terms = useMemo(
     () => [...glossaryTerms].sort((a, b) => a.term.localeCompare(b.term, "en", { sensitivity: "base" })),
     [],

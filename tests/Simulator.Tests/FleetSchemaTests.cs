@@ -166,6 +166,40 @@ public sealed class FleetSchemaTests
         }
     }
 
+    [Fact]
+    public void RecipeStepThatLeavesOutAParameterIsRejected()
+    {
+        var temp = CopyFleet();
+        try
+        {
+            // #367: a step must define every parameter of its tool (its own window, or idle with a window). Before, a
+            // missing parameter quietly fell back to another step or to the sensor's physical range.
+            var path = Path.Combine(temp, "mps-e7.yaml");
+            var lines = File.ReadAllLines(path).ToList();
+            var idle = lines.FindIndex(line => line.Contains("parameter: rfBiasPower", StringComparison.Ordinal) && line.Contains("idle: true", StringComparison.Ordinal));
+            idle.Should().BeGreaterThan(0);
+            lines.RemoveAt(idle);
+            File.WriteAllLines(path, lines);
+
+            var act = () => FleetCatalogLoader.Load(temp);
+
+            act.Should().Throw<FleetSpecException>().WithMessage("*does not define rfBiasPower*");
+        }
+        finally
+        {
+            Directory.Delete(temp, true);
+        }
+    }
+
+    [Fact]
+    public void IdleWindowsLoadAsIdle()
+    {
+        var tool = Catalog.GetRequired("E-02");
+        var oxide = tool.Recipes.Single(recipe => recipe.Id == "OXIDE-ETCH");
+        oxide.Step("stabilize")!.WindowFor("rfBiasPower")!.Idle.Should().BeTrue();
+        oxide.Step("main-etch")!.WindowFor("rfBiasPower")!.Idle.Should().BeFalse();
+    }
+
     private static string CopyFleet()
     {
         var temp = Directory.CreateTempSubdirectory("mps-fleet").FullName;

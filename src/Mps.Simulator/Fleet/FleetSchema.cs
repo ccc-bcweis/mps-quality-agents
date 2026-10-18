@@ -185,6 +185,16 @@ public static partial class FleetSchema
                         yield return error;
                     }
                 }
+
+                // Every step defines every parameter its tool measures: its own window, or idle with a window. Nothing
+                // falls back to the sensor's physical range (#367).
+                foreach (var required in ToolParameters(tool))
+                {
+                    if (!parameters.Contains(required))
+                    {
+                        yield return $"{path}/{recipe.Id}/{step.Id}: the step does not define {required}. Give it a window, or mark it idle with a window.";
+                    }
+                }
             }
         }
 
@@ -192,6 +202,17 @@ public static partial class FleetSchema
         {
             yield return error;
         }
+    }
+
+    /// <summary>The process parameters a tool measures: its chamber sensors that carry a parameter (not reflected power or tool counters).</summary>
+    public static IReadOnlyList<string> ToolParameters(ToolSpec tool)
+    {
+        ArgumentNullException.ThrowIfNull(tool);
+        return tool.Sensors
+            .Where(sensor => sensor.Parameter is not null && sensor.TracksSensorId is null && sensor.ChamberId is not null)
+            .Select(sensor => sensor.Parameter!)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
     }
 
     private static IEnumerable<string> EvaluateSensors(ToolSpec tool, string path)

@@ -322,7 +322,7 @@ public static class FleetCatalogLoader
 
             try
             {
-                mapped.Add(new OperatingWindow(window.Parameter, window.Unit, window.Minimum.Value, window.Maximum.Value, window.Nominal.Value));
+                mapped.Add(new OperatingWindow(window.Parameter, window.Unit, window.Minimum.Value, window.Maximum.Value, window.Nominal.Value) { Idle = window.Idle == true });
             }
             catch (ArgumentException exception)
             {
@@ -426,5 +426,8 @@ public static class FleetCatalogLoader
         public double? Maximum { get; set; }
 
         public double? Nominal { get; set; }
+
+        /// <summary>The step does not set this parameter. The window still applies (see <see cref="OperatingWindow.Idle"/>).</summary>
+        public bool? Idle { get; set; }
     }
 }

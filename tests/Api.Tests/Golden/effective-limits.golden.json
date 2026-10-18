@@ -20,7 +20,7 @@
   "sim.noise.excursion": "chance 4E-07, 2.4 sigma",
   "sim.noise.phi": "0.82",
   "sim.noise.scale": "0.12",
-  "sim.nominalTelemetry.2h.sha256": "E6075E6EA55A23FF4D671AAAEB2AEA66307A69132370D5847A929B6B8DC974B3",
+  "sim.nominalTelemetry.2h.sha256": "1CE889025570CD55EC46C3B29F2B9D55772B39316BD47384915E681B9CFB4D59",
   "sim.realTimeFaultPace (PlantSimulation)": "6",
   "sim.recipe": "step 120s, wafer 300s, 25 wafers per lot",
   "sim.scenario.SC-1.signals": "[{\"ToolId\":\"E-02\",\"ChamberId\":\"E-02-A\",\"Parameter\":\"escTemperature\",\"Shape\":2,\"MagnitudeKind\":0,\"Magnitude\":3.5,\"Onset\":\"2026-10-01T08:00:00+00:00\",\"PeriodSeconds\":1200,\"RampSeconds\":600,\"DutyCycle\":0.5,\"EndsAt\":null}]",

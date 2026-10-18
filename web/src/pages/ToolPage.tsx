@@ -27,7 +27,7 @@ import { statusTone, WAITING_FOR_READINGS } from "../fleet/catalog";
 import { sensorsForTool } from "../fleet/sensors";
 import { pointLabel } from "../fleet/schematic";
 import { parameterLabel } from "../labels";
-import { chartSeriesKey, liveReadingMap, overlayWindows, pointLimits, recipeLabel, seriesLimits, seriesPoints, toolTile } from "../live/overlay";
+import { chartSeriesKey, currentStep, liveReadingMap, overlayWindows, pointLimits, recipeLabel, seriesLimits, seriesPoints, toolTile } from "../live/overlay";
 import { useLiveResource, useRecordPatches, useToolLive } from "../live/useLive";
 import { clearAlert, upsertRecord, type AlertCleared, type ToolLiveDelta } from "../live/stream";
 import { latestManual, manualMarker, manualTile, seriesFor } from "../live/manual";
@@ -150,6 +150,7 @@ export function ToolPage() {
   const livePoints = seriesPoints(live, seriesParameter, seriesKey.chamberId);
   const serverLimits = seriesLimits(live, seriesParameter, seriesKey.chamberId);
   const stepLimits = pointLimits(live, seriesParameter, seriesKey.chamberId);
+  const nowStep = currentStep(live, seriesParameter, seriesKey.chamberId);
   const pointCount = livePoints?.length ?? 0;
   const chartLabel = selected ? pointLabel(selected.schematicAnchor) : parameterLabel(seriesParameter);
   const chartUnit = selected?.unit ?? "";
@@ -245,6 +246,12 @@ export function ToolPage() {
         <h2 className="mb-2 text-mps-title font-semibold">
           <Explain text={`${cumulative ? "Count" : "SPC"} · ${chartLabel}`} />{" "}
           <span className="float-right font-mono text-mps-micro font-normal text-mps-muted">
+            {nowStep?.recipe || nowStep?.step ? (
+              <span data-current-step="true">
+                Recipe {nowStep.recipe ?? "—"} · step {nowStep.step ?? "—"}
+                {nowStep.idle ? " (idle)" : ""} ·{" "}
+              </span>
+            ) : null}
             σ = {serverLimits ? axisNumber(serverLimits.sigma, serverLimits.sigma) : "—"} {chartUnit} · n = {pointCount}
           </span>
         </h2>

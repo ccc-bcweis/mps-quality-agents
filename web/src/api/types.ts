@@ -479,7 +479,21 @@ export type LiveSeries = {
   segments?: LiveLimitSegment[] | null;
 };
 
-export type LiveLimitSegment = { from: string; center: number; sigma: number };
+/**
+ * One recipe step's limits, from its first point until the next segment. recipe and step name the step; idle is true
+ * when the step does not set this parameter. floor and ceiling are what the sensor can physically read: every limit
+ * is clamped to them, so a flow or power never gets a negative limit.
+ */
+export type LiveLimitSegment = {
+  from: string;
+  center: number;
+  sigma: number;
+  recipe?: string | null;
+  step?: string | null;
+  idle?: boolean;
+  floor?: number | null;
+  ceiling?: number | null;
+};
 
 export type FleetLiveTool = {
   toolId: string;

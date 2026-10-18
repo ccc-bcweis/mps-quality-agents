@@ -1197,6 +1197,9 @@ components:
     LiveLimitSegment:
       type: object
       additionalProperties: false
+      description: >-
+        One recipe step's limits, from its first point until the next segment. A new segment starts at every recipe
+        step change, even when two steps share limits, so the chart can mark each step.
       required: [from, center, sigma]
       properties:
         from:
@@ -1206,6 +1209,25 @@ components:
           type: number
         sigma:
           type: number
+        recipe:
+          type: string
+          nullable: true
+          description: Readable name of the recipe running in this step.
+        step:
+          type: string
+          nullable: true
+          description: Readable name of the recipe step, such as Main etch.
+        idle:
+          type: boolean
+          description: True when this step does not set the parameter; the window still applies (no physical-range fallback).
+        floor:
+          type: number
+          nullable: true
+          description: Lowest value the sensor can physically read. Every limit is clamped to it (no negative flow or power limits).
+        ceiling:
+          type: number
+          nullable: true
+          description: Highest value the sensor can physically read. Every limit is clamped to it.
     LivePoint:
       type: object
       additionalProperties: false
