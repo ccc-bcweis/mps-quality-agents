@@ -54,7 +54,9 @@ public static class QualityHost
         var plantSeed = Mps.Simulator.Demo.DemoDefaults.PlantSeedFrom(builder.Configuration);
         builder.Services.AddSingleton(SitePlantGenerator.Load(dataDirectory, plantSeed));
         builder.Services.AddSingleton(new CrossSiteMaterialCatalog(Path.Combine(dataDirectory, "seed", "enterprise.json")));
-        var connectionString = builder.Configuration.GetConnectionString("Mps") ?? "Data Source=mps.db";
+        // One home for the default: appsettings.json (ConnectionStrings:Mps); the image and Bicep override it.
+        var connectionString = builder.Configuration.GetConnectionString("Mps")
+            ?? throw new InvalidOperationException("ConnectionStrings:Mps is not set. appsettings.json ships the local default.");
         builder.Services.AddProblemDetails();
         builder.AddQualityTelemetry();
         builder.Services.AddExceptionHandler<ApiExceptionHandler>();
