@@ -193,6 +193,12 @@ public static class QualityHost
 
         // Resolve the approval key now: outside Development a missing key stops startup instead of the first approval.
         _ = app.Services.GetRequiredService<Mps.Application.Decisions.ApprovalPolicy>();
+
+        // Sign-in setup: Entra mode with no admin stops startup; local mode warns when it is not private to this machine.
+        var authLog = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(Mps.Api.Access.AuthStartup).FullName!);
+        Mps.Api.Access.AuthStartup.Validate(app.Configuration, app.Environment, authLog);
+        app.Lifetime.ApplicationStarted.Register(() => Mps.Api.Access.AuthStartup.WarnIfExposed(
+            app.Services.GetRequiredService<Microsoft.AspNetCore.Hosting.Server.IServer>(), app.Configuration, authLog));
         app.UseExceptionHandler();
         app.UseCors("console");
 

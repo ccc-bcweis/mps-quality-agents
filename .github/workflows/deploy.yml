@@ -3,6 +3,8 @@
 # Environment azure-demo needs a required reviewer, which Bob configures in GitHub.
 # OIDC uses secrets AZURE_CLIENT_ID, AZURE_TENANT_ID, and AZURE_SUBSCRIPTION_ID.
 # Easy Auth uses variables RESOURCE_GROUP, ENTRA_CLIENT_ID, ENTRA_ISSUER, and BUDGET_EMAIL.
+# Admins: input adminEmails, else variable ADMIN_EMAILS, else the list on the running app. With none, it stops before any change.
+# A fork or clone without these secrets and variables skips cleanly: the OIDC credential only trusts this repo's azure-demo environment.
 
 name: Deploy
 
@@ -11,6 +13,11 @@ on:
     inputs:
       imageTag:
         description: Image tag. Leave blank to use the commit SHA.
+        required: false
+        type: string
+        default: ""
+      adminEmails:
+        description: Admin emails, comma separated. Blank uses the ADMIN_EMAILS variable, else the running app's list.
         required: false
         type: string
         default: ""
@@ -29,13 +36,34 @@ jobs:
       ENTRA_CLIENT_ID: ${{ vars.ENTRA_CLIENT_ID }}
       ENTRA_ISSUER: ${{ vars.ENTRA_ISSUER }}
       BUDGET_EMAIL: ${{ vars.BUDGET_EMAIL }}
+      ADMIN_EMAILS_INPUT: ${{ inputs.adminEmails || vars.ADMIN_EMAILS }}
       IMAGE_TAG: ${{ inputs.imageTag || github.sha }}
       BOOTSTRAP_IMAGE: mcr.microsoft.com/dotnet/aspnet:10.0
     steps:
+      - name: Check Azure setup
+        id: setup
+        shell: bash
+        env:
+          HAS_CLIENT: ${{ secrets.AZURE_CLIENT_ID != '' }}
+          HAS_TENANT: ${{ secrets.AZURE_TENANT_ID != '' }}
+          HAS_SUBSCRIPTION: ${{ secrets.AZURE_SUBSCRIPTION_ID != '' }}
+        run: |
+          set -euo pipefail
+          if [ "$HAS_CLIENT" = "true" ] && [ "$HAS_TENANT" = "true" ] && [ "$HAS_SUBSCRIPTION" = "true" ] && [ -n "$RESOURCE_GROUP" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            msg="Azure is not set up for this repository (secrets AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID and variable RESOURCE_GROUP). Skipping the deploy. See README 'Deploy to your own Azure'."
+            echo "::notice::$msg"
+            echo "$msg" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Checkout
+        if: steps.setup.outputs.ready == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Azure login
+        if: steps.setup.outputs.ready == 'true'
         uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -43,6 +71,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Require environment variables
+        if: steps.setup.outputs.ready == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -57,7 +86,35 @@ jobs:
             exit 1
           fi
 
+      - name: Resolve admin emails
+        if: steps.setup.outputs.ready == 'true'
+        id: admins
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Order: workflow input, then the ADMIN_EMAILS variable, then the list on the running app, so a deploy keeps its admins.
+          admins="$ADMIN_EMAILS_INPUT"
+          source="input or ADMIN_EMAILS variable"
+          if [ -z "$admins" ]; then
+            app="$(az deployment group show --resource-group "$RESOURCE_GROUP" --name mps-demo --query properties.outputs.appName.value -o tsv 2>/dev/null || true)"
+            app="${app:-$(az containerapp list --resource-group "$RESOURCE_GROUP" --query "[0].name" -o tsv 2>/dev/null || true)}"
+            if [ -n "$app" ]; then
+              admins="$(az containerapp show --resource-group "$RESOURCE_GROUP" --name "$app" --query "properties.template.containers[0].env[?name=='Mps__Auth__AdminEmails'].value | [0]" -o tsv 2>/dev/null || true)"
+              source="running app $app"
+            fi
+          fi
+          if [ -z "$admins" ] && [ -n "$ENTRA_CLIENT_ID" ]; then
+            echo "No admin email. Set the ADMIN_EMAILS variable on the azure-demo environment or the adminEmails input. Nothing was changed."
+            exit 1
+          fi
+          count="$(printf '%s' "$admins" | tr ',;' '\n\n' | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')"
+          echo "Admin emails: ${count} from ${source}."
+          echo "list=${admins}" >> "$GITHUB_OUTPUT"
+
       - name: Deploy bootstrap so the registry exists
+        if: steps.setup.outputs.ready == 'true'
+        env:
+          ADMIN_EMAILS: ${{ steps.admins.outputs.list }}
         shell: bash
         run: |
           set -euo pipefail
@@ -70,11 +127,13 @@ jobs:
               apiImage="$BOOTSTRAP_IMAGE" \
               entraClientId="$ENTRA_CLIENT_ID" \
               openIdIssuer="$ENTRA_ISSUER" \
+              adminEmails="$ADMIN_EMAILS" \
               budgetContactEmail="$BUDGET_EMAIL" \
               deploySql=false \
               deployStaticWeb=false
 
       - name: Read registry outputs
+        if: steps.setup.outputs.ready == 'true'
         id: acr
         shell: bash
         run: |
@@ -85,6 +144,7 @@ jobs:
           echo "principal=$(az deployment group show --resource-group "$RESOURCE_GROUP" --name mps-demo --query properties.outputs.identityPrincipalId.value -o tsv)" >> "$GITHUB_OUTPUT"
 
       - name: Wait for AcrPull on the app identity
+        if: steps.setup.outputs.ready == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -101,6 +161,7 @@ jobs:
           exit 1
 
       - name: Build the app image in the registry
+        if: steps.setup.outputs.ready == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -111,7 +172,10 @@ jobs:
             .
 
       - name: Deploy the app image
+        if: steps.setup.outputs.ready == 'true'
         id: app
+        env:
+          ADMIN_EMAILS: ${{ steps.admins.outputs.list }}
         shell: bash
         run: |
           set -euo pipefail
@@ -125,6 +189,7 @@ jobs:
               apiImage="$image" \
               entraClientId="$ENTRA_CLIENT_ID" \
               openIdIssuer="$ENTRA_ISSUER" \
+              adminEmails="$ADMIN_EMAILS" \
               budgetContactEmail="$BUDGET_EMAIL" \
               deploySql=false \
               deployStaticWeb=false
@@ -133,6 +198,7 @@ jobs:
           echo "Demo URL: https://${fqdn}"
 
       - name: Smoke check anonymous access
+        if: steps.setup.outputs.ready == 'true'
         shell: bash
         run: |
           set -euo pipefail

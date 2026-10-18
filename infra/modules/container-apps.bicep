@@ -21,8 +21,8 @@ param entraClientId string = ''
 @description('OpenID issuer, for example https://login.microsoftonline.com/<tenant>/v2.0. Empty skips the auth config.')
 param openIdIssuer string = ''
 
-@description('Comma-separated emails that get the demo admin harness (join links, resets).')
-param adminEmails string = 'bcweis@commonconsulting.us'
+@description('Comma-separated emails that get the demo admin harness (join links, resets). No default: main.bicep passes the deployer-supplied list.')
+param adminEmails string
 
 @secure()
 param appInsightsConnectionString string

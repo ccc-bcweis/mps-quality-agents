@@ -23,11 +23,12 @@ public sealed class JoinLinkTests
         {
             builder.UseSetting("Mps:Auth:Mode", "azure");
             builder.UseSetting("Mps:Auth:HomeTenantId", Home);
+            builder.UseSetting("Mps:Auth:AdminEmails", "owner@example.com");
         });
-        var admin = Client(factory, Principal("oid-admin", Home, "bcweis@commonconsulting.us", "Bryan Weis"));
+        var admin = Client(factory, Principal("oid-admin", Home, "owner@example.com", "Demo Owner"));
         var guest = Client(factory, Principal("oid-guest", Outside, "guest@outlook.com", "Guest One"));
         var second = Client(factory, Principal("oid-guest-2", Outside, "two@outlook.com", "Guest Two"));
-        var homeUser = Client(factory, Principal("oid-home", Home, "colleague@commonconsulting.us", "Colleague"));
+        var homeUser = Client(factory, Principal("oid-home", Home, "colleague@example.com", "Colleague"));
 
         (await guest.GetAsync("/api/tools")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
         (await homeUser.GetAsync("/api/tools")).StatusCode.Should().Be(HttpStatusCode.OK);

@@ -18,11 +18,14 @@ public static class EasyAuthPrincipal
 
     public const string AzureMode = "azure";
 
+    /// <summary>Accepted spelling of <see cref="AzureMode"/>: Entra sign-in through Container Apps Easy Auth.</summary>
+    public const string EntraAlias = "entra";
+
     public const string LocalDisplayName = "dev-user";
 
     public static DemoCaller Read(string? header, string? mode)
     {
-        var azure = string.Equals(Normalize(mode), AzureMode, StringComparison.OrdinalIgnoreCase);
+        var azure = IsAzure(mode);
         if (string.IsNullOrWhiteSpace(header))
         {
             return azure
@@ -38,9 +41,12 @@ public static class EasyAuthPrincipal
         return new DemoCaller(azure ? AzureMode : LocalMode, admin, displayName);
     }
 
-    private static string Normalize(string? mode)
+    /// <summary>True for Entra sign-in mode (<c>azure</c> or <c>entra</c>). Anything else, including blank, is local mode.</summary>
+    public static bool IsAzure(string? mode)
     {
-        return string.IsNullOrWhiteSpace(mode) ? LocalMode : mode.Trim();
+        var value = string.IsNullOrWhiteSpace(mode) ? LocalMode : mode.Trim();
+        return string.Equals(value, AzureMode, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(value, EntraAlias, StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool TryParse(string header, out string displayName, out bool admin)

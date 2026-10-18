@@ -59,7 +59,7 @@ public sealed class AccessGate
     }
 
     public static bool Hosted(IConfiguration configuration) =>
-        string.Equals(configuration["Mps:Auth:Mode"], EasyAuthPrincipal.AzureMode, StringComparison.OrdinalIgnoreCase);
+        EasyAuthPrincipal.IsAzure(configuration["Mps:Auth:Mode"]);
 
     public static bool IsAdmin(HttpContext http, IConfiguration configuration)
     {
