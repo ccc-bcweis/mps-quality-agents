@@ -5,6 +5,7 @@ import type { Investigation } from "../api/types";
 import { panel } from "./ui";
 import { AgentTimeline } from "./AgentTimeline";
 import { EvidencePack } from "./EvidencePack";
+import { collectRuledOut } from "../investigation/ruledOut";
 
 /** Evidence and the agent trace for incidents already on a list. The list itself stays put. */
 export function CaseBriefs({ incidentIds, intro }: { incidentIds: string[]; intro: string }) {
@@ -37,7 +38,7 @@ export function CaseBriefs({ incidentIds, intro }: { incidentIds: string[]; intr
       <h2 className="text-mps-title font-semibold">{intro}</h2>
       {packs.map((investigation) => (
         <section key={investigation.id} className={panel}>
-          <EvidencePack items={investigation.evidence} />
+          <EvidencePack items={investigation.evidence} ruledOut={collectRuledOut(investigation.hypotheses)} />
           <div className="mt-4">
             <AgentTimeline investigation={investigation} />
           </div>

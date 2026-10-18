@@ -35,6 +35,10 @@ describe("escalation detail", () => {
   });
 
   it("shows no proposal when the round was not refused by a check", async () => {
+    const base = investigations.find((item) => item.id === S2_INVESTIGATION_ID)!;
+    server.use(
+      http.get(`/api/investigations/${S2_INVESTIGATION_ID}`, () => HttpResponse.json({ ...base, rejectedAnswer: null })),
+    );
     renderConsole(`/investigations/${S2_INVESTIGATION_ID}`);
     expect((await screen.findAllByText(/No root cause is asserted/)).length).toBeGreaterThan(0);
     expect(screen.queryByText("What the AI proposed (not accepted)")).not.toBeInTheDocument();

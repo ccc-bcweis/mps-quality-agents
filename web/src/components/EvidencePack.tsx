@@ -1,7 +1,8 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 import { useState } from "react";
-import type { EvidenceItem } from "../api/types";
+import type { EvidenceItem, RuledOutItem } from "../api/types";
 import { Explain } from "./Explain";
+import { RuledOutRecords } from "./RuledOutRecords";
 import { TracePanel } from "./TracePanel";
 import { btn } from "./ui";
 import {
@@ -13,6 +14,7 @@ import {
   whatItShows,
 } from "../investigation/format";
 import { groupEvidence, rangeText } from "../investigation/evidenceGroups";
+import { ruledOutViews } from "../investigation/ruledOut";
 import { LIMIT_LABEL, limitClass } from "../investigation/limits";
 
 function hoverRecord(item: EvidenceItem): string {
@@ -26,13 +28,19 @@ function fullText(item: EvidenceItem): string {
   return excerpt || title;
 }
 
-export function EvidencePack({ items }: { items: EvidenceItem[] }) {
+export function EvidencePack({ items, ruledOut }: { items: EvidenceItem[]; ruledOut?: readonly RuledOutItem[] | null }) {
   const [traceItem, setTraceItem] = useState<EvidenceItem | null>(null);
-  const rows = groupEvidence(items);
+  const dismissed = new Set(ruledOutViews(items, ruledOut).map((row) => row.id));
+  const supporting = items.filter((item) => !dismissed.has(item.id));
+  const rows = groupEvidence(supporting);
+  const collapsed = rows.length !== supporting.length;
   return (
     <div>
-      <h2 className="mb-2 text-mps-title font-semibold">Evidence pack ({rows.length}{rows.length !== items.length ? ` signals from ${items.length} records` : ""})</h2>
+      <h2 className="mb-2 text-mps-title font-semibold">
+        Evidence pack ({collapsed ? `${rows.length} signals from ${items.length} records` : items.length})
+      </h2>
       {items.length === 0 ? <p>No evidence yet.</p> : null}
+      {rows.length === 0 ? null : (
       <div className="overflow-x-auto">
         <table aria-label="Evidence pack" className="w-full table-fixed text-left">
           <thead>
@@ -102,6 +110,13 @@ export function EvidencePack({ items }: { items: EvidenceItem[] }) {
           </tbody>
         </table>
       </div>
+      )}
+      {dismissed.size > 0 ? (
+        <section aria-label="Considered and ruled out" className="mt-4">
+          <h3 className="mb-1 font-semibold">Considered and ruled out</h3>
+          <RuledOutRecords items={items} ruledOut={ruledOut} showSource label="Considered and ruled out" />
+        </section>
+      ) : null}
       {traceItem ? <TracePanel item={traceItem} onClose={() => setTraceItem(null)} /> : null}
     </div>
   );
