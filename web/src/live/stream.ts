@@ -120,6 +120,27 @@ export function upsertRecord<T extends { id: string }>(list: T[], record: T): T[
   return next;
 }
 
+/** The fields that tell one investigation round apart: its incident and round, and its stage. */
+type InvestigationRound = { id: string; incidentId: string; round?: number; stage: string };
+
+/**
+ * Puts a changed investigation in place, one entry per incident and round (#378). While a round gathers, the server
+ * streams a "started" placeholder with a temporary id; the saved investigation then arrives with its own id. Upserting
+ * by id alone kept both, so Linked records showed "Started" next to "Recommendation ready" for one investigation.
+ * The saved record replaces the placeholder of its round, and a late placeholder never replaces a saved record.
+ */
+export function upsertInvestigation<T extends InvestigationRound>(list: T[], record: T): T[] {
+  const sameRound = (item: T) => item.id !== record.id && item.incidentId === record.incidentId && (item.round ?? 1) === (record.round ?? 1);
+  const placeholder = (item: T) => sameRound(item) && item.stage === "started";
+  if (record.stage === "started" && list.some((item) => sameRound(item) && item.stage !== "started")) return list;
+  const at = list.findIndex(placeholder);
+  if (at >= 0 && !list.some((item) => item.id === record.id)) {
+    // The saved record takes its placeholder's place, so the entry updates where it was.
+    return list.map((item, i) => (i === at ? record : item)).filter((item, i) => i === at || !placeholder(item));
+  }
+  return upsertRecord(list.filter((item) => !placeholder(item)), record);
+}
+
 /** Marks one alert cleared from the alertCleared message. */
 export function clearAlert<T extends { id: string; status?: string; clearedAt?: string | null }>(list: T[], cleared: AlertCleared): T[] {
   const index = list.findIndex((item) => item.id === cleared.alertId);
