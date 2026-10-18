@@ -27,7 +27,7 @@ import { statusTone, WAITING_FOR_READINGS } from "../fleet/catalog";
 import { sensorsForTool } from "../fleet/sensors";
 import { pointLabel } from "../fleet/schematic";
 import { parameterLabel } from "../labels";
-import { liveReadingMap, overlayWindows, recipeLabel, seriesLimits, seriesPoints, toolTile } from "../live/overlay";
+import { chartSeriesKey, liveReadingMap, overlayWindows, recipeLabel, seriesLimits, seriesPoints, toolTile } from "../live/overlay";
 import { useLiveResource, useRecordPatches, useToolLive } from "../live/useLive";
 import { clearAlert, upsertRecord, type AlertCleared, type ToolLiveDelta } from "../live/stream";
 import { latestManual, manualMarker, manualTile, seriesFor } from "../live/manual";
@@ -143,10 +143,12 @@ export function ToolPage() {
   const shown = toolTile(tool.id, alerts, liveTile);
   const tone = statusTone(shown.status);
   const selected = toolSensors.find((sensor) => sensor.id === selectedId) ?? defaultSensor(toolSensors, alerts, focusParameter);
-  // Sensors without a process parameter (reflected RF power, tool counters) stream under their sensor id.
-  const seriesParameter = selected ? (selected.parameter ?? selected.id) : (focusParameter ?? "");
-  const livePoints = seriesPoints(live, seriesParameter, selected?.chamberId);
-  const serverLimits = seriesLimits(live, seriesParameter, selected?.chamberId);
+  // One key per sensor: sensors without a process parameter (reflected RF power, tool counters) stream under their
+  // sensor id, and the chamber picks that chamber's series only.
+  const seriesKey = selected ? chartSeriesKey(selected) : { parameter: focusParameter ?? "", chamberId: undefined };
+  const seriesParameter = seriesKey.parameter;
+  const livePoints = seriesPoints(live, seriesParameter, seriesKey.chamberId);
+  const serverLimits = seriesLimits(live, seriesParameter, seriesKey.chamberId);
   const pointCount = livePoints?.length ?? 0;
   const chartLabel = selected ? pointLabel(selected.schematicAnchor) : parameterLabel(seriesParameter);
   const chartUnit = selected?.unit ?? "";

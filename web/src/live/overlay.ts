@@ -69,21 +69,32 @@ export function liveReadingMap(readings: LiveReading[] | undefined): Map<string,
   return map;
 }
 
-export function seriesPoints(live: ToolLive | null, parameter: string, chamberId?: string): SpcPoint[] | undefined {
+/**
+ * The one series a chart draws for a sensor. A sensor with a chamber matches that chamber only: never the other
+ * chamber's series with the same parameter, which made the chart swap to a different-looking graph and back whenever
+ * its own series was briefly missing. A tool-level sensor (no chamber) matches the tool's own series.
+ */
+export function chartSeries(live: ToolLive | null, parameter: string, chamberId?: string | null): LiveSeries | undefined {
   if (!live) return undefined;
   const rows = live.series.filter((series) => series.parameter === parameter && series.points.length > 0);
-  const match: LiveSeries | undefined =
-    rows.find((series) => chamberId !== undefined && series.chamberId === chamberId) ?? rows[0];
+  if (chamberId) return rows.find((series) => series.chamberId === chamberId);
+  return rows.find((series) => series.chamberId === live.toolId) ?? (rows.length === 1 ? rows[0] : undefined);
+}
+
+/** The series key a chart uses for a sensor: its process parameter, or its sensor id when it has none, and its chamber. */
+export function chartSeriesKey(sensor: { id: string; parameter?: string; chamberId?: string }): { parameter: string; chamberId?: string } {
+  return { parameter: sensor.parameter ?? sensor.id, chamberId: sensor.chamberId };
+}
+
+export function seriesPoints(live: ToolLive | null, parameter: string, chamberId?: string): SpcPoint[] | undefined {
+  const match = chartSeries(live, parameter, chamberId);
   if (!match) return undefined;
   return match.points.map((point, index) => ({ index, value: point.value }));
 }
 
 /** The center and sigma the rules engine uses for this series, when the server sent them. */
 export function seriesLimits(live: ToolLive | null, parameter: string, chamberId?: string): { mean: number; sigma: number } | undefined {
-  if (!live) return undefined;
-  const rows = live.series.filter((series) => series.parameter === parameter && series.points.length > 0);
-  const match: LiveSeries | undefined =
-    rows.find((series) => chamberId !== undefined && series.chamberId === chamberId) ?? rows[0];
+  const match = chartSeries(live, parameter, chamberId);
   if (!match || match.center == null || match.sigma == null || !(match.sigma > 0)) return undefined;
   return { mean: match.center, sigma: match.sigma };
 }
