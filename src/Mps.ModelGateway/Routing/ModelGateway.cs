@@ -165,6 +165,18 @@ public sealed class ModelGateway : IChatClient
             return _ledger;
         }
 
+        // The resolution agent keeps pack ids when the answer comes from the offline ranker or from replay.
+        // A live route does not expose those clients: the model sees handles, and a fallback sees the same prompt.
+        if (serviceType == typeof(MockReasonerChatClient) && _options.Mode == ModelRoute.MockReasoner)
+        {
+            return _mockClient;
+        }
+
+        if (serviceType == typeof(ReplayChatClient) && _options.Mode == ModelRoute.Replay)
+        {
+            return _replayClient;
+        }
+
         return null;
     }
 

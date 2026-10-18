@@ -5,8 +5,8 @@ using Mps.Domain.Enterprise;
 namespace Mps.Agents.Evidence;
 
 /// <summary>
-/// Records that say in their own words they cannot be the cause: a document-only change, a lot that matches its
-/// specification, or an inspection where nothing was changed. The check reads only the record, never the answer key.
+/// Records the plant data already rules out. The phrases and the reason template live in data/metadata/ruled-out.yaml.
+/// The check reads only the record, never the answer key.
 /// </summary>
 public static class RuledOut
 {
@@ -15,35 +15,33 @@ public static class RuledOut
     public static string? Reason(EcoRecord eco)
     {
         ArgumentNullException.ThrowIfNull(eco);
-        var text = eco.Title + " " + eco.ChangeSummary;
-        var documentOnly = Has(text, "document-only") || Has(text, "document only");
-        var physical = Has(text, "replace") || Has(text, "install") || Has(text, "edge ring");
-        return documentOnly && !physical ? eco.EcoId + " is a document-only change. Setpoints were not changed." : null;
+        return Fill("eco", eco.Title + " " + eco.ChangeSummary, eco.EcoId, null, null, null, null);
     }
 
     public static string? Reason(SupplierNotice notice)
     {
         ArgumentNullException.ThrowIfNull(notice);
-        return Has(notice.Summary, "matches the purchase specification") && !Has(notice.Summary, "out of spec")
-            ? "Lot " + notice.LotId + " (" + notice.NoticeId + ") matches its specification."
-            : null;
+        return Fill("supplierNotice", notice.Summary, null, notice.LotId, notice.NoticeId, null, null);
     }
 
     public static string? Reason(WorkOrder order)
     {
         ArgumentNullException.ThrowIfNull(order);
-        return Has(order.Summary, "no parts changed") && Has(order.Summary, "no findings")
-            ? "Work order " + order.WorkOrderId + " (" + order.Kind + ") was an inspection with no findings. Nothing was changed."
-            : null;
+        return Fill("workOrder", order.Summary, null, null, null, order.WorkOrderId, order.Kind);
     }
 
-    public static string Title(string title, string? reason) =>
-        reason is null || title.StartsWith(Prefix, StringComparison.Ordinal) ? title : Prefix + title;
+    /// <summary>The record's own title. Ruled-out records are named on the typed list, not by a title prefix.</summary>
+    public static string Title(string title, string? reason) => title;
 
     /// <summary>One sentence per ruled-out record in the pack, for the hypothesis counter-evidence.</summary>
     public static IReadOnlyList<string> All(EvidencePack pack)
     {
         ArgumentNullException.ThrowIfNull(pack);
+        if (pack.RuledOut.Count > 0)
+        {
+            return pack.RuledOut.Select(record => record.Reason).Distinct(StringComparer.Ordinal).ToArray();
+        }
+
         return pack.Ecos.Select(Reason)
             .Concat(pack.SupplierNotices.Select(Reason))
             .Concat(pack.WorkOrders.Select(Reason))
@@ -52,5 +50,9 @@ public static class RuledOut
             .ToArray();
     }
 
-    private static bool Has(string text, string phrase) => text.Contains(phrase, StringComparison.OrdinalIgnoreCase);
+    private static string? Fill(string source, string text, string? ecoId, string? lotId, string? noticeId, string? workOrderId, string? kind)
+    {
+        var rule = RuledOutRules.Shared.Match(source, text);
+        return rule?.Fill(ecoId, lotId, noticeId, workOrderId, kind);
+    }
 }

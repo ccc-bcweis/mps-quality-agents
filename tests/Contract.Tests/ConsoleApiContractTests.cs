@@ -285,7 +285,8 @@ public sealed class ConsoleApiContractTests
 
         var evidence = document.Schema("EvidenceItem");
         evidence.AdditionalPropertiesAllowed.Should().BeFalse();
-        evidence.Required.Should().BeEquivalentTo("id", "source", "title", "excerpt", "observedAt");
+        evidence.Required.Should().BeEquivalentTo("id", "source", "title", "excerpt", "observedAt", "status");
+        document.Schema("EvidenceItemStatus").EnumNames().Should().Equal("candidate", "ruledOut", "context");
         evidence.Properties.Keys.Should().Contain(["value", "unit", "specLow", "specHigh", "toolName", "chamberName"]);
         evidence.Required.Should().NotContain(["value", "unit", "specLow", "specHigh", "toolName", "chamberName"]);
 
@@ -304,7 +305,17 @@ public sealed class ConsoleApiContractTests
             "confidence",
             "evidenceIds",
             "counterEvidence",
-            "actions");
+            "actions",
+            "ruledOut");
+        document.Schema("RuledOutItem").AdditionalPropertiesAllowed.Should().BeFalse();
+        document.Schema("RuledOutItem").Required.Should().BeEquivalentTo("evidenceId", "reason", "source");
+        document.Schema("RuledOutSource").EnumNames().Should().Equal("record", "agent");
+
+        var rejected = document.Schema("RejectedAnswer");
+        rejected.AdditionalPropertiesAllowed.Should().BeFalse();
+        rejected.Required.Should().BeEquivalentTo("evidenceIds", "ruledOutIds");
+        document.Schema("RejectedRuledOutItem").AdditionalPropertiesAllowed.Should().BeFalse();
+        document.Schema("RejectedRuledOutItem").Required.Should().BeEquivalentTo("evidenceId", "reason");
         hypothesis.Properties["confidence"].Minimum.Should().Be(0);
         hypothesis.Properties["confidence"].Maximum.Should().Be(1);
         hypothesis.Properties["evidenceIds"].MinItems.Should().Be(1);

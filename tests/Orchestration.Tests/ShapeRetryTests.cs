@@ -162,7 +162,12 @@ public sealed class ShapeRetryTests
 
         public object? GetService(Type serviceType, object? serviceKey = null)
         {
-            return serviceType.IsInstanceOfType(this) ? this : null;
+            if (serviceKey is null && serviceType.IsInstanceOfType(this))
+            {
+                return this;
+            }
+
+            return _inner.GetService(serviceType, serviceKey);
         }
 
         public void Dispose()
@@ -209,7 +214,12 @@ public sealed class ShapeRetryTests
 
         public object? GetService(Type serviceType, object? serviceKey = null)
         {
-            return serviceType.IsInstanceOfType(this) ? this : null;
+            if (serviceKey is null && serviceType.IsInstanceOfType(this))
+            {
+                return this;
+            }
+
+            return _inner.GetService(serviceType, serviceKey);
         }
 
         public void Dispose()

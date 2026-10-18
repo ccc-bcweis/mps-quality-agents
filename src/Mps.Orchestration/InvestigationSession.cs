@@ -49,6 +49,12 @@ public sealed class InvestigationSession
     /// <summary>The AI answer a guard refused in this round (cause, class, cited ids); null when no answer was refused.</summary>
     public Mps.Application.Evidence.RejectedAnswer? RejectedAnswer { get; internal set; }
 
+    /// <summary>Pack records the plant data rules out, kept even when the round has no hypothesis.</summary>
+    public IReadOnlyList<RuledOutEntry> RecordRuledOut { get; internal set; } = [];
+
+    /// <summary>Set when a guard or grounding check refused an id in evidenceIds or ruledOutIds.</summary>
+    public Mps.Application.Evidence.GuardListHit? GuardHit { get; internal set; }
+
     public IReadOnlyList<EvidenceItem> Evidence => _evidence;
 
     public IReadOnlyList<Hypothesis> Hypotheses => _hypotheses;

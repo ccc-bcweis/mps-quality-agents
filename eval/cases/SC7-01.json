@@ -6,6 +6,9 @@
     "behavior": "recommend",
     "category": "equipmentCalibrationOrAlignment",
     "forbiddenInCause": ["SIH4-088"],
+    "forbiddenInSupport": ["SN-SIH4-088"],
+    "requiredRuledOut": ["SN-SIH4-088"],
+    "requiredSupport": ["WO-PMP-D02-BRG"],
     "causeTerms": ["bearing"]
   },
   "request": {
@@ -22,10 +25,16 @@
       "00000000-0000-0000-0000-000000000910"
     ],
     "noticeIds": ["SN-SIH4-088"],
+    "candidates": [
+      {"id": "00000000-0000-0000-0000-000000000900", "class": "equipmentCalibrationOrAlignment", "kind": "workOrder"}
+    ],
+    "ruledOut": [
+      {"id": "00000000-0000-0000-0000-000000000920", "class": "supplyChainMaterial", "reason": "Silane lot SIH4-088 matches the purchase specification."}
+    ],
     "notes": [
-      {"id": "00000000-0000-0000-0000-000000000900", "source": "cmms", "title": "Work order WO-PMP-D02-BRG", "detail": "Foreline pump bearing hours are past the service interval on D-02. Vibration has been rising. The bearing was not replaced.", "externalRef": "WO-PMP-D02-BRG"},
-      {"id": "00000000-0000-0000-0000-000000000910", "source": "telemetry", "title": "Pump vibration on D-02-A", "detail": "Shape from the data since the first rule break: a gradual drift in one direction.", "externalRef": "TEL-D-02-pumpVibration"},
-      {"id": "00000000-0000-0000-0000-000000000920", "source": "erp", "title": "Ruled out: Supplier notice SN-SIH4-088", "detail": "Silane lot SIH4-088 matches the purchase specification.", "externalRef": "SN-SIH4-088"}
+      {"id": "00000000-0000-0000-0000-000000000900", "source": "cmms", "title": "Work order WO-PMP-D02-BRG", "detail": "Foreline pump bearing hours are past the service interval on D-02. Vibration has been rising. The bearing was not replaced.", "externalRef": "WO-PMP-D02-BRG", "status": "candidate"},
+      {"id": "00000000-0000-0000-0000-000000000910", "source": "telemetry", "title": "Pump vibration on D-02-A", "detail": "Shape from the data since the first rule break: a gradual drift in one direction.", "externalRef": "TEL-D-02-pumpVibration", "status": "context"},
+      {"id": "00000000-0000-0000-0000-000000000920", "source": "erp", "title": "Supplier notice SN-SIH4-088", "detail": "Silane lot SIH4-088 matches the purchase specification.", "externalRef": "SN-SIH4-088", "status": "ruledOut"}
     ]
   }
 }

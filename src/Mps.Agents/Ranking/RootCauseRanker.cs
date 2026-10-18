@@ -290,7 +290,21 @@ public static class RootCauseRanker
         IReadOnlyList<string> counterEvidence,
         IReadOnlyList<string> actions)
     {
-        var ids = ParseIds(evidenceIds);
+        var ruledOut = new List<RuledOutClaim>();
+        var blocked = new HashSet<EvidenceId>();
+        foreach (var note in request.RuledOut)
+        {
+            if (note is null || !Guid.TryParse(note.Id, out var parsed) || parsed == Guid.Empty)
+            {
+                continue;
+            }
+
+            var id = new EvidenceId(parsed);
+            blocked.Add(id);
+            ruledOut.Add(new RuledOutClaim(id, string.IsNullOrWhiteSpace(note.Reason) ? string.Empty : note.Reason.Trim()));
+        }
+
+        var ids = ParseIds(evidenceIds).Where(id => !blocked.Contains(id)).ToList();
         if (ids.Count == 0)
         {
             return RankDecision.Escalation("primary has no evidence id");
@@ -299,7 +313,7 @@ public static class RootCauseRanker
         var catalog = WhyItMattersCatalog.Shared;
         var explanations = CitedEvidenceFactory.ForRequest(request, ids, catalog);
         var matrix = EvidenceMatrixBuilder.FromRequest(request, category, ids, catalog);
-        var claim = new ResolutionClaim(category, cause, confidence, ids, counterEvidence, actions, [], explanations, matrix, request.SignalShape);
+        var claim = new ResolutionClaim(category, cause, confidence, ids, counterEvidence, actions, [], explanations, matrix, request.SignalShape, ruledOut);
         return RankDecision.Recommendation(claim);
     }
 

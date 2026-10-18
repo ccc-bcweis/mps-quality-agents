@@ -21,7 +21,8 @@ public sealed class ResolutionClaim
         IReadOnlyList<GroundedStatement> claims,
         IReadOnlyList<CitedEvidence>? explanations = null,
         IReadOnlyList<EvidenceMatrixEntry>? evidenceMatrix = null,
-        string? shape = null)
+        string? shape = null,
+        IReadOnlyList<RuledOutClaim>? ruledOutIds = null)
     {
         ArgumentNullException.ThrowIfNull(evidenceIds);
         ArgumentNullException.ThrowIfNull(counterEvidence);
@@ -38,6 +39,7 @@ public sealed class ResolutionClaim
         Explanations = explanations?.ToArray() ?? [];
         EvidenceMatrix = evidenceMatrix?.ToArray() ?? [];
         Shape = string.IsNullOrWhiteSpace(shape) ? null : shape.Trim();
+        RuledOutIds = ruledOutIds?.ToArray() ?? [];
     }
 
     public RootCauseCategory? Category { get; }
@@ -60,4 +62,7 @@ public sealed class ResolutionClaim
 
     /// <summary>The signal shape the agent reports, an id from the signal shape catalog. The cause check compares it with the measured shape.</summary>
     public string? Shape { get; }
+
+    /// <summary>Records the answer rules out. Empty when the answer names none.</summary>
+    public IReadOnlyList<RuledOutClaim> RuledOutIds { get; }
 }

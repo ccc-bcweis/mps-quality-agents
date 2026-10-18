@@ -25,7 +25,8 @@ public sealed class Hypothesis
         double confidence,
         IReadOnlyList<EvidenceId> evidenceIds,
         IReadOnlyList<string> counterEvidence,
-        IReadOnlyList<string> actions)
+        IReadOnlyList<string> actions,
+        IReadOnlyList<RuledOutEntry>? ruledOut = null)
     {
         if (id.IsEmpty)
         {
@@ -51,6 +52,19 @@ public sealed class Hypothesis
             throw new DomainRuleException("Confidence must be between 0 and 1.");
         }
 
+        var ruledOutEntries = ruledOut?.ToArray() ?? [];
+        if (ruledOutEntries.Length > 0)
+        {
+            var cited = new HashSet<EvidenceId>(evidenceIds);
+            foreach (var entry in ruledOutEntries)
+            {
+                if (cited.Contains(entry.Id))
+                {
+                    throw new DomainRuleException("An evidence id cannot be both cited and ruled out.");
+                }
+            }
+        }
+
         Id = id;
         Category = category;
         Cause = RequiredText.Value(cause, "Hypothesis cause is required.");
@@ -58,6 +72,7 @@ public sealed class Hypothesis
         EvidenceIds = evidenceIds.ToArray();
         CounterEvidence = counterEvidence.Select(item => RequiredText.Value(item, "Counter-evidence text is required.")).ToArray();
         Actions = actions.Select(item => RequiredText.Value(item, "Proposed action text is required.")).ToArray();
+        RuledOut = ruledOutEntries;
     }
 
     public HypothesisId Id { get; }
@@ -73,4 +88,6 @@ public sealed class Hypothesis
     public IReadOnlyList<string> CounterEvidence { get; }
 
     public IReadOnlyList<string> Actions { get; }
+
+    public IReadOnlyList<RuledOutEntry> RuledOut { get; }
 }

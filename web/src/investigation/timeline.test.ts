@@ -37,5 +37,22 @@ describe("agent step timeline", () => {
 
     const started = buildAgentSteps({ ...investigations[0], stage: "started" });
     expect(started.find((step) => step.id === "triage")?.status).toBe("running");
+
+    const noticeId = investigations[0].evidence.find((item) => item.externalRef === "SN-SIH4-088")?.id;
+    const ranking = s1.find((step) => step.id === "ranking")?.payload ?? "";
+    expect(ranking).toContain(noticeId);
+    expect(ranking).toContain('"source": "record"');
+    expect(ranking).toContain('"source": "agent"');
+    const tools = s1.find((step) => step.id === "toolCalls")?.payload ?? "";
+    expect(tools).toContain('"status": "ruledOut"');
+    expect(tools).toContain('"status": "context"');
+
+    const legacy = buildAgentSteps({
+      ...investigations[0],
+      hypotheses: investigations[0].hypotheses.map((item) => ({ ...item, ruledOut: undefined })),
+      evidence: investigations[0].evidence.map((item) => ({ ...item, status: undefined })),
+    });
+    expect(legacy.find((step) => step.id === "ranking")?.payload).toContain('"ruledOut": []');
+    expect(legacy.find((step) => step.id === "toolCalls")?.payload).toContain('"status": null');
   });
 });

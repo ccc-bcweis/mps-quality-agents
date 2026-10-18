@@ -145,7 +145,7 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
         // Per investigation: one scenario can open several (one per tool), and each lists its own steps.
         if (_cascade.FindStep(snapshot.CorrelationId, StepKey(snapshot)) is null)
         {
-            await PublishStepsAsync(snapshot, stored?.Incident, cancellationToken).ConfigureAwait(false);
+            await PublishStepsAsync(snapshot, stored?.Incident, narrative, cancellationToken).ConfigureAwait(false);
         }
 
         await PublishAsync(
@@ -232,7 +232,11 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
 
     private static string StepKey(InvestigationSnapshot snapshot) => "investigation:" + snapshot.Id.Value.ToString("N");
 
-    private async Task PublishStepsAsync(InvestigationSnapshot snapshot, Incident? incident, CancellationToken cancellationToken)
+    private async Task PublishStepsAsync(
+        InvestigationSnapshot snapshot,
+        Incident? incident,
+        InvestigationNarrative narrative,
+        CancellationToken cancellationToken)
     {
         var parent = CommandAmbient.EventId
             ?? _cascade.FindStep(snapshot.CorrelationId, "ticket")
@@ -295,8 +299,10 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
                     incident?.ToolId.ToString(),
                     incident?.ChamberId,
                     DateTimeOffset.UtcNow,
-                    new { kind = "recommendation", investigationId = snapshot.Id.Value }),
+                    InvestigationRoundPayload.For(snapshot, narrative)),
                 cancellationToken).ConfigureAwait(false);
+
+            // The cascade key stays recommendation so a later approval still finds this step.
             _cascade.RememberStep(snapshot.CorrelationId, "recommendation", recommendation);
         }
     }

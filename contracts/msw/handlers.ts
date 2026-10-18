@@ -50,6 +50,7 @@ const investigation = {
       observedAt: "2026-10-12T08:00:00Z",
       toolId: "E-02",
       externalRef: "ECO-4471",
+      status: "candidate",
     },
   ],
   hypotheses: [
@@ -61,6 +62,7 @@ const investigation = {
       evidenceIds: ["11111111-1111-4111-8111-111111111111"],
       counterEvidence: ["A preventive maintenance was performed the same week."],
       actions: ["Hold the affected lots and confirm the installed ring revision."],
+      ruledOut: [],
     },
   ],
   escalationReason: null,

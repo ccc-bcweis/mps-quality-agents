@@ -1,0 +1,19 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Live-model eval settings. The replay eval does not read this file.
+# samplesPerCase is k: how many times each case is sent to the real resolution prompt.
+# LiveModelEvalTests wiring that reads this file comes in a later round.
+samplesPerCase: 5
+cases:
+  - SC7-02
+  - SC7-01
+  - SC8-01
+# Gates for that run. A miss fails the live eval.
+# decoysInSupport: forbidden ids or external refs found in evidenceIds, across the run. Must be 0.
+# categoryAccuracy: share of answers in the expected class. Must be 1.0.
+# ruledOutCoverage: share of requiredRuledOut ids present in ruledOutIds, on cases that set that list. Must be at least 0.9.
+# groundingPassRate: share of answers the grounding validator accepts. Must be 1.0. An unknown id, an id in both lists, or a missing reason fails.
+gates:
+  decoysInSupport: 0
+  categoryAccuracy: 1.0
+  ruledOutCoverage: 0.9
+  groundingPassRate: 1.0

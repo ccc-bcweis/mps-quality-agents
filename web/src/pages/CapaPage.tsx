@@ -21,6 +21,7 @@ import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
 import { splitBySite } from "../sites/splitBySite";
 import { formatLocalWhen } from "../investigation/format";
+import { collectRuledOut } from "../investigation/ruledOut";
 import { nextCapaStage } from "../lifecycle";
 
 export function CapaPage() {
@@ -323,7 +324,7 @@ export function CapaPage() {
           {investigation ? (
             <>
               <section className={`${panel} mt-3`}>
-                <EvidencePack items={investigation.evidence} />
+                <EvidencePack items={investigation.evidence} ruledOut={collectRuledOut(investigation.hypotheses)} />
               </section>
               <section className={`${panel} mt-3`}>
                 <AgentTimeline investigation={investigation} />

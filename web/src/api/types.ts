@@ -205,6 +205,29 @@ export type PrintoutConfirmation = {
   catalogParameter: string;
 };
 
+/**
+ * candidate may support a class. ruledOut is already ruled out by the plant data.
+ * context is a signal or an alert. Older packs omit it; a missing value is not ruled out.
+ */
+export type EvidenceStatus = "candidate" | "ruledOut" | "context";
+
+/** record: the plant data ruled it out. agent: the AI ruled it out. */
+export type RuledOutSource = "record" | "agent";
+
+/** One record a hypothesis considered and ruled out. C9 HypothesisResponse.ruledOut. */
+export type RuledOutItem = {
+  evidenceId: string;
+  reason: string;
+  source: RuledOutSource;
+  category?: RootCauseCategory | null;
+};
+
+/** One record a refused answer proposed as ruled out. C9 RejectedAnswerResponse.ruledOutIds. */
+export type RejectedRuledOut = {
+  evidenceId: string;
+  reason: string;
+};
+
 export type EvidenceItem = {
   id: string;
   source: EvidenceSource;
@@ -230,6 +253,8 @@ export type EvidenceItem = {
   limitState?: LimitState | null;
   /** Set on userProvided evidence: who added it with Add evidence. */
   suppliedBy?: string | null;
+  /** C9. Required on new responses. Older packs omit it. */
+  status?: EvidenceStatus;
 };
 
 /** outOfSpec: outside the recipe spec. outOfControl: inside spec but statistically unusual. */
@@ -264,6 +289,8 @@ export type Hypothesis = {
   evidenceIds: string[];
   counterEvidence: string[];
   actions: string[];
+  /** Considered and ruled out. C9 requires the array. Older rows omit it; a missing value is an empty list. */
+  ruledOut?: RuledOutItem[];
 };
 
 export type Investigation = {
@@ -292,6 +319,8 @@ export type RejectedAnswer = {
   category?: RootCauseCategory | null;
   /** Evidence ids the refused answer cited as support. */
   evidenceIds: string[];
+  /** Proposed as ruled out. C9 requires the array. Older rows omit it; a missing value is an empty list. */
+  ruledOutIds?: RejectedRuledOut[];
 };
 
 export type EvidenceStance = "supports" | "rulesOut" | "neutral";

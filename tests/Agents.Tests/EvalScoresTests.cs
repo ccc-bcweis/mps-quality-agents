@@ -93,8 +93,60 @@ public sealed class EvalScoresTests
 
         text.Should().Contain("| Expected cause in the top 2 | 100% | 80% |");
         text.Should().Contain("| Citation precision | 100% | 90% |");
+        text.Should().Contain("| Decoys in support | 0 | 0 |");
+        text.Should().Contain("| Ruled-out coverage |");
         text.Should().Contain("| `supplyChainMaterial` | 0 | 0 | 4 | 0 | 0 |");
         text.Should().Contain("| SC7-01 |");
+        text.Should().Contain("| SC7-02 |");
+    }
+
+    [Fact]
+    public void ADecoyInSupportFailsTheGateAndLowCoverageDoesToo()
+    {
+        var clean = Result("A", "processDrift", "processDrift");
+        var decoy = EvalSuite.Summarize([clean with { DecoyInSupport = 1 }]);
+        decoy.DecoyInSupport.Should().Be(1);
+        decoy.GatesPass.Should().BeFalse();
+
+        var low = EvalSuite.Summarize(
+        [
+            clean with { RuledOutCoverage = 0.5d },
+            Result("B", "processDrift", "processDrift") with { RuledOutCoverage = 1d },
+        ]);
+        low.RuledOutCoverage.Should().Be(0.75d);
+        low.GatesPass.Should().BeFalse();
+
+        var enough = EvalSuite.Summarize(
+        [
+            clean with { RuledOutCoverage = 1d },
+            Result("B", "processDrift", "processDrift") with { RuledOutCoverage = 0.8d },
+        ]);
+        enough.RuledOutCoverage.Should().Be(0.9d);
+        enough.GatesPass.Should().BeTrue();
+    }
+
+    [Fact]
+    public void SupportAndRuledOutChecksMatchIdsAndExternalRefs()
+    {
+        var item = EvalSuite.Load(Cases).Single(c => c.Id == "CAL-01");
+
+        item.Expected.RequiredSupport = ["CAL-S-02"];
+        EvalSuite.Score(item).Passed.Should().BeTrue();
+
+        item.Expected.ForbiddenInSupport = ["CAL-S-02"];
+        var decoy = EvalSuite.Score(item);
+        decoy.DecoyInSupport.Should().Be(1);
+        decoy.Passed.Should().BeFalse();
+
+        item.Expected.ForbiddenInSupport = [];
+        item.Expected.RequiredSupport = ["WO-NOT-THERE"];
+        EvalSuite.Score(item).Passed.Should().BeFalse();
+
+        item.Expected.RequiredSupport = [];
+        item.Expected.RequiredRuledOut = ["N2H2-190"];
+        var missed = EvalSuite.Score(item);
+        missed.RuledOutCoverage.Should().Be(0d);
+        missed.Passed.Should().BeFalse();
     }
 
     private static EvalCaseResult Result(string id, string? expected, string? returned, int cited = 1, int inPack = 1, bool? top2 = true) =>
