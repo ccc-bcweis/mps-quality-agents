@@ -28,7 +28,7 @@ coverage/
 *.db-wal
 
 # Node (UI lane)
-node_modules/
+node_modules
 dist/
 *.tsbuildinfo
 test-results/
