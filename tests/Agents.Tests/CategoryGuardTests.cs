@@ -19,8 +19,13 @@ public sealed class CategoryGuardTests
     private static readonly EvidenceNote Bearing = Note(BearingId, "cmms", "WO-PMP-D02-BRG", "Foreline pump bearing hours are past the service interval on D-02. Vibration has been rising.");
     private static readonly EvidenceNote Signal = Note(SignalId, "telemetry", "TEL-D-02", "Shape from the data: a gradual drift in one direction.");
 
-    private static ResolutionClaim Claim(RootCauseCategory category, Guid[] cited, string[]? counter = null, EvidenceMatrixEntry[]? matrix = null) =>
-        new(category, "WO-PMP-D02-BRG says the bearing is past its service interval.", 0.8, cited.Select(id => new EvidenceId(id)).ToArray(), counter ?? [], [], [], null, matrix, "ramp");
+    private static ResolutionClaim Claim(
+        RootCauseCategory category,
+        Guid[] cited,
+        string[]? counter = null,
+        EvidenceMatrixEntry[]? matrix = null,
+        RuledOutClaim[]? ruledOut = null) =>
+        new(category, "WO-PMP-D02-BRG says the bearing is past its service interval.", 0.8, cited.Select(id => new EvidenceId(id)).ToArray(), counter ?? [], [], [], null, matrix, "ramp", ruledOut);
 
     [Fact]
     public void ABearingWorkOrderFiledAsProcessDriftIsAMismatch()
@@ -43,6 +48,9 @@ public sealed class CategoryGuardTests
         CategoryGuard.Check(Claim(RootCauseCategory.ProcessDrift, [BearingId], counter: ["WO-PMP-D02-BRG is a confounder."]), [Bearing]).Should().BeNull();
         var rulesOut = new EvidenceMatrixEntry(RootCauseCategory.EquipmentCalibrationOrAlignment, new EvidenceId(BearingId), EvidenceStance.RulesOut, null);
         CategoryGuard.Check(Claim(RootCauseCategory.ProcessDrift, [BearingId], matrix: [rulesOut]), [Bearing]).Should().BeNull();
+        var listed = new RuledOutClaim(new EvidenceId(BearingId), "The bearing record is not the cause of this step.");
+        CategoryGuard.Check(Claim(RootCauseCategory.ProcessDrift, [BearingId], ruledOut: [listed]), [Bearing]).Should().BeNull();
+        CategoryGuard.Feedback(Claim(RootCauseCategory.ProcessDrift, [BearingId]), [Bearing]).Should().Contain("ruledOutIds");
     }
 
     [Fact]

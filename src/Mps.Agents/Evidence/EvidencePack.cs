@@ -100,6 +100,25 @@ public sealed class EvidencePack
         }
 
         var items = Items.Concat(extra).ToArray();
+        var (addedCandidates, addedRuledOut) = EvidenceLists.Partition([], [], [], [], [], extra);
+        var candidates = Candidates.ToList();
+        var ruledOut = RuledOut.ToList();
+        foreach (var candidate in addedCandidates)
+        {
+            if (candidates.All(existing => existing.Id != candidate.Id) && ruledOut.All(existing => existing.Id != candidate.Id))
+            {
+                candidates.Add(candidate);
+            }
+        }
+
+        foreach (var record in addedRuledOut)
+        {
+            if (candidates.All(existing => existing.Id != record.Id) && ruledOut.All(existing => existing.Id != record.Id))
+            {
+                ruledOut.Add(record);
+            }
+        }
+
         return new EvidencePack(
             items,
             ConfigClaims,
@@ -111,7 +130,7 @@ public sealed class EvidencePack
             CalibrationLookupCompleted,
             SignalShape,
             CitedEvidenceFactory.ForItems(items, catalog),
-            Candidates,
-            RuledOut);
+            candidates,
+            ruledOut);
     }
 }
