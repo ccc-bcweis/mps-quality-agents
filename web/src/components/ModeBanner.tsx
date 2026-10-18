@@ -4,23 +4,24 @@ import { useConsole } from "../context/ConsoleContext";
 import { visibleProblem } from "../history/copy";
 import { Term } from "./Term";
 
-const ENGINE_TIP = "This does not change the plant data. It only changes how the AI answers.";
+const ENGINE_TIP = "The model the server is using to answer. Set by Mps:Model:Mode (offline, openai or azure). It does not change the plant data.";
 
+/** The AI engine the server really runs, from GET /api/model/status. Read-only: the mode is a server setting. */
 export function ModeBanner() {
-  const { metrics, metricsError, bannerMode, serverMode, capReached, localPreview, setPreview } = useConsole();
+  const { metrics, metricsError, bannerMode, capReached, modelStatus } = useConsole();
   const spend = metrics ? formatUsd(bannerMode === "replay" ? 0 : metrics.spendTodayUsd) : "—";
   const cap = metrics ? formatUsd(metrics.spendCapUsd) : "—";
   const ratio = metrics && metrics.spendCapUsd > 0 && bannerMode !== "replay" ? metrics.spendTodayUsd / metrics.spendCapUsd : 0;
   const hot = ratio >= 0.8;
+  const label = modelStatus ? modelStatus.label + (modelStatus.model ? ` · ${modelStatus.model}` : "") : "…";
+  const warn = capReached || modelStatus?.fallingBack === true || modelStatus?.mode === "placeholder";
   const status = capReached
-    ? "Daily spend cap reached. Live calls stay off and the console stays in replay."
+    ? "Daily spend cap reached. Live calls stay off and saved answers are used."
     : visibleProblem(metricsError)
       ? visibleProblem(metricsError)
-      : bannerMode === "mockReasoner"
-        ? "No saved answer for the last injection. A fixed reasoner is answering."
-        : localPreview && serverMode
-          ? `Gateway reports ${serverMode}.`
-          : null;
+      : modelStatus?.fallingBack || modelStatus?.mode === "placeholder"
+        ? (modelStatus.detail ?? null)
+        : null;
 
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-mps-body">
@@ -28,25 +29,15 @@ export function ModeBanner() {
         <span className="shrink-0 whitespace-nowrap">
           <Term id="AI" spellOut={false} focusable={false} /> engine:
         </span>
-        <button
-          type="button"
-          aria-pressed={bannerMode === "replay"}
-          title={ENGINE_TIP}
-          className={`shrink-0 whitespace-nowrap rounded border px-2 py-0.5 ${bannerMode === "replay" ? "border-sn-gold bg-sn-navy-soft text-sn-gold" : "border-sn-gold/40 text-sn-gold-wash"}`}
-          onClick={() => setPreview("replay")}
+        <span
+          role="status"
+          aria-label="AI engine in use"
+          className={`shrink-0 whitespace-nowrap rounded border px-2 py-0.5 ${
+            warn ? "border-mps-alarm text-sn-gold" : modelStatus?.live ? "border-mps-ok text-[#a7f3d0]" : "border-sn-gold bg-sn-navy-soft text-sn-gold"
+          }`}
         >
-          Replay (saved answers, free, repeatable)
-        </button>
-        <button
-          type="button"
-          aria-pressed={bannerMode === "live"}
-          title={ENGINE_TIP}
-          disabled={capReached}
-          className={`shrink-0 whitespace-nowrap rounded border px-2 py-0.5 disabled:opacity-40 ${bannerMode === "live" ? "border-mps-ok text-[#a7f3d0]" : "border-sn-gold/40 text-sn-gold-wash"}`}
-          onClick={() => setPreview("live")}
-        >
-          Live (real model)
-        </button>
+          {label}
+        </span>
       </div>
       <p className="shrink-0 whitespace-nowrap text-mps-micro text-sn-gold-wash">Answers only. Plant data stays the same.</p>
       {status ? <p className="basis-full text-sn-gold-wash">{status}</p> : null}

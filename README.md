@@ -33,22 +33,43 @@ All companies, equipment, people and data in this repo are **fictional and synth
 
 ## Clone and run
 
-Replay mode is the default. It needs no model key and makes no network model call.
+No Azure account, model key, Entra tenant or Key Vault is needed. With no model configured the app runs **offline on saved answers**: the real agents, evidence gate and guards run, and the model's part comes from the same saved answers the 28-case replay eval scores, so SC-1 to SC-8 reach their real causes with no network call.
+
+You need either Docker, or the **.NET 10 SDK** and **Node 22** (the version CI and the dev container use; Node 20.19 or later also builds).
 
 **One container (Docker).** This is the same image the hosted demo runs.
+
+```bash
+git clone https://github.com/ccc-bcweis/mps-quality-agents
+cd mps-quality-agents
+cp .env.example .env          # optional: only needed to set a model key or other values
+docker compose up --build
+```
 
 ```powershell
 git clone https://github.com/ccc-bcweis/mps-quality-agents
 cd mps-quality-agents
-Copy-Item .env.example .env
+Copy-Item .env.example .env   # optional
 docker compose up --build
 ```
 
-- Console and API: http://localhost:8080 (signed in as the local dev user)
+- Console and API: http://localhost:8080 (local sign-in mode: no login, you are the admin)
 - API health: http://localhost:8080/health
 - Aspire dashboard (traces): http://localhost:18888
 
-**Without Docker** (.NET 10 SDK and Node 22), in two terminals from the repo root:
+Compose publishes these ports on `127.0.0.1` only, because local sign-in mode treats every caller as admin. Compose reads `.env` both for its own `${...}` values (such as `MODEL_MODE`) and as the container's environment.
+
+**Without Docker**, in two terminals from the repo root. `dotnet run` loads the repo's `.env` if there is one (real environment variables win; `MPS_SKIP_DOTENV=1` turns this off).
+
+```bash
+dotnet run --project src/Mps.Api
+```
+
+```bash
+cd web
+npm ci
+VITE_USE_MSW=false npm run dev
+```
 
 ```powershell
 dotnet run --project src/Mps.Api
@@ -64,7 +85,38 @@ Open http://localhost:5173. Vite forwards `/api`, `/health` and `/hubs` to the A
 
 In VS Code, F5 runs the **API** configuration and opens `/health`. The dev container is `.devcontainer/devcontainer.json` (.NET 10 and Node 22).
 
-**Live model locally.** Set `LLM_MODE=live` and the Azure OpenAI or OpenAI values in the untracked `.env`. A model key belongs only in that file.
+**Speed.** The plant runs on the wall clock. At 1x, an investigation waits for about 20 readings after the alert before it judges the signal's shape, so a scenario takes about 5 minutes from injection to recommendation. Set 10x in the harness speed control (or `POST /api/demo/speed` with `{"speed":10,"strideSeconds":15}`) for under a minute.
+
+**Approval signing key.** In Development with no `Mps__Approval__SigningKey`, the app makes a random key for each run and logs a warning; approvals still work but do not survive a restart. Set your own hex key (at least 32 bytes, for example `openssl rand -hex 32`) in `.env` to keep them. Outside Development the app will not start without a key.
+
+### Model modes
+
+One setting picks the model: `MODEL_MODE` (or `Mps__Model__Mode`, `Mps:Model:Mode` in configuration). The console shows the mode in use in a status chip at the top, and `GET /api/model/status` returns it.
+
+| `MODEL_MODE` | Chip | What it needs |
+|---|---|---|
+| `offline` (default when no key is set) | Offline (saved answers) | Nothing. No network call. |
+| `openai` (default when `OPENAI_API_KEY` is set) | OpenAI | `OPENAI_API_KEY`. Optional `OPENAI_MODEL` (default `Mps:Model:OpenAI:Model` in `appsettings.json`, `gpt-5.4-mini`) and `OPENAI_BASE_URL`. |
+| `azure` | Azure OpenAI | `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`. Signs in with managed identity or your `az login` (`DefaultAzureCredential`); `AZURE_OPENAI_API_KEY` is optional. `AZURE_CLIENT_ID` picks a user-assigned identity. |
+
+Put keys only in the untracked `.env` (see `.env.example`), never in a tracked file. A missing value stops startup with a message naming the setting.
+
+```bash
+# .env
+MODEL_MODE=openai
+OPENAI_API_KEY=<your key>
+```
+
+A live model call that fails or takes longer than `Mps:Model:TimeoutSeconds` (20 s) is not retried. After `Mps:Model:CircuitBreakerFailures` failures (2) the app answers from the saved answers and tries the model again after `Mps:Model:CircuitCooldownSeconds` (60 s). While it does, the chip says it is falling back and why. Live calls stop at `Mps:Model:DailyCapUsd` per day. Offline answers cost nothing.
+
+### Sign-in modes
+
+| `Mps__Auth__Mode` | Who can get in |
+|---|---|
+| `local` (default) | Everyone, with no sign-in. The caller is the local admin. Meant for Development on localhost: the app logs a loud warning if it listens beyond loopback (`Mps__Auth__LocalNetworkWarning=false` silences it inside a container whose port is published on loopback) or if it runs outside Development. |
+| `azure` (also `entra`) | Microsoft Entra sign-in through Container Apps Easy Auth, using **your own** tenant and sign-in app (`ENTRA_CLIENT_ID`, `ENTRA_ISSUER` at deploy). Admins come from `ADMIN_EMAILS` (or `Mps__Auth__AdminEmails`), comma separated. **The app refuses to start if that list is empty.** `Mps__Auth__HomeTenantId` names your tenant for guest checks. |
+
+No email address is built into the code.
 
 ## Tests and evaluation
 
@@ -99,7 +151,7 @@ The hosted demo is **one container**. `deploy/app.Dockerfile` builds the React c
 
 Container Apps Easy Auth (Microsoft Entra) runs with anonymous requests allowed, and the app gates access itself. A signed-out browser is sent to `/landing.html` with a **Log in** button. An anonymous API call gets **401**. `GET /health` answers **200**. An account that has not redeemed a join link sees "Signed in as X, which has no access" and **Use a different account** (ADR-011).
 
-SQLite stays inside the container (`/app/data/mps.db`), is seeded on start, and disappears when the replica stops, so **every deploy wipes the demo data**. `deploySql` and `deployStaticWeb` default to **false**. Azure OpenAI is keyless: local auth is off, and the app's managed identity has Cognitive Services OpenAI User. The app settings are the endpoint, the `gpt-5.4-mini` deployment, `Mps__Model__Mode=Live`, and `Mps__Model__DailyCapUsd=2`. The registry is Basic and its admin user is off. The same identity has AcrPull.
+SQLite stays inside the container (`/app/data/mps.db`), is seeded on start, and disappears when the replica stops, so **every deploy wipes the demo data**. `deploySql` and `deployStaticWeb` default to **false**. Azure OpenAI is keyless: local auth is off, and the app's managed identity has Cognitive Services OpenAI User. The app settings are the endpoint, the `gpt-5.4-mini` deployment, `Mps__Model__Mode=azure`, `Mps__Model__DailyCapUsd=2`, and `Mps__Auth__AdminEmails`. The registry is Basic and its admin user is off. The same identity has AcrPull.
 
 **Approval signing key.** Approval tokens are signed with one key, `Mps:Approval:SigningKey` (hex, at least 32 bytes). There is no built-in key. The hosted app reads it from Key Vault secret `approval-signing-key` in `mpsdemokv` through a Container Apps Key Vault reference, using the app identity (Key Vault Secrets User). The secret was created by hand and is not in Git or in the template; a new environment needs it created before the app deploy (`az keyvault secret set --vault-name <vault> --name approval-signing-key --file <(openssl rand -hex 32 | tr -d '\n') -o none`). Outside Development the app will not start without the key. In Development it makes a random key per process, so approvals do not survive a restart.
 
@@ -117,10 +169,41 @@ GitHub environment **variables**:
 | `ENTRA_CLIENT_ID` | Easy Auth application (client) id. |
 | `ENTRA_ISSUER` | OpenID issuer. |
 | `BUDGET_EMAIL` | Budget notification address. Empty skips the budget resource. |
+| `NAME_PREFIX`, `LOCATION` | Optional. Resource name prefix and region; blank keeps `infra/main.bicepparam`. |
+| `ADMIN_EMAILS` | Comma-separated app admins. The **Run workflow** input `adminEmails` overrides it. If both are blank, the workflow keeps the running app's list; if there is none, it stops before changing anything. |
+
+If the secrets or `RESOURCE_GROUP` are missing (a fork, a fresh clone), the workflow writes a notice and skips every step; it does not fail.
+
+**Who can deploy here.** The workflow logs in with GitHub OIDC only; the Azure app has no client secret or certificate. Its federated credentials trust only tokens for this repository's `azure-demo` environment, which has a required reviewer, and its roles cover only the demo resource group. A fork or a copy has none of these secrets or variables, and its OIDC token names a different repository, so Azure refuses it even if someone copies the ids.
 
 Run it from GitHub: Actions → **Deploy** → Run workflow, then approve the `azure-demo` environment. Leave the image tag blank to use the commit SHA, so the running image tag `mps-app:<sha>` names the commit that is live. The job logs in with OIDC, deploys `infra/main.bicep`, builds `deploy/app.Dockerfile` in the registry, deploys the new image, then checks that `/health` is 200, an anonymous API call is 401 and `/` redirects to `/landing.html`.
 
 Spend notes and the name-prefix rules are in [infra/BUDGET.md](infra/BUDGET.md). Teardown is deleting the resource group. The app runs one replica on purpose, because each replica has its own SQLite file.
+
+## Deploy to your own Azure
+
+Everything above deploys to the original demo's subscription only. To run your own copy you need an Azure subscription where you can create resources and role assignments (Owner, or Contributor plus User Access Administrator, on the resource group), Azure OpenAI quota for `gpt-5.4-mini` in your region, and globally unique names (`NAME_PREFIX`).
+
+**Path 1: the deploy script from your machine.** Needs the Azure CLI, `openssl` and bash (WSL or Git Bash on Windows).
+
+```bash
+az login
+az account set --subscription <your-subscription-id>
+RESOURCE_GROUP=rg-mps-mine NAME_PREFIX=mpsmine LOCATION=eastus2 deploy/deploy.sh
+```
+
+`deploy/deploy.sh` creates the resource group if needed, deploys `infra/main.bicep`, creates the approval signing key in your new Key Vault (random, never printed), builds the image in your registry and deploys the app. **You are the admin by default**: `ADMIN_EMAILS` falls back to the list on the running app, then to your `az login` user. Without `ENTRA_CLIENT_ID` and `ENTRA_ISSUER` the app has no Entra sign-in. To turn it on, create your own sign-in app (next path, step 4), rerun with those two values, then run `deploy/entra-setup.sh <signin-app-id> <app-fqdn> [your-upn]` as printed at the end.
+
+**Path 2: your own GitHub Actions.** In your fork or copy:
+
+1. Create an Entra app registration (or a user-assigned managed identity) for deploys. Give it **Contributor** and **User Access Administrator** on your resource group (the template assigns roles to the app's identity).
+2. Add a federated credential to it: issuer `https://token.actions.githubusercontent.com`, subject `repo:<your-org>/<your-repo>:environment:azure-demo`, audience `api://AzureADTokenExchange`. No client secret is needed.
+3. In your repo, create the environment `azure-demo` (add yourself as required reviewer), with secrets `AZURE_CLIENT_ID` (step 1), `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, and variables `RESOURCE_GROUP`, `ADMIN_EMAILS` (your email), `NAME_PREFIX` (your own prefix; registry and Key Vault names are global), and optionally `LOCATION` and `BUDGET_EMAIL`.
+4. For sign-in, register your own Entra web app in your tenant and set variables `ENTRA_CLIENT_ID` (its client id) and `ENTRA_ISSUER` (`https://login.microsoftonline.com/<your-tenant-id>/v2.0`). After the first deploy, run `deploy/entra-setup.sh` once as that app's owner.
+5. The first deploy needs the approval signing key in your Key Vault. Either run Path 1 once, or create it after the bootstrap step: `az keyvault secret set --vault-name <prefix>kv --name approval-signing-key --file <(openssl rand -hex 32 | tr -d '\n') -o none`. Then run the workflow again.
+6. Run **Deploy** from the Actions tab and approve the environment.
+
+In GitHub Actions the deployer is a service principal with no email, so the workflow cannot make "the person deploying" the admin; that is what `ADMIN_EMAILS` (or the `adminEmails` input) is for.
 
 ## Ownership
 All intellectual property in this build (design, specification, plan, code, data, documents and presentation materials) is owned by **Bryan C. Weis / Common Consulting Company**. It is a fictional demonstration built with AI assistance. All companies, equipment and data in it are fictional and synthetic. It is released under the MIT License (see LICENSE). The license grants usage rights but doesn't transfer ownership.

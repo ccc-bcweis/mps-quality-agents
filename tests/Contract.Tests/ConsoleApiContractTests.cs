@@ -48,6 +48,7 @@ public sealed class ConsoleApiContractTests
         "/api/injector/scenarios/{scenarioId}",
         "/api/injector/stop",
         "/api/metrics",
+        "/api/model/status",
         "/api/metadata/company",
         "/api/metadata/sites",
         "/api/metadata/tools/{toolId}",

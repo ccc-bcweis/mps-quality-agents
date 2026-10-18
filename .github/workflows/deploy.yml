@@ -36,6 +36,9 @@ jobs:
       ENTRA_CLIENT_ID: ${{ vars.ENTRA_CLIENT_ID }}
       ENTRA_ISSUER: ${{ vars.ENTRA_ISSUER }}
       BUDGET_EMAIL: ${{ vars.BUDGET_EMAIL }}
+      # Optional, for your own copy: resource name prefix (registry and vault names are global) and region. Blank keeps infra/main.bicepparam.
+      NAME_PREFIX: ${{ vars.NAME_PREFIX }}
+      LOCATION: ${{ vars.LOCATION }}
       ADMIN_EMAILS_INPUT: ${{ inputs.adminEmails || vars.ADMIN_EMAILS }}
       IMAGE_TAG: ${{ inputs.imageTag || github.sha }}
       BOOTSTRAP_IMAGE: mcr.microsoft.com/dotnet/aspnet:10.0
@@ -118,6 +121,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          overrides=()
+          if [ -n "$NAME_PREFIX" ]; then overrides+=(namePrefix="$NAME_PREFIX"); fi
+          if [ -n "$LOCATION" ]; then overrides+=(location="$LOCATION"); fi
           az deployment group create \
             --resource-group "$RESOURCE_GROUP" \
             --name mps-demo \
@@ -129,6 +135,7 @@ jobs:
               openIdIssuer="$ENTRA_ISSUER" \
               adminEmails="$ADMIN_EMAILS" \
               budgetContactEmail="$BUDGET_EMAIL" \
+              "${overrides[@]}" \
               deploySql=false \
               deployStaticWeb=false
 
@@ -180,6 +187,9 @@ jobs:
         run: |
           set -euo pipefail
           image="${{ steps.acr.outputs.server }}/mps-app:${IMAGE_TAG}"
+          overrides=()
+          if [ -n "$NAME_PREFIX" ]; then overrides+=(namePrefix="$NAME_PREFIX"); fi
+          if [ -n "$LOCATION" ]; then overrides+=(location="$LOCATION"); fi
           az deployment group create \
             --resource-group "$RESOURCE_GROUP" \
             --name mps-demo \
@@ -191,6 +201,7 @@ jobs:
               openIdIssuer="$ENTRA_ISSUER" \
               adminEmails="$ADMIN_EMAILS" \
               budgetContactEmail="$BUDGET_EMAIL" \
+              "${overrides[@]}" \
               deploySql=false \
               deployStaticWeb=false
           fqdn="$(az deployment group show --resource-group "$RESOURCE_GROUP" --name mps-demo --query properties.outputs.appFqdn.value -o tsv)"

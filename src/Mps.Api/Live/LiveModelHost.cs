@@ -20,21 +20,23 @@ using Mps.Orchestration;
 namespace Mps.Api.Live;
 
 /// <summary>
-/// Composes the real agent workflow when Mps:Model:Mode is Live and an Azure OpenAI endpoint is set.
-/// Every model call goes through the gateway, which enforces the daily dollar cap and falls back to the labeled mock.
+/// Composes the real agent workflow for the configured model mode (<see cref="ModelModeSettings"/>): offline (the
+/// deterministic reasoner the replay eval scores, no network), OpenAI (API key) or Azure OpenAI (Azure identity or key).
+/// Every model call goes through the gateway, which enforces the daily dollar cap, times out live calls, and falls back
+/// to saved answers when the live model fails. The guards run in every mode.
 /// </summary>
 public static class LiveModelHost
 {
+    /// <summary>
+    /// Adds the investigation workflow. Returns false only for the test-only placeholder mode, which the caller wires.
+    /// </summary>
     public static bool TryAddLiveInvestigation(this WebApplicationBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
         var config = builder.Configuration;
-        var mode = config["Mps:Model:Mode"];
-        var endpoint = config["Mps:Model:Endpoint"] ?? config["AZURE_OPENAI_ENDPOINT"];
-        var deployment = config["Mps:Model:Deployment"] ?? config["AZURE_OPENAI_DEPLOYMENT"];
-        if (!string.Equals(mode, "Live", StringComparison.OrdinalIgnoreCase)
-            || string.IsNullOrWhiteSpace(endpoint)
-            || string.IsNullOrWhiteSpace(deployment))
+        var settings = ModelModeSettings.Read(config);
+        builder.Services.AddSingleton(settings);
+        if (settings.Mode == ModelMode.Placeholder)
         {
             return false;
         }
@@ -46,31 +48,33 @@ public static class LiveModelHost
         {
             var options = new ModelGatewayOptions
             {
-                Mode = ModelRoute.AzureOpenAI,
-                DailySpendCapUsd = config.GetValue("Mps:Model:DailyCapUsd", 2m),
-                InputUsdPerMillionTokens = config.GetValue("Mps:Model:InputUsdPerMillionTokens", 0.75m),
-                OutputUsdPerMillionTokens = config.GetValue("Mps:Model:OutputUsdPerMillionTokens", 4.50m),
+                Mode = settings.Mode switch
+                {
+                    ModelMode.Azure => ModelRoute.AzureOpenAI,
+                    ModelMode.OpenAI => ModelRoute.OpenAI,
+                    _ => ModelRoute.MockReasoner,
+                },
+                DailySpendCapUsd = Required<decimal>(config, "Mps:Model:DailyCapUsd"),
+                InputUsdPerMillionTokens = Required<decimal>(config, "Mps:Model:InputUsdPerMillionTokens"),
+                OutputUsdPerMillionTokens = Required<decimal>(config, "Mps:Model:OutputUsdPerMillionTokens"),
                 LiveRetryCount = 0,
+                CircuitBreakerFailures = Required<int>(config, "Mps:Model:CircuitBreakerFailures"),
+                CircuitCooldown = TimeSpan.FromSeconds(Required<double>(config, "Mps:Model:CircuitCooldownSeconds")),
                 ScriptedReplay = config.GetValue("Mps:Model:ScriptedReplay", false),
                 Seed = config.GetValue("Mps:Model:Seed", (long)Mps.Simulator.Demo.DemoDefaults.PlantSeedFrom(config)),
 
                 // gpt-5.x mini rejects a temperature; set Mps:Model:Temperature only for models that accept it.
                 Temperature = config.GetValue<float?>("Mps:Model:Temperature"),
             };
-            var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
-            {
-                ManagedIdentityClientId = config["AZURE_CLIENT_ID"],
-            });
-            var azure = new LiveFailureTranslatingChatClient(
-                ManagedIdentityChatClient.Create(new Uri(endpoint), deployment, credential),
-                services1.GetRequiredService<ILoggerFactory>().CreateLogger("Mps.Live.Model"));
+            var live = ModelClientFactory.Create(settings, services1.GetRequiredService<ILoggerFactory>().CreateLogger("Mps.Live.Model"));
             return new ModelGateway.Routing.ModelGateway(
                 options,
                 services1.GetRequiredService<ICostLedger>(),
                 new InMemoryReplayCatalog(),
                 new QualityMockReasoner(),
                 services1.GetRequiredService<TimeProvider>(),
-                azure,
+                azureClient: settings.Mode == ModelMode.Azure ? live : null,
+                openAiClient: settings.Mode == ModelMode.OpenAI ? live : null,
                 scriptedReplay: Mps.ModelGateway.Replay.ScriptedReplayFiles.Load(Mps.Api.Demo.DemoRuntimeLoader.FindReplayDirectory()),
                 scenarioHint: services1.GetRequiredService<Mps.Api.Demo.ScriptedScenarioContext>());
         });
@@ -121,6 +125,10 @@ public static class LiveModelHost
         return true;
     }
 
+    /// <summary>A model setting from configuration. appsettings.json ships every one, so a missing value is a broken install.</summary>
+    private static T Required<T>(IConfiguration config, string key) where T : struct =>
+        config.GetValue<T?>(key) ?? throw new InvalidOperationException(key + " is not set. appsettings.json ships the default.");
+
     private static string DataDirectory(string contentRoot, string? configured)
     {
         if (!string.IsNullOrWhiteSpace(configured) && Directory.Exists(configured))
@@ -141,24 +149,27 @@ public static class LiveModelHost
     }
 
     /// <summary>
-    /// Today's model calls by route, from the gateway ledger. Route "azure-openai" means the live model answered.
+    /// GET /api/model/status: the model mode actually in use (what the console banner shows) and whether live calls are
+    /// failing over to saved answers. GET /api/model/usage: today's model calls by route from the gateway ledger.
     /// </summary>
     public static void MapModelUsage(this WebApplication app)
     {
         ArgumentNullException.ThrowIfNull(app);
-        app.MapGet("/api/model/usage", async (IServiceProvider services, TimeProvider time, CancellationToken cancellationToken) =>
+        app.MapGet("/api/model/status", (ModelModeSettings settings, IServiceProvider services) =>
+            Results.Ok(ModelStatusResponse.From(settings, services.GetService<ModelGateway.Routing.ModelGateway>()?.Status)));
+        app.MapGet("/api/model/usage", async (ModelModeSettings settings, IServiceProvider services, TimeProvider time, CancellationToken cancellationToken) =>
         {
             var ledger = services.GetService<ICostLedger>();
             if (ledger is null)
             {
-                return Results.Ok(new { mode = "stand-in", spendTodayUsd = 0m, calls = Array.Empty<object>() });
+                return Results.Ok(new { mode = settings.Name, spendTodayUsd = 0m, calls = Array.Empty<object>() });
             }
 
             var day = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
             var entries = await ledger.GetEntriesAsync(day, cancellationToken).ConfigureAwait(false);
             return Results.Ok(new
             {
-                mode = "live",
+                mode = settings.Name,
                 spendTodayUsd = await ledger.GetSpendAsync(day, cancellationToken).ConfigureAwait(false),
                 byRoute = entries.GroupBy(entry => entry.Route).Select(group => new
                 {

@@ -23,6 +23,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Mps:Simulation:RealTime", "false");
         builder.UseSetting("ConnectionStrings:Mps", "Data Source=" + _databasePath);
         builder.UseSetting("Mps:Replay:Directory", _replayDirectory);
+
+        // The lifecycle tests were written against the fixed placeholder investigation, so they pin it. It is also explicit
+        // so a developer's .env (for example an OPENAI_API_KEY) never sends tests to a live model. OfflineScenarioTests and
+        // ModelModeTests override this to run the real agents offline.
+        builder.UseSetting("Mps:Model:Mode", "placeholder");
         builder.ConfigureServices(services =>
         {
             var descriptors = services.Where(service =>

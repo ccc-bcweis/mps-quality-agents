@@ -51,19 +51,15 @@ public sealed class ModelGatewayTests
     public async Task EachCallRecordsItsCost()
     {
         var messages = User("cost me");
-        var catalog = new InMemoryReplayCatalog();
-        catalog.Store(
-            PromptHasher.Hash(messages, null),
-            new ReplayTurn("replay-model", "priced", [], inputTokens: 2_000, outputTokens: 1_000));
+        var live = new ScriptedChatClient("priced", inputTokens: 2_000, outputTokens: 1_000);
         var ledger = new InMemoryCostLedger();
-        var gateway = Gateway(ModelRoute.Replay, catalog, ledger, ThrowingReasoner(), inputPrice: 0.15m, outputPrice: 0.60m);
+        var gateway = Gateway(ModelRoute.AzureOpenAI, new InMemoryReplayCatalog(), ledger, ThrowingReasoner(), inputPrice: 0.15m, outputPrice: 0.60m, azure: live);
 
         var response = await gateway.GetResponseAsync(messages, new ChatOptions { ConversationId = "inv-1" });
 
         var entries = await ledger.GetEntriesAsync(DateOnly.FromDateTime(Now.UtcDateTime), CancellationToken.None);
         var entry = entries.Should().ContainSingle().Subject;
-        entry.Route.Should().Be(ModelRoutes.Replay);
-        entry.Model.Should().Be("replay-model");
+        entry.Route.Should().Be(ModelRoutes.AzureOpenAI);
         entry.InputTokens.Should().Be(2_000);
         entry.OutputTokens.Should().Be(1_000);
         entry.CostUsd.Should().Be(0.0009m);
@@ -150,6 +146,68 @@ public sealed class ModelGatewayTests
         second.Text.Should().Be("mock-fallback");
         second.AdditionalProperties![GatewayMetadata.LiveRefused].Should().Be(true);
         live.Calls.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task StatusReportsTheFallbackInPlainWordsWithoutTheErrorText()
+    {
+        var live = new ScriptedChatClient("unused", 10, 10) { Failure = new HttpRequestException("secret-bearing message", null, System.Net.HttpStatusCode.Unauthorized) };
+        var gateway = Gateway(
+            ModelRoute.OpenAI,
+            new InMemoryReplayCatalog(),
+            reasoner: new DelegateMockReasoner((_, _) => TextResponse("saved")),
+            openAi: live,
+            retries: 0,
+            breaker: 1);
+
+        gateway.Status.LastRoute.Should().BeNull();
+        await gateway.GetResponseAsync(User("x"));
+
+        var status = gateway.Status;
+        status.FellBack.Should().BeTrue();
+        status.CircuitOpen.Should().BeFalse("the circuit opens on the next decision, after the threshold is reached");
+        status.LastFailure.Should().Be("The model service answered 401.");
+        status.LastFailure.Should().NotContain("secret");
+        status.LastRoute.Should().Be(ModelRoutes.Mock);
+    }
+
+    [Fact]
+    public async Task AnOpenCircuitTriesLiveAgainAfterTheCooldown()
+    {
+        var clock = new MovableTimeProvider(Now);
+        var live = new ScriptedChatClient("live answer", 10, 10) { Failure = new TimeoutException() };
+        var options = new ModelGatewayOptions
+        {
+            Mode = ModelRoute.AzureOpenAI,
+            LiveRetryCount = 0,
+            CircuitBreakerFailures = 1,
+            CircuitCooldown = TimeSpan.FromSeconds(60),
+        };
+        var gateway = new Routing.ModelGateway(options, new InMemoryCostLedger(), new InMemoryReplayCatalog(), new DelegateMockReasoner((_, _) => TextResponse("saved")), clock, live);
+
+        (await gateway.GetResponseAsync(User("a"))).Text.Should().Be("saved");
+        (await gateway.GetResponseAsync(User("b"))).Text.Should().Be("saved");
+        gateway.Status.CircuitOpen.Should().BeTrue();
+        gateway.Status.LastFailure.Should().Be("The model did not answer in time.");
+        live.Calls.Should().Be(1, "an open circuit does not call the model");
+
+        live.Failure = null;
+        clock.Advance(TimeSpan.FromSeconds(61));
+        (await gateway.GetResponseAsync(User("c"))).Text.Should().Be("live answer");
+        live.Calls.Should().Be(2);
+        gateway.Status.CircuitOpen.Should().BeFalse();
+        gateway.Status.FellBack.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task OfflineAnswersCostNothing()
+    {
+        var ledger = new InMemoryCostLedger();
+        var gateway = Gateway(ModelRoute.MockReasoner, new InMemoryReplayCatalog(), ledger, new DelegateMockReasoner((_, _) => TextResponse("offline")));
+
+        await gateway.GetResponseAsync(User("x"));
+
+        (await ledger.GetSpendAsync(DateOnly.FromDateTime(Now.UtcDateTime), CancellationToken.None)).Should().Be(0m);
     }
 
     [Fact]
@@ -348,6 +406,15 @@ public sealed class ModelGatewayTests
     private static FixedTimeProvider Clock()
     {
         return new FixedTimeProvider(Now);
+    }
+
+    private sealed class MovableTimeProvider(DateTimeOffset start) : TimeProvider
+    {
+        private DateTimeOffset _now = start;
+
+        public void Advance(TimeSpan by) => _now += by;
+
+        public override DateTimeOffset GetUtcNow() => _now;
     }
 
     private sealed class FixedTimeProvider : TimeProvider
