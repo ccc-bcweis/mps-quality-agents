@@ -92,6 +92,24 @@ export function seriesPoints(live: ToolLive | null, parameter: string, chamberId
   return match.points.map((point, index) => ({ index, value: point.value }));
 }
 
+/**
+ * The center and sigma for each point, from the per-recipe-step segments: the limits the rules engine scored that
+ * point against. Undefined when the server sent no segments (counters, older servers).
+ */
+export function pointLimits(live: ToolLive | null, parameter: string, chamberId?: string): { mean: number; sigma: number }[] | undefined {
+  const match = chartSeries(live, parameter, chamberId);
+  const segments = match?.segments;
+  if (!match || !segments || segments.length === 0) return undefined;
+  const starts = segments.map((segment) => Date.parse(segment.from));
+  let cursor = 0;
+  return match.points.map((point) => {
+    const at = Date.parse(point.at);
+    while (cursor + 1 < segments.length && starts[cursor + 1] <= at) cursor += 1;
+    const segment = segments[cursor];
+    return { mean: segment.center, sigma: segment.sigma };
+  });
+}
+
 /** The center and sigma the rules engine uses for this series, when the server sent them. */
 export function seriesLimits(live: ToolLive | null, parameter: string, chamberId?: string): { mean: number; sigma: number } | undefined {
   const match = chartSeries(live, parameter, chamberId);

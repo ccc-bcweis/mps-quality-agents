@@ -466,7 +466,11 @@ export type LiveSeries = {
   /** Limits the rules engine checks. Null or absent for cumulative counters. */
   center?: number | null;
   sigma?: number | null;
+  /** Limits per recipe step, oldest first: each holds from its first point until the next. Absent for counters. */
+  segments?: LiveLimitSegment[] | null;
 };
+
+export type LiveLimitSegment = { from: string; center: number; sigma: number };
 
 export type FleetLiveTool = {
   toolId: string;

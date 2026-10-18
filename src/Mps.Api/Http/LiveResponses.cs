@@ -45,15 +45,20 @@ public static class LiveResponses
             .ThenBy(reading => reading.ChamberId, StringComparer.Ordinal)
             .Select(reading =>
             {
-                var window = IsCounter(reading.Parameter, reading.SensorId) ? null : plant.WindowAt(toolId, reading.Parameter, reading.At);
+                var counter = IsCounter(reading.Parameter, reading.SensorId);
+                var window = counter ? null : plant.WindowAt(toolId, reading.Parameter, reading.At);
+                var points = plant.Log.Window(toolId, reading.ChamberId, reading.Parameter)
+                    .Select(point => new LivePointResponse(point.At, point.Value))
+                    .ToArray();
                 return new LiveSeriesResponse(
                     reading.Parameter,
                     reading.ChamberId,
-                    plant.Log.Window(toolId, reading.ChamberId, reading.Parameter)
-                        .Select(point => new LivePointResponse(point.At, point.Value))
-                        .ToArray(),
+                    points,
                     window?.Nominal,
-                    window is null ? null : Math.Max(window.Sigma, 1e-6));
+                    window is null ? null : Math.Max(window.Sigma, 1e-6))
+                {
+                    Segments = counter ? null : Segments(plant, toolId, reading.Parameter, points),
+                };
             })
             .ToArray();
         return new ToolLiveResponse(toolId, SiteOf(plant, toolId), plant.SimulatedNow, alertStatus is null ? mapped.Status : ToolAlertStatus.Of(alertStatus, toolId), mapped.Readings, series)
@@ -91,13 +96,18 @@ public static class LiveResponses
                 {
                     var ordered = group.OrderBy(point => point.At).ToArray();
                     var last = ordered[^1];
-                    var window = IsCounter(last.Parameter, null) ? null : plant.WindowAt(toolId, last.Parameter, last.At);
+                    var counter = IsCounter(last.Parameter, null);
+                    var window = counter ? null : plant.WindowAt(toolId, last.Parameter, last.At);
+                    var points = ordered.Select(point => new LivePointResponse(point.At, point.Value)).ToArray();
                     return new LiveSeriesResponse(
                         last.Parameter,
                         last.ChamberId,
-                        ordered.Select(point => new LivePointResponse(point.At, point.Value)).ToArray(),
+                        points,
                         window?.Nominal,
-                        window is null ? null : Math.Max(window.Sigma, 1e-6));
+                        window is null ? null : Math.Max(window.Sigma, 1e-6))
+                    {
+                        Segments = counter ? null : Segments(plant, toolId, last.Parameter, points),
+                    };
                 })
                 .ToArray();
         return new ToolLiveDelta(
@@ -174,6 +184,11 @@ public static class LiveResponses
     }
 
     /// <summary>The wafer output counter climbs all hour by design, so it never sets a watch or alarm.</summary>
+    private static LiveLimitSegment[] Segments(PlantSimulation plant, string toolId, string parameter, IReadOnlyList<LivePointResponse> points) =>
+        plant.LimitSegments(toolId, parameter, points.Select(point => point.At).ToArray())
+            .Select(segment => new LiveLimitSegment(segment.From, segment.Center, segment.Sigma))
+            .ToArray();
+
     private static bool IsCounter(string parameter, string? sensorId) => Mps.Api.Live.SpcCoverage.IsCumulative(parameter, sensorId);
 
     private static string StatusOf(double value, OperatingWindow? window)

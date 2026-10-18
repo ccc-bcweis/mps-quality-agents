@@ -1186,6 +1186,26 @@ components:
           type: number
           nullable: true
           description: One sigma for the rules engine. Null for cumulative counters.
+        segments:
+          type: array
+          nullable: true
+          description: >-
+            Control limits per recipe step, oldest first. Each segment holds from its first point until the next one;
+            these are the center and sigma the rules engine scores each point against. Null for cumulative counters.
+          items:
+            $ref: "#/components/schemas/LiveLimitSegment"
+    LiveLimitSegment:
+      type: object
+      additionalProperties: false
+      required: [from, center, sigma]
+      properties:
+        from:
+          type: string
+          format: date-time
+        center:
+          type: number
+        sigma:
+          type: number
     LivePoint:
       type: object
       additionalProperties: false

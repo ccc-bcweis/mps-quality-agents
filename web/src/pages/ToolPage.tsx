@@ -27,7 +27,7 @@ import { statusTone, WAITING_FOR_READINGS } from "../fleet/catalog";
 import { sensorsForTool } from "../fleet/sensors";
 import { pointLabel } from "../fleet/schematic";
 import { parameterLabel } from "../labels";
-import { chartSeriesKey, liveReadingMap, overlayWindows, recipeLabel, seriesLimits, seriesPoints, toolTile } from "../live/overlay";
+import { chartSeriesKey, liveReadingMap, overlayWindows, pointLimits, recipeLabel, seriesLimits, seriesPoints, toolTile } from "../live/overlay";
 import { useLiveResource, useRecordPatches, useToolLive } from "../live/useLive";
 import { clearAlert, upsertRecord, type AlertCleared, type ToolLiveDelta } from "../live/stream";
 import { latestManual, manualMarker, manualTile, seriesFor } from "../live/manual";
@@ -149,6 +149,7 @@ export function ToolPage() {
   const seriesParameter = seriesKey.parameter;
   const livePoints = seriesPoints(live, seriesParameter, seriesKey.chamberId);
   const serverLimits = seriesLimits(live, seriesParameter, seriesKey.chamberId);
+  const stepLimits = pointLimits(live, seriesParameter, seriesKey.chamberId);
   const pointCount = livePoints?.length ?? 0;
   const chartLabel = selected ? pointLabel(selected.schematicAnchor) : parameterLabel(seriesParameter);
   const chartUnit = selected?.unit ?? "";
@@ -251,6 +252,7 @@ export function ToolPage() {
           label={chartLabel}
           unit={chartUnit}
           center={serverLimits}
+          steps={stepLimits}
           points={livePoints}
           finding={finding}
           cumulative={cumulative}
