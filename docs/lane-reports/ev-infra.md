@@ -40,7 +40,7 @@ Outside the lane, because they already stated the current replica size or they l
 - `docs/SPEC.md`
 - `docs/deck/roi-slides.md`
 - `docs/deck/pov-content.md`
-- `docs/demo/DEMO-SCRIPT.md`
+- the demo script under `docs/demo/`
 - `docs/diagrams/README.md`
 - `docs/diagrams/cicd.md`
 - `docs/diagrams/physical.md`
@@ -92,7 +92,7 @@ Application.Tests (266, including the three new facts) and Architecture.Tests (1
 
 The two failures are outside this diff. Their tests, `eval/results/latest.json`, the golden file, and the simulator sources are unchanged from `50ced27`.
 
-- `EvalSuiteTests.TheReplayEvalPassesTheGatesAndTheCommittedReportIsCurrent` differs at index 1. The committed report is LF. `JsonSerializer` on this Windows runtime emits CRLF. The replay gates themselves are not the mismatch.
+- `EvalSuiteTests.TheReplayEvalPassesTheGatesAndTheCommittedReportIsCurrent` differs at index 1. The committed report uses Unix line endings. `JsonSerializer` on this Windows runtime emits Windows line endings. The replay gates themselves are not the mismatch.
 - `EffectiveLimitsGoldenTests.EveryConsumerReadsTheSameValuesAsTheGoldenSnapshot` differs only on `sim.nominalTelemetry.2h.sha256`: golden `1CE889025570CD55EC46C3B29F2B9D55772B39316BD47384915E681B9CFB4D59`, this machine `E4900D3B54663F9C1AB7ED4E0351610C99D0CD04DABE7A07ADF42D96430FF17D`. The golden file was not rewritten.
 
 Standalone Bicep CLI `0.47.16` (`bicep build infra/main.bicep` and `bicep build-params`) compiled. The template default is cpu `0.5` and memory `1Gi`. The container resources are `[json(parameters('cpu'))]` and `[parameters('memory')]`. Replicas are 1 and 1. The parameters file carries the same values. `az` was not used. CI still runs its own Bicep check (CLI v0.48.1).

@@ -29,7 +29,7 @@ Files:
 - `contracts/openapi.yaml` — those two optional fault fields
 - `tests/Api.Tests/ScenarioEvidenceTests.cs`, `EvidenceBoardTests.cs`, `PrintoutEndpointTests.cs`
 - `tests/Application.Tests/Faults/FaultInjectionServiceTests.cs`
-- `docs/SPEC.md` (section 2.1 injector paragraph and the SC-6 row in 2.7), `docs/demo/REPRODUCIBILITY.md`, `docs/demo/DEMO-SCRIPT.md`
+- `docs/SPEC.md` (section 2.1 injector paragraph and the SC-6 row in 2.7), `docs/demo/REPRODUCIBILITY.md`, and the demo script under `docs/demo/`
 
 `ScriptedScenarioContext` stays. It only tells model replay which scenario is being applied during that request. `DemoResetService` still calls `Clear()`.
 
