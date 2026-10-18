@@ -61,7 +61,7 @@ public sealed class ScenarioBusChainTests
         var client = factory.CreateClient();
         var plant = factory.Services.GetRequiredService<PlantSimulation>();
         var telemetry = factory.Services.GetRequiredService<TelemetryPublisher>();
-        var spc = factory.Services.GetRequiredService<StreamSpcPublisher>();
+        var spc = factory.Services.GetRequiredService<SpcRuleSubscriber>();
         var store = factory.Services.GetRequiredService<SqliteEventStore>();
 
         foreach (var scenario in ScriptedScenarioCatalog.All)
@@ -87,7 +87,6 @@ public sealed class ScenarioBusChainTests
 
             plant.Advance(TimeSpan.FromSeconds(AdvanceSeconds(scenario)));
             await telemetry.PublishPendingAsync(CancellationToken.None);
-            await spc.PublishAsync(CancellationToken.None);
             await spc.DrainAsync();
 
             var rule = RuleOnTheChain(store, fault.EventId, scenario.Id);

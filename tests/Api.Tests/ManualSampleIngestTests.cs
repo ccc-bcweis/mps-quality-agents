@@ -168,11 +168,10 @@ public sealed class ManualSampleIngestTests
     {
         var plant = factory.Services.GetRequiredService<PlantSimulation>();
         var telemetry = factory.Services.GetRequiredService<TelemetryPublisher>();
-        var spc = factory.Services.GetRequiredService<StreamSpcPublisher>();
+        var spc = factory.Services.GetRequiredService<SpcRuleSubscriber>();
         return (plant, async () =>
         {
             await telemetry.PublishPendingAsync(CancellationToken.None);
-            await spc.PublishAsync(CancellationToken.None);
             await spc.DrainAsync();
         }
         );
