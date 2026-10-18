@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
 using System.Globalization;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using Mps.Agents.Evidence;
@@ -8,6 +9,7 @@ using Mps.Agents.Explain;
 using Mps.Agents.Impact;
 using Mps.Domain.Enterprise;
 using Mps.Domain.Evidence;
+using Mps.Domain.Hypotheses;
 using Mps.Domain.Impact;
 
 namespace Mps.Agents.Ranking;
@@ -77,6 +79,11 @@ public sealed class ResolutionRequest
         ArgumentNullException.ThrowIfNull(pack);
         ArgumentNullException.ThrowIfNull(features);
         var catalog = WhyItMattersCatalog.Shared;
+        var ruledOutIds = new HashSet<string>(pack.RuledOut.Select(record => record.Id.ToString()), StringComparer.OrdinalIgnoreCase);
+        var ruledOutRefs = new HashSet<string>(
+            pack.Items.Where(item => ruledOutIds.Contains(item.Id.ToString()) && !string.IsNullOrWhiteSpace(item.ExternalRef))
+                .Select(item => item.ExternalRef!),
+            StringComparer.OrdinalIgnoreCase);
         return new ResolutionRequest
         {
             ScopeKind = ScopeName(features.Kind),
@@ -84,25 +91,37 @@ public sealed class ResolutionRequest
             SignalShape = SignalShapeCatalog.Shared.Of(features.Shape).Id,
             ShapeOptions = [.. SignalShapeCatalog.Shared.Ids],
             CategoryRules = Mps.Agents.Grounding.CategoryEvidenceRules.Shared.Rules
-                .Select(rule => rule.Description + ": " + System.Text.Json.JsonNamingPolicy.CamelCase.ConvertName(rule.Implies.ToString()))
+                .Select(rule => rule.Description + ": " + JsonNamingPolicy.CamelCase.ConvertName(rule.Implies.ToString()))
                 .ToArray(),
             EcoIds = pack.Ecos.Select(eco => eco.EcoId).ToArray(),
-            EcoEvidenceIds = Ids(pack, pack.Ecos.Select(eco => eco.EcoId)),
+            EcoEvidenceIds = WithoutRuledOut(Ids(pack, pack.Ecos.Select(eco => eco.EcoId)), ruledOutIds),
             PmSummaries = pack.WorkOrders.Where(order => !IsAlignment(order)).Select(DescribeOrder).ToArray(),
             OverdueInstruments = pack.Calibrations.Where(record => record.IsOverdue).Select(record => record.Instrument).ToArray(),
-            OverdueEvidenceIds = Ids(pack, pack.Calibrations.Where(record => record.IsOverdue).Select(record => record.CalibrationId)),
+            OverdueEvidenceIds = WithoutRuledOut(Ids(pack, pack.Calibrations.Where(record => record.IsOverdue).Select(record => record.CalibrationId)), ruledOutIds),
             AlignmentSummaries = pack.WorkOrders.Where(IsAlignment).Select(DescribeOrder).ToArray(),
-            AlignmentEvidenceIds = Ids(pack, pack.WorkOrders.Where(IsAlignment).Select(order => order.WorkOrderId)),
+            AlignmentEvidenceIds = WithoutRuledOut(Ids(pack, pack.WorkOrders.Where(IsAlignment).Select(order => order.WorkOrderId)), ruledOutIds),
             LotIds = pack.MaterialLots.Select(lot => lot.LotId).ToArray(),
-            LotEvidenceIds = Ids(pack, pack.MaterialLots.Select(lot => lot.LotId)),
-            NoticeIds = pack.SupplierNotices.Select(notice => notice.NoticeId).ToArray(),
+            LotEvidenceIds = WithoutRuledOut(Ids(pack, pack.MaterialLots.Select(lot => lot.LotId)), ruledOutIds),
+            NoticeIds = pack.SupplierNotices.Select(notice => notice.NoticeId).Where(id => !ruledOutRefs.Contains(id)).ToArray(),
             SignalEvidenceIds = pack.Items
                 .Where(item => item.Source is EvidenceSource.Spc or EvidenceSource.Telemetry)
                 .Select(item => item.Id.ToString())
                 .ToArray(),
-            PmEvidenceIds = Ids(pack, pack.WorkOrders.Where(order => !IsAlignment(order)).Select(order => order.WorkOrderId)),
+            PmEvidenceIds = WithoutRuledOut(Ids(pack, pack.WorkOrders.Where(order => !IsAlignment(order)).Select(order => order.WorkOrderId)), ruledOutIds),
             UserEvidence = pack.Items.Where(item => item.Source == EvidenceSource.UserProvided).Select(item => item.Excerpt).ToArray(),
             UserEvidenceIds = pack.Items.Where(item => item.Source == EvidenceSource.UserProvided).Select(item => item.Id.ToString()).ToArray(),
+            Candidates = pack.Candidates.Select(candidate => new CandidateNote
+            {
+                Id = candidate.Id.ToString(),
+                Class = ClassName(candidate.Class),
+                Kind = candidate.Kind,
+            }).ToArray(),
+            RuledOut = pack.RuledOut.Select(record => new RuledOutNote
+            {
+                Id = record.Id.ToString(),
+                Class = ClassName(record.Class),
+                Reason = record.Reason,
+            }).ToArray(),
             Notes = pack.Items.Select(item => new EvidenceNote
             {
                 Id = item.Id.ToString(),
@@ -112,10 +131,32 @@ public sealed class ResolutionRequest
                 Parameter = WhyItMattersCatalog.ParameterOf(item),
                 SignalId = catalog.SignalIdFor(item),
                 ExternalRef = item.ExternalRef,
-                Status = item.Source is EvidenceSource.Spc or EvidenceSource.Telemetry ? "context" : "candidate",
+                Status = NoteStatus(item, ruledOutIds),
             }).ToArray(),
         };
     }
+
+    private static string[] WithoutRuledOut(string[] ids, HashSet<string> ruledOutIds) =>
+        ids.Where(id => !ruledOutIds.Contains(id)).ToArray();
+
+    private static string NoteStatus(EvidenceItem item, HashSet<string> ruledOutIds)
+    {
+        if (ruledOutIds.Contains(item.Id.ToString()))
+        {
+            return "ruledOut";
+        }
+
+        // Signal and alert notes are context. A bench reading is a signal; a ticket is the alert.
+        if (item.Source is EvidenceSource.Spc or EvidenceSource.Telemetry or EvidenceSource.Ticketing or EvidenceSource.ManualMeasurement)
+        {
+            return "context";
+        }
+
+        return "candidate";
+    }
+
+    private static string ClassName(RootCauseCategory category) =>
+        JsonNamingPolicy.CamelCase.ConvertName(category.ToString());
 
     /// <summary>
     /// Copy that shows E01, E02, ... instead of pack ids. Handles follow note order: two digits through 99, then three.

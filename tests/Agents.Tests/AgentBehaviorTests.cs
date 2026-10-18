@@ -515,9 +515,12 @@ internal sealed class ScriptedChatClient : IChatClient
 
     public int Calls { get; private set; }
 
+    public List<ChatMessage> Seen { get; } = [];
+
     public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
     {
         Calls++;
+        Seen.AddRange(messages);
         return Task.FromResult(_responses.Dequeue());
     }
 
