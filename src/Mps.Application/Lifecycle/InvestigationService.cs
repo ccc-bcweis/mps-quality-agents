@@ -109,8 +109,11 @@ public sealed class InvestigationService : IInvestigationService
         return saved;
     }
 
-    private async Task<InvestigationSnapshot> StartCoreAsync(IncidentId incidentId, IReadOnlyList<EvidenceItem> userEvidence, CancellationToken cancellationToken)
+    private async Task<InvestigationSnapshot> StartCoreAsync(IncidentId incidentId, IReadOnlyList<EvidenceItem> userEvidence, CancellationToken requested)
     {
+        // A demo reset cancels this run (and its wait for readings) so it neither holds the reset up nor writes into the fresh plant.
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(requested, _inFlight.ResetToken);
+        var cancellationToken = linked.Token;
         var stored = await _incidents.GetAsync(incidentId, cancellationToken).ConfigureAwait(false)
             ?? throw new ResourceNotFoundException("Incident was not found.");
         var active = await _investigations.FindActiveByIncidentAsync(incidentId, cancellationToken).ConfigureAwait(false);

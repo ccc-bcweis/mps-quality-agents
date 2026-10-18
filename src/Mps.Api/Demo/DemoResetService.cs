@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 using Mps.Api.Bus;
 using Mps.Api.Fleet;
@@ -57,6 +58,10 @@ public sealed class DemoResetService
     private readonly ScriptedScenarioContext _context;
     private readonly ResetProgress _progress;
     private readonly Mps.Application.Lifecycle.InvestigationsInFlight? _inFlight;
+    private readonly TimeSpan _drainLimit;
+
+    /// <summary>Seconds a reset waits for cancelled investigations to stop (Mps:Demo:ResetDrainSeconds in appsettings.json).</summary>
+    public const string DrainSecondsKey = "Mps:Demo:ResetDrainSeconds";
 
     public DemoResetService(
         QualityDbContext db,
@@ -74,7 +79,8 @@ public sealed class DemoResetService
         IManualMeasurementLog measurements,
         ScriptedScenarioContext context,
         ResetProgress progress,
-        Mps.Application.Lifecycle.InvestigationsInFlight? inFlight = null)
+        Mps.Application.Lifecycle.InvestigationsInFlight? inFlight = null,
+        IConfiguration? configuration = null)
     {
         ArgumentNullException.ThrowIfNull(db);
         ArgumentNullException.ThrowIfNull(plant);
@@ -96,6 +102,7 @@ public sealed class DemoResetService
         _events = events;
         _cascade = cascade;
         _inFlight = inFlight;
+        _drainLimit = DrainLimit(configuration);
         _sink = sink;
         _time = time;
         _seeder = seeder;
@@ -120,8 +127,10 @@ public sealed class DemoResetService
         {
             _progress.Begin(kind);
 
-            // Let investigations from the previous run finish so none writes into the fresh plant.
-            await _traces.DrainAsync().ConfigureAwait(false);
+            // Stop investigations from the previous run so none writes into the fresh plant. Cancel rather than wait:
+            // the gate held here stops the plant, so one waiting for readings would wait out its whole budget.
+            _inFlight?.CancelAll();
+            await _traces.CancelAndDrainAsync(_drainLimit).ConfigureAwait(false);
             var baseline = hard
                 ? await HardAsync(cancellationToken).ConfigureAwait(false)
                 : await SoftAsync(cancellationToken).ConfigureAwait(false);
@@ -140,6 +149,12 @@ public sealed class DemoResetService
 
             Gate.Release();
         }
+    }
+
+    private static TimeSpan DrainLimit(IConfiguration? configuration)
+    {
+        var seconds = configuration?.GetValue<double?>(DrainSecondsKey);
+        return seconds is > 0 ? TimeSpan.FromSeconds(seconds.Value) : Timeout.InfiniteTimeSpan;
     }
 
     private async Task<DemoBaseline> HardAsync(CancellationToken cancellationToken)
