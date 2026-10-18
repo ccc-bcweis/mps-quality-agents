@@ -143,7 +143,8 @@ export function ToolPage() {
   const shown = toolTile(tool.id, alerts, liveTile);
   const tone = statusTone(shown.status);
   const selected = toolSensors.find((sensor) => sensor.id === selectedId) ?? defaultSensor(toolSensors, alerts, focusParameter);
-  const seriesParameter = selected?.parameter ?? focusParameter ?? "";
+  // Sensors without a process parameter (reflected RF power, tool counters) stream under their sensor id.
+  const seriesParameter = selected ? (selected.parameter ?? selected.id) : (focusParameter ?? "");
   const livePoints = seriesPoints(live, seriesParameter, selected?.chamberId);
   const serverLimits = seriesLimits(live, seriesParameter, selected?.chamberId);
   const pointCount = livePoints?.length ?? 0;
