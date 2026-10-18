@@ -99,6 +99,9 @@ public sealed record EvidenceMatrixResponse(
     EvidenceStance Stance,
     string? WhyItMatters);
 
+/// <summary>The AI answer a guard refused: its cause text, class (null when it named none) and the evidence ids it cited as support.</summary>
+public sealed record RejectedAnswerResponse(string? Cause, RootCauseCategory? Category, IReadOnlyList<Guid> EvidenceIds);
+
 public sealed record HypothesisResponse(
     Guid Id,
     RootCauseCategory Category,
@@ -122,6 +125,9 @@ public sealed record InvestigationResponse(
 {
     /// <summary>The recorded human decision, once made; the console shows it as a read-only record.</summary>
     public DecisionRecordResponse? Decision { get; init; }
+
+    /// <summary>What the AI proposed when a guard refused its answer and escalated; null otherwise.</summary>
+    public RejectedAnswerResponse? RejectedAnswer { get; init; }
 
     /// <summary>Round on the ticket (the evidence loop): 1 for the first run, then one more each time a person added evidence.</summary>
     public int Round { get; init; } = 1;

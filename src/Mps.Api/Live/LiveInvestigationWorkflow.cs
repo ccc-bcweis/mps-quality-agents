@@ -42,7 +42,7 @@ public sealed class LiveInvestigationWorkflow : IInvestigationWorkflow
         var snapshot = ToApi(await _inner.StartRoundAsync(incidentId, userEvidence, cancellationToken).ConfigureAwait(false));
         if (snapshot.Evidence.Count > 0)
         {
-            _narratives.Stage(snapshot.Id, Narrative(snapshot));
+            _narratives.Stage(snapshot.Id, Narrative(snapshot, _inner.RejectedAnswerFor(snapshot.Id)));
         }
 
         return snapshot;
@@ -71,7 +71,7 @@ public sealed class LiveInvestigationWorkflow : IInvestigationWorkflow
             snapshot.CorrelationId);
     }
 
-    private InvestigationNarrative Narrative(InvestigationSnapshot snapshot)
+    private InvestigationNarrative Narrative(InvestigationSnapshot snapshot, RejectedAnswer? rejected)
     {
         var chosen = snapshot.Hypotheses.Count > 0 ? snapshot.Hypotheses[0].Category : (Mps.Domain.Hypotheses.RootCauseCategory?)null;
         var notes = snapshot.Evidence
@@ -84,6 +84,6 @@ public sealed class LiveInvestigationWorkflow : IInvestigationWorkflow
         var matrix = EvidenceMatrixBuilder.FromItems(snapshot.Evidence, SignalShape.Unknown, chosen, _catalog)
             .Select(entry => new AppMatrixEntry(entry.Category, entry.EvidenceId.Value, (AppStance)(int)entry.Stance, entry.WhyItMatters))
             .ToArray();
-        return InvestigationNarrative.Create(notes, matrix, snapshot.Evidence.Select(item => item.Id.Value).ToHashSet());
+        return InvestigationNarrative.Create(notes, matrix, snapshot.Evidence.Select(item => item.Id.Value).ToHashSet(), rejected);
     }
 }

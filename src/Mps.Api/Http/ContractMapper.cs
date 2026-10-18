@@ -128,6 +128,9 @@ public static class ContractMapper
                 : null,
             Round = snapshot.Round,
             MaxRounds = Mps.Application.Decisions.EvidenceRoundSettings.Shared.MaxRounds,
+            RejectedAnswer = snapshot.Stage == InvestigationStage.Escalated && narrative.Rejected is { } rejected
+                ? new RejectedAnswerResponse(rejected.Cause, rejected.Category, rejected.EvidenceIds)
+                : null,
         };
     }
 

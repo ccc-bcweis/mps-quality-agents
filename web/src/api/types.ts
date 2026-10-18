@@ -283,6 +283,15 @@ export type Investigation = {
   round?: number;
   /** Most rounds a ticket allows (data/metadata/investigation.yaml). */
   maxRounds?: number;
+  /** What the AI proposed when a guard refused its answer and the round escalated. */
+  rejectedAnswer?: RejectedAnswer | null;
+};
+
+export type RejectedAnswer = {
+  cause?: string | null;
+  category?: RootCauseCategory | null;
+  /** Evidence ids the refused answer cited as support. */
+  evidenceIds: string[];
 };
 
 export type EvidenceStance = "supports" | "rulesOut" | "neutral";

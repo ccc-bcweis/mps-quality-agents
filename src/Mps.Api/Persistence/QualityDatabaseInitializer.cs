@@ -37,6 +37,7 @@ public sealed class QualityDatabaseInitializer : IHostedService
         await EnsureAlertTrackingAsync(db, cancellationToken).ConfigureAwait(false);
         await EnsureAlertStatusColumnAsync(db, cancellationToken).ConfigureAwait(false);
         await EnsureColumnAsync(db, "Investigations", "DecisionJson", "TEXT NULL", cancellationToken).ConfigureAwait(false);
+        await EnsureColumnAsync(db, "Investigations", "RejectedAnswerJson", "TEXT NULL", cancellationToken).ConfigureAwait(false);
         await SeedToolsAsync(db, cancellationToken).ConfigureAwait(false);
 
         // No history refill on start: the plant primes one telemetry window (data/metadata/simulation.yaml) on its first tick,

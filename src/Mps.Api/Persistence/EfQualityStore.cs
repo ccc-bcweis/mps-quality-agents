@@ -303,13 +303,24 @@ public sealed class EfQualityStore :
             .Select(item => new EvidenceNote(item.Id, item.WhyItMatters, item.SignalId))
             .ToArray();
         var matrix = JsonSerializer.Deserialize<MatrixDocument[]>(MatrixJson(row), JsonOptions) ?? [];
+        var rejected = string.IsNullOrWhiteSpace(row.RejectedAnswerJson)
+            ? null
+            : JsonSerializer.Deserialize<RejectedDocument>(row.RejectedAnswerJson, JsonOptions);
         return new InvestigationNarrative(
             notes,
             matrix.Select(item => new EvidenceMatrixEntry(
                 Enum.Parse<RootCauseCategory>(item.Category),
                 item.EvidenceId,
                 Enum.Parse<EvidenceStance>(item.Stance),
-                item.WhyItMatters)).ToArray());
+                item.WhyItMatters)).ToArray())
+        {
+            Rejected = rejected is null
+                ? null
+                : new RejectedAnswer(
+                    rejected.Cause,
+                    Enum.TryParse<RootCauseCategory>(rejected.Category, out var category) ? category : null,
+                    rejected.EvidenceIds ?? []),
+        };
     }
 
     public async Task<InvestigationSnapshot?> GetAsync(InvestigationId id, CancellationToken cancellationToken)
@@ -674,6 +685,9 @@ public sealed class EfQualityStore :
         }
 
         row.EvidenceJson = JsonSerializer.Serialize(evidence, JsonOptions);
+        row.RejectedAnswerJson = narrative.Rejected is { } rejected
+            ? JsonSerializer.Serialize(new RejectedDocument(rejected.Cause, rejected.Category?.ToString(), rejected.EvidenceIds.ToArray()), JsonOptions)
+            : null;
         row.EvidenceMatrixJson = JsonSerializer.Serialize(
             narrative.Matrix.Select(entry => new MatrixDocument(
                 entry.Category.ToString(),
@@ -785,6 +799,8 @@ public sealed class EfQualityStore :
         string? SuppliedBy = null);
 
     private sealed record MatrixDocument(string Category, Guid EvidenceId, string Stance, string? WhyItMatters);
+
+    private sealed record RejectedDocument(string? Cause, string? Category, Guid[]? EvidenceIds);
 
     private sealed record HypothesisDocument(
         Guid Id,
