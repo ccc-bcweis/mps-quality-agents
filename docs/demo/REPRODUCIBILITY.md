@@ -42,13 +42,13 @@ A scenario starts at the moment it is run. Its records keep their spacing from t
 
 ## Plant-data replay
 
-Live is the running plant. Replay swaps the production line, the tool charts, and the alerts to a recorded scenario. Recordings are bus messages in `data/replay/<scenario>/messages.jsonl`, written by `tools/ReplayRecorder` or `POST /api/admin/replay/{scenarioId}`. Saved model answers stay in `data/replay/scripted/` and are not those files. `POST /api/demo/data-mode` with `live` puts the console back on the running plant and leaves the recording in place. The answer engine (saved answers or a live model) is a separate switch.
+Live is the running plant. Replay swaps the production line, the tool charts, and the alerts to a recorded scenario. Recordings are bus messages in `data/replay/<scenario>/messages.jsonl`, written by `tools/ReplayRecorder` or `POST /api/admin/replay/{scenarioId}`. Saved model answers stay in `data/replay/scripted/` and are not those files. `POST /api/demo/data-mode` with `live` puts the console back on the running plant and leaves the recording in place. The answer engine (saved answers or a live model) is separate: it is set at start by `MODEL_MODE` and shown in the console's status chip.
 
 ## Model replay
 
 `Mps:Model:ScriptedReplay` defaults to false. When it is true, the gateway looks up a recorded turn by scenario id plus the prompt hash before it calls a live model. The hash covers the model id, the messages, and the tool names. It does not include temperature or the seed, so pinning does not change the key.
 
-Recordings live in `data/replay/scripted/{scenarioId}/{promptHash}.json`. A missing directory is an empty catalog. A miss falls through to the live route. When `LLM_MODE` is `replay`, there is no live client, and a scripted miss uses the existing replay catalog and then the mock reasoner. `LLM_MODE` stays `replay` in `appsettings.json`, so startup does not need a key.
+Recordings live in `data/replay/scripted/{scenarioId}/{promptHash}.json`. A missing directory is an empty catalog. A miss falls through to the live route. In `offline` mode (`MODEL_MODE`, the default when no model key is set) there is no live client, and a scripted miss uses the replay catalog and then the rule-based reasoner, which ranks causes with the same `RootCauseRanker` the eval scores. `Mps:Model:Mode` is blank in `appsettings.json`, so startup does not need a key. Offline runs are repeatable: same seed, same evidence, same answer.
 
 The scenario id is the chat option `mps.scenarioId`. While a named scenario is being applied, the API also sets that id on an ambient hint.
 
