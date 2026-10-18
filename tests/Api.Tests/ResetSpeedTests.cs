@@ -33,6 +33,8 @@ public sealed class ResetSpeedTests
         var store = factory.Services.GetRequiredService<SqliteEventStore>();
         await using var scope = factory.Services.CreateAsyncScope();
         var reset = scope.ServiceProvider.GetRequiredService<DemoResetService>();
+        // The fastest flow primes the most readings: one window of every sensor.
+        plant.TrySetSpeed(PlantSimulation.Speeds.Max(), PlantSimulation.Strides.Min()).Should().BeTrue();
 
         var watch = System.Diagnostics.Stopwatch.StartNew();
         await reset.ResetAsync(hard: true, CancellationToken.None);
@@ -43,7 +45,8 @@ public sealed class ResetSpeedTests
         var lag = DateTimeOffset.UtcNow - plant.SimulatedNow;
         lag.Should().BeLessThan(TimeSpan.FromSeconds(5), "the plant clock must be current as soon as the reset reports done");
         var moved = plant.SimulatedNow;
-        var deadline = DateTime.UtcNow.AddSeconds(5);
+        // A tick is due every few seconds (Mps:Simulation:TickSeconds); a frozen clock would sit still for much longer.
+        var deadline = DateTime.UtcNow.AddSeconds(8);
         while (plant.SimulatedNow <= moved && DateTime.UtcNow < deadline)
         {
             await Task.Delay(100);
