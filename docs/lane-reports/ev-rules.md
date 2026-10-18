@@ -27,7 +27,7 @@ SPC no longer polls plant memory. `SpcRuleSubscriber` listens for `telemetry.rea
 - `tests/Application.Tests/Spc/SpcRuleEngineTests.cs` (new), `SpcAlertServiceTests.cs`, `WesternElectricEvaluatorTests.cs`
 - `tests/Api.Tests/SpcShadowTests.cs` (new), plus the API tests that used to call the old publisher
 - `tests/Api.Tests/Golden/effective-limits.golden.json` (new setting keys only; the Linux telemetry hash is unchanged)
-- `docs/SPEC.md`, `docs/TESTING.md`, `docs/live-stream.md`, `docs/architecture/data-model.md`, `docs/architecture/event-envelope.md`
+- `docs/SPEC.md`, the testing guide, `docs/live-stream.md`, `docs/architecture/data-model.md`, `docs/architecture/event-envelope.md`
 - `docs/diagrams/spc-alert-flow.md` (new), `docs/diagrams/README.md`, `investigation-flow.md`, `logical.md`
 - `docs/adr/ADR-015-event-based-spc-rules.md` (new), `docs/adr/README.md`, ADR-012, ADR-013
 
@@ -99,7 +99,7 @@ Passed 888, failed 2, skipped 1, total 891.
 | Contract.Tests | 41 passed |
 | Api.Tests | 181 passed, 1 failed, 1 skipped |
 
-The two failures are the known Windows-only ones. `EvalSuiteTests.TheReplayEvalPassesTheGatesAndTheCommittedReportIsCurrent` differs at index 1 (LF vs CRLF). `EffectiveLimitsGoldenTests.EveryConsumerReadsTheSameValuesAsTheGoldenSnapshot` differs only on `sim.nominalTelemetry.2h.sha256`: golden `1CE889025570CD55EC46C3B29F2B9D55772B39316BD47384915E681B9CFB4D59`, this machine `E4900D3B54663F9C1AB7ED4E0351610C99D0CD04DABE7A07ADF42D96430FF17D`. The committed hash is the Linux one. CI is Linux. The Windows hash was not committed. The skipped test is `LiveModelEvalTests.TheLiveModelPicksTheExpectedClassAndNeverCitesARuledOutDecoy`.
+The two failures are the known Windows-only ones. `EvalSuiteTests.TheReplayEvalPassesTheGatesAndTheCommittedReportIsCurrent` differs at index 1 (Windows line endings). `EffectiveLimitsGoldenTests.EveryConsumerReadsTheSameValuesAsTheGoldenSnapshot` differs only on `sim.nominalTelemetry.2h.sha256`: golden `1CE889025570CD55EC46C3B29F2B9D55772B39316BD47384915E681B9CFB4D59`, this machine `E4900D3B54663F9C1AB7ED4E0351610C99D0CD04DABE7A07ADF42D96430FF17D`. The committed hash is the Linux one. CI is Linux. The Windows hash was not committed. The skipped test is `LiveModelEvalTests.TheLiveModelPicksTheExpectedClassAndNeverCitesARuledOutDecoy`.
 
 ## Open
 
