@@ -16,9 +16,13 @@ function points(base: number) {
 // no process parameter, so the server streams them under their sensor id; the chart looked for a series named "".
 describe("tool sensors with no process parameter", () => {
   it.each([
-    ["E-01-A-RF-BIAS-RFL", "E-01-A", 10.5],
-    ["E-01-RUN-RATE", "E-01", 12],
-  ])("charts %s from the series keyed by its sensor id", async (sensorId, chamberId, center) => {
+    ["E-01-A-RF-BIAS-RFL", "E-01-A", 10.5, /SPC chart of .*Mean 10\.50/],
+    ["E-01-B-RF-BIAS-RFL", "E-01-B", 10.5, /SPC chart of .*Mean 10\.50/],
+    ["E-01-RUN-RATE", "E-01", 12, /SPC chart of .*Mean 12\.00/],
+    ["E-01-THROUGHPUT", "E-01", 11.4, /SPC chart of .*Mean 11\.40/],
+    ["E-01-YIELD", "E-01", 97, /SPC chart of .*Mean 97\.00/],
+    ["E-01-OUTPUT", "E-01", 12, /Trend of .*running count/],
+  ])("charts %s from the series keyed by its sensor id", async (sensorId, chamberId, center, figure) => {
     server.use(
       http.get("/api/tools/:toolId/live", () =>
         HttpResponse.json({
@@ -34,8 +38,9 @@ describe("tool sensors with no process parameter", () => {
     renderConsole("/tools/E-01");
     await userEvent.click(await screen.findByRole("button", { name: new RegExp(sensorId) }));
 
-    expect(await screen.findByRole("figure", { name: new RegExp(`Mean ${center.toFixed(2)}`) })).toBeInTheDocument();
+    expect(await screen.findByRole("figure", { name: figure })).toBeInTheDocument();
     expect(screen.queryByRole("figure", { name: /Waiting for readings/ })).not.toBeInTheDocument();
     expect(screen.getByText(/n = 3/)).toBeInTheDocument();
+    expect(screen.queryByRole("figure", { name: /Waiting for readings/ })).not.toBeInTheDocument();
   });
 });
