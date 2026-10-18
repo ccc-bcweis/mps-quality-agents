@@ -2,6 +2,8 @@
 
 using System.Net;
 
+using Xunit.Abstractions;
+
 namespace Mps.Api.IntegrationTests;
 
 /// <summary>
@@ -12,8 +14,10 @@ public sealed class ApprovalEnforcementTests : IClassFixture<MpsApiFactory>
 {
     private readonly MpsApiFactory _factory;
 
-    public ApprovalEnforcementTests(MpsApiFactory factory)
+    public ApprovalEnforcementTests(MpsApiFactory factory, ITestOutputHelper output)
     {
+        ArgumentNullException.ThrowIfNull(factory);
+        factory.ServerLog.Attach(output);
         _factory = factory;
     }
 
