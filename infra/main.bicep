@@ -54,6 +54,12 @@ param approvalKeySecretName string = 'approval-signing-key'
 @description('Budget window end.')
 param budgetEnd string = '2027-09-30'
 
+@description('API container vCPU. 0.5 pairs with memory 1Gi. The 0.25 / 0.5Gi pair restarted the replica on 18 Oct 2026 when the working set reached 590-673 MiB.')
+param cpu string = '0.5'
+
+@description('API container memory. 1Gi pairs with cpu 0.5. About $33 more per month for one always-on replica.')
+param memory string = '1Gi'
+
 var identityName = '${namePrefix}-id'
 var workspaceName = '${namePrefix}-law'
 var insightsName = '${namePrefix}-ai'
@@ -146,6 +152,8 @@ module apps 'modules/container-apps.bicep' = {
     adminEmails: adminEmails
     appInsightsConnectionString: insights.outputs.connectionString
     approvalKeySecretUri: empty(approvalKeySecretName) ? '' : '${vault.outputs.uri}secrets/${approvalKeySecretName}'
+    cpu: cpu
+    memory: memory
   }
 }
 

@@ -30,6 +30,12 @@ param appInsightsConnectionString string
 @description('Key Vault secret URI for the approval signing key (hex, 32 bytes). The app identity reads it. Empty leaves it unset, and the app will not start in Production.')
 param approvalKeySecretUri string = ''
 
+@description('API container vCPU, as a number string. 0.5 pairs with memory 1Gi.')
+param cpu string = '0.5'
+
+@description('API container memory. 1Gi pairs with cpu 0.5.')
+param memory string = '1Gi'
+
 resource environment 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: envName
   location: location
@@ -89,8 +95,8 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
           name: 'api'
           image: apiImage
           resources: {
-            cpu: json('0.25')
-            memory: '0.5Gi'
+            cpu: json(cpu)
+            memory: memory
           }
           env: concat([
             {
