@@ -198,6 +198,7 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
         }
 
         // Evidence a person added in an earlier round joins the pack before the gate, like any other record.
+        session.RejectedAnswer = null;
         var pack = gathered.Pack.Including(session.UserEvidence, WhyItMattersCatalog.Shared);
         session.ReplaceEvidence(pack.Items);
         session.ReplaceExplanations(pack.Explanations);
@@ -242,6 +243,7 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
                     : string.Join(", ", grounding.Failures);
                 session.Stage = InvestigationStage.Escalated;
                 session.EscalationReason = "grounding: " + detail;
+                session.RejectedAnswer = Rejected(resolution.Claim);
                 session.ClearHypotheses();
                 return false;
             }
@@ -270,6 +272,7 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
 
             session.Stage = InvestigationStage.Escalated;
             session.EscalationReason = guarded ?? categoryMiss;
+            session.RejectedAnswer = Rejected(accepted);
             session.ClearHypotheses();
             return false;
         }
@@ -294,6 +297,13 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
         session.Stage = InvestigationStage.AwaitingApproval;
         return true;
     }
+
+    /// <summary>The AI answer a guard refused in the investigation's latest round, for the escalation detail; null when none.</summary>
+    public Mps.Application.Evidence.RejectedAnswer? RejectedAnswerFor(InvestigationId investigationId) =>
+        _sessions.Require(investigationId).RejectedAnswer;
+
+    private static Mps.Application.Evidence.RejectedAnswer Rejected(ResolutionClaim claim) =>
+        new(claim.Cause, claim.Category, claim.EvidenceIds.Select(id => id.Value).ToArray());
 
     internal void ApplyHumanDecision(string investigationIdText)
     {

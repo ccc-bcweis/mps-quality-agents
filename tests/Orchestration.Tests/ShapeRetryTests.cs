@@ -49,6 +49,13 @@ public sealed class ShapeRetryTests
         started.EscalationReason.Should().Contain("The AI described the signal as");
         started.Hypotheses.Should().BeEmpty();
         rig.Resolution.Calls.Should().Be(1 + MafInvestigationWorkflow.ShapeRetries);
+
+        // The refused answer is kept for the person reviewing the escalation.
+        var rejected = rig.Workflow.RejectedAnswerFor(started.Id);
+        rejected.Should().NotBeNull();
+        rejected!.Cause.Should().NotBeNullOrWhiteSpace();
+        rejected.Category.Should().NotBeNull();
+        rejected.EvidenceIds.Should().NotBeEmpty().And.BeSubsetOf(started.Evidence.Select(item => item.Id.Value));
     }
 
     [Fact]
@@ -63,6 +70,7 @@ public sealed class ShapeRetryTests
 
         started.Stage.Should().Be(InvestigationStage.AwaitingApproval);
         rig.Resolution.Calls.Should().Be(1);
+        rig.Workflow.RejectedAnswerFor(started.Id).Should().BeNull();
     }
 
     [Fact]

@@ -68,7 +68,8 @@ public sealed class CategoryGuardTests
     {
         var rules = CategoryEvidenceRules.Load();
         rules.Rules.Should().NotBeEmpty();
-        rules.Rules.Should().OnlyContain(rule => rule.Implies == RootCauseCategory.EquipmentCalibrationOrAlignment);
+        rules.Rules.Should().Contain(rule => rule.Implies == RootCauseCategory.EquipmentCalibrationOrAlignment);
+        rules.Rules.Should().ContainSingle(rule => rule.Implies == RootCauseCategory.ProcessDrift, "a recipe setpoint edited with no engineering change order is process drift");
 
         var bad = Path.Combine(Path.GetTempPath(), "category-" + Guid.NewGuid().ToString("N") + ".yaml");
         File.WriteAllText(bad, "rules:\n  - id: x\n    sources: [cmms]\n    anyOf: [bearing]\n    implies: luck\n");

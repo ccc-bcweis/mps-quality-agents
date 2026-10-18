@@ -46,6 +46,9 @@ public sealed class InvestigationSession
 
     public string? EscalationReason { get; internal set; }
 
+    /// <summary>The AI answer a guard refused in this round (cause, class, cited ids); null when no answer was refused.</summary>
+    public Mps.Application.Evidence.RejectedAnswer? RejectedAnswer { get; internal set; }
+
     public IReadOnlyList<EvidenceItem> Evidence => _evidence;
 
     public IReadOnlyList<Hypothesis> Hypotheses => _hypotheses;

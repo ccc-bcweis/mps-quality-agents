@@ -24,6 +24,12 @@ public sealed record EvidenceMatrixEntry(
 /// Plain-language notes and the root-cause matrix carried beside an investigation.
 /// Domain evidence does not store these fields yet, so the API persists them here.
 /// </summary>
+/// <summary>
+/// The AI answer a guard refused, kept so a person reviewing the escalation sees what the AI proposed: its cause text,
+/// class and the evidence ids it cited as support.
+/// </summary>
+public sealed record RejectedAnswer(string? Cause, RootCauseCategory? Category, IReadOnlyList<Guid> EvidenceIds);
+
 public sealed class InvestigationNarrative
 {
     public const int MaxWhyItMattersLength = 240;
@@ -44,10 +50,14 @@ public sealed class InvestigationNarrative
 
     public IReadOnlyList<EvidenceMatrixEntry> Matrix { get; }
 
+    /// <summary>The refused AI answer when a guard escalated the round; null otherwise.</summary>
+    public RejectedAnswer? Rejected { get; init; }
+
     public static InvestigationNarrative Create(
         IReadOnlyList<EvidenceNote> notes,
         IReadOnlyList<EvidenceMatrixEntry> matrix,
-        IReadOnlySet<Guid> evidenceIds)
+        IReadOnlySet<Guid> evidenceIds,
+        RejectedAnswer? rejected = null)
     {
         ArgumentNullException.ThrowIfNull(notes);
         ArgumentNullException.ThrowIfNull(matrix);
@@ -86,7 +96,12 @@ public sealed class InvestigationNarrative
                 NormalizeWhy(entry.WhyItMatters)));
         }
 
-        return new InvestigationNarrative(normalizedNotes, normalizedMatrix);
+        return new InvestigationNarrative(normalizedNotes, normalizedMatrix)
+        {
+            Rejected = rejected is null
+                ? null
+                : rejected with { EvidenceIds = rejected.EvidenceIds.Where(evidenceIds.Contains).Distinct().ToArray() },
+        };
     }
 
     private static void RequireKnown(Guid evidenceId, IReadOnlySet<Guid> evidenceIds, string message)

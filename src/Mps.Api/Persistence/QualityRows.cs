@@ -127,6 +127,9 @@ public sealed class InvestigationRow
 
     public string EvidenceMatrixJson { get; set; } = "[]";
 
+    /// <summary>The AI answer a guard refused (cause, class, cited ids) as JSON, or null when none was refused.</summary>
+    public string? RejectedAnswerJson { get; set; }
+
     /// <summary>The recorded human decision as JSON, or null before one is made.</summary>
     public string? DecisionJson { get; set; }
 }

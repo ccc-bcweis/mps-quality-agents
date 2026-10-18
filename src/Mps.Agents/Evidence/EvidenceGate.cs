@@ -2,15 +2,18 @@
 
 using System.Globalization;
 
+using Mps.Agents.Grounding;
 using Mps.Agents.Impact;
+using Mps.Agents.Ranking;
 using Mps.Domain.Enterprise;
 using Mps.Domain.Evidence;
+using Mps.Domain.Hypotheses;
 
 namespace Mps.Agents.Evidence;
 
 /// <summary>
 /// Decides whether evidence is sufficient, incomplete, or contradictory. A conflict escalates. A gap requests information.
-/// An empty calibration lookup is named on an escalation and is not itself a gap when another discriminator is present.
+/// A process-change record named in the category metadata is a discriminator. An empty calibration lookup is named on an escalation and is not itself a gap when another discriminator is present.
 /// </summary>
 public static class EvidenceGate
 {
@@ -104,7 +107,21 @@ public static class EvidenceGate
             return true;
         }
 
-        return IsRampWithoutDiscreteEvent(pack);
+        return IsRampWithoutDiscreteEvent(pack) || HasProcessChangeRecord(pack);
+    }
+
+    /// <summary>
+    /// A record the category metadata says points at process drift (a recipe setpoint edited with no engineering change
+    /// order) separates the causes on its own. Live SC-8 only got past this gate on an unrelated supplier notice.
+    /// </summary>
+    private static bool HasProcessChangeRecord(EvidencePack pack)
+    {
+        var rules = CategoryEvidenceRules.Shared.Rules.Where(rule => rule.Implies == RootCauseCategory.ProcessDrift).ToArray();
+        return rules.Length > 0 && pack.Items.Any(item =>
+        {
+            var note = new EvidenceNote { Source = item.Source.ToString(), Title = item.Title, Detail = item.Excerpt };
+            return rules.Any(rule => rule.Matches(note));
+        });
     }
 
     private static bool IsRampWithoutDiscreteEvent(EvidencePack pack)

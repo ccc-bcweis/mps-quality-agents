@@ -33,7 +33,7 @@ All companies, equipment, people and data in this repo are **fictional and synth
 
 ## Clone and run
 
-No Azure account, model key, Entra tenant or Key Vault is needed. With no model configured the app runs **offline on saved answers**: the real agents, evidence gate and guards run, and the model's part comes from the same saved answers the 28-case replay eval scores, so SC-1 to SC-8 reach their real causes with no network call.
+No Azure account, model key, Entra tenant or Key Vault is needed. With no model configured the app runs **offline on saved answers**: the real agents, evidence gate and guards run, and the model's part comes from the same saved answers the 29-case replay eval scores, so SC-1 to SC-8 reach their real causes with no network call.
 
 You need either Docker, or the **.NET 10 SDK** and **Node 22** (the version CI and the dev container use; Node 20.19 or later also builds).
 
@@ -141,7 +141,7 @@ cd web; npm test; npm run lint; npm run build
 - [docs/demo/REPRODUCIBILITY.md](docs/demo/REPRODUCIBILITY.md): seed, resets, clock, replay
 - [docs/operations/runbook.md](docs/operations/runbook.md): deploy, smoke, reset, rollback, teardown
 - [docs/TESTING.md](docs/TESTING.md): test harness
-- [eval/README.md](eval/README.md): replay eval (28 cases, CI gate)
+- [eval/README.md](eval/README.md): replay eval (29 cases, CI gate; live-model eval on demand)
 
 ## Deploy to Azure
 

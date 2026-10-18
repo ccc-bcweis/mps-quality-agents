@@ -312,13 +312,51 @@ function InvestigationDetail({ investigation, onChange }: { investigation: Inves
   );
 }
 
+/** What the AI proposed before a check refused it, so the reviewer can judge the escalation. */
+function RejectedAnswerDetail({ investigation }: { investigation: Investigation }) {
+  const rejected = investigation.rejectedAnswer;
+  if (!rejected) return null;
+  const cited = rejected.evidenceIds
+    .map((id) => investigation.evidence.find((item) => item.id === id))
+    .filter((item): item is NonNullable<typeof item> => item !== undefined);
+  return (
+    <details className="mt-2" data-rejected-answer="true">
+      <summary className="cursor-pointer">What the AI proposed (not accepted)</summary>
+      <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-mps-micro">
+        <dt className="text-mps-muted">Cause class</dt>
+        <dd>{rejected.category ? CATEGORY_LABEL[rejected.category] : "None named"}</dd>
+        <dt className="text-mps-muted">Cause</dt>
+        <dd>{rejected.cause ? <Explain text={rejected.cause} spellOut={false} /> : "None given"}</dd>
+        <dt className="text-mps-muted">Cited as support</dt>
+        <dd>
+          {cited.length === 0 ? (
+            "No records"
+          ) : (
+            <ul>
+              {cited.map((item) => (
+                <li key={item.id}>
+                  {item.externalRef ? `${item.externalRef}: ` : ""}
+                  {item.title}
+                </li>
+              ))}
+            </ul>
+          )}
+        </dd>
+      </dl>
+    </details>
+  );
+}
+
 function EvidenceGate({ investigation }: { investigation: Investigation }) {
   const state = evidenceGateState(investigation);
   if (state === "escalate") {
     return (
-      <p className="mb-3 rounded border border-mps-warn bg-mps-panel px-3 py-2" role="status" data-gate="escalate">
-        Evidence gate: <strong>escalate</strong>. <Explain text={plainNarrative(investigation.escalationReason ?? "")} spellOut={false} />
-      </p>
+      <div className="mb-3 rounded border border-mps-warn bg-mps-panel px-3 py-2" data-gate="escalate">
+        <p role="status">
+          Evidence gate: <strong>escalate</strong>. <Explain text={plainNarrative(investigation.escalationReason ?? "")} spellOut={false} />
+        </p>
+        <RejectedAnswerDetail investigation={investigation} />
+      </div>
     );
   }
 

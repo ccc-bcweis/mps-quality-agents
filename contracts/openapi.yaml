@@ -1588,6 +1588,28 @@ components:
           type: integer
           minimum: 1
           description: The most rounds a ticket can have (data/metadata/investigation.yaml evidenceRounds.max).
+        rejectedAnswer:
+          $ref: "#/components/schemas/RejectedAnswer"
+    RejectedAnswer:
+      type: object
+      nullable: true
+      additionalProperties: false
+      required: [evidenceIds]
+      description: What the AI proposed when a guard refused its answer and the round escalated. Present only on an escalated investigation.
+      properties:
+        cause:
+          type: string
+          nullable: true
+        category:
+          allOf:
+            - $ref: "#/components/schemas/RootCauseCategory"
+          nullable: true
+        evidenceIds:
+          type: array
+          description: Evidence ids the refused answer cited as support.
+          items:
+            type: string
+            format: uuid
     DecisionRecord:
       type: object
       nullable: true

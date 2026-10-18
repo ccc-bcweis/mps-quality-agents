@@ -75,7 +75,8 @@ public sealed class WhyItMattersCatalog
     {
         ArgumentNullException.ThrowIfNull(item);
         var cited = Explain(item.Id, Wire(item.Source), ParameterOf(item), item.Title, item.ExternalRef, preferredSignalId: null);
-        return LimitSentence(item) is { } measured ? new CitedEvidence(cited.EvidenceId, measured, cited.SignalId) : cited;
+        var signal = Localize(cited.SignalId, item);
+        return new CitedEvidence(cited.EvidenceId, LimitSentence(item) ?? cited.WhyItMatters, signal);
     }
 
     public string? SignalIdFor(EvidenceItem item)
@@ -86,7 +87,47 @@ public sealed class WhyItMattersCatalog
             return null;
         }
 
-        return SignalFor(item.Source, ParameterOf(item), item.Title, item.ExternalRef, preferred: null);
+        return Localize(SignalFor(item.Source, ParameterOf(item), item.Title, item.ExternalRef, preferred: null), item);
+    }
+
+    /// <summary>
+    /// The sensor id on the item's own tool and chamber. Sensors are matched by parameter from the fleet templates, so a
+    /// tool built from a template (E-03 from E-01) or a second chamber would otherwise get the template's first sensor
+    /// (live SC-8, Oct 18: E-03 chamber A evidence carried E-01-A-RF-BIAS-FWD). Tool ids are rewritten the way the
+    /// site generator names a templated tool's sensors.
+    /// </summary>
+    private string? Localize(string? signalId, EvidenceItem item)
+    {
+        if (signalId is null || item.ToolId is not { } tool)
+        {
+            return signalId;
+        }
+
+        var sensor = _sensors.FirstOrDefault(candidate => string.Equals(candidate.Id, signalId, StringComparison.OrdinalIgnoreCase));
+        if (sensor?.ChamberId is not { } chamberId || !signalId.StartsWith(chamberId, StringComparison.OrdinalIgnoreCase))
+        {
+            return signalId;
+        }
+
+        var split = chamberId.LastIndexOf('-');
+        if (split <= 0)
+        {
+            return signalId;
+        }
+
+        var letter = ChamberLetter(item.Reading?.ChamberName) ?? chamberId[(split + 1)..];
+        var localChamber = tool + "-" + letter;
+        return string.Equals(localChamber, chamberId, StringComparison.OrdinalIgnoreCase)
+            ? signalId
+            : localChamber + signalId[chamberId.Length..];
+    }
+
+    /// <summary>"Chamber A" to "A" (the plain chamber name the evidence stores); null when it is not a chamber name.</summary>
+    private static string? ChamberLetter(string? chamberName)
+    {
+        var rest = chamberName?.Trim();
+        var space = rest?.LastIndexOf(' ') ?? -1;
+        return rest is not null && space > 0 && rest.Length - space == 2 ? rest[(space + 1)..] : null;
     }
 
     public CitedEvidence Explain(
@@ -287,9 +328,13 @@ public sealed class WhyItMattersCatalog
             || haystack.Contains("align", StringComparison.OrdinalIgnoreCase)
             || haystack.Contains("overdue", StringComparison.OrdinalIgnoreCase);
         var notice = haystack.Contains("notice", StringComparison.OrdinalIgnoreCase);
+        var recipe = haystack.Contains("recipe", StringComparison.OrdinalIgnoreCase) || haystack.Contains("setpoint", StringComparison.OrdinalIgnoreCase);
+        var noChange = haystack.Contains("no change on record", StringComparison.OrdinalIgnoreCase);
         return source switch
         {
+            EvidenceSource.Plm when noChange => "The configuration record shows no engineering change on this tool.",
             EvidenceSource.Plm => "An engineering change landed just before this signal moved, which can change the process result.",
+            EvidenceSource.Cmms when recipe => "A recipe setpoint was changed on this tool in this window, which changes the process it runs.",
             EvidenceSource.Cmms when calibration => "A calibration or alignment record is overdue, which can make a sensor read the wrong value.",
             EvidenceSource.Cmms => "Maintenance in this window can move a sensor or change an alignment.",
             EvidenceSource.Erp when notice => "A supplier notice in this window says a material lot may be outside its specification.",
@@ -512,7 +557,7 @@ public sealed class WhyItMattersCatalog
                 continue;
             }
 
-            sink.Add(new Sensor(id.Trim(), StringOf(map, "parameter") ?? StringOf(map, "type")));
+            sink.Add(new Sensor(id.Trim(), StringOf(map, "parameter") ?? StringOf(map, "type"), StringOf(map, "chamberId")));
         }
     }
 
@@ -774,11 +819,14 @@ public sealed class WhyItMattersCatalog
 
     private sealed class Sensor
     {
-        public Sensor(string id, string? parameter)
+        public Sensor(string id, string? parameter, string? chamberId)
         {
             Id = id;
             Parameter = parameter;
+            ChamberId = string.IsNullOrWhiteSpace(chamberId) ? null : chamberId.Trim();
         }
+
+        public string? ChamberId { get; }
 
         public string Id { get; }
 
