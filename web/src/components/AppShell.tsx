@@ -12,7 +12,7 @@ import { useConsole } from "../context/ConsoleContext";
 import { SiteProvider, useSite } from "../context/SiteContext";
 import { CONSOLE_TABS } from "../shell/navigation";
 import { plantOptions } from "../sites/selection";
-import { countWord, loadCatalog, plants, useCatalog } from "../labels";
+import { countWord, keepLoadingCatalog, plants, useCatalog } from "../labels";
 import { Explain } from "./Explain";
 import { GlossaryScope } from "./GlossaryScope";
 import { HarnessBar } from "./HarnessBar";
@@ -76,8 +76,9 @@ export function ConsoleFrame() {
   useCatalog();
 
   useEffect(() => {
-    // Usually loaded before the first render (main.tsx). A signed-out first load retries once the session is known.
-    void loadCatalog(api.consoleCatalog).catch(() => undefined);
+    // Usually loaded before the first render (main.tsx). A failed load (signed out, an app restart during a deploy)
+    // keeps retrying with backoff until it lands, and starts again when the session changes.
+    return keepLoadingCatalog(api.consoleCatalog);
   }, [session]);
 
   function chooseSite(next: string) {
