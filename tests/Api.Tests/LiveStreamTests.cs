@@ -45,7 +45,10 @@ public sealed class LiveStreamTests
         var series = message.GetProperty("series").EnumerateArray().ToArray();
         series.Should().NotBeEmpty();
         series.Should().OnlyContain(row => row.GetProperty("points").GetArrayLength() > 0);
-        series.Should().Contain(row => row.GetProperty("sigma").ValueKind == JsonValueKind.Number);
+        // The SPC chart draws UCL/LCL and the sigma bands from center and sigma; without both it draws no limits.
+        series.Should().Contain(row => row.GetProperty("center").ValueKind == JsonValueKind.Number
+            && row.GetProperty("sigma").ValueKind == JsonValueKind.Number
+            && row.GetProperty("sigma").GetDouble() > 0);
         message.GetProperty("status").GetString().Should().NotBeNullOrWhiteSpace();
         strayTool.Task.IsCompleted.Should().BeFalse();
         strayFleet.Task.IsCompleted.Should().BeFalse();

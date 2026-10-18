@@ -30,7 +30,7 @@ The AI part is checked by a **replay evaluation**: 27 graded cases through the d
 | `Contract.Tests` | 40 |
 | `Api.Tests` | 91 |
 | **.NET total** | **709** in 13 projects |
-| Vitest (`web/src`) | 186 in 56 files |
+| Vitest (`web/src`) | 198 in 56 files |
 | Replay eval (`eval/cases`) | 28 cases |
 | Playwright (`web/e2e`, local) | 6 tests in 4 specs, at 3 screen widths |
 
@@ -61,6 +61,7 @@ These fail the build on a pattern rather than a behavior.
 | `NoHardcodedLimitsTests` (.NET) and `noHardcodedLimits.test.ts` (web) | A limit, threshold, count, timing, sigma multiplier, rule sentence with its numbers, second label map, parameter name or plant/tool prefix is written as a literal in code instead of read from `data/` (legitimate constants are listed with a reason in `tools/guards/hardcoded-allowlist.txt`; a stale entry fails) |
 | `ConsoleCatalogTests` (.NET) | The web test fixtures (`web/src/test/catalog.fixture.json`, `settings.fixture.json`) differ from what `/api/metadata/catalog` and `/api/metadata/settings` serve |
 | `SimulationSettingsTests`, `InvestigationTuningTests` (.NET) | `data/metadata/simulation.yaml` or the `shapeClassifier`/`resolution` sections of `investigation.yaml` change the simulator or classifier values by accident, or a missing setting loads silently |
+| `SpcChart.bands.test.tsx` (web), `LiveStreamTests` (.NET) | The SPC chart stops drawing its UCL/LCL/mean lines or the three sigma bands for a series with a center, or the live tool stream stops sending `center` and `sigma` (#338) |
 | `GlossaryTests` | An acronym or unit in `docs/` or `data/` has no glossary entry |
 | `LayeringTests` | A layer references one it must not (NetArchTest) |
 | `DeployShapeTests` | The image, compose file, Bicep or deploy workflow loses a required setting, or gains a key |
