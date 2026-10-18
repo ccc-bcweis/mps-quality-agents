@@ -36,6 +36,9 @@ param entraClientId string = ''
 @description('OpenID issuer for Easy Auth, for example https://login.microsoftonline.com/<tenant>/v2.0.')
 param openIdIssuer string = ''
 
+@description('Comma-separated admin emails (join links, resets). Required when Entra sign-in is on: the app will not start without one. The deploy fills it from ADMIN_EMAILS, the running app, or the signed-in deployer.')
+param adminEmails string = ''
+
 @description('Monthly USD budget. Azure has no weekly grain. 40 stands in for the $10/week alert.')
 param monthlyBudgetUsd int = 40
 
@@ -140,6 +143,7 @@ module apps 'modules/container-apps.bicep' = {
     modelDeployment: openai.outputs.deploymentName
     entraClientId: entraClientId
     openIdIssuer: openIdIssuer
+    adminEmails: adminEmails
     appInsightsConnectionString: insights.outputs.connectionString
     approvalKeySecretUri: empty(approvalKeySecretName) ? '' : '${vault.outputs.uri}secrets/${approvalKeySecretName}'
   }
@@ -166,6 +170,7 @@ module budget 'modules/budget.bicep' = if (!empty(budgetContactEmail)) {
 
 output identityClientId string = identity.outputs.clientId
 output identityPrincipalId string = identity.outputs.principalId
+output appName string = appName
 output appFqdn string = apps.outputs.fqdn
 output apiFqdn string = apps.outputs.fqdn
 output acrName string = acr.outputs.name

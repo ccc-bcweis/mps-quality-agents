@@ -75,7 +75,7 @@ public sealed class ReplayDataModeTests
     [Fact]
     public async Task ReplayControlsRejectANonAdminPrincipal()
     {
-        await using var azure = new ApiFactory().WithWebHostBuilder(builder => builder.UseSetting("Mps:Auth:Mode", "azure"));
+        await using var azure = new ApiFactory().WithWebHostBuilder(builder => builder.UseSetting("Mps:Auth:Mode", "azure").UseSetting("Mps:Auth:AdminEmails", "owner@example.com"));
         var client = azure.CreateClient();
         client.DefaultRequestHeaders.Add("X-MS-CLIENT-PRINCIPAL", Principal("reader"));
 

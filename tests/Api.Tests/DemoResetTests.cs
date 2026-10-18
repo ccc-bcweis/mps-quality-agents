@@ -85,7 +85,7 @@ public sealed class DemoResetTests
     public async Task ResetRejectsANonAdminPrincipal()
     {
         await using var local = new ApiFactory();
-        await using var azure = new ApiFactory().WithWebHostBuilder(builder => builder.UseSetting("Mps:Auth:Mode", "azure"));
+        await using var azure = new ApiFactory().WithWebHostBuilder(builder => builder.UseSetting("Mps:Auth:Mode", "azure").UseSetting("Mps:Auth:AdminEmails", "owner@example.com"));
         var localClient = local.CreateClient();
         var azureClient = azure.CreateClient();
         localClient.DefaultRequestHeaders.Add("X-MS-CLIENT-PRINCIPAL", Principal("reader"));

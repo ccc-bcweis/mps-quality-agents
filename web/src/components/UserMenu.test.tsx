@@ -11,10 +11,10 @@ describe("user menu", () => {
   it("opens from the signed-in name and signs out through the platform to the landing page", async () => {
     const user = userEvent.setup();
     const navigate = vi.fn();
-    render(<UserMenu session={{ mode: "azure", isAdmin: false, displayName: "bcweis@commonconsulting.us" }} navigate={navigate} />);
+    render(<UserMenu session={{ mode: "azure", isAdmin: false, displayName: "someone@example.com" }} navigate={navigate} />);
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /Signed in bcweis@commonconsulting.us/ }));
+    await user.click(screen.getByRole("button", { name: /Signed in someone@example.com/ }));
     const signOut = screen.getByRole("menuitem", { name: "Sign out" });
     expect(signOut.className).toContain("bg-mps-alarm-solid");
     await user.click(signOut);
@@ -43,7 +43,7 @@ describe("user menu", () => {
     expect(landingFor("/tools/E-02")).toBe("/landing.html?next=%2Ftools%2FE-02");
     expect(entryRedirect({ status: 403 }, "/")).toBe(NO_ACCESS_PAGE);
     expect(entryRedirect({ session: { mode: "azure", isAdmin: false, displayName: "guest@example.com", member: false } }, "/")).toBe(NO_ACCESS_PAGE);
-    expect(entryRedirect({ session: { mode: "azure", isAdmin: false, displayName: "bcweis@commonconsulting.us", member: true } }, "/")).toBeNull();
+    expect(entryRedirect({ session: { mode: "azure", isAdmin: false, displayName: "someone@example.com", member: true } }, "/")).toBeNull();
     expect(entryRedirect({ status: 500 }, "/")).toBeNull();
   });
 });
