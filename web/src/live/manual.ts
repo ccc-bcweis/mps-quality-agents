@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+import { chartSeries } from "./overlay";
 import type { LiveSeries, ManualReading, ToolLive } from "../api/types";
 import type { SensorStatus } from "../fleet/telemetry";
 
@@ -60,8 +61,7 @@ export function manualMarker(series: LiveSeries | undefined, reading: ManualRead
 }
 
 export function seriesFor(live: ToolLive | null, parameter: string, chamberId?: string | null): LiveSeries | undefined {
-  const rows = (live?.series ?? []).filter((series) => series.parameter === parameter && series.points.length > 0);
-  return rows.find((series) => chamberId && series.chamberId === chamberId) ?? rows[0];
+  return chartSeries(live, parameter, chamberId);
 }
 
 /** Earliest time the chart window holds for this series; a reading before it will not plot in place. */

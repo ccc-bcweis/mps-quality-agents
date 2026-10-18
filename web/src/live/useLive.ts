@@ -32,16 +32,49 @@ export function useLiveResource<T>(key: string, load: () => Promise<T>, options:
     let cancelled = false;
     let timer = 0;
     let latest: T | null = null;
+    // Only the newest load applies, and messages that arrive while it runs are replayed on top of it. Before, every
+    // message that found no loaded value started another load; the loads answered out of order, so the chart swapped
+    // between older and newer windows and back.
+    let requested = 0;
+    let loading = false;
+    let reloadAgain = false;
+    let queued: { apply: Apply<T>; payload: unknown }[] = [];
     const reload = () => {
+      if (loading) {
+        reloadAgain = true;
+        return;
+      }
+      loading = true;
+      const ticket = ++requested;
       void loadRef
         .current()
         .then((next) => {
-          if (cancelled) return;
-          latest = next;
-          setValue(next);
+          if (cancelled || ticket !== requested) return;
+          let value: T | null = next;
+          const pending = queued;
+          queued = [];
+          for (const { apply, payload } of pending) {
+            const patched = apply(value, payload);
+            if (patched === "reload") {
+              reloadAgain = true;
+              break;
+            }
+            value = patched;
+          }
+          latest = value;
+          setValue(value);
         })
         .catch(() => {
           // Keep the last good value; the stream or the fallback tries again.
+        })
+        .finally(() => {
+          if (ticket !== requested) return;
+          loading = false;
+          if (reloadAgain && !cancelled) {
+            reloadAgain = false;
+            queued = [];
+            reload();
+          }
         });
     };
     const schedule = () => {
@@ -64,6 +97,10 @@ export function useLiveResource<T>(key: string, load: () => Promise<T>, options:
         onHub(name, (payload) => {
           const handler = optionsRef.current.events?.find((event) => event.name === name);
           if (!handler || cancelled) return;
+          if (loading) {
+            queued.push({ apply: handler.apply, payload });
+            return;
+          }
           const next = handler.apply(latest, payload);
           if (next === "reload") {
             reload();
