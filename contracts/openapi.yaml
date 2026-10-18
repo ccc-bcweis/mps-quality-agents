@@ -1144,6 +1144,9 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/LiveSeries"
+        windowPoints:
+          type: integer
+          description: Readings each series keeps (simulation.yaml telemetryWindow.readingsPerSensor); the chart x axis is this wide.
     LiveReading:
       type: object
       additionalProperties: false

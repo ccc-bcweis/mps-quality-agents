@@ -40,6 +40,10 @@ public sealed class LiveSiteTests
         detail.GetProperty("siteId").GetString().Should().Be("northwater");
         detail.GetProperty("readings").GetArrayLength().Should().BeGreaterThan(0);
         detail.GetProperty("series").EnumerateArray().Should().Contain(series => series.GetProperty("points").GetArrayLength() > 0);
+        // The chart's fixed x axis is the telemetry window from simulation.yaml, sent by the API (#380).
+        var window = Mps.Simulator.SimulationSettings.Shared.TelemetryWindow.ReadingsPerSensor;
+        detail.GetProperty("windowPoints").GetInt32().Should().Be(window);
+        detail.GetProperty("series").EnumerateArray().Should().OnlyContain(series => series.GetProperty("points").GetArrayLength() <= window);
 
         (await client.GetAsync("/api/tools/Z-99/live")).StatusCode.Should().Be(HttpStatusCode.NotFound);
 

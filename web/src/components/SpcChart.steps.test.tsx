@@ -3,9 +3,9 @@ import { cloneElement, type ReactElement } from "react";
 import { render as rtlRender, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import { SpcChart, stepHoverText, stepRuns } from "./SpcChart";
+import { SpcChart, fixedAxis, stepHoverText, stepRuns } from "./SpcChart";
 import { mpsColor } from "../brand/colors";
-import { pointLimits } from "../live/overlay";
+import { pointLimits, seriesPoints } from "../live/overlay";
 import { applyToolDelta, mergeSegments } from "../live/stream";
 import { limits } from "../spc/series";
 import type { ToolLive } from "../api/types";
@@ -251,5 +251,97 @@ describe("SpcChart limits per recipe step", () => {
     expect(centers.slice(240).every((center) => center === 50)).toBe(true);
     expect(new Set(limitsByPoint.map((limit) => limit.step))).toEqual(new Set(["Stabilize", "Main etch", "Endpoint"]));
     expect(new Set(limitsByPoint.map((limit) => limit.segment)).size).toBe(3);
+  });
+});
+
+describe("SpcChart fixed-width x axis (#380)", () => {
+  const WINDOW = 600;
+  const at = (second: number) => new Date(Date.UTC(2026, 9, 18, 7, 0, 0) + second * 1000).toISOString();
+  const names = ["Stabilize", "Main etch", "Endpoint"];
+  const segment = (second: number) => {
+    const n = Math.floor(second / 120);
+    return { from: at(n * 120), center: n % 3 === 1 ? 52 : 50, sigma: 4 / 3, recipe: "Oxide main etch", step: names[n % 3], idle: n % 3 === 2, floor: 40, ceiling: 60 };
+  };
+  const tool = (seconds: number[], windowPoints = WINDOW) =>
+    ({
+      toolId: "E-02",
+      siteId: "northwater",
+      simulatedNow: at(seconds[seconds.length - 1]),
+      status: "nominal",
+      readings: [],
+      windowPoints,
+      series: [
+        {
+          parameter: "escTemperature",
+          chamberId: "E-02-A",
+          center: 50,
+          sigma: 4 / 3,
+          points: seconds.map((second) => ({ at: at(second), value: 50 })),
+          segments: [...new Map(seconds.map((second) => [segment(second).from, segment(second)])).values()],
+        },
+      ],
+    }) as unknown as ToolLive;
+  const delta = (second: number) => ({
+    toolId: "E-02",
+    siteId: "northwater",
+    simulatedNow: at(second),
+    status: "nominal" as const,
+    readings: [],
+    series: [{ parameter: "escTemperature", chamberId: "E-02-A", points: [{ at: at(second), value: 50 }], center: 50, sigma: 4 / 3, segments: [segment(second)] }],
+    resync: false,
+  });
+  /** x pixel of each step divider, from the drawn reference lines. */
+  const dividerX = (container: HTMLElement) =>
+    [...container.querySelectorAll(".spc-step-divider line")].map((line) => Number(line.getAttribute("x1")));
+  const chart = (live: ToolLive) => {
+    const points = seriesPoints(live, "escTemperature", "E-02-A")!;
+    const steps = pointLimits(live, "escTemperature", "E-02-A")!;
+    return render(<SpcChart label="ESC temperature" unit="C" center={{ mean: 50, sigma: 4 / 3 }} steps={steps} points={points} windowPoints={live.windowPoints ?? undefined} finding="x" />);
+  };
+
+  it("is always the full window wide: the domain never rescales while the window fills", () => {
+    const few = fixedAxis(Array.from({ length: 100 }, (_, index) => ({ index, value: 1 })), WINDOW)!;
+    expect(few.domain).toEqual([-500, 99]);
+    expect(few.ticks.every((tick) => tick >= 0 && tick <= 99)).toBe(true);
+    const full = fixedAxis(Array.from({ length: 600 }, (_, index) => ({ index, value: 1 })), WINDOW)!;
+    expect(full.domain[1] - full.domain[0]).toBe(few.domain[1] - few.domain[0]);
+    expect(fixedAxis([{ index: 0, value: 1 }], undefined)).toBeUndefined();
+  });
+
+  it("keeps a recipe step the same width as readings arrive: dividers only move left", () => {
+    let live: ToolLive | null = tool(Array.from({ length: 250 }, (_, second) => second));
+    const before = dividerX(chart(live).container);
+    expect(before).toHaveLength(2); // 120 and 240
+    for (let second = 250; second < 370; second += 1) live = applyToolDelta(live, delta(second));
+    const after = dividerX(chart(live!).container);
+    expect(after).toHaveLength(3); // 120, 240, 360
+    // Same distance between the 120 and 240 dividers: the scale did not change, the whole plot moved left.
+    expect(after[1] - after[0]).toBeCloseTo(before[1] - before[0], 3);
+    expect(after[0]).toBeLessThan(before[0]);
+  });
+
+  it("scrolls once the window is full: reading numbers advance and old dividers leave on the left", () => {
+    let live: ToolLive | null = tool(Array.from({ length: WINDOW }, (_, second) => second));
+    const full = chart(live);
+    const firstTicks = [...full.container.querySelectorAll(".recharts-xAxis .recharts-cartesian-axis-tick-value")].map((tick) => Number(tick.textContent));
+    expect(firstTicks[0]).toBe(0);
+    expect(dividerX(full.container)).toHaveLength(4); // 120, 240, 360, 480
+    for (let second = WINDOW; second < WINDOW + 130; second += 1) live = applyToolDelta(live, delta(second));
+    const series = live!.series[0];
+    expect(series.points).toHaveLength(WINDOW);
+    expect(series.first).toBe(130);
+    const points = seriesPoints(live, "escTemperature", "E-02-A")!;
+    expect(points[0].index).toBe(130);
+    expect(points[points.length - 1].index).toBe(729);
+    const scrolled = chart(live!);
+    const ticks = [...scrolled.container.querySelectorAll(".recharts-xAxis .recharts-cartesian-axis-tick-value")].map((tick) => Number(tick.textContent));
+    expect(ticks[0]).toBeGreaterThanOrEqual(130);
+    expect(ticks[ticks.length - 1]).toBeLessThanOrEqual(729);
+    // The 120 divider scrolled off the left; 240, 360 and 480 moved left; 600 and 720 came in on the right.
+    const before = dividerX(full.container);
+    const after = dividerX(scrolled.container);
+    expect(after).toHaveLength(5);
+    expect(after[0]).toBeCloseTo(before[1] - (before[1] - before[0]) * (130 / 120), 3);
+    expect(fixedAxis(points, WINDOW)!.domain).toEqual([130, 729]);
   });
 });

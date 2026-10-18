@@ -2,9 +2,6 @@
 // Pure patches for the fleet hub messages. A page keeps its first load and applies each message to it.
 import type { FleetLive, FleetLiveTool, LiveLimitSegment, LiveReading, LiveSeries, LiveStatus, ToolLive } from "../api/types";
 
-/** Points kept per chart series; the same window GET /api/tools/{id}/live returns. */
-export const LIVE_WINDOW_POINTS = 600;
-
 /** toolLive: the tool's latest readings and only the new points per series. resync asks the page to load again. */
 export type ToolLiveDelta = {
   toolId: string;
@@ -26,8 +23,12 @@ export type AlertCleared = { alertId: string; toolId?: string; clearedAt?: strin
 
 const seriesKey = (series: { parameter: string; chamberId: string }) => `${series.parameter}|${series.chamberId}`;
 
-/** Appends the new points to each series (oldest dropped past the window). Null when there is no first load to patch. */
-export function applyToolDelta(previous: ToolLive | null, delta: ToolLiveDelta, maxPoints = LIVE_WINDOW_POINTS): ToolLive | null {
+/**
+ * Appends the new points to each series, oldest dropped past the window: the window the first load reported
+ * (windowPoints, from simulation.yaml). Each series counts the readings that rolled off in first, so reading numbers
+ * keep growing and the chart scrolls. Null when there is no first load to patch.
+ */
+export function applyToolDelta(previous: ToolLive | null, delta: ToolLiveDelta, maxPoints = previous?.windowPoints ?? Number.POSITIVE_INFINITY): ToolLive | null {
   if (!previous || delta.resync || previous.toolId !== delta.toolId) return null;
   const byKey = new Map(previous.series.map((series) => [seriesKey(series), series]));
   for (const incoming of delta.series) {
@@ -41,6 +42,7 @@ export function applyToolDelta(previous: ToolLive | null, delta: ToolLiveDelta, 
       parameter: incoming.parameter,
       chamberId: incoming.chamberId,
       points: kept,
+      first: (current?.first ?? 0) + (points.length - kept.length),
       center: incoming.center ?? null,
       sigma: incoming.sigma ?? null,
       segments: mergeSegments(current?.segments, incoming.segments, kept[0]?.at),

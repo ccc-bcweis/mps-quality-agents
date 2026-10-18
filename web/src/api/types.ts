@@ -477,6 +477,11 @@ export type LiveSeries = {
   sigma?: number | null;
   /** Limits per recipe step, oldest first: each holds from its first point until the next. Absent for counters. */
   segments?: LiveLimitSegment[] | null;
+  /**
+   * Console only: the reading number of points[0], counted since the page loaded the tool. It grows as old readings
+   * roll off the window, so the chart's x labels and step dividers scroll left with the data (#380).
+   */
+  first?: number;
 };
 
 /**
@@ -516,6 +521,8 @@ export type ToolLive = {
   series: LiveSeries[];
   /** Readable name of the running recipe, from the fleet data. */
   recipeName?: string | null;
+  /** Readings each series keeps (simulation.yaml telemetryWindow.readingsPerSensor); the chart x axis is this wide. */
+  windowPoints?: number | null;
 };
 
 export type ScenarioTelemetryPoint = {

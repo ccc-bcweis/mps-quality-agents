@@ -262,6 +262,7 @@ export function ToolPage() {
           center={serverLimits}
           steps={stepLimits}
           points={livePoints}
+          windowPoints={live?.windowPoints ?? undefined}
           finding={finding}
           cumulative={cumulative}
           manual={cumulative ? undefined : chartManual}

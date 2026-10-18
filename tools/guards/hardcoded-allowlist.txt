@@ -35,7 +35,6 @@ src/Mps.Simulator/Scenarios/ScriptedScenarioCatalog.cs | SampleSeconds = 30 | sc
 src/Mps.Simulator/Sites/SitePlantGenerator.cs | SampleCount = 128 | generated samples per site series
 #
 # Web layout and copy.
-web/src/live/stream.ts | LIVE_WINDOW_POINTS = 600 | chart window length in points, matching the API live window; a display size, not a process limit
 web/src/fleet/schematic.ts | CHAMBER_MIN_PX = 620 | layout width in pixels, not a process limit
 web/src/fleet/schematic.ts | COUNTER_MIN_PX = 220 | layout width in pixels, not a process limit
 web/src/pages/ToolPage.tsx | LINKED_LIMIT = 12 | how many linked records the Tool page lists

@@ -98,9 +98,11 @@ public sealed class LiveSeriesLog
         }
     }
 
-    public IReadOnlyList<LivePoint> Window(string toolId, string chamberId, string parameter, int maxPoints = 600)
+    /// <summary>The newest points of one series, at most <paramref name="maxPoints"/> (default: the whole window).</summary>
+    public IReadOnlyList<LivePoint> Window(string toolId, string chamberId, string parameter, int? maxPoints = null)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxPoints);
+        var limit = maxPoints ?? _maxPoints;
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(limit);
 
         lock (_gate)
         {
@@ -109,7 +111,7 @@ public sealed class LiveSeriesLog
                 return [];
             }
 
-            var skip = Math.Max(0, buffer.Count - maxPoints);
+            var skip = Math.Max(0, buffer.Count - limit);
             return buffer.Skip(skip).ToArray();
         }
     }
@@ -117,9 +119,10 @@ public sealed class LiveSeriesLog
     /// <summary>
     /// Points for a parameter. A null chamber uses the chamber whose latest sample is newest.
     /// </summary>
-    public IReadOnlyList<LivePoint> WindowForParameter(string toolId, string parameter, string? chamberId, int maxPoints = 600)
+    public IReadOnlyList<LivePoint> WindowForParameter(string toolId, string parameter, string? chamberId, int? maxPoints = null)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxPoints);
+        var limit = maxPoints ?? _maxPoints;
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(limit);
 
         lock (_gate)
         {
@@ -149,7 +152,7 @@ public sealed class LiveSeriesLog
                 return [];
             }
 
-            var skip = Math.Max(0, buffer.Count - maxPoints);
+            var skip = Math.Max(0, buffer.Count - limit);
             return buffer.Skip(skip).ToArray();
         }
     }

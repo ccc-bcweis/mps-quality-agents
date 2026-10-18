@@ -64,6 +64,7 @@ public static class LiveResponses
         return new ToolLiveResponse(toolId, SiteOf(plant, toolId), plant.SimulatedNow, alertStatus is null ? mapped.Status : ToolAlertStatus.Of(alertStatus, toolId), mapped.Readings, series)
         {
             RecipeName = plant.RecipeNameAt(toolId, plant.SimulatedNow),
+            WindowPoints = plant.Log.MaxPoints,
         };
     }
 
