@@ -8,6 +8,7 @@ using Mps.Application.Persistence;
 using Mps.Application.Tests.Fakes;
 using Mps.Domain.Approval;
 using Mps.Domain.Capa;
+using Mps.Domain.Events;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
 using Mps.Domain.Lifecycle;
@@ -28,7 +29,7 @@ public sealed class CapaLifecycleEffectsTests
         await fixture.Service.AdvanceAsync(fixture.Capa.Id, CapaStage.Containment, CancellationToken.None);
 
         fixture.Plant.ClearedTools.Should().Equal("E-02");
-        fixture.Events.Published.Should().ContainSingle(item => item.Type == LifecycleTypes.FaultCleared && item.ToolId == "E-02" && item.CorrelationId == "corr-life");
+        fixture.Events.Published.Should().ContainSingle(item => item.Type == EventTypes.FaultCleared && item.ToolId == "E-02" && item.CorrelationId == "corr-life");
     }
 
     [Fact]

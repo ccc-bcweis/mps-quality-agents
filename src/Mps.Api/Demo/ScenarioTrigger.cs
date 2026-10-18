@@ -4,6 +4,7 @@ using Mps.Api.Live;
 using Mps.Application.Bus;
 using Mps.Application.Faults;
 using Mps.Application.Printouts;
+using Mps.Domain.Events;
 using Mps.Domain.Hypotheses;
 using Mps.Simulator.Scenarios;
 using Mps.Simulator.Telemetry;
@@ -142,7 +143,7 @@ public sealed class ScenarioTrigger
         var correlationId = "scenario-" + scenario.Id + "-" + Guid.NewGuid().ToString("N");
         var eventId = await _events.PublishAsync(
             new LifecycleEvent(
-                LifecycleTypes.ScenarioStart,
+                EventTypes.ScenarioStart,
                 correlationId,
                 null,
                 null,

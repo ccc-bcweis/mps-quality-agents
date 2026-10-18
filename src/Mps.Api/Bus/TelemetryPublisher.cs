@@ -2,6 +2,7 @@
 
 using Mps.Api.Live;
 using Mps.Application.Bus;
+using Mps.Domain.Events;
 using Mps.Simulator.Telemetry;
 
 namespace Mps.Api.Bus;
@@ -52,7 +53,7 @@ public sealed class TelemetryPublisher
         var correlation = _cascade.CorrelationFor(frame.ToolId, frame.Parameter) ?? "nominal-" + frame.ToolId;
         var window = _plant.WindowAt(frame.ToolId, frame.Parameter, frame.SimulatedAt);
         return new LifecycleEvent(
-            LifecycleTypes.TelemetryReading,
+            EventTypes.TelemetryReading,
             correlation,
             parent,
             parent,

@@ -8,6 +8,7 @@ using Mps.Api.Http;
 using Mps.Api.Hubs;
 using Mps.Application.Persistence;
 using Mps.Bus;
+using Mps.Domain.Events;
 
 namespace Mps.Api.Live;
 

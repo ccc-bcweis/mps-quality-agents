@@ -4,6 +4,8 @@ using System.Text.Json.Nodes;
 
 using Json.Schema;
 
+using Mps.Domain.Events;
+
 namespace Mps.Contract.Tests;
 
 /// <summary>

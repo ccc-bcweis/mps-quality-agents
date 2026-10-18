@@ -8,6 +8,7 @@ using Mps.Application.Faults;
 using Mps.Application.Intake;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
+using Mps.Domain.Events;
 using Mps.Domain.Evidence;
 using Mps.Domain.Hypotheses;
 using Mps.Domain.Identity;
@@ -168,7 +169,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
         var correlationId = "printout-" + Guid.NewGuid().ToString("N");
         var eventId = await _events.PublishAsync(
             new LifecycleEvent(
-                LifecycleTypes.DocumentUpload,
+                EventTypes.DocumentUpload,
                 correlationId,
                 null,
                 null,
@@ -197,7 +198,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
         var parent = CommandAmbient.EventId;
         var eventId = await _events.PublishAsync(
             new LifecycleEvent(
-                LifecycleTypes.DocumentUploaded,
+                EventTypes.DocumentUploaded,
                 correlationId,
                 parent,
                 parent,
@@ -238,7 +239,7 @@ public sealed class DocumentIntakeService : IDocumentIntake
         var parent = CommandAmbient.EventId;
         await _events.PublishAsync(
             new LifecycleEvent(
-                LifecycleTypes.TelemetryReading,
+                EventTypes.TelemetryReading,
                 correlationId,
                 parent,
                 parent,

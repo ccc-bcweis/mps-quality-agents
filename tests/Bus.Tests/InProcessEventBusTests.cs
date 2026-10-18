@@ -1,5 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Domain.Events;
+
 namespace Mps.Bus.Tests;
 
 public sealed class InProcessEventBusTests

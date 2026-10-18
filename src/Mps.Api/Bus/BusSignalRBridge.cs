@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.SignalR;
 
 using Mps.Api.Hubs;
 using Mps.Bus;
+using Mps.Domain.Events;
 
 namespace Mps.Api.Bus;
 

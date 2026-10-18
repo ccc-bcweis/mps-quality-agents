@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
 using Mps.Bus;
+using Mps.Domain.Events;
 
 namespace Mps.Api.Demo;
 

@@ -5,6 +5,7 @@ using System.Globalization;
 
 using Mps.Api.Live;
 using Mps.Application.Bus;
+using Mps.Domain.Events;
 using Mps.Simulator.Sites;
 
 namespace Mps.Api.Bus;
@@ -137,7 +138,7 @@ public sealed class NominalHistorySeeder : INominalHistorySeeder
             var noise = NextSigned(ref state) * 0.1d * Math.Max((series.High - series.Low) / 6d, 1e-6);
             var value = Math.Clamp(series.Nominal + noise, series.Low, series.High);
             chunk.Add(new LifecycleEvent(
-                LifecycleTypes.TelemetryReading,
+                EventTypes.TelemetryReading,
                 "nominal-" + series.ToolId,
                 null,
                 null,

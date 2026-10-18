@@ -10,6 +10,7 @@ using Mps.Api.Persistence;
 using Mps.Application.Bus;
 using Mps.Application.Persistence;
 using Mps.Application.Printouts;
+using Mps.Domain.Events;
 using Mps.Domain.Incidents;
 using Mps.Domain.Investigations;
 using Mps.Domain.Lifecycle;
@@ -180,7 +181,7 @@ public sealed class DemoResetService
 
         _db.TicketSequences.Add(new TicketSequenceRow { Id = 1, NextNumber = 1000 });
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        var published = await PublishResetAsync(LifecycleTypes.ResetHard, cancellationToken).ConfigureAwait(false);
+        var published = await PublishResetAsync(EventTypes.ResetHard, cancellationToken).ConfigureAwait(false);
         _plant.Reset();
         _progress.Report("seeding", "Filling a week of healthy history.");
         await _seeder.SeedAsync(NominalWindow.LastWeek, cancellationToken).ConfigureAwait(false);
@@ -190,7 +191,7 @@ public sealed class DemoResetService
     private async Task<DemoBaseline> SoftAsync(CancellationToken cancellationToken)
     {
         _progress.Report("closing", "Closing open tickets and investigations.");
-        var published = await PublishResetAsync(LifecycleTypes.ResetSoft, cancellationToken).ConfigureAwait(false);
+        var published = await PublishResetAsync(EventTypes.ResetSoft, cancellationToken).ConfigureAwait(false);
         await CloseOpenWorkAsync(published.EventId, published.CorrelationId, cancellationToken).ConfigureAwait(false);
         ClearOverlays();
         _plant.Reset();
@@ -226,7 +227,7 @@ public sealed class DemoResetService
             var toolId = stored.Incident.ToolId.ToString();
             await _sink.PublishAsync(
                 new LifecycleEvent(
-                    LifecycleTypes.IncidentChanged,
+                    EventTypes.IncidentChanged,
                     correlationId,
                     resetEventId,
                     resetEventId,
@@ -256,7 +257,7 @@ public sealed class DemoResetService
             await _investigations.UpdateAsync(closed, cancellationToken).ConfigureAwait(false);
             await _sink.PublishAsync(
                 new LifecycleEvent(
-                    LifecycleTypes.InvestigationChanged,
+                    EventTypes.InvestigationChanged,
                     correlationId,
                     resetEventId,
                     resetEventId,
@@ -317,7 +318,7 @@ public sealed class DemoResetService
                     }
 
                     chunk.Add(new LifecycleEvent(
-                        LifecycleTypes.TelemetryReading,
+                        EventTypes.TelemetryReading,
                         correlationId,
                         resetEventId,
                         resetEventId,
@@ -363,7 +364,7 @@ public sealed class DemoResetService
                 null,
                 null,
                 _time.GetUtcNow(),
-                new { kind = type == LifecycleTypes.ResetHard ? "hard" : "soft" }),
+                new { kind = type == EventTypes.ResetHard ? "hard" : "soft" }),
             cancellationToken).ConfigureAwait(false);
         return (eventId, correlationId);
     }

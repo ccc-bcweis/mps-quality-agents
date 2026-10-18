@@ -3,59 +3,6 @@
 namespace Mps.Application.Bus;
 
 /// <summary>
-/// Dotted names shared by commands and the facts that follow them.
-/// The bus project owns the same spellings. This list keeps the application free of that reference.
-/// </summary>
-public static class LifecycleTypes
-{
-    public const string TelemetryReading = "telemetry.reading";
-
-    public const string AlertRaised = "alert.raised";
-
-    public const string AlertCleared = "alert.cleared";
-
-    public const string FaultCleared = "fault.cleared";
-
-    public const string ScenarioStopped = "command.scenario.stop";
-
-    public const string RuleMatched = "rule.matched";
-
-    public const string TicketCreated = "ticket.created";
-
-    public const string IncidentChanged = "incident.changed";
-
-    public const string InvestigationStep = "investigation.step";
-
-    public const string InvestigationChanged = "investigation.changed";
-
-    public const string ApprovalGranted = "approval.granted";
-
-    public const string CapaCreated = "capa.created";
-
-    public const string CapaAdvanced = "capa.advanced";
-
-    public const string DocumentUploaded = "document.uploaded";
-
-    public const string FaultInject = "command.fault.inject";
-
-    public const string ScenarioStart = "command.scenario.start";
-
-    public const string ResetHard = "command.reset.hard";
-
-    public const string ResetSoft = "command.reset.soft";
-
-    public const string OperatorReport = "command.operator.report";
-
-    public const string DocumentUpload = "command.document.upload";
-
-    public const string ApprovalGrant = "command.approval.grant";
-
-    public const string CapaAdvance = "command.capa.advance";
-
-    public const string InvestigationStart = "command.investigation.start";
-}
-
-/// <summary>
 /// A fact the application wants on the bus. The host fills the event id, sequence, and recorded time.
 /// </summary>
 public sealed record LifecycleEvent(

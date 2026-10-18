@@ -1,9 +1,10 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
-namespace Mps.Bus;
+namespace Mps.Domain.Events;
 
 /// <summary>
-/// Dotted event names. Commands and domain facts share one envelope.
+/// Dotted event names. Commands and domain facts share one envelope. The bus, the application and the API all read
+/// these, so each name is spelled once.
 /// </summary>
 public static class EventTypes
 {

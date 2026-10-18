@@ -5,6 +5,7 @@ using Mps.Application.Errors;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
 using Mps.Domain.Capa;
+using Mps.Domain.Events;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
 using Mps.Domain.Lifecycle;
@@ -102,7 +103,7 @@ public sealed class CapaLifecycleService : ICapaLifecycleService
         {
             await _events.PublishAsync(
                 new LifecycleEvent(
-                    LifecycleTypes.FaultCleared,
+                    EventTypes.FaultCleared,
                     incident.CorrelationId,
                     null,
                     null,

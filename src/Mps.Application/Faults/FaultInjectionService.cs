@@ -4,6 +4,7 @@ using Mps.Application.Bus;
 using Mps.Application.Errors;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
+using Mps.Domain.Events;
 using Mps.Domain.Hypotheses;
 using Mps.Domain.Identity;
 
@@ -133,7 +134,7 @@ public sealed class FaultInjectionService : IFaultInjectionService
         {
             var eventId = await _events.PublishAsync(
                 new LifecycleEvent(
-                    LifecycleTypes.FaultInject,
+                    EventTypes.FaultInject,
                     correlationId,
                     parent,
                     parent,

@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Mps.Api.Bus;
 using Mps.Api.Live;
 using Mps.Application.Bus;
+using Mps.Domain.Events;
 using Mps.Simulator.Scenarios;
 using Mps.Simulator.Telemetry;
 
@@ -76,8 +77,8 @@ public sealed class ScenarioBusChainTests
             faults.Should().HaveCount(scenario.ToolIds.Count, scenario.Id + " should apply each tool once");
 
             var correlation = body.GetProperty("correlationId").GetString()!;
-            var started = store.FindFirst(correlation, LifecycleTypes.ScenarioStart);
-            var fault = store.FindFirst(correlation, LifecycleTypes.FaultInject);
+            var started = store.FindFirst(correlation, EventTypes.ScenarioStart);
+            var fault = store.FindFirst(correlation, EventTypes.FaultInject);
             started.Should().NotBeNull(scenario.Id);
             fault.Should().NotBeNull(scenario.Id);
             fault!.ParentEventId.Should().Be(started!.EventId);
@@ -117,7 +118,7 @@ public sealed class ScenarioBusChainTests
     private static StoredEvent RuleOnTheChain(SqliteEventStore store, string faultEventId, string scenarioId)
     {
         var readings = store.Children(faultEventId, 800)
-            .Where(row => row.Type == LifecycleTypes.TelemetryReading
+            .Where(row => row.Type == EventTypes.TelemetryReading
                 && row.ParentEventId == faultEventId
                 && row.CausationId == faultEventId)
             .ToArray();
@@ -125,34 +126,34 @@ public sealed class ScenarioBusChainTests
         var reached = new List<string>();
         foreach (var reading in readings)
         {
-            var alert = LinkedChild(store, reading.EventId, LifecycleTypes.AlertRaised);
+            var alert = LinkedChild(store, reading.EventId, EventTypes.AlertRaised);
             if (alert is null)
             {
                 continue;
             }
 
-            var rule = LinkedChild(store, alert.EventId, LifecycleTypes.RuleMatched);
+            var rule = LinkedChild(store, alert.EventId, EventTypes.RuleMatched);
             if (rule is null)
             {
                 reached.Add("alert");
                 continue;
             }
 
-            var ticket = LinkedChild(store, rule.EventId, LifecycleTypes.TicketCreated);
+            var ticket = LinkedChild(store, rule.EventId, EventTypes.TicketCreated);
             if (ticket is null)
             {
                 reached.Add("rule");
                 continue;
             }
 
-            var investigation = LinkedChild(store, ticket.EventId, LifecycleTypes.InvestigationStart);
+            var investigation = LinkedChild(store, ticket.EventId, EventTypes.InvestigationStart);
             if (investigation is null)
             {
                 reached.Add("ticket");
                 continue;
             }
 
-            if (LinkedChild(store, investigation.EventId, LifecycleTypes.InvestigationStep) is null)
+            if (LinkedChild(store, investigation.EventId, EventTypes.InvestigationStep) is null)
             {
                 reached.Add("investigation");
                 continue;

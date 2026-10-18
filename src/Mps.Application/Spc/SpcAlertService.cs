@@ -5,6 +5,7 @@ using Mps.Application.Intake;
 using Mps.Application.Metadata;
 using Mps.Application.Notifications;
 using Mps.Application.Persistence;
+using Mps.Domain.Events;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
 using Mps.Domain.Telemetry;
@@ -223,7 +224,7 @@ public sealed class SpcAlertService
             {
                 await _events.PublishAsync(
                     new LifecycleEvent(
-                        LifecycleTypes.AlertCleared,
+                        EventTypes.AlertCleared,
                         alert.CorrelationId,
                         null,
                         _hints?.FindStep(alert.CorrelationId, "alert"),
@@ -287,7 +288,7 @@ public sealed class SpcAlertService
         var parent = _hints?.FindStep(correlationId, "alert");
         var eventId = await _events.PublishAsync(
             new LifecycleEvent(
-                LifecycleTypes.RuleMatched,
+                EventTypes.RuleMatched,
                 correlationId,
                 parent,
                 parent,
