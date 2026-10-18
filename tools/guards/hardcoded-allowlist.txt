@@ -5,8 +5,6 @@
 # An entry whose line is gone fails the guard, so remove it when the literal moves to data.
 #
 # Engineering limits: input sizes, budgets and safety caps, not process or rule settings.
-src/Mps.Agents/Explain/PlainSentence.cs | MaxLength = 240 | longest plain sentence the explainer writes (text size cap)
-src/Mps.Application/Evidence/InvestigationNarrative.cs | MaxWhyItMattersLength = 240 | stored text size cap
 src/Mps.Application/Evidence/InvestigationNarrative.cs | MaxSignalIdLength = 200 | stored id size cap
 src/Mps.Application/Intake/IntakeService.cs | MaxSummaryLength = 4000 | request validation size cap
 src/Mps.Domain/Investigations/InvestigationRounds.cs | MaxEvidenceLength = 4000 | request validation size cap for added evidence (#309)

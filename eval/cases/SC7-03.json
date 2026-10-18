@@ -1,0 +1,243 @@
+{
+  "id": "SC7-03",
+  "group": "equipmentCalibrationOrAlignment",
+  "groundTruth": "SC-7 foreline pump bearing past its service interval on D-02 chamber A (live investigation aad42389-8da9-40c4-9ca6-4f746bacb3f4, run 11)",
+  "expected": {
+    "behavior": "recommend",
+    "category": "equipmentCalibrationOrAlignment",
+    "forbiddenInCause": [
+      "SIH4-088"
+    ],
+    "forbiddenInSupport": [
+      "SN-SIH4-088"
+    ],
+    "requiredRuledOut": [
+      "SN-SIH4-088"
+    ],
+    "requiredSupport": [
+      "WO-PMP-D02-BRG"
+    ],
+    "causeTerms": [
+      "bearing"
+    ]
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "D-02/D-02-A",
+    "signalShape": "ramp",
+    "pmSummaries": [
+      "WO-PM-D-02-00 pm: Scheduled preventive maintenance on D-02.",
+      "WO-PM-D-02-01 pm: Scheduled preventive maintenance on D-02.",
+      "WO-PMP-D02-BRG maintenance: Foreline pump bearing hours are past the service interval on D-02. Vibration has been rising. The bearing was not replaced."
+    ],
+    "pmEvidenceIds": [
+      "7db0203e-e4f3-53ca-acf0-0dfe7850c4aa",
+      "3e27277c-884d-5a92-933a-c7638e718482",
+      "e3ec4e35-7f68-5de4-a998-575dafcc19eb"
+    ],
+    "lotIds": [
+      "SIH4-088",
+      "WAF-14"
+    ],
+    "lotEvidenceIds": [
+      "ef06b636-5ad4-539a-8be9-aa1f7a214be2",
+      "e196f0e6-7f43-58bc-a1fe-c6d7cddfd3ac"
+    ],
+    "noticeIds": [
+      "SN-SIH4-088"
+    ],
+    "signalEvidenceIds": [
+      "481bdf8f-b9c4-571e-997d-c947feaebe3c",
+      "08279114-603a-5526-9567-7af47cc5e3a3",
+      "ebf79029-4f68-5d7c-8fb8-e9bdd65f7d1c",
+      "ca68f279-dce5-5347-b319-ef54801c7859",
+      "a7d75599-ec3f-501c-8ece-674ec761f825",
+      "8a5a3b1d-a967-5511-9249-a5d296eec078"
+    ],
+    "ruledOut": [
+      {
+        "id": "9a08e9fb-5b62-5d5d-9d23-12ac6a59b2ea",
+        "class": "supplyChainMaterial",
+        "reason": "Silane lot SIH4-088 matches the purchase specification."
+      }
+    ],
+    "notes": [
+      {
+        "id": "481bdf8f-b9c4-571e-997d-c947feaebe3c",
+        "source": "spc",
+        "title": "Western Electric rule 1 (one reading more than 3 sigma from the average) on Vibration",
+        "detail": "Western Electric rule 1 (one reading more than 3 sigma from the average) broke on D-02 D-02-A Vibration at 2026-10-18 18:31 UTC: value 1.786 (one sigma is 0.333); recipe spec 0 to 2; control limits -0.3 to 1.7 (centre 0.7), severity High.",
+        "externalRef": "spc:D-02:vibrationRms:2026-10-18T18:31:46.0000000+00:00:western-electric-1",
+        "status": "context"
+      },
+      {
+        "id": "08279114-603a-5526-9567-7af47cc5e3a3",
+        "source": "spc",
+        "title": "Western Electric rule 2 (2 of 3 readings more than 2 sigma out on one side) on Vibration",
+        "detail": "Western Electric rule 2 (2 of 3 readings more than 2 sigma out on one side) broke on D-02 D-02-A Vibration at 2026-10-18 18:31 UTC: value 1.786 (one sigma is 0.333); recipe spec 0 to 2; control limits -0.3 to 1.7 (centre 0.7), severity High.",
+        "externalRef": "spc:D-02:vibrationRms:2026-10-18T18:31:46.0000000+00:00:western-electric-2",
+        "status": "context"
+      },
+      {
+        "id": "ebf79029-4f68-5d7c-8fb8-e9bdd65f7d1c",
+        "source": "spc",
+        "title": "Western Electric rule 3 (4 of 5 readings more than 1 sigma out on one side) on Vibration",
+        "detail": "Western Electric rule 3 (4 of 5 readings more than 1 sigma out on one side) broke on D-02 D-02-A Vibration at 2026-10-18 18:31 UTC: value 1.786 (one sigma is 0.333); recipe spec 0 to 2; control limits -0.3 to 1.7 (centre 0.7), severity Medium.",
+        "externalRef": "spc:D-02:vibrationRms:2026-10-18T18:31:46.0000000+00:00:western-electric-3",
+        "status": "context"
+      },
+      {
+        "id": "ca68f279-dce5-5347-b319-ef54801c7859",
+        "source": "spc",
+        "title": "Western Electric rule 4 (8 readings in a row on one side of the average) on Vibration",
+        "detail": "Western Electric rule 4 (8 readings in a row on one side of the average) broke on D-02 D-02-A Vibration at 2026-10-18 18:31 UTC: value 1.786 (one sigma is 0.333); recipe spec 0 to 2; control limits -0.3 to 1.7 (centre 0.7), severity Medium.",
+        "externalRef": "spc:D-02:vibrationRms:2026-10-18T18:31:46.0000000+00:00:western-electric-4",
+        "status": "context"
+      },
+      {
+        "id": "a7d75599-ec3f-501c-8ece-674ec761f825",
+        "source": "spc",
+        "title": "Nelson rule 6 (6 readings in a row, each higher than the last) on Vibration",
+        "detail": "Nelson rule 6 (6 readings in a row, each higher than the last) broke on D-02 D-02-A Vibration at 2026-10-18 18:31 UTC: value 1.707 (one sigma is 0.333); recipe spec 0 to 2; control limits -0.3 to 1.7 (centre 0.7), severity Low.",
+        "externalRef": "spc:D-02:vibrationRms:2026-10-18T18:31:38.0000000+00:00:nelson-6-rising",
+        "status": "context"
+      },
+      {
+        "id": "8a5a3b1d-a967-5511-9249-a5d296eec078",
+        "source": "telemetry",
+        "title": "Vibration readings",
+        "detail": "Vibration on D-02, 600 samples 2026-10-04 18:31 UTC to 2026-10-18 18:31 UTC: early mean 0.688 (sd 0.068), late mean 1.207, min 0.524, max 1.786, last 1.786; late shift 7.607 baseline sigmas. Shape from the data since the first rule break: a gradual drift in one direction.",
+        "externalRef": "telemetry:D-02:vibrationRms:2026-10-04T18:31:04.0000000+00:00",
+        "status": "context"
+      },
+      {
+        "id": "ca15264a-4a8c-5f6b-942d-c7e335a28ad2",
+        "source": "plm",
+        "title": "Showerhead rev A",
+        "detail": "PLM configuration CFG-D-02: D-02 carries Showerhead revision A.",
+        "externalRef": "CFG-D-02",
+        "status": "candidate"
+      },
+      {
+        "id": "268fa95b-779a-545a-a136-c4e6c1fb7aec",
+        "source": "mes",
+        "title": "PECVD-OXIDE rev A",
+        "detail": "MES run RUN-BG-20261014-D-02-W05-00 on D-02 started 2026-10-06 03:00 UTC: recipe PECVD-OXIDE revision A, lot LOT-D-02-W05.",
+        "externalRef": "RUN-BG-20261014-D-02-W05-00",
+        "status": "candidate"
+      },
+      {
+        "id": "13871d01-2070-50f5-8b6c-f315e06a82a2",
+        "source": "mes",
+        "title": "PECVD-OXIDE rev A",
+        "detail": "MES run RUN-BG-20261014-D-02-W05-01 on D-02 started 2026-10-06 05:00 UTC: recipe PECVD-OXIDE revision A, lot LOT-D-02-W05.",
+        "externalRef": "RUN-BG-20261014-D-02-W05-01",
+        "status": "candidate"
+      },
+      {
+        "id": "517f6ba1-fe5e-54ce-98a1-1502d28e3be9",
+        "source": "mes",
+        "title": "PECVD-OXIDE rev A",
+        "detail": "MES run RUN-BG-20261014-D-02-W05-02 on D-02 started 2026-10-06 07:00 UTC: recipe PECVD-OXIDE revision A, lot LOT-D-02-W05.",
+        "externalRef": "RUN-BG-20261014-D-02-W05-02",
+        "status": "candidate"
+      },
+      {
+        "id": "6075754d-fe3f-5dc3-bc8a-c36fc52716cd",
+        "source": "mes",
+        "title": "PECVD-OXIDE rev A",
+        "detail": "MES run RUN-BG-20261014-D-02-W05-03 on D-02 started 2026-10-06 09:00 UTC: recipe PECVD-OXIDE revision A, lot LOT-D-02-W05.",
+        "externalRef": "RUN-BG-20261014-D-02-W05-03",
+        "status": "candidate"
+      },
+      {
+        "id": "f8a51d61-4328-5189-aae3-e828712a5e80",
+        "source": "mes",
+        "title": "PECVD-NITRIDE rev A",
+        "detail": "MES run RUN-BG-20261014-D-02-W06-00 on D-02 started 2026-10-13 03:00 UTC: recipe PECVD-NITRIDE revision A, lot LOT-D-02-W06.",
+        "externalRef": "RUN-BG-20261014-D-02-W06-00",
+        "status": "candidate"
+      },
+      {
+        "id": "223aa057-3c87-531a-8e54-cfd6ba8cb58f",
+        "source": "mes",
+        "title": "PECVD-NITRIDE rev A",
+        "detail": "MES run RUN-BG-20261014-D-02-W06-01 on D-02 started 2026-10-13 05:00 UTC: recipe PECVD-NITRIDE revision A, lot LOT-D-02-W06.",
+        "externalRef": "RUN-BG-20261014-D-02-W06-01",
+        "status": "candidate"
+      },
+      {
+        "id": "c7c7ce62-7d6f-5702-b9b2-e36f0daa224a",
+        "source": "mes",
+        "title": "PECVD-NITRIDE rev A",
+        "detail": "MES run RUN-BG-20261014-D-02-W06-02 on D-02 started 2026-10-13 07:00 UTC: recipe PECVD-NITRIDE revision A, lot LOT-D-02-W06.",
+        "externalRef": "RUN-BG-20261014-D-02-W06-02",
+        "status": "candidate"
+      },
+      {
+        "id": "28fc3a0a-3ba9-5568-b5c2-1808bb4e3e30",
+        "source": "mes",
+        "title": "PECVD-NITRIDE rev A",
+        "detail": "MES run RUN-BG-20261014-D-02-W06-03 on D-02 started 2026-10-13 09:00 UTC: recipe PECVD-NITRIDE revision A, lot LOT-D-02-W06.",
+        "externalRef": "RUN-BG-20261014-D-02-W06-03",
+        "status": "candidate"
+      },
+      {
+        "id": "ef06b636-5ad4-539a-8be9-aa1f7a214be2",
+        "source": "erp",
+        "title": "GAS-SIH4 SIH4-088",
+        "detail": "Material lot SIH4-088 (GAS-SIH4) from Cinderwell Specialty Gases received 2026-09-13 00:00 UTC; supplier notice SN-SIH4-088.",
+        "externalRef": "SIH4-088",
+        "status": "candidate"
+      },
+      {
+        "id": "e196f0e6-7f43-58bc-a1fe-c6d7cddfd3ac",
+        "source": "erp",
+        "title": "WAF-SI-300 WAF-14",
+        "detail": "Material lot WAF-14 (WAF-SI-300) from Northline Process Materials received 2026-09-06 00:00 UTC; supplier notice none.",
+        "externalRef": "WAF-14",
+        "status": "candidate"
+      },
+      {
+        "id": "9a08e9fb-5b62-5d5d-9d23-12ac6a59b2ea",
+        "source": "erp",
+        "title": "Silane lot SIH4-088 matches the purchase specification.",
+        "detail": "Supplier notice SN-SIH4-088 from Cinderwell Specialty Gases issued 2026-09-13 04:00 UTC for GAS-SIH4 lot SIH4-088: Silane lot SIH4-088 matches the purchase specification.",
+        "externalRef": "SN-SIH4-088",
+        "status": "ruledOut"
+      },
+      {
+        "id": "7db0203e-e4f3-53ca-acf0-0dfe7850c4aa",
+        "source": "cmms",
+        "title": "Scheduled preventive maintenance on D-02.",
+        "detail": "Work order WO-PM-D-02-00 (pm) on D-02 D-02-A at 2026-09-08 00:00 UTC: Scheduled preventive maintenance on D-02.",
+        "externalRef": "WO-PM-D-02-00",
+        "status": "candidate"
+      },
+      {
+        "id": "3e27277c-884d-5a92-933a-c7638e718482",
+        "source": "cmms",
+        "title": "Scheduled preventive maintenance on D-02.",
+        "detail": "Work order WO-PM-D-02-01 (pm) on D-02 D-02-A at 2026-10-06 00:00 UTC: Scheduled preventive maintenance on D-02.",
+        "externalRef": "WO-PM-D-02-01",
+        "status": "candidate"
+      },
+      {
+        "id": "e3ec4e35-7f68-5de4-a998-575dafcc19eb",
+        "source": "cmms",
+        "title": "Foreline pump bearing hours are past the service interval on D-02. Vibration has been rising. The bearing was not replaced.",
+        "detail": "Work order WO-PMP-D02-BRG (maintenance) on D-02 D-02-A at 2026-10-14 09:00 UTC: Foreline pump bearing hours are past the service interval on D-02. Vibration has been rising. The bearing was not replaced.",
+        "externalRef": "WO-PMP-D02-BRG",
+        "status": "candidate"
+      },
+      {
+        "id": "6a9ce96e-ebf4-5cc6-9fe8-d59c2dedf9b9",
+        "source": "cmms",
+        "title": "Heater thermocouple",
+        "detail": "Calibration CAL-D-02-INST for Heater thermocouple on D-02: due 2026-12-30 00:00 UTC, completed 2026-09-21 00:00 UTC, in date.",
+        "externalRef": "CAL-D-02-INST",
+        "status": "candidate"
+      }
+    ]
+  }
+}

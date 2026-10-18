@@ -4,6 +4,7 @@ using System.Text.Json;
 
 using Mps.Agents.Explain;
 using Mps.Agents.Ranking;
+using Mps.Application.Wording;
 using Mps.Domain.Hypotheses;
 
 namespace Mps.Agents.Grounding;
@@ -64,7 +65,8 @@ public static class CategoryGuard
         var records = string.Join("; ", implications.Select(item => Label(item.Note) + " (" + item.Rule.Description + ")").Distinct());
         return "Your previous answer set category to \"" + Name(claim.Category) + "\", but it cites " + records + ", which points to "
             + string.Join(" or ", implied.Select(name => "\"" + name + "\"")) + ". Set category to the class the cited records support. "
-            + "If such a record is not the cause, put its id in ruledOutIds with one short reason, or list it in counterEvidence and mark it rulesOut for that class in evidenceMatrix, or escalate.";
+            + "If such a record is not the cause, put its id in ruledOutIds with " + PlainWording.Shared.PromptClause
+            + " Or list it in counterEvidence and mark it rulesOut for that class in evidenceMatrix, or escalate.";
     }
 
     private static bool SetAside(ResolutionClaim claim, EvidenceNote note, RootCauseCategory implied)

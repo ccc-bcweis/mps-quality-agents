@@ -216,7 +216,8 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
 
         // A reported shape (the structured "shape" field) that is not the measured shape, or a category the cited records
         // contradict (data/metadata/category-evidence.yaml), gets one retry with feedback. Grounding and both guards run on
-        // every answer; a second miss escalates.
+        // every answer; a second miss escalates. A grounding miss is not retried, including an id that is in both
+        // evidenceIds and ruledOutIds (ruled-out-and-cited).
         string? feedback = null;
         ResolutionClaim? accepted = null;
         ResolutionClaim? submitted = null;

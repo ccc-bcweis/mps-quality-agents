@@ -1,0 +1,298 @@
+{
+  "id": "SC3-01",
+  "group": "supplyChainMaterial",
+  "groundTruth": "SC-3 precursor gas lot PL-2044 is out of specification on E-01 and E-02 (live investigation c919ec91-4041-41ef-ab4c-b2a860a24c0e). Other records are distractors.",
+  "expected": {
+    "behavior": "recommend",
+    "category": "supplyChainMaterial",
+    "forbiddenInCause": [
+      "WO-CLN-E01-220"
+    ],
+    "forbiddenInSupport": [
+      "WAF-14",
+      "CF4-014",
+      "CAL-E-01-INST",
+      "WO-CLN-E01-220"
+    ],
+    "requiredRuledOut": [
+      "WAF-14",
+      "CF4-014",
+      "CAL-E-01-INST",
+      "WO-CLN-E01-220"
+    ],
+    "requiredSupport": [
+      "PL-2044"
+    ],
+    "causeTerms": [
+      "PL-2044"
+    ]
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "E-01/E-01-A",
+    "signalShape": "step",
+    "lotIds": [
+      "PL-2044"
+    ],
+    "lotEvidenceIds": [
+      "9a0a8f18-f94c-5c5b-b5ae-2f1b917f9797"
+    ],
+    "noticeIds": [
+      "SN-PL-2044"
+    ],
+    "pmSummaries": [
+      "WO-CLN-E01-220 clean: Last chamber clean. Chamber A is past 420 RF-hours since that clean.",
+      "WO-PM-E-01-00 pm: Scheduled preventive maintenance on E-01.",
+      "WO-PM-E-01-01 pm: Scheduled preventive maintenance on E-01."
+    ],
+    "signalEvidenceIds": [
+      "b815a646-4060-581e-bdad-557ab3ec9c99",
+      "283a434e-0636-5252-92e6-c4015735dc0b",
+      "6ac99668-56c2-589c-b04c-d994d4ae84fc",
+      "81b0225a-b6d9-5e5e-a477-a4e6d9deb070",
+      "b83c6fdf-ee6e-5c3f-8f84-6988fa155f67",
+      "1410c9f4-589b-58d0-ba16-9a904e55f6b8",
+      "32b6e7e6-7b57-5bd8-a534-3690153d9f16"
+    ],
+    "ruledOut": [
+      {
+        "id": "e196f0e6-7f43-58bc-a1fe-c6d7cddfd3ac",
+        "class": "supplyChainMaterial",
+        "reason": "The wafer lot is not the gas the flow signal measures."
+      },
+      {
+        "id": "7664804b-a524-5290-bd0e-cca5ff2772ff",
+        "class": "supplyChainMaterial",
+        "reason": "This gas lot has no supplier notice."
+      },
+      {
+        "id": "3e598cb2-5551-533b-ac21-25c1929d981a",
+        "class": "equipmentCalibrationOrAlignment",
+        "reason": "The calibration was completed in date."
+      },
+      {
+        "id": "5baaec7b-1929-5176-a683-7458605f4221",
+        "class": "equipmentCalibrationOrAlignment",
+        "reason": "The chamber clean is a confounder on one tool."
+      }
+    ],
+    "notes": [
+      {
+        "id": "b815a646-4060-581e-bdad-557ab3ec9c99",
+        "source": "spc",
+        "title": "reading outside the spec window on CF4 flow",
+        "detail": "reading outside the spec window broke on E-01 E-01-A CF4 flow at 2026-10-18 18:25 UTC: value 23.019 (one sigma is 5); recipe spec 30 to 60; control limits 30 to 60 (centre 45), severity High.",
+        "externalRef": "spc:E-01:cf4Flow:2026-10-18T18:25:27.0000000+00:00:window",
+        "status": "context"
+      },
+      {
+        "id": "283a434e-0636-5252-92e6-c4015735dc0b",
+        "source": "spc",
+        "title": "Western Electric rule 1 (one reading more than 3 sigma from the average) on CF4 flow",
+        "detail": "Western Electric rule 1 (one reading more than 3 sigma from the average) broke on E-01 E-01-A CF4 flow at 2026-10-18 18:25 UTC: value 23.019 (one sigma is 5); recipe spec 30 to 60; control limits 30 to 60 (centre 45), severity Critical.",
+        "externalRef": "spc:E-01:cf4Flow:2026-10-18T18:25:27.0000000+00:00:western-electric-1",
+        "status": "context"
+      },
+      {
+        "id": "6ac99668-56c2-589c-b04c-d994d4ae84fc",
+        "source": "spc",
+        "title": "Western Electric rule 2 (2 of 3 readings more than 2 sigma out on one side) on CF4 flow",
+        "detail": "Western Electric rule 2 (2 of 3 readings more than 2 sigma out on one side) broke on E-01 E-01-A CF4 flow at 2026-10-18 18:25 UTC: value 23.019 (one sigma is 5); recipe spec 30 to 60; control limits 30 to 60 (centre 45), severity High.",
+        "externalRef": "spc:E-01:cf4Flow:2026-10-18T18:25:27.0000000+00:00:western-electric-2",
+        "status": "context"
+      },
+      {
+        "id": "81b0225a-b6d9-5e5e-a477-a4e6d9deb070",
+        "source": "spc",
+        "title": "Western Electric rule 3 (4 of 5 readings more than 1 sigma out on one side) on CF4 flow",
+        "detail": "Western Electric rule 3 (4 of 5 readings more than 1 sigma out on one side) broke on E-01 E-01-A CF4 flow at 2026-10-18 18:25 UTC: value 23.019 (one sigma is 5); recipe spec 30 to 60; control limits 30 to 60 (centre 45), severity Medium.",
+        "externalRef": "spc:E-01:cf4Flow:2026-10-18T18:25:27.0000000+00:00:western-electric-3",
+        "status": "context"
+      },
+      {
+        "id": "b83c6fdf-ee6e-5c3f-8f84-6988fa155f67",
+        "source": "spc",
+        "title": "Western Electric rule 4 (8 readings in a row on one side of the average) on CF4 flow",
+        "detail": "Western Electric rule 4 (8 readings in a row on one side of the average) broke on E-01 E-01-A CF4 flow at 2026-10-18 18:25 UTC: value 23.019 (one sigma is 5); recipe spec 30 to 60; control limits 30 to 60 (centre 45), severity Medium.",
+        "externalRef": "spc:E-01:cf4Flow:2026-10-18T18:25:27.0000000+00:00:western-electric-4",
+        "status": "context"
+      },
+      {
+        "id": "1410c9f4-589b-58d0-ba16-9a904e55f6b8",
+        "source": "spc",
+        "title": "Nelson rule 6 (6 readings in a row, each higher than the last) on CF4 flow",
+        "detail": "Nelson rule 6 (6 readings in a row, each higher than the last) broke on E-01 E-01-A CF4 flow at 2026-10-18 18:18 UTC: value 55.931 (one sigma is 5); recipe spec 30 to 60; control limits 30 to 60 (centre 45), severity Low.",
+        "externalRef": "spc:E-01:cf4Flow:2026-10-18T18:18:04.0000000+00:00:nelson-6-rising",
+        "status": "context"
+      },
+      {
+        "id": "32b6e7e6-7b57-5bd8-a534-3690153d9f16",
+        "source": "telemetry",
+        "title": "CF4 flow readings",
+        "detail": "CF4 flow on E-01, 600 samples 2026-10-04 18:25 UTC to 2026-10-18 18:25 UTC: early mean 54.948 (sd 1.021), late mean 40.986, min 21.265, max 57.63, last 23.019; late shift -13.677 baseline sigmas. Shape from the data since the first rule break: a step (a sudden jump that stays).",
+        "externalRef": "telemetry:E-01:cf4Flow:2026-10-04T18:25:06.0000000+00:00",
+        "status": "context"
+      },
+      {
+        "id": "5cbaa363-ece5-50f2-9ceb-5dae64cc86bb",
+        "source": "plm",
+        "title": "Liner rev B",
+        "detail": "PLM configuration CFG-E-01: E-01 carries Liner revision B.",
+        "externalRef": "CFG-E-01",
+        "status": "candidate"
+      },
+      {
+        "id": "23a164a2-0eda-5ac6-8f90-8f262833fd70",
+        "source": "mes",
+        "title": "POLY-ETCH rev B",
+        "detail": "MES run RUN-BG-20261014-E-01-W05-00 on E-01 started 2026-10-06 04:00 UTC: recipe POLY-ETCH revision B, lot LOT-E-01-W05.",
+        "externalRef": "RUN-BG-20261014-E-01-W05-00",
+        "status": "candidate"
+      },
+      {
+        "id": "52b6d45c-e114-56af-bd1f-faddd2d10ae6",
+        "source": "mes",
+        "title": "POLY-ETCH rev B",
+        "detail": "MES run RUN-BG-20261014-E-01-W05-01 on E-01 started 2026-10-06 06:00 UTC: recipe POLY-ETCH revision B, lot LOT-E-01-W05.",
+        "externalRef": "RUN-BG-20261014-E-01-W05-01",
+        "status": "candidate"
+      },
+      {
+        "id": "98b57c2f-34a1-577e-aa4a-799de65a11c0",
+        "source": "mes",
+        "title": "POLY-ETCH rev B",
+        "detail": "MES run RUN-BG-20261014-E-01-W05-02 on E-01 started 2026-10-06 08:00 UTC: recipe POLY-ETCH revision B, lot LOT-E-01-W05.",
+        "externalRef": "RUN-BG-20261014-E-01-W05-02",
+        "status": "candidate"
+      },
+      {
+        "id": "56b989f3-cf44-5dd3-a252-7737a16214bd",
+        "source": "mes",
+        "title": "POLY-ETCH rev B",
+        "detail": "MES run RUN-BG-20261014-E-01-W05-03 on E-01 started 2026-10-06 10:00 UTC: recipe POLY-ETCH revision B, lot LOT-E-01-W05.",
+        "externalRef": "RUN-BG-20261014-E-01-W05-03",
+        "status": "candidate"
+      },
+      {
+        "id": "c64aaa32-b252-5d70-9ce0-8651c9603961",
+        "source": "mes",
+        "title": "OXIDE-ETCH rev B",
+        "detail": "MES run RUN-BG-20261014-E-01-W06-00 on E-01 started 2026-10-13 04:00 UTC: recipe OXIDE-ETCH revision B, lot LOT-E-01-W06.",
+        "externalRef": "RUN-BG-20261014-E-01-W06-00",
+        "status": "candidate"
+      },
+      {
+        "id": "c4322a43-e90b-5213-a9e3-c27f081af550",
+        "source": "mes",
+        "title": "OXIDE-ETCH rev B",
+        "detail": "MES run RUN-BG-20261014-E-01-W06-01 on E-01 started 2026-10-13 06:00 UTC: recipe OXIDE-ETCH revision B, lot LOT-E-01-W06.",
+        "externalRef": "RUN-BG-20261014-E-01-W06-01",
+        "status": "candidate"
+      },
+      {
+        "id": "b0aeb8b6-92fe-50d7-ab7e-e855fed9fe2f",
+        "source": "mes",
+        "title": "OXIDE-ETCH rev B",
+        "detail": "MES run RUN-BG-20261014-E-01-W06-02 on E-01 started 2026-10-13 08:00 UTC: recipe OXIDE-ETCH revision B, lot LOT-E-01-W06.",
+        "externalRef": "RUN-BG-20261014-E-01-W06-02",
+        "status": "candidate"
+      },
+      {
+        "id": "2e0dde16-e1c9-577c-9625-4d2f103fda21",
+        "source": "mes",
+        "title": "OXIDE-ETCH rev B",
+        "detail": "MES run RUN-BG-20261014-E-01-W06-03 on E-01 started 2026-10-13 10:00 UTC: recipe OXIDE-ETCH revision B, lot LOT-E-01-W06.",
+        "externalRef": "RUN-BG-20261014-E-01-W06-03",
+        "status": "candidate"
+      },
+      {
+        "id": "ef726361-db76-56f7-b0ba-ce89de8aca8e",
+        "source": "mes",
+        "title": "OXIDE-ETCH rev B",
+        "detail": "MES run RUN-FLT-DRIFT-E01-E-01-00 on E-01 started 2026-10-18 00:00 UTC: recipe OXIDE-ETCH revision B, lot W-E01-090.",
+        "externalRef": "RUN-FLT-DRIFT-E01-E-01-00",
+        "status": "candidate"
+      },
+      {
+        "id": "1a1b871d-64b6-5f85-b510-f40961aa9fb9",
+        "source": "mes",
+        "title": "OXIDE-ETCH rev B",
+        "detail": "MES run RUN-FLT-DRIFT-E01-E-01-01 on E-01 started 2026-10-18 02:00 UTC: recipe OXIDE-ETCH revision B, lot W-E01-090.",
+        "externalRef": "RUN-FLT-DRIFT-E01-E-01-01",
+        "status": "candidate"
+      },
+      {
+        "id": "5c8698c3-70b6-5ad2-93d8-e4c82466ec34",
+        "source": "mes",
+        "title": "OXIDE-ETCH rev B",
+        "detail": "MES run RUN-FLT-DRIFT-E01-E-01-02 on E-01 started 2026-10-18 04:00 UTC: recipe OXIDE-ETCH revision B, lot W-E01-090.",
+        "externalRef": "RUN-FLT-DRIFT-E01-E-01-02",
+        "status": "candidate"
+      },
+      {
+        "id": "7664804b-a524-5290-bd0e-cca5ff2772ff",
+        "source": "erp",
+        "title": "GAS-CF4 CF4-014",
+        "detail": "Material lot CF4-014 (GAS-CF4) from Cinderwell Specialty Gases received 2026-09-19 00:00 UTC; supplier notice none.",
+        "externalRef": "CF4-014",
+        "status": "ruledOut"
+      },
+      {
+        "id": "e196f0e6-7f43-58bc-a1fe-c6d7cddfd3ac",
+        "source": "erp",
+        "title": "WAF-SI-300 WAF-14",
+        "detail": "Material lot WAF-14 (WAF-SI-300) from Northline Process Materials received 2026-09-06 00:00 UTC; supplier notice none.",
+        "externalRef": "WAF-14",
+        "status": "ruledOut"
+      },
+      {
+        "id": "9a0a8f18-f94c-5c5b-b5ae-2f1b917f9797",
+        "source": "erp",
+        "title": "GAS-CF4 PL-2044",
+        "detail": "Material lot PL-2044 (GAS-CF4) from Cinderwell Specialty Gases received 2026-10-13 08:00 UTC; supplier notice SN-PL-2044.",
+        "externalRef": "PL-2044",
+        "status": "candidate"
+      },
+      {
+        "id": "c9ed2b78-04ee-5c81-ac41-dc5ca2105e47",
+        "source": "erp",
+        "title": "Lot PL-2044 CF4 purity certificate is out of spec (99.2 percent against 99.9 percent minimum). Lot went into service on E-01 and E-02 on 2026-10-13.",
+        "detail": "Supplier notice SN-PL-2044 from Cinderwell Specialty Gases issued 2026-10-15 14:00 UTC for GAS-CF4 lot PL-2044: Lot PL-2044 CF4 purity certificate is out of spec (99.2 percent against 99.9 percent minimum). Lot went into service on E-01 and E-02 on 2026-10-13.",
+        "externalRef": "SN-PL-2044",
+        "status": "candidate"
+      },
+      {
+        "id": "5baaec7b-1929-5176-a683-7458605f4221",
+        "source": "cmms",
+        "title": "Last chamber clean. Chamber A is past 420 RF-hours since that clean.",
+        "detail": "Work order WO-CLN-E01-220 (clean) on E-01 E-01-A at 2026-10-06 04:00 UTC: Last chamber clean. Chamber A is past 420 RF-hours since that clean.",
+        "externalRef": "WO-CLN-E01-220",
+        "status": "ruledOut"
+      },
+      {
+        "id": "69c1cefd-9e34-5e9b-aa17-c5f2255ca063",
+        "source": "cmms",
+        "title": "Scheduled preventive maintenance on E-01.",
+        "detail": "Work order WO-PM-E-01-00 (pm) on E-01 E-01-A at 2026-09-08 00:00 UTC: Scheduled preventive maintenance on E-01.",
+        "externalRef": "WO-PM-E-01-00",
+        "status": "candidate"
+      },
+      {
+        "id": "2f214753-1a25-5190-aa49-a5152df0f71b",
+        "source": "cmms",
+        "title": "Scheduled preventive maintenance on E-01.",
+        "detail": "Work order WO-PM-E-01-01 (pm) on E-01 E-01-A at 2026-10-06 00:00 UTC: Scheduled preventive maintenance on E-01.",
+        "externalRef": "WO-PM-E-01-01",
+        "status": "candidate"
+      },
+      {
+        "id": "3e598cb2-5551-533b-ac21-25c1929d981a",
+        "source": "cmms",
+        "title": "RF generator",
+        "detail": "Calibration CAL-E-01-INST for RF generator on E-01: due 2026-12-30 00:00 UTC, completed 2026-09-21 00:00 UTC, in date.",
+        "externalRef": "CAL-E-01-INST",
+        "status": "ruledOut"
+      }
+    ]
+  }
+}

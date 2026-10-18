@@ -337,6 +337,7 @@ public sealed class InvestigationWorkflowTests
         started.EscalationReason.Should().Contain("grounding:");
         started.EscalationReason.Should().Contain("unknown-evidence-id:");
         started.Hypotheses.Should().BeEmpty();
+        rig.Resolution.Calls.Should().Be(1, "a grounding miss is not retried");
     }
 
     [Fact]

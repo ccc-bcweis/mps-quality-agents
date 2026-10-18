@@ -1,0 +1,240 @@
+{
+  "id": "SC1-01",
+  "group": "engineeringChange",
+  "groundTruth": "SC-1 edge ring revision C on etch E-02 (live investigation bdedb86e-2939-4810-95da-7c2d14488592). The same-week maintenance note passed its checks and is a distractor.",
+  "expected": {
+    "behavior": "recommend",
+    "category": "engineeringChange",
+    "forbiddenInCause": [
+      "WO-PM-8821"
+    ],
+    "forbiddenInSupport": [
+      "WO-PM-8821",
+      "CAL-E-02-INST"
+    ],
+    "requiredRuledOut": [
+      "WO-PM-8821",
+      "CAL-E-02-INST"
+    ],
+    "requiredSupport": [
+      "ECO-4471"
+    ],
+    "causeTerms": [
+      "ECO-4471"
+    ]
+  },
+  "request": {
+    "scopeKind": "chamber",
+    "scopeKey": "E-02/E-02-A",
+    "signalShape": "oscillation",
+    "ecoIds": [
+      "ECO-4471"
+    ],
+    "ecoEvidenceIds": [
+      "87d7c0bc-2553-5eed-baea-b3458a4fc842"
+    ],
+    "pmSummaries": [
+      "WO-PM-E-02-00 pm: Scheduled preventive maintenance on E-02.",
+      "WO-PM-E-02-01 pm: Scheduled preventive maintenance on E-02.",
+      "WO-PM-8821 pm: Scheduled chamber PM on E-02 chamber A the same week as ECO-4471. All PM checks passed; the ESC loop calibration is in date and not due until November."
+    ],
+    "ruledOut": [
+      {
+        "id": "71454076-cbc5-592e-8f1a-8fed4a6d1bda",
+        "class": "equipmentCalibrationOrAlignment",
+        "reason": "All checks passed and ESC loop calibration was in date."
+      },
+      {
+        "id": "fcacff6e-8117-55e1-9018-e6cd5492d670",
+        "class": "equipmentCalibrationOrAlignment",
+        "reason": "Calibration was completed and in date, not overdue."
+      }
+    ],
+    "notes": [
+      {
+        "id": "7ebddae1-e441-55a5-b270-1f7fcd99dc16",
+        "source": "spc",
+        "title": "reading outside the spec window on ESC temperature",
+        "detail": "reading outside the spec window broke on E-02 E-02-A ESC temperature at 2026-10-18 18:24 UTC: value 54.448 (one sigma is 1.667); recipe spec 44 to 54; control limits 44 to 54 (centre 49), severity High.",
+        "externalRef": "spc:E-02:escTemperature:2026-10-18T18:24:44.0000000+00:00:window",
+        "status": "context"
+      },
+      {
+        "id": "d3be0057-b760-50ee-b234-509136724acf",
+        "source": "spc",
+        "title": "Western Electric rule 1 (one reading more than 3 sigma from the average) on ESC temperature",
+        "detail": "Western Electric rule 1 (one reading more than 3 sigma from the average) broke on E-02 E-02-A ESC temperature at 2026-10-18 18:24 UTC: value 54.448 (one sigma is 1.667); recipe spec 44 to 54; control limits 44 to 54 (centre 49), severity High.",
+        "externalRef": "spc:E-02:escTemperature:2026-10-18T18:24:44.0000000+00:00:western-electric-1",
+        "status": "context"
+      },
+      {
+        "id": "4e969f3c-5a64-5204-9683-8be58d9b15ce",
+        "source": "spc",
+        "title": "Western Electric rule 2 (2 of 3 readings more than 2 sigma out on one side) on ESC temperature",
+        "detail": "Western Electric rule 2 (2 of 3 readings more than 2 sigma out on one side) broke on E-02 E-02-A ESC temperature at 2026-10-18 18:24 UTC: value 53.907 (one sigma is 1.667); recipe spec 44 to 54; control limits 44 to 54 (centre 49), severity High.",
+        "externalRef": "spc:E-02:escTemperature:2026-10-18T18:24:45.0000000+00:00:western-electric-2",
+        "status": "context"
+      },
+      {
+        "id": "8d9ade88-7f98-59b8-aed7-bc0d8d9c3514",
+        "source": "spc",
+        "title": "Western Electric rule 3 (4 of 5 readings more than 1 sigma out on one side) on ESC temperature",
+        "detail": "Western Electric rule 3 (4 of 5 readings more than 1 sigma out on one side) broke on E-02 E-02-A ESC temperature at 2026-10-18 18:24 UTC: value 53.907 (one sigma is 1.667); recipe spec 44 to 54; control limits 44 to 54 (centre 49), severity Medium.",
+        "externalRef": "spc:E-02:escTemperature:2026-10-18T18:24:45.0000000+00:00:western-electric-3",
+        "status": "context"
+      },
+      {
+        "id": "6dd093e3-7fe7-5076-a863-0fd7a904b68e",
+        "source": "spc",
+        "title": "Western Electric rule 4 (8 readings in a row on one side of the average) on ESC temperature",
+        "detail": "Western Electric rule 4 (8 readings in a row on one side of the average) broke on E-02 E-02-A ESC temperature at 2026-10-18 18:24 UTC: value 48.981 (one sigma is 1.667); recipe spec 44 to 54; control limits 44 to 54 (centre 49), severity Medium.",
+        "externalRef": "spc:E-02:escTemperature:2026-10-18T18:24:38.0000000+00:00:western-electric-4",
+        "status": "context"
+      },
+      {
+        "id": "ca8e4ee4-645b-50af-a66f-6d751e3f3751",
+        "source": "spc",
+        "title": "Nelson rule 6 (6 readings in a row, each higher than the last) on ESC temperature",
+        "detail": "Nelson rule 6 (6 readings in a row, each higher than the last) broke on E-02 E-02-A ESC temperature at 2026-10-18 18:24 UTC: value 54.881 (one sigma is 1.667); recipe spec 44 to 54; control limits 44 to 54 (centre 49), severity Low.",
+        "externalRef": "spc:E-02:escTemperature:2026-10-18T18:24:43.0000000+00:00:nelson-6-rising",
+        "status": "context"
+      },
+      {
+        "id": "f411787c-ab0d-5fe6-910b-7b2ad4f522d4",
+        "source": "telemetry",
+        "title": "ESC temperature readings",
+        "detail": "ESC temperature on E-02, 600 samples 2026-10-04 18:24 UTC to 2026-10-18 18:24 UTC: early mean 51.18 (sd 1.095), late mean 49.286, min 43.23, max 54.933, last 53.907; late shift -1.73 baseline sigmas. Shape from the data since the first rule break: an oscillation (the reading swings up and down repeatedly).",
+        "externalRef": "telemetry:E-02:escTemperature:2026-10-04T18:24:22.0000000+00:00",
+        "status": "context"
+      },
+      {
+        "id": "87d7c0bc-2553-5eed-baea-b3458a4fc842",
+        "source": "plm",
+        "title": "Edge ring revision C on etch E-02",
+        "detail": "ECO-4471 \"Edge ring revision C on etch E-02\" effective 2026-10-16 18:24 UTC on tool E-02, recipe OXIDE-ETCH. Change: Replace the chamber A edge ring with revision C (from revision B). Revision C is thinner, which narrows the gap between the ring and the electrostatic chuck; the supplier qualification notes the chuck temperature loop can oscillate at this gap. OXIDE-ETCH setpoints are unchanged.",
+        "externalRef": "ECO-4471",
+        "status": "candidate"
+      },
+      {
+        "id": "ba93a18f-9abc-541d-a525-d70033acbc99",
+        "source": "plm",
+        "title": "Edge ring rev C",
+        "detail": "PLM configuration CFG-E-02: E-02 carries Edge ring revision C.",
+        "externalRef": "CFG-E-02",
+        "status": "candidate"
+      },
+      {
+        "id": "a00a589d-1b4d-5338-b13b-dceb82efdde8",
+        "source": "mes",
+        "title": "OXIDE-ETCH rev B",
+        "detail": "MES run RUN-BG-20261014-E-02-W05-00 on E-02 started 2026-10-06 05:00 UTC: recipe OXIDE-ETCH revision B, lot LOT-E-02-W05.",
+        "externalRef": "RUN-BG-20261014-E-02-W05-00",
+        "status": "candidate"
+      },
+      {
+        "id": "0ceb080a-d3e2-5c11-927f-4bc501748e6e",
+        "source": "mes",
+        "title": "OXIDE-ETCH rev B",
+        "detail": "MES run RUN-BG-20261014-E-02-W05-01 on E-02 started 2026-10-06 07:00 UTC: recipe OXIDE-ETCH revision B, lot LOT-E-02-W05.",
+        "externalRef": "RUN-BG-20261014-E-02-W05-01",
+        "status": "candidate"
+      },
+      {
+        "id": "90855393-cde5-530c-a130-16ca2b03e431",
+        "source": "mes",
+        "title": "OXIDE-ETCH rev B",
+        "detail": "MES run RUN-BG-20261014-E-02-W05-02 on E-02 started 2026-10-06 09:00 UTC: recipe OXIDE-ETCH revision B, lot LOT-E-02-W05.",
+        "externalRef": "RUN-BG-20261014-E-02-W05-02",
+        "status": "candidate"
+      },
+      {
+        "id": "411594d9-87cd-50b9-b45c-96f5364d56a2",
+        "source": "mes",
+        "title": "OXIDE-ETCH rev B",
+        "detail": "MES run RUN-BG-20261014-E-02-W05-03 on E-02 started 2026-10-06 11:00 UTC: recipe OXIDE-ETCH revision B, lot LOT-E-02-W05.",
+        "externalRef": "RUN-BG-20261014-E-02-W05-03",
+        "status": "candidate"
+      },
+      {
+        "id": "3b7ed8d1-d76f-5233-a7c0-246d80320597",
+        "source": "mes",
+        "title": "POLY-ETCH rev B",
+        "detail": "MES run RUN-BG-20261014-E-02-W06-00 on E-02 started 2026-10-13 05:00 UTC: recipe POLY-ETCH revision B, lot LOT-E-02-W06.",
+        "externalRef": "RUN-BG-20261014-E-02-W06-00",
+        "status": "candidate"
+      },
+      {
+        "id": "9bfbbdd7-65e9-5199-9a1d-553ebdad5cbe",
+        "source": "mes",
+        "title": "POLY-ETCH rev B",
+        "detail": "MES run RUN-BG-20261014-E-02-W06-01 on E-02 started 2026-10-13 07:00 UTC: recipe POLY-ETCH revision B, lot LOT-E-02-W06.",
+        "externalRef": "RUN-BG-20261014-E-02-W06-01",
+        "status": "candidate"
+      },
+      {
+        "id": "a26fe621-2248-5f49-ac44-d3f0629a6d0f",
+        "source": "mes",
+        "title": "POLY-ETCH rev B",
+        "detail": "MES run RUN-BG-20261014-E-02-W06-02 on E-02 started 2026-10-13 09:00 UTC: recipe POLY-ETCH revision B, lot LOT-E-02-W06.",
+        "externalRef": "RUN-BG-20261014-E-02-W06-02",
+        "status": "candidate"
+      },
+      {
+        "id": "e36785b5-917f-5b34-967b-7304fcc73ac7",
+        "source": "mes",
+        "title": "POLY-ETCH rev B",
+        "detail": "MES run RUN-BG-20261014-E-02-W06-03 on E-02 started 2026-10-13 11:00 UTC: recipe POLY-ETCH revision B, lot LOT-E-02-W06.",
+        "externalRef": "RUN-BG-20261014-E-02-W06-03",
+        "status": "candidate"
+      },
+      {
+        "id": "7664804b-a524-5290-bd0e-cca5ff2772ff",
+        "source": "erp",
+        "title": "GAS-CF4 CF4-014",
+        "detail": "Material lot CF4-014 (GAS-CF4) from Cinderwell Specialty Gases received 2026-09-19 00:00 UTC; supplier notice none.",
+        "externalRef": "CF4-014",
+        "status": "candidate"
+      },
+      {
+        "id": "e196f0e6-7f43-58bc-a1fe-c6d7cddfd3ac",
+        "source": "erp",
+        "title": "WAF-SI-300 WAF-14",
+        "detail": "Material lot WAF-14 (WAF-SI-300) from Northline Process Materials received 2026-09-06 00:00 UTC; supplier notice none.",
+        "externalRef": "WAF-14",
+        "status": "candidate"
+      },
+      {
+        "id": "1e73b95c-875b-5cce-949b-7b562206eb97",
+        "source": "cmms",
+        "title": "Scheduled preventive maintenance on E-02.",
+        "detail": "Work order WO-PM-E-02-00 (pm) on E-02 E-02-A at 2026-09-08 00:00 UTC: Scheduled preventive maintenance on E-02.",
+        "externalRef": "WO-PM-E-02-00",
+        "status": "candidate"
+      },
+      {
+        "id": "e2713821-04b1-5c8d-851b-4c8736f6ca05",
+        "source": "cmms",
+        "title": "Scheduled preventive maintenance on E-02.",
+        "detail": "Work order WO-PM-E-02-01 (pm) on E-02 E-02-A at 2026-10-06 00:00 UTC: Scheduled preventive maintenance on E-02.",
+        "externalRef": "WO-PM-E-02-01",
+        "status": "candidate"
+      },
+      {
+        "id": "71454076-cbc5-592e-8f1a-8fed4a6d1bda",
+        "source": "cmms",
+        "title": "Scheduled chamber PM on E-02 chamber A the same week as ECO-4471. All PM checks passed; the ESC loop calibration is in date and not due until November.",
+        "detail": "Work order WO-PM-8821 (pm) on E-02 E-02-A at 2026-10-15 10:24 UTC: Scheduled chamber PM on E-02 chamber A the same week as ECO-4471. All PM checks passed; the ESC loop calibration is in date and not due until November.",
+        "externalRef": "WO-PM-8821",
+        "status": "ruledOut"
+      },
+      {
+        "id": "fcacff6e-8117-55e1-9018-e6cd5492d670",
+        "source": "cmms",
+        "title": "RF generator",
+        "detail": "Calibration CAL-E-02-INST for RF generator on E-02: due 2026-12-30 00:00 UTC, completed 2026-09-21 00:00 UTC, in date.",
+        "externalRef": "CAL-E-02-INST",
+        "status": "ruledOut"
+      }
+    ]
+  }
+}

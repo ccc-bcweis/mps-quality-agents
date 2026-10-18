@@ -2,6 +2,8 @@
 
 using System.Reflection;
 
+using Mps.Application.Wording;
+
 namespace Mps.Agents.Prompts;
 
 /// <summary>
@@ -80,6 +82,12 @@ public sealed class PromptCatalog
             throw new InvalidOperationException("Prompt front matter requires id and version.");
         }
 
-        return new PromptDocument(id, version, string.Join('\n', lines.Skip(bodyStart)));
+        var body = string.Join('\n', lines.Skip(bodyStart));
+        if (body.Contains(PlainWording.PromptMarker, StringComparison.Ordinal))
+        {
+            body = body.Replace(PlainWording.PromptMarker, PlainWording.Shared.PromptClause, StringComparison.Ordinal);
+        }
+
+        return new PromptDocument(id, version, body);
     }
 }

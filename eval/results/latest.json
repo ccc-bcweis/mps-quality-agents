@@ -1,7 +1,7 @@
 {
   "mode": "replay",
-  "cases": 30,
-  "passed": 30,
+  "cases": 33,
+  "passed": 33,
   "taskCompletion": 1,
   "categoryAccuracy": 1,
   "safeEscalation": 1,
@@ -20,7 +20,7 @@
     ],
     "counts": [
       [
-        4,
+        5,
         0,
         0,
         0,
@@ -28,7 +28,7 @@
       ],
       [
         0,
-        8,
+        9,
         0,
         0,
         0
@@ -36,7 +36,7 @@
       [
         0,
         0,
-        4,
+        5,
         0,
         0
       ],
@@ -378,6 +378,38 @@
       "ruledOutCoverage": null
     },
     {
+      "id": "SC1-01",
+      "group": "engineeringChange",
+      "expectedBehavior": "recommend",
+      "expectedCategory": "engineeringChange",
+      "actualBehavior": "recommend",
+      "actualCategory": "engineeringChange",
+      "passed": true,
+      "actualCause": "ECO ECO-4471 changed the affected scope shortly before onset.",
+      "causeInTop2": true,
+      "cited": 1,
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null,
+      "decoyInSupport": 0,
+      "ruledOutCoverage": 1
+    },
+    {
+      "id": "SC3-01",
+      "group": "supplyChainMaterial",
+      "expectedBehavior": "recommend",
+      "expectedCategory": "supplyChainMaterial",
+      "actualBehavior": "recommend",
+      "actualCategory": "supplyChainMaterial",
+      "passed": true,
+      "actualCause": "Material lot PL-2044 spans the affected tools and supplier notice SN-PL-2044 matches it.",
+      "causeInTop2": true,
+      "cited": 1,
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null,
+      "decoyInSupport": 0,
+      "ruledOutCoverage": 1
+    },
+    {
       "id": "SC7-01",
       "group": "equipmentCalibrationOrAlignment",
       "expectedBehavior": "recommend",
@@ -395,6 +427,22 @@
     },
     {
       "id": "SC7-02",
+      "group": "equipmentCalibrationOrAlignment",
+      "expectedBehavior": "recommend",
+      "expectedCategory": "equipmentCalibrationOrAlignment",
+      "actualBehavior": "recommend",
+      "actualCategory": "equipmentCalibrationOrAlignment",
+      "passed": true,
+      "actualCause": "A maintenance record shows the pump bearing is past its service interval, and vibration is rising.",
+      "causeInTop2": true,
+      "cited": 3,
+      "citedInPack": 3,
+      "categoryWithoutUserEvidence": null,
+      "decoyInSupport": 0,
+      "ruledOutCoverage": 1
+    },
+    {
+      "id": "SC7-03",
       "group": "equipmentCalibrationOrAlignment",
       "expectedBehavior": "recommend",
       "expectedCategory": "equipmentCalibrationOrAlignment",
