@@ -29,7 +29,7 @@ Each host fixture gets its own SQLite folder (`MpsApiFactory`).
 | Test | Checks |
 |---|---|
 | `FleetListsEveryConfiguredToolInFourFamiliesWithChambers` | 32 tools from `data/fleet/sites.yaml`, four families, at least two bays, every tool has a chamber. |
-| `MetricsExposeModeAndSpend` | Mode is `replay` or `live`; spend present; cap positive. |
+| `MetricsExposeModeAndSpend` | The metrics field `mode` is `live` when Azure or OpenAI answers and `replay` for offline saved answers. That field is not a console Replay/Live toggle. The model mode chip is separate. Spend is present and the cap is positive. |
 | `InjectedFaultIsAccepted` | `POST /api/faults` returns 202 with `faultId` and `correlationId`. |
 
 ## Tool failures (mock enterprise host)
@@ -49,6 +49,6 @@ Each host fixture gets its own SQLite folder (`MpsApiFactory`).
 The two evidence-escalation tests (`MissingEvidenceEscalates…`, `ContradictoryEvidenceNamesTheConflict…`) were removed. The integration host uses the fake workflow, which cannot escalate. The same behavior is covered by:
 
 - `InvestigationWorkflowTests.S2ReplayEscalatesOnTheRevisionConflictAndDoesNotRankACause` (Orchestration.Tests);
-- eval cases MIS-01..03 and CON-01..02 (`eval/cases`, CI step "Eval (replay mode, gates)").
+- eval cases MIS-01..03 and CON-01..02 (`eval/cases`, CI step "Eval (replay mode, gates)"). The suite is 29 cases, including SC8-01.
 
 Category checks moved out of `ApprovedRecommendation…` into eval cases ECO-01..04. Ranker-level injection checks moved into eval cases INJ-01..02.

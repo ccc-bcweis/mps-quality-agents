@@ -22,7 +22,7 @@ def logical():
            ('Offline instruments',['Oscilloscope, RF meter printouts','Upload telemetry, read and confirmed']),
            ('Operator report',['Manual ticket with tool and sensor']),
            ('Quality and supplier events',['QMS nonconformance, supplier notice']),
-           ('Simulator control plane',['Scenarios, fault injection, hard and','soft reset, replay vs live'],True)]
+           ('Simulator control plane',['Scenarios, fault injection, hard and','soft reset, model mode chip'],True)]
     ns,yb=stack('e',0,top+56,items,'edge'); el.append(G('gE',col(0),top,COLW,yb-top+4,'Plant edge and intake','edge')); el+=ns
     items=[('Telemetry stream',['Azure Event Hubs (IoT Hub ingress)','Partitioned by tool, ordered'],True),
            ('Command and event topics',['Azure Service Bus topics','System and application commands'],True),
@@ -39,7 +39,7 @@ def logical():
     items=[('Investigation orchestrator',['Microsoft Agent Framework']),
            ('Investigation agent',['Read-only tools over enterprise','systems and documents below']),
            ('Resolution agent',['Ranks root cause, no tools']),
-           ('Model gateway',['Routing, retries, daily spend cap','Azure OpenAI gpt-5.4-mini, replay'])]
+           ('Model gateway',['20 s timeout, then saved answers','offline, OpenAI, or Azure gpt-5.4-mini'])]
     ns,yb4=stack('a',3,top+56,items,'ai'); el.append(G('gA',col(3),top,COLW,yb4-top+4,'Agent layer, probabilistic','ai')); el+=ns
     y5=yb4+30
     items=[('Mocked enterprise systems',['MES, QMS, PLM, ERP, maintenance']),('Document store',['SOPs, FMEA, bulletins, search index'],True)]
@@ -59,20 +59,20 @@ def logical():
                   ('b0','d0',''),('b1','d1',''),('d4','a3','') ,('d1','a0','')]: ed.append((a,b,l))
     ed=[e for e in ed if e[0]!='d4']
     notes=['* The running demo is intentionally thin. One Azure Container App, one replica, hosts the API, simulator and agents.',
-           '* Demo bus: in-process, same envelope and command catalog (ADR-008). Measured: 7-day nominal seed, 466,662 readings in 7 s (~66k events/s).',
-           '* Demo stores: metadata in YAML loaded at startup (ADR-009); telemetry, event log and transactions in SQLite; 7-day chart read under 1 ms.',
+           '* Demo bus: in-process, same envelope and command catalog (ADR-008). Each sensor keeps 600 readings. Reset does not seed a week of history.',
+           '* Demo stores: metadata in YAML loaded at startup (ADR-009); telemetry, event log and transactions in SQLite. Older readings roll off.',
            '* Demo tools: three simulated plants; only the Manufacturing capability is simulated. Document search runs in process.',
            'Every telemetry reading, alert, ticket, investigation step, approval, CAPA and command travels through the event backbone.']
     return dict(name='logical',kicker='LOGICAL ARCHITECTURE',title='Logical architecture, target design',el=el,ed=ed,notes=notes)
 
 def physical():
     el=[];ed=[];top=170
-    items=[('Invited reviewers and operators',['Browser, Entra ID sign-in']),('Plant IoT gateways',['Three plants, tool sensors'],True),('GitHub Actions',['Build, test, eval gate, OIDC'])]
+    items=[('Invited reviewers and operators',['Browser, Entra ID sign-in']),('Plant IoT gateways',['Three plants, tool sensors'],True),('GitHub Actions',['CI never deploys. Manual OIDC'])]
     ns,yb=stack('p',0,top+56,items,'edge'); el.append(G('gP',col(0),top,COLW,yb-top+4,'Outside Azure','edge')); el+=ns
     items=[('Azure Front Door and WAF',['Global entry, TLS, rate limits'],True),('Microsoft Entra ID',['Single-tenant app, assignment','required, B2B guests']),
            ('API Management AI gateway',['Token limits, model routing'],True)]
     ns,yb2=stack('f',1,top+56,items,'sec'); el.append(G('gF',col(1),top,COLW,yb2-top+4,'Edge and identity','sec')); el+=ns
-    items=[('Web console',['React, served by the API container']),('API service',['.NET 10, SignalR, scale 1 to 3'],True),('Investigation workers',['Scale on queue depth'],True),
+    items=[('Web console',['React, served by the API container']),('API service',['.NET 10, one replica, aspnet 10.0'],True),('Investigation workers',['Same container as the API'],True),
            ('Simulator service',['Telemetry and scenarios, 1 replica'],True),('Mock enterprise APIs',['MES, QMS, PLM, ERP, maintenance'])]
     ns,yb3=stack('c',2,top+56,items,'det'); el.append(G('gC',col(2),top,COLW,yb3-top+4,'Container Apps environment','det')); el+=ns
     items=[('Azure IoT Hub',['Device ingress from gateways'],True),('Azure Event Hubs',['Telemetry stream, per-tool partitions'],True),('Azure Service Bus',['Command and domain event topics'],True),
@@ -91,7 +91,7 @@ def physical():
            '* Demo messaging: in-process bus in that container instead of IoT Hub, Event Hubs and Service Bus. Same envelope, so it can be swapped later.',
            '* Demo storage: SQLite on the container plus YAML metadata instead of Azure SQL and Data Explorer; data resets on redeploy by design.',
            '* Not deployed in the demo: Front Door, WAF, API Management, AI Search, separate workers. Deployed: Entra ID, Key Vault, managed identity,',
-           '  Container Registry, Azure OpenAI, App Insights and Log Analytics. Deploys run from GitHub Actions with OIDC, no stored cloud secrets.']
+           '  Container Registry, Azure OpenAI, App Insights and Log Analytics. Deploy is manual workflow_dispatch with OIDC. A merge does not deploy.']
     return dict(name='physical',kicker='PHYSICAL ARCHITECTURE',title='Physical architecture, target Azure deployment',el=el,ed=ed,notes=notes)
 
 def er():

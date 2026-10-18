@@ -1,5 +1,7 @@
 # Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-# How the fictional plant generates readings, loaded at startup. These shape the simulated data, not the rules it is judged by.
+# How the fictional plant generates readings, loaded at startup. Noise and the recipe schedule shape the simulated data.
+# Rules are scored against the recipe step window, not against statistics of these readings.
+# telemetryWindow is the rolling store (memory and the database) and the chart's fixed x-axis width.
 recipeSchedule:
   stepSeconds: 120            # each recipe step lasts this many simulated seconds
   waferSeconds: 300           # one wafer (run id) every this many simulated seconds
@@ -13,5 +15,7 @@ realTimeFaultPace: 6          # in real time a fault develops this many times fa
 siteComparison:
   spreadRatio: 1.5            # a plant is flagged when its spread is more than this many times the reference plant's
 telemetryWindow:
-  readingsPerSensor: 600      # fixed rolling window per sensor, in memory and in the database; older readings roll off.
-                              # Charts, the Western Electric rules and the AI read at most the newest 600 readings.
+  readingsPerSensor: 600      # Newest readings kept per sensor, in memory and in the database. Older readings roll off.
+                              # The chart x-axis is always this wide (windowPoints): new points enter on the right and old ones leave on the left.
+                              # A reset primes this window in memory. It does not seed a week of history onto the bus.
+                              # A soft reset keeps the readings already stored in the database.

@@ -13,51 +13,42 @@ Logical view: [`logical.md`](logical.md). Physical view: [`physical.md`](physica
 flowchart LR
   subgraph Lanes["Grok Build lanes - parallel PRs"]
     direction TB
-    GBF["GB-F Foundation - lane/f-foundation - P0"]
-    GBD["GB-D Design - lane/d-design - P0"]
-    GB1["GB-1 Data and simulation - lane/1-data-sim"]
-    GB2["GB-2 Agents - lane/2-agents"]
-    GB3["GB-3 API - lane/3-api"]
-    GB4["GB-4 UI - lane/4-ui"]
-    GB5["GB-5 QA, eval, security - lane/5-qa"]
+    GBF["GB-F Foundation"]
+    GBD["GB-D Design"]
+    GB1["GB-1 Data and simulation"]
+    GB2["GB-2 Agents"]
+    GB3["GB-3 API"]
+    GB4["GB-4 UI"]
+    GB5["GB-5 QA and eval"]
   end
 
   PR["Pull request"]
 
-  subgraph CI["ci.yml - required checks"]
+  subgraph CI["CI - never deploys"]
     direction TB
-    BUILD["Build - warnings as errors, analyzers"]
-    TEST["Test - xUnit, Vitest, ESLint, tsc"]
-    COV["Coverage - 70 percent Domain and Application"]
-    FMT["Format - dotnet format verify"]
-    CQ["CodeQL - C# and JavaScript"]
-    GL["gitleaks - secret scan"]
-    DEP["Dependency review"]
-    BICEP["Bicep build - compile only, no deploy"]
+    BUILD["ci.yml build - format, tests, replay eval"]
+    WEB["ci.yml web - lint, Vitest, knip"]
+    SLOW["ci.yml slow tests"]
+    BICEP["ci.yml bicep - compile only"]
+    GL["ci.yml gitleaks"]
+    DEP["ci.yml dependency review"]
+    CQ["codeql.yml analyze - C#"]
   end
 
-  subgraph Later["After I1 - not on day-1 PRs"]
-    direction TB
-    EVAL["Eval replay - hard gates"]
-    RED["Red-team and ZAP baseline"]
-  end
+  BOB["Review - Bob"]
+  BRY["Bryan - lane merges"]
+  MAIN["Merge to main - no deploy"]
 
-  BOB["Required review - Bob"]
-  BRY["Bryan - lane merges and Azure go"]
-  MAIN["Merge to main"]
-
-  subgraph DEPLOY["deploy.yml - manual, gated"]
+  subgraph DEPLOY["deploy.yml - manual only"]
     direction TB
     MAN["workflow_dispatch only"]
-    ENV["Environment azure-demo"]
-    REVU["Required reviewer"]
-    OIDC["OIDC to Azure - no stored secrets"]
-    PUSH["Build and push containers"]
-    WHAT["Bicep what-if"]
-    APPLY["Deploy rg-mps-demo"]
+    SKIP["Fork without secrets skips"]
+    OIDC["OIDC trusts azure-demo"]
+    PUSH["Build image mps-app"]
+    APPLY["One replica, aspnet 10.0"]
   end
 
-  SMOKE["Smoke - invited sign-in, LIVE badge, S1"]
+  SMOKE["Smoke - health 200, API 401, landing redirect"]
 
   GBF --> PR
   GBD --> PR
@@ -67,27 +58,24 @@ flowchart LR
   GB4 --> PR
   GB5 --> PR
   PR --> BUILD
-  PR --> TEST
-  PR --> COV
-  PR --> FMT
-  PR --> CQ
+  PR --> WEB
+  PR --> SLOW
+  PR --> BICEP
   PR --> GL
   PR --> DEP
-  PR --> BICEP
+  PR --> CQ
   BUILD --> BOB
-  TEST --> BOB
-  COV --> BOB
-  FMT --> BOB
-  CQ --> BOB
+  WEB --> BOB
+  SLOW --> BOB
+  BICEP --> BOB
   GL --> BOB
   DEP --> BOB
-  BICEP --> BOB
-  EVAL -.-> BOB
-  RED -.-> BOB
+  CQ --> BOB
   BOB --> BRY
   BRY --> MAIN
   MAIN --> MAN
-  MAN --> ENV --> REVU --> OIDC --> PUSH --> WHAT --> APPLY --> SMOKE
+  MAN --> SKIP
+  MAN --> OIDC --> PUSH --> APPLY --> SMOKE
 ```
 
 ## Gates
@@ -95,14 +83,15 @@ flowchart LR
 | Stage | What blocks progress | What it must not do |
 |---|---|---|
 | Lanes | Each lane is a branch and a PR. P0 (GB-F, with GB-D) lands before the P1 lanes build on frozen contracts. At most five Grok Build sessions at once. | Agents do not call git remotes. Bob syncs with `sync_to_github.ps1`. |
-| `ci.yml` | Build (warnings as errors, analyzers), test (xUnit, Vitest, ESLint, tsc), coverage at or above 70% on Domain and Application, `dotnet format --verify-no-changes`, CodeQL (C# and JavaScript), gitleaks, dependency review, Bicep build. | CI does not deploy and does not receive Azure credentials. |
-| Later checks | Eval in replay mode with hard gates, promptfoo red-team, and the OWASP ZAP baseline. They arrive with integration (I1) and SEC1, then stay on PRs. | A day-1 scaffold PR is not failed for an eval suite that does not exist yet. |
-| Review | Bob is the required reviewer. SPEC also has Bryan approve lane merges. Branch protection on `main`: PR, green CI, review. | A lane does not merge itself. |
+| `ci.yml` | Jobs: `build` (warnings as errors, `dotnet format --verify-no-changes`, tests except `Category=Slow`, replay eval, coverage report uploaded), `web` (ESLint, Vitest, production build, knip), `slow tests`, `bicep` (compile only), `gitleaks`, `dependency review` (pull requests). | CI does not deploy and does not receive Azure credentials. It does not fail on a coverage percent. |
+| `codeql.yml` | Job `analyze`. It builds the solution and analyzes C#. | It does not deploy. |
+| `quality.yml` | Nightly and on demand. Coverage report and a mutation run. | It is not a pull-request check. |
+| Review | Bob reviews. Bryan approves lane merges. The intended branch protection on `main` is a pull request, green CI, and review. | A lane does not merge itself. Agents do not run git commands that contact GitHub. Bob syncs with `sync_to_github.ps1`. |
 | `main` | Integration branch. Still no Azure changes. | A push to `main` does not run a deploy. |
-| `deploy.yml` | Manual `workflow_dispatch`. GitHub environment `azure-demo` with a required reviewer. OIDC federation, no stored cloud secrets. Build and push images, Bicep what-if, then deploy `rg-mps-demo`. | It does not run on an unreviewed PR, and it does not use a client secret in the repo. |
-| Smoke | Invited guest can sign in. LIVE AI badge and spend meter show. Scenario S1 runs in replay, then live. An uninvited account is blocked. | Smoke is not a substitute for the eval hard gates. |
+| `deploy.yml` | Manual `workflow_dispatch` only. Environment `azure-demo`. OpenID Connect, no stored cloud client secret. A fork without the secrets and variables skips. The workflow builds `mps-app` and deploys one replica. There is no Bicep what-if step. | It does not run on push or merge. It is one deploy per batch, and not while Bryan is testing the live demo. A deploy wipes the demo SQLite data. |
+| Smoke | `/health` is 200, an anonymous `/api/tools` is 401, and `/` redirects to `/landing.html`. | Smoke is not a substitute for the eval gates. |
 
-The operator brief for this sheet names the GitHub environment `azure-demo`. PLAN.md §10 and [`physical.md`](physical.md) call that environment `demo`. This diagram uses `azure-demo` until Bob confirms the name on the federated credential.
+The GitHub environment name is `azure-demo`, which is the name in `deploy.yml` and on the federated credential.
 
 ## Large-format print
 

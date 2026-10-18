@@ -1,8 +1,11 @@
 # Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 # Which root-cause class a cited record implies, loaded at startup.
 # When the resolution cites a record that matches a rule (source plus text), its category must be one of the classes
-# those cited records imply. A mismatch gets one retry with feedback, then escalates to a person. A cited record the
-# reply itself rules out (counterEvidence, or rulesOut for that class in evidenceMatrix) does not count.
+# those cited records imply. A category mismatch is sent back once (investigation.yaml shapeRetries), then the case
+# escalates and the refused answer is saved. A cited record the reply itself rules out (counterEvidence, or rulesOut
+# for that class in evidenceMatrix) does not count.
+# recipeSetpointEditWithoutEco maps a work order that edited a recipe setpoint with no engineering change order to
+# processDrift. The evidence gate counts that process-drift record as a discriminator.
 # sources: evidence source names (telemetry, spc, mes, qms, plm, erp, cmms, document, ticketing, manualMeasurement).
 # anyOf: the record text contains at least one term; allOf: it contains every term. matchCase: compare case-sensitively.
 # implies: engineeringChange, equipmentCalibrationOrAlignment, supplyChainMaterial or processDrift.

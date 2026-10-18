@@ -52,7 +52,23 @@ Business metrics, with the illustrative baseline for one year at three plants (`
 
 Real baselines come from a 4-week measurement of the current process in the first month. First-time resolution rate and CAPA on-time closure are measured then too.
 
-AI health metrics, shown live on the Metrics panel: completion rate, grounded-answer rate, safe-escalation rate, category accuracy on the graded cases (27 replay cases on every build), cost per successful investigation, and spend today against the cap.
+AI health metrics, shown on the Metrics panel: completion rate, grounded-answer rate, safe-escalation rate, category accuracy, cost per successful investigation, and spend today against the $2 daily cap. The graded set is 29 replay cases on every CI run, including SC8-01. On CI run 39110761511 (main `0a3375f`, 2026-10-18) every case passed: category accuracy 100%, safe escalation 100%, injection resistance 100%, expected cause in the top 2 100%, citation precision 100%.
+
+## Demo as built
+
+These are the hosted demo, not the illustrative business case above.
+
+| Item | As built |
+|---|---|
+| Scenarios | 8, SC-1 through SC-8 |
+| Answer engine | A read-only model mode chip: Offline (saved answers), OpenAI, or Azure OpenAI. There is no Replay/Live toggle for the model. Plant-data Live/Replay is a separate control and does not change the answers |
+| Hosted model | Azure OpenAI `gpt-5.4-mini` (`MODEL_MODE=azure`). Offline mode costs $0. A live call times out at 20 seconds, with no SDK retries, then the gateway fails over to saved answers and the chip says so |
+| Harness status | Reads **Live** when no scenario is running, then the chip. The scenario picker and the speed follow the server in every tab |
+| Charts | A fixed 600-reading window per sensor. New readings enter on the right and old ones scroll off the left. Limits follow the recipe step |
+| Checked smoke | Deploy #14, 10x, sample every 5 seconds. The SC-1 fault was injected at 03:23:03 Eastern Time. The investigation appeared 5 seconds after that injection, and `recommendationReady` for an engineering change (ECO-4471) was 47 seconds after that injection. SC-8: the investigation appeared 5 seconds after its injection, and `recommendationReady` for process drift (the recipe-edit work order on E-03, confidence 0.96, no escalation) was 31 seconds after that injection. SC-1 was `recommendationReady` again on deploy #16 at 04:24 Eastern Time |
+| Tests | 1,144 automated tests passing (872 .NET, 272 Vitest in 63 files), plus 1 key-gated skip. CI wall time 5 minutes 13 seconds (build 5:09, slow tests 3:41, web 1:13, Bicep 8 seconds, gitleaks 6 seconds). CodeQL is a separate workflow, about 4:46 |
+| Stack | .NET 10 (SDK 10.0.100), Microsoft Agent Framework 1.25.0, Microsoft.Extensions.AI 10.11.0, EF Core SQLite 10.0.13, ASP.NET Core SignalR and `@microsoft/signalr` 8.0.29, React 19.3.1, TypeScript 5.9.3, Vite 7.3.7, Recharts 2.15.4, Vitest 3.2.7, Node 22 |
+| Hosting | Azure Container Apps, East US 2, one replica, 0.25 vCPU and 0.5 GiB. Budget `mpsdemo-monthly` is $40 a month, with alerts at 80% of actual spend and 100% of the forecast. October spend is $4.13 month to date as of 2026-10-18 about 05:00 Eastern Time (Azure Cost Management, resource group rg-mps-demo) |
 
 ## 90-day roadmap
 

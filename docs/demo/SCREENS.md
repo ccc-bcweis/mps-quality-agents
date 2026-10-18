@@ -10,7 +10,7 @@ Navy and gold band above the product. Not part of the Meridian Precision Systems
 
 | Screen | Where | What the presenter uses it for |
 |---|---|---|
-| Harness bar | Every screen | One row until the presenter opens it: a down arrow and a line for plant data, the scenario, and the answer engine. The choice stays in this browser. Opened, the bar holds scenario cards, the fault injector, a sample printout upload, hard and soft reset (admin only), plant data Live or Replay, the answer engine, return on investment, metrics, and the audit log. The open bar stays within about a third of a short screen. The console scrolls on its own. |
+| Harness bar | Every screen | One row until the presenter opens it: a down arrow and a status line. The line reads **Live** when no scenario is running, then the model mode chip (for example `Live · Azure OpenAI`). While a scenario runs it includes `Running SC-n`. The scenario, the speed, and the stride follow the server in every tab. They are not stored as a private choice in this browser. Opened, the bar holds scenario cards, the fault injector, a sample printout upload, hard and soft reset (admin only), plant data Live or Replay, the read-only model mode chip, return on investment, metrics, and the audit log. There is no Replay/Live toggle for the answer engine. The open bar stays within about a third of a short screen. The console scrolls on its own. |
 | Fault injector | `/harness/injector` | Free-form fault. Named scenarios run from the bar, then the console opens that tool with the trace streaming. |
 | Return on investment | `/harness/roi` | Illustrative savings sketch. Every figure is synthetic. |
 | Metrics | `/harness/metrics` | How this demo run is scoring, and what it has spent. |
@@ -25,10 +25,10 @@ Charcoal application inside the gold frame.
 |---|---|---|
 | Sites | `/sites` | Three plants. The tab sits before Production line. |
 | Production line | `/` | Eight tools, two bays. |
-| Tool | `/tools/:toolId` | Schematic and the process window. |
+| Tool | `/tools/:toolId` | Schematic and the process window. The chart header shows the recipe and the step of the newest reading. The x axis is a fixed 600 readings wide (`windowPoints`): new readings enter on the right and old ones scroll off the left. Step labels shorten instead of disappearing. Hover says "Limits for this recipe step". Limits follow that step, including an idle window, and stay inside the sensor's physical range. During a fault the band does not re-center. **Linked records** shows one entry per investigation: the saved record replaces its Started placeholder. |
 | Alerts | `/alerts` | Rules-engine alerts, newest first. Detail at `/alerts/:alertId`. A missing alert falls back to the list. |
 | Tickets | `/tickets` | Normalized intake, newest first. Detail at `/tickets/:ticketId`. Operator report and Upload telemetry sit side by side. A missing ticket falls back to the list. |
-| Investigation | `/investigations` | The tab opens the list, newest first. A missing deep link falls back to the list. Detail stays at `/investigations/:id`. |
+| Investigation | `/investigations` | The tab opens the list, newest first. A missing deep link falls back to the list. Detail stays at `/investigations/:id`. When the evidence gate says escalate, **What the AI proposed (not accepted)** sits under that gate. That is the rejected answer (`rejectedAnswer`). It is not the recommendation. A recommend path does not show it. |
 | Decision | `/investigations/:id#decision` | No tab of its own: the Decision section is on the Investigation page. Old links redirect: `/approvals` → `/investigations`, `/approvals/:id` → `/investigations/:id#decision`. Request more evidence, and any round waiting for more evidence, shows **Add evidence** (text, plus an optional bench printout). Submitting closes the round and the agents run the next one. **Rounds on this ticket** lists Round 1, Round 2 and so on: past rounds are locked history with their decision, and only the current round has buttons. Opening a past round says "This is round N, kept as history" with a link to the current round. |
 | Corrective and preventive action | `/capas` | The tab opens the list, newest first. Detail stays at `/capas/:id`. |
 | Rules & Process | `/rules` | Thresholds and settings (including the most rounds per ticket for Add evidence, 5), each business rule's conditions and actions, and one process map of the actual flow with its numbers filled from those settings. Edit and Save show the fields but persist nothing. |
@@ -44,4 +44,4 @@ On Tickets, choose a tool and the parameter list shrinks to that tool's sensor c
 
 ## What not to mix
 
-Hard reset, soft reset, the scenario picker, plant-data replay, the fault injector, return on investment, and metrics are presenter tools. They are not console tabs. A replay banner on the console only says that the numbers on screen are a recording. Deck crops follow `docs/PLAN.md` section 7.
+Hard reset, soft reset, the scenario picker, plant-data replay, the fault injector, return on investment, and metrics are presenter tools. They are not console tabs. A replay banner on the console only says that the numbers on screen are a recording of plant data. The model mode chip is separate and is read-only. Deck crops follow `docs/PLAN.md` section 7.

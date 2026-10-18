@@ -29,13 +29,17 @@ All companies, equipment, people and data in this repo are **fictional and synth
 
 ## Stack
 
-.NET 10 / C# with `TreatWarningsAsErrors`, Microsoft Agent Framework (`Microsoft.Agents.AI.Workflows`) behind `IInvestigationWorkflow` with a LangGraph seam ([docs/langgraph-compat.md](docs/langgraph-compat.md)), `Microsoft.Extensions.AI`, SQLite, SignalR, OpenTelemetry. React 19, TypeScript, Vite, Tailwind and Recharts. Azure Container Apps with Easy Auth (Microsoft Entra), Azure OpenAI `gpt-5.4-mini` through managed identity, Azure Container Registry, Application Insights and a cost budget.
+.NET 10 (`net10.0`, SDK 10.0.100 in `global.json`, `rollForward` latestFeature) with `TreatWarningsAsErrors`. Microsoft Agent Framework (`Microsoft.Agents.AI` 1.25.0 and `Microsoft.Agents.AI.Workflows`) behind `IInvestigationWorkflow`, with a LangGraph seam ([docs/langgraph-compat.md](docs/langgraph-compat.md)). `Microsoft.Extensions.AI` 10.11.0. EF Core SQLite 10.0.13. ASP.NET Core SignalR on the server and `@microsoft/signalr` 8.0.29 in the console. OpenTelemetry.
+
+The console is React 19.3.1, TypeScript 5.9.3, Vite 7.3.7, Tailwind, and Recharts 2.15.4. Tests use Vitest 3.2.7. Node is 22 in CI (`actions/setup-node`) and in `deploy/app.Dockerfile`. The repo has no `engines` field and no `.nvmrc`.
+
+Hosting is Azure Container Apps in East US 2: one replica, 0.25 vCPU and 0.5 GiB, image `mps-app` on `aspnet:10.0`. Easy Auth (Microsoft Entra). The hosted model is Azure OpenAI `gpt-5.4-mini` (`MODEL_MODE=azure`). Azure Container Registry, Application Insights, and the budget `mpsdemo-monthly` at $40 a month, with alerts at 80% of actual spend and 100% of the forecast. October spend is $4.13 month to date as of 2026-10-18 about 05:00 Eastern Time (Azure Cost Management, resource group rg-mps-demo). Offline mode costs $0.
 
 ## Clone and run
 
 No Azure account, model key, Entra tenant or Key Vault is needed. With no model configured the app runs **offline on saved answers**: the real agents, evidence gate and guards run, and the model's part comes from the same saved answers the 29-case replay eval scores, so SC-1 to SC-8 reach their real causes with no network call.
 
-You need either Docker, or the **.NET 10 SDK** and **Node 22** (the version CI and the dev container use; Node 20.19 or later also builds).
+You need either Docker, or the **.NET 10 SDK** (10.0.100) and **Node 22** (the version CI and `deploy/app.Dockerfile` use).
 
 **One container (Docker).** This is the same image the hosted demo runs.
 
@@ -85,13 +89,21 @@ Open http://localhost:5173. Vite forwards `/api`, `/health` and `/hubs` to the A
 
 In VS Code, F5 runs the **API** configuration and opens `/health`. The dev container is `.devcontainer/devcontainer.json` (.NET 10 and Node 22).
 
-**Speed.** The plant runs on the wall clock. At 1x, an investigation waits for about 20 readings after the alert before it judges the signal's shape, so a scenario takes about 5 minutes from injection to recommendation. Set 10x in the harness speed control (or `POST /api/demo/speed` with `{"speed":10,"strideSeconds":15}`) for under a minute.
+**Speed.** The plant clock is the wall clock (`Mps:Simulation:RealTime`). The harness offers 1x, 2x, 5x, and 10x, and a sample stride of 5, 15, 30, or 60 seconds. A hard reset returns 1x and 15 seconds (`Mps:Simulation:SampleStrideSeconds`). The kept gap is that stride divided by the speed, and at least one second. The investigation waits for 20 readings after the first rule break (`shapeWait.minReadingsSinceOnset` in `data/metadata/investigation.yaml`) before it judges the shape. At 1x and a 15-second stride that wait is about 5 minutes. An injected fault develops 6 times faster per 1x (`realTimeFaultPace` in `data/metadata/simulation.yaml`). The checked hosted smoke used 10x and a 5-second stride (deploy #14). The SC-1 fault was injected at 03:23:03 Eastern Time. The investigation appeared 5 seconds after that injection, and SC-1 reached `recommendationReady` for an engineering change (ECO-4471) 47 seconds after that injection. SC-8 reached `recommendationReady` for process drift (work order WO-RCP-E03-RF, confidence 0.96, no escalation) 31 seconds after its injection, and its investigation appeared 5 seconds after that injection. SC-1 was `recommendationReady` again on deploy #16 at 04:24 Eastern Time.
+
+**Harness status.** The status line, the scenario picker, and the speed controls follow the server (`runningScenarioId` on the clock and on `GET /api/demo/speed`), in every tab. When nothing is running the line reads **Live**, then the model mode chip, for example `Live · Azure OpenAI`. While a scenario runs it includes `Running SC-n`. There is no Replay/Live toggle for the answer engine.
+
+**Plant data** is a separate control. **Live** follows the running plant. **Replay** shows a recorded scenario (`data/replay/<scenario>/messages.jsonl`) and a banner that the numbers are a recording. Switching it does not change how the model answers.
+
+**Telemetry window.** Each sensor keeps 600 readings, in memory and in the database (`telemetryWindow.readingsPerSensor` in `data/metadata/simulation.yaml`, exposed as `windowPoints`). Older readings roll off. A reset does not seed a week of history. The prime fills the window in memory and does not publish those points on the bus. A hard reset takes seconds.
+
+**Charts.** Limits come from the recipe step running at each reading. Every recipe step defines every parameter (its own window, or `idle: true`). A test fails the build if a step omits one. Limits are clamped to the sensor's physical range, on the server, on the chart, and in the rules score. During a fault the band keeps following the recipe step. It does not re-center on the bad data. The x axis is always 600 readings wide. New readings enter on the right and old ones scroll off the left. Reading numbers keep advancing. Step labels shorten instead of disappearing. Hover names the step and says "Limits for this recipe step". A recipe change draws a divider with the recipe name. The chart header shows the recipe and the step of the newest reading.
 
 **Approval signing key.** In Development with no `Mps__Approval__SigningKey`, the app makes a random key for each run and logs a warning; approvals still work but do not survive a restart. Set your own hex key (at least 32 bytes, for example `openssl rand -hex 32`) in `.env` to keep them. Outside Development the app will not start without a key.
 
 ### Model modes
 
-One setting picks the model: `MODEL_MODE` (or `Mps__Model__Mode`, `Mps:Model:Mode` in configuration). The console shows the mode in use in a status chip at the top, and `GET /api/model/status` returns it.
+One setting picks the model: `MODEL_MODE` (or `Mps__Model__Mode`, `Mps:Model:Mode` in configuration). Copy `.env.example` to `.env` and set it there. `LLM_MODE` is only a legacy alias (`replay`, `mock`, and `saved` mean offline; `live` means azure). The console shows a read-only **model mode chip** (AI engine). It names the mode, and it says when the gateway is falling back to saved answers and why. There is no Replay/Live toggle for this. `GET /api/model/status` returns the same facts.
 
 | `MODEL_MODE` | Chip | What it needs |
 |---|---|---|
@@ -107,7 +119,7 @@ MODEL_MODE=openai
 OPENAI_API_KEY=<your key>
 ```
 
-A live model call that fails or takes longer than `Mps:Model:TimeoutSeconds` (20 s) is not retried. After `Mps:Model:CircuitBreakerFailures` failures (2) the app answers from the saved answers and tries the model again after `Mps:Model:CircuitCooldownSeconds` (60 s). While it does, the chip says it is falling back and why. Live calls stop at `Mps:Model:DailyCapUsd` per day. Offline answers cost nothing.
+A live model call that fails, or takes longer than `Mps:Model:TimeoutSeconds` (20 seconds), is not retried by the SDK. The gateway then fails over to saved answers. After `Mps:Model:CircuitBreakerFailures` failures (2) it stays on saved answers and tries the model again after `Mps:Model:CircuitCooldownSeconds` (60 seconds). While it does, the chip says it is falling back and why. Live calls also stop at `Mps:Model:DailyCapUsd` per day ($2 on the hosted app). Offline answers cost nothing.
 
 ### Sign-in modes
 
@@ -120,13 +132,18 @@ No email address is built into the code.
 
 ## Tests and evaluation
 
+CI run 39110761511 on `main` `0a3375f` (2026-10-18, 04:15–04:20 Eastern Time) passed **1,144** automated tests: **872** .NET tests passed and **1** skipped, plus **272** Vitest tests in 63 files. The skipped test is `LiveModelEvalTests`, which runs only when `MPS_LIVE_EVAL=1` and a model key are set. The replay eval is separate from that total: **29** cases, all passed (category accuracy, safe escalation, injection resistance, expected cause in the top 2, and citation precision all 100%).
+
+Wall time was 5 minutes 13 seconds. Jobs run in parallel: build 5:09, slow tests 3:41, web 1:13, Bicep 8 seconds, gitleaks 6 seconds. CodeQL is a separate workflow (about 4:46 on that day).
+
 ```powershell
-dotnet test MPS.sln
-dotnet run --project eval/Eval.Runner
+dotnet test MPS.sln --filter "Category!=Slow"
+dotnet test tests/Api.Tests/Api.Tests.csproj --filter "Category=Slow"
+dotnet run --project eval/Eval.Runner -- eval/cases eval/results/latest.json
 cd web; npm test; npm run lint; npm run build
 ```
 
-[docs/TESTING.md](docs/TESTING.md) lists the frameworks, the test layers, the guard tests and what CI runs.
+The build job's .NET counts, with `Category!=Slow`: Domain 39, ModelGateway 18, Agents 151, Orchestration 25, MockEnterprise 4, Architecture 16, Simulator 94, Connectors 13, Application 263, Bus 6, Contract 41, Api.IntegrationTests 23, Api.Tests 165 passed and 1 skipped. The slow job is 14 whole-plant tests in `Api.Tests`. [docs/TESTING.md](docs/TESTING.md) lists how to run each suite and what the guard tests catch.
 
 ## Documents
 
@@ -145,7 +162,7 @@ cd web; npm test; npm run lint; npm run build
 
 ## Deploy to Azure
 
-The workflow is manual. It does not run on a pull request or on a push. Bob created resource group `rg-mps-demo` in `eastus2`, the GitHub OIDC app and federated credential, and the GitHub environment `azure-demo` (required reviewer). This repo holds no cloud secret.
+The workflow is manual `workflow_dispatch` only. A merge or a push does not deploy. Run one deploy per batch, and not while someone is testing the live demo: **a deploy wipes the live demo data**. Bob created resource group `rg-mps-demo` in `eastus2`, the GitHub OIDC app and federated credential, and the GitHub environment `azure-demo` (required reviewer). This repo holds no cloud secret. A fork or a clone without the environment secrets and `RESOURCE_GROUP` skips cleanly. The federated credential trusts only this repo's `azure-demo` environment.
 
 The hosted demo is **one container**. `deploy/app.Dockerfile` builds the React console in live API mode (`VITE_USE_MSW=false`, same-origin API) and publishes `Mps.Api`. The image copies `web/dist` into `wwwroot` and `data/` into `/app/content/data`. The API serves those files and falls back to `index.html` for console routes. It holds compiled assemblies and built web files, not the C# or TypeScript source.
 

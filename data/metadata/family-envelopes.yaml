@@ -1,6 +1,8 @@
 # Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 # Family envelopes from the spec table, loaded at startup. Every recipe step window in data/fleet must sit inside its
-# family envelope and use its unit. These are validation bounds, never shown as a spec: the spec is the recipe step window.
+# family envelope and use its unit. The fleet sensor minimum and maximum equal this envelope: that is the physical
+# floor and ceiling. Control limits (recipe-step center plus or minus three sigma) are clamped to it on the server,
+# on the chart, and in the rule score. These bounds are never shown as a spec: the spec is the recipe step window.
 # Bounds that the spec only names (film thickness, edge-ring height, flows) are fictional demo limits.
 deposition:
   - { parameter: chamberPressure, unit: Torr, minimum: 2, maximum: 6 }

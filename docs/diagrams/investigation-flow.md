@@ -28,7 +28,7 @@ flowchart LR
   subgraph HRN["Harness bar"]
     direction TB
     SCN["Scenario picker"]
-    MODE["Live, replay, mock"]
+    MODE["Model mode chip"]
   end
 
   subgraph HUM["Engineer"]
@@ -129,7 +129,7 @@ The evidence matrix is drawn under the swimlane on the print sheet, with an arro
 | Investigation Agent | Violet, **AGENT** badge | Triage, name the four classes, call read-only tools, write one why-line per evidence item. Cannot diagnose or write. |
 | Resolution Agent | Violet, **AGENT** badge | Rank causes, write the evidence matrix, draft CAPA actions. No tools. Cannot write. |
 | Tools / enterprise systems | Slate | Manufacturing, quality, product-lifecycle, and planning systems, plus maintenance and document retrieval. Read-only until the action service calls the mock quality system. |
-| Model gateway | Gold | Completions, retries, cost ledger, daily spend cap. Not a decision. |
+| Model gateway | Gold | Completions for offline, OpenAI, or Azure OpenAI. A live call waits 20 seconds and does not retry in the SDK. Timeout, failure, or the daily cap uses saved answers. Not a decision. |
 
 Screen order on the sheet, left to right: **Alerts / Tickets → Investigation → Approval → CAPA**.
 
@@ -163,7 +163,7 @@ An alert that clears the severity threshold is raised by **statistical process c
 
 The console then opens the **tool schematic**. This is the evidence entry point for a reader who does not live in the fab. SPEC 2.10 calls for one picture per tool family (deposition, etch, strip, clean) with the chamber, radio-frequency source, gas box and flow controllers, vacuum and pump, chuck and heater, and the wafer handler. Each sensor point shows the live value, the unit, and a status color, and opens its control chart. The card on the sheet names the chamber, gas, vacuum, chuck, and radio-frequency source, and says a sensor opens its chart. Heater and wafer handler are the same picture; the card does not have a sixth line. Sensor identity, type, and unit come from the fleet spec when that catalog exists (`sensors` with `id`, `type`, `unit`, `subsystem`, `schematicAnchor`). The schematic does not decide a cause. It is where the evidence starts.
 
-The **Investigation Agent** triages next. It plans which evidence to collect. It does not name a root cause. The call goes through the **model gateway** (route, retry, cost ledger, daily cap). Over the cap, or in the local default, the gateway serves replay instead of a live model.
+The **Investigation Agent** triages next. It plans which evidence to collect. It does not name a root cause. The call goes through the **model gateway**. The mode is offline, OpenAI, or Azure OpenAI `gpt-5.4-mini`. A live call waits at most 20 seconds, the SDK does not retry, and a timeout, a failure, or the $2 daily cap uses saved answers. The chip says when that happens. Offline mode never calls the network.
 
 The same agent then **names four hypothesis classes** and does not pick one. The classes are fixed by SPEC §2.4 and SPEC 2.10. The sheet keeps the names short. The matrix, not the hypothesis card, carries the signals.
 
@@ -172,11 +172,11 @@ The same agent then **names four hypothesis classes** and does not pick one. The
 | Engineering change | Engineering change | A product-lifecycle change order changed a recipe step or a part shortly before onset, and only the affected recipe or tool moved. Maintenance the same week is the usual confounder. |
 | Out of spec | Equipment out of spec, calibration, or alignment | Maintenance records show an overdue calibration, alignment drift, or a maintenance gap. The signal sits on one chamber. A new material lot that week is the usual confounder. |
 | Supply-chain material | Supply-chain material | Planning records show a new lot of gas, target, chemical, or wafers. The shift spans the tools that used that lot. A change order on one of those tools is the usual confounder. |
-| Process drift | Process drift | A gradual ramp that tracks chamber radio-frequency hours since the last clean, or consumable wear. No discrete event. Ordinary seasonal noise is the usual confounder. |
+| Process drift | Process drift | A gradual ramp that tracks chamber radio-frequency hours since the last clean, or consumable wear, with no discrete change. An operator edit of a recipe setpoint with no engineering change order is the same class. Ordinary seasonal noise is the usual confounder. |
 
 Deterministic **impact features** (scope of one chamber, one tool, a recipe, or a lot; timing against events; signal shape) are computed in code and handed to the agent as features. The agent does not invent them.
 
-**Tool calls** are read-only and capped at ten: telemetry window, control-chart violations, manufacturing runs and lots, quality nonconformances, change orders and config, material lots and supplier notices, work orders and calibrations, document retrieval, and impact scope. When a scripted scenario is running, that scenario's own records are part of the read, and the resolution agent sees the full record text. The tools lane is those enterprise systems, the scenario records, and the document store. The agent cannot add a write tool. Ground truth from the fault injector is not in this lane.
+**Tool calls** are read-only and capped at ten: telemetry window, control-chart violations, manufacturing runs and lots, quality nonconformances, change orders and config, material lots and supplier notices, work orders and calibrations, document retrieval, and impact scope. Supplier notices are loaded only for material lots this tool used. A tool with no lots gets none. The telemetry window is the newest 600 readings per sensor. Limits are the recipe step at each reading, clamped to the sensor's physical range, including while a fault is running. When a scripted scenario is running, that scenario's own records are part of the read, and the resolution agent sees the full record text. The tools lane is those enterprise systems, the scenario records, and the document store. The agent cannot add a write tool. Ground truth from the fault injector is not in this lane.
 
 The ticket names its plant. Northwater Fab and Ironwood Fab are the front-end fabs. Lumen Pilot Works is strip, clean, and the pilot line. The Sites API is how the console lists them and compares one tool family. Scenario SC-5 is a supplier lot that reaches Northwater and Ironwood. The harness bar can start the scenario. It is not a step in this swimlane.
 
@@ -203,6 +203,8 @@ On the same output the agent **drafts corrective and preventive actions** (conta
 The sheet draws ranking (and the matrix it writes), then the CAPA draft, then the grounding check. That follows SPEC: the agent finishes one payload, and only then does the validator run. The draft is its own marked step so it is obvious the agent proposed it. The validator still sees it.
 
 The **grounding validator** is code. Every cited id must be in the pack. Every cited why-line must point at a real evidence item. Uncited claims, unknown ids, and a why-line that cites nothing in the pack are rejected. A failed check does not become a softer recommendation.
+
+**CauseGuard** runs after that. A ruled-out record may be mentioned so the answer can dismiss it. The check escalates only when that record is cited as support (`evidenceIds`) or named as the cause of its own class. The resolution prompt (1.12.0) rules a rival out by class and does not put the ruled-out id in `evidenceIds`. When the round escalates because a check refused the model, the API stores `rejectedAnswer` and the screen shows "What the AI proposed (not accepted)" under the evidence gate. Linked records show one entry per investigation. The saved record replaces the Started placeholder.
 
 The engineer sees the grounded recommendation on the **Approval screen**. If the investigation is not escalated, confirm mints a single-use signed approval token, bound to the action hash, expiring. Reject mints nothing. If the investigation **is** escalated, plain confirm is refused. The screen is the escalation gate: request more evidence, or override with a written reason, and only the override mints the token. The token is checked in the adapter and again in the API. The **action service** is the only caller of the mock quality system's create operation. The mock can return 500, timeout, or 409; the service retries or returns the failed state. It does not ask the model to invent a record number. The **CAPA screen** then shows the new record and the lifecycle bar advances. The screen spells the name: corrective and preventive action.
 

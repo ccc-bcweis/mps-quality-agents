@@ -1,5 +1,10 @@
 # Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 # Synthetic Meridian Precision Systems fleet. Fictional model MPS-D7.
+# Every recipe step defines every parameter: its own window, or idle: true with a window when the step does not
+# control that parameter. FleetSchema checks this at load. There is no fallback to another step or to the sensor range.
+# SPC limits are that step's window (center plus or minus three sigma), clamped to the sensor minimum and maximum
+# (the physical floor and ceiling, equal to the family envelope). They are not statistics of the telemetry.
+# During a fault the band keeps following the recipe step.
 family: deposition
 model: MPS-D7
 recipes:

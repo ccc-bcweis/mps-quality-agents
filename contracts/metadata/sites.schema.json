@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://contracts.meridian-precision.example/metadata/sites.schema.json",
   "title": "SitesMetadataFile",
+  "description": "Sites that belong to the company. Each site offers capabilities. Plant positions and the simulated clock are not in this file.",
   "type": "object",
   "additionalProperties": false,
   "required": ["sites"],
@@ -14,11 +15,11 @@
         "additionalProperties": false,
         "required": ["id", "name", "purpose", "description", "timezone"],
         "properties": {
-          "id": { "type": "string", "minLength": 1 },
-          "name": { "type": "string", "minLength": 1 },
-          "purpose": { "type": "string", "minLength": 1 },
-          "description": { "type": "string", "minLength": 1 },
-          "timezone": { "type": "string", "minLength": 1 }
+          "id": { "type": "string", "minLength": 1, "description": "Stable site id." },
+          "name": { "type": "string", "minLength": 1, "description": "Site name shown in the console." },
+          "purpose": { "type": "string", "minLength": 1, "description": "What this site is for." },
+          "description": { "type": "string", "minLength": 1, "description": "Short description of the site." },
+          "timezone": { "type": "string", "minLength": 1, "description": "Timezone name for the site. Event timestamps are still stored in UTC." }
         }
       }
     }

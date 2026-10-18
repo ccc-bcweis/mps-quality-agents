@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://contracts.meridian-precision.example/metadata/tools.schema.json",
   "title": "ToolsMetadataFile",
+  "description": "Tool catalog. Parameter lcl and ucl are the family envelope (what the sensor can physically read). Stepped control limits live on recipe steps in the fleet files and are clamped to that range. They are not these fields.",
   "type": "object",
   "additionalProperties": false,
   "required": ["tools"],
@@ -47,7 +48,7 @@
       "required": ["name", "description"],
       "properties": {
         "name": { "type": "string", "minLength": 1 },
-        "description": { "type": "string", "minLength": 1 }
+        "description": { "type": "string", "minLength": 1, "description": "What this input or output is, in plain language." }
       }
     },
     "parameter": {
@@ -59,15 +60,16 @@
         "name": { "type": "string", "minLength": 1 },
         "parameterClass": {
           "type": "string",
+          "description": "Kind of measurement. Not a control limit.",
           "enum": ["temperature", "pressure", "flow", "power", "vibration", "alignment", "output", "particles", "process"]
         },
-        "unit": { "type": "string", "minLength": 1 },
-        "telemetry": { "type": "boolean" },
-        "lcl": { "type": "number" },
-        "ucl": { "type": "number" },
-        "alertLow": { "type": "number" },
-        "alertHigh": { "type": "number" },
-        "nominal": { "type": "number" }
+        "unit": { "type": "string", "minLength": 1, "description": "Display unit for this parameter. Simulated tools use the same unit as the family envelope." },
+        "telemetry": { "type": "boolean", "description": "True when this catalog parameter is a measured series. Chart limits still come from the recipe step." },
+        "lcl": { "type": "number", "description": "Family-envelope floor: the lowest value the sensor can physically read. Not a chart control limit." },
+        "ucl": { "type": "number", "description": "Family-envelope ceiling: the highest value the sensor can physically read. Chart control limits are clamped to this." },
+        "alertLow": { "type": "number", "description": "Catalog warning inside the family envelope. Live watch uses the recipe-step window, not this number." },
+        "alertHigh": { "type": "number", "description": "Catalog warning inside the family envelope. Live watch uses the recipe-step window, not this number." },
+        "nominal": { "type": "number", "description": "A catalog nominal inside the family envelope. The chart center is the recipe step running at the reading, not this number." }
       }
     }
   }

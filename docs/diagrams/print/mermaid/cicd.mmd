@@ -1,51 +1,42 @@
 flowchart LR
   subgraph Lanes["Grok Build lanes - parallel PRs"]
     direction TB
-    GBF["GB-F Foundation - lane/f-foundation - P0"]
-    GBD["GB-D Design - lane/d-design - P0"]
-    GB1["GB-1 Data and simulation - lane/1-data-sim"]
-    GB2["GB-2 Agents - lane/2-agents"]
-    GB3["GB-3 API - lane/3-api"]
-    GB4["GB-4 UI - lane/4-ui"]
-    GB5["GB-5 QA, eval, security - lane/5-qa"]
+    GBF["GB-F Foundation"]
+    GBD["GB-D Design"]
+    GB1["GB-1 Data and simulation"]
+    GB2["GB-2 Agents"]
+    GB3["GB-3 API"]
+    GB4["GB-4 UI"]
+    GB5["GB-5 QA and eval"]
   end
 
   PR["Pull request"]
 
-  subgraph CI["ci.yml - required checks"]
+  subgraph CI["CI - never deploys"]
     direction TB
-    BUILD["Build - warnings as errors, analyzers"]
-    TEST["Test - xUnit, Vitest, ESLint, tsc"]
-    COV["Coverage - 70 percent Domain and Application"]
-    FMT["Format - dotnet format verify"]
-    CQ["CodeQL - C# and JavaScript"]
-    GL["gitleaks - secret scan"]
-    DEP["Dependency review"]
-    BICEP["Bicep build - compile only, no deploy"]
+    BUILD["ci.yml build - format, tests, replay eval"]
+    WEB["ci.yml web - lint, Vitest, knip"]
+    SLOW["ci.yml slow tests"]
+    BICEP["ci.yml bicep - compile only"]
+    GL["ci.yml gitleaks"]
+    DEP["ci.yml dependency review"]
+    CQ["codeql.yml analyze - C#"]
   end
 
-  subgraph Later["After I1 - not on day-1 PRs"]
-    direction TB
-    EVAL["Eval replay - hard gates"]
-    RED["Red-team and ZAP baseline"]
-  end
+  BOB["Review - Bob"]
+  BRY["Bryan - lane merges"]
+  MAIN["Merge to main - no deploy"]
 
-  BOB["Required review - Bob"]
-  BRY["Bryan - lane merges and Azure go"]
-  MAIN["Merge to main"]
-
-  subgraph DEPLOY["deploy.yml - manual, gated"]
+  subgraph DEPLOY["deploy.yml - manual only"]
     direction TB
     MAN["workflow_dispatch only"]
-    ENV["Environment azure-demo"]
-    REVU["Required reviewer"]
-    OIDC["OIDC to Azure - no stored secrets"]
-    PUSH["Build and push containers"]
-    WHAT["Bicep what-if"]
-    APPLY["Deploy rg-mps-demo"]
+    SKIP["Fork without secrets skips"]
+    OIDC["OIDC trusts azure-demo"]
+    PUSH["Build image mps-app"]
+    APPLY["One replica, aspnet 10.0"]
   end
 
-  SMOKE["Smoke - invited sign-in, LIVE badge, S1"]
+  SMOKE["Smoke - health 200, API 401, landing redirect"]
 
   GBF --> PR
   GBD --> PR
@@ -55,24 +46,21 @@ flowchart LR
   GB4 --> PR
   GB5 --> PR
   PR --> BUILD
-  PR --> TEST
-  PR --> COV
-  PR --> FMT
-  PR --> CQ
+  PR --> WEB
+  PR --> SLOW
+  PR --> BICEP
   PR --> GL
   PR --> DEP
-  PR --> BICEP
+  PR --> CQ
   BUILD --> BOB
-  TEST --> BOB
-  COV --> BOB
-  FMT --> BOB
-  CQ --> BOB
+  WEB --> BOB
+  SLOW --> BOB
+  BICEP --> BOB
   GL --> BOB
   DEP --> BOB
-  BICEP --> BOB
-  EVAL -.-> BOB
-  RED -.-> BOB
+  CQ --> BOB
   BOB --> BRY
   BRY --> MAIN
   MAIN --> MAN
-  MAN --> ENV --> REVU --> OIDC --> PUSH --> WHAT --> APPLY --> SMOKE
+  MAN --> SKIP
+  MAN --> OIDC --> PUSH --> APPLY --> SMOKE

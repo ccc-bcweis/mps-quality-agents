@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://contracts.meridian-precision.example/metadata/company.schema.json",
   "title": "CompanyMetadataFile",
+  "description": "One fictional company. Durable metadata, read at startup. Not a transactional row.",
   "type": "object",
   "additionalProperties": false,
   "required": ["company"],
@@ -11,11 +12,11 @@
       "additionalProperties": false,
       "required": ["id", "name", "purpose", "description", "industry"],
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "name": { "type": "string", "minLength": 1 },
-        "purpose": { "type": "string", "minLength": 1 },
-        "description": { "type": "string", "minLength": 1 },
-        "industry": { "type": "string", "minLength": 1 }
+        "id": { "type": "string", "minLength": 1, "description": "Stable company id." },
+        "name": { "type": "string", "minLength": 1, "description": "Company name shown in the console." },
+        "purpose": { "type": "string", "minLength": 1, "description": "Why this fictional company exists in the demo." },
+        "description": { "type": "string", "minLength": 1, "description": "Short description of the company." },
+        "industry": { "type": "string", "minLength": 1, "description": "Industry label. The companies in the demo are fictional." }
       }
     }
   }

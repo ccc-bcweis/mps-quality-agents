@@ -23,7 +23,7 @@ flowchart LR
     INJ["Fault injector"]
     SCN["Scenario picker"]
     RST["Reset demo"]
-    MODE["Live, replay, mock"]
+    MODE["Model mode chip"]
   end
 
   subgraph Intake["Intake"]
@@ -75,11 +75,11 @@ flowchart LR
   subgraph Gw["Model gateway"]
     direction TB
     LEDGER["Spend cap"]
-    ROUTE["Route and retry"]
-    M1["Azure OpenAI"]
+    ROUTE["20 s timeout, no SDK retry"]
+    M1["Azure gpt-5.4-mini"]
     M2["OpenAI"]
-    M3["Replay"]
-    M4["Mock reasoner"]
+    M3["Saved answers"]
+    M4["Offline, no key"]
   end
 
   subgraph Gov["Eval"]
@@ -146,8 +146,8 @@ flowchart LR
   ROUTE --> LEDGER
   LEDGER -->|"under cap"| M1
   LEDGER -->|"under cap"| M2
-  LEDGER -->|"over cap"| M3
-  LEDGER -->|"no recording"| M4
+  LEDGER -->|"timeout, failure, or cap"| M3
+  LEDGER -->|"no key"| M4
   REG --> ROUTE
   MODE --> LEDGER
 
@@ -174,11 +174,11 @@ flowchart LR
 |---|---|---|---|
 | **Deterministic** | Cyan | SPC / Western Electric, intake, lifecycle, impact features, evidence gate, ApprovalToken, CAPA action service | Yes, but only after a human token |
 | **Probabilistic** | Violet | Investigation Agent, Resolution Agent, MAF graph behind `IInvestigationWorkflow` | None |
-| **Model gateway** | Gold / navy (pitch) | Azure OpenAI, OpenAI, Replay, Mock reasoner, cost ledger, daily cap | None (completions only) |
+| **Model gateway** | Gold / navy (pitch) | Azure OpenAI gpt-5.4-mini, OpenAI, saved answers, 20-second timeout, cost ledger, daily cap | None (completions only) |
 | **Eval / governance** | Steel | Grounding validator, eval runner, red-team, audit log, version registry | None |
 | **Mock enterprise** | Panel | MES, QMS, PLM, ERP, CMMS, ticketing | QMS CAPA write is the action service, not an agent tool |
 | **Documents** | Panel | Seeded corpus, scripted scenario records, chunk/embed, hybrid retrieval | Read-only |
-| **Harness** | Navy and gold | Fault injector, scenario picker, reset, live / replay / mock, spend | None. Not a console tab |
+| **Harness** | Navy and gold | Fault injector, scenario picker, reset, plant-data Live or Replay, model-mode chip, spend. The banner reads Live when nothing is running | None. Not a console tab |
 | **Console** | Charcoal | Sites, Fleet, Tool, Alerts, Tickets, Investigation, Approval, CAPA | Shows state. The engineer decides |
 
 ## Narrative
@@ -189,7 +189,9 @@ The orchestrator then runs the **Investigation Agent** with a hard tool allowlis
 
 A human in the console **approves** only when the investigation is not escalated. An escalated case stops at the **escalation gate**: request more evidence, or override with a written reason. A plain approval is refused. Only a passing decision mints a single-use HMAC **ApprovalToken** and lets the action service call the mock QMS CAPA API. Agents are never registered with write tools (enforced by architecture tests).
 
-All model calls go through the **gateway**: routing, retries, a SQL **cost ledger**, and a **hard daily spend cap**. Over cap (or local default) the UI banner switches to REPLAY; injections without a recording use the labeled mock reasoner. Traces, the audit log, and the eval runner (including red-team injection cases) sit beside the product, not after it.
+All model calls go through the **gateway**. The mode is offline, OpenAI, or Azure OpenAI. A live call waits at most 20 seconds and the SDK does not retry. A timeout, a failure, or the daily spend cap falls back to saved answers, and the chip says so. Offline mode is those saved answers and makes no network call. The banner reads Live when no scenario is running. That word is the plant, not the model. Traces, the audit log, and the replay eval sit beside the product.
+
+CauseGuard lets a resolution mention a ruled-out record in order to dismiss it. It escalates when that record is cited as support or named as the cause of its own class. A refused answer is kept as `rejectedAnswer`. Supplier notices are read only for lots the tool used. A recipe setpoint edit with no engineering change order is process drift. Control limits follow the recipe step at each reading, inside a rolling window of 600 readings per sensor.
 
 LangGraph is not in-process. Orchestration is behind `IInvestigationWorkflow`; a stub adapter and MCP-exported tools (stretch) are the swap points. See SPEC §3.1.
 
@@ -197,7 +199,7 @@ LangGraph is not in-process. Orchestration is behind `IInvestigationWorkflow`; a
 
 Three fictional plants feed the simulator. Northwater Fab and Ironwood Fab are front-end fabs. Lumen Pilot Works runs strip, clean, and a pilot line. The Sites API lists the plants, returns one plant, and compares one tool family. Scenario SC-5 is one supplier lot that reaches Northwater and Ironwood. It does not reach Lumen.
 
-The screen is two layers. The StatusNeo harness bar holds the fault injector, the scenario picker, reset, the live / replay / mock line, and spend. The Meridian console holds Sites, Fleet, Tool, Alerts, Tickets, Investigation, Approval, and corrective and preventive action. Presenter controls are not console tabs.
+The screen is two layers. The StatusNeo harness bar holds the fault injector, the scenario picker, reset, plant-data Live or Replay, the model-mode chip, and spend. The Meridian console holds Sites, Fleet, Tool, Alerts, Tickets, Investigation, Approval, and corrective and preventive action. Presenter controls are not console tabs.
 
 Scripted scenarios carry their own evidence. Those records join the read-only tools. The resolution agent sees the full record text. It still has no tools and no write.
 

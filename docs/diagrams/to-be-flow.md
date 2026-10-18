@@ -49,7 +49,7 @@ flowchart LR
     A6["Prior cases"]
     A7["Joins the supplier lot"]
     A8["One evidence pack"]
-    A9["Ranks four classes"]
+    A9["Ranks four classes. Mention is not a citation"]
     A10["Pack is the ask"]
     A12["Writes the record"]
     A13["Token is the signature"]
@@ -112,7 +112,7 @@ The number is the number on the current sheet. The lane is where that number sit
 | Retrieves prior cases onto the same ticket. | MPS agent platform | AGENT 6 | E6 Data gap |
 | Joins the supplier lot to the manufacturing run. | MPS agent platform | AGENT 7 | E7 Wrong lot traced |
 | One evidence pack. Each file is cited once. No meeting. | MPS agent platform | AGENT 8 | E8 Data gap |
-| Ranks four cause classes and cites what would rule one out. | MPS agent platform | AGENT 9 | E9 Bias toward the last known cause |
+| Ranks four cause classes and cites what would rule one out. A ruled-out record may be mentioned and must not be cited as support. A recipe edit with no engineering change order is process drift. | MPS agent platform | AGENT 9 | E9 Bias toward the last known cause |
 | The pack is the ask. Citations are attached. | MPS agent platform | AGENT 10 |  |
 | Approves on the pack. Signed token, single use. The cause is cited. | Management | HUMAN 11 | E10 Uncited approval |
 | Writes the corrective and preventive action from the approved pack. | MPS agent platform | AGENT 12 | E11 Re-keyed record |
@@ -141,6 +141,16 @@ Eleven violet badges. Two teal badges. Eleven green badges, one for each error o
 This numbered path is one etch alarm at Northwater Fab. It is the sufficient-evidence path. Ironwood Fab is the other front-end fab. Lumen Pilot Works is strip, clean, and a pilot line. The Sites API is how a reader lists the three and compares one family. Scenario SC-5 is a different story: one supplier lot that reaches Northwater and Ironwood. It is not the MX-400 etch on this sheet.
 
 Scripted scenarios carry their own evidence. That text is in the pack the resolution agent reads. An escalated case does not continue into the record write. The escalation gate offers more evidence, or an override with a written reason. Management remains the approver either way.
+
+## What the running demo does on this path
+
+The durations above stay illustrative. The running demo adds these facts:
+
+- The model mode is offline, OpenAI, or Azure OpenAI `gpt-5.4-mini`. A live call waits 20 seconds, the SDK does not retry, and a timeout or the daily cap uses saved answers. The harness chip says which. The banner reads Live when no scenario is running.
+- Control limits follow the recipe step at each reading. Each sensor keeps 600 readings. Older readings roll off.
+- Supplier notices are loaded only for the tool's own material lots.
+- CauseGuard escalates when a ruled-out record is cited as support or named as the cause of its own class. Mentioning it to dismiss it is allowed. The refused answer is stored and shown as "What the AI proposed (not accepted)".
+- Deploy is a manual `workflow_dispatch`. A merge does not deploy. The hosted app is one Container Apps replica on the `aspnet:10.0` image. CI jobs are build, web, slow tests, bicep, gitleaks, dependency review, and CodeQL analyze. None of them deploy.
 
 ## Glossary on the sheet
 
