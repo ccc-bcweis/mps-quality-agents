@@ -5,6 +5,7 @@ import { afterAll, afterEach, beforeAll, beforeEach } from "vitest";
 import { setHubConnected } from "../live/fleetHub";
 import { setCatalog } from "../labels";
 import { resetMockState } from "../mocks/state";
+import { storeRunning } from "../components/harnessSession";
 import catalogFixture from "./catalog.fixture.json";
 import { server } from "./server";
 
@@ -26,6 +27,7 @@ beforeEach(() => {
     localStorage.removeItem("mps.harness");
   }
   resetMockState();
+  storeRunning("");
 });
 afterEach(() => {
   cleanup();

@@ -160,8 +160,17 @@ public sealed class PlantSimulation : Mps.Application.Lifecycle.IPlantFaultContr
         lock (_gate)
         {
             Runtime.Simulator.InjectAtSimulatedNow(onset => Pace(scenario.StreamSignals(onset)));
+            Volatile.Write(ref _runningScenarioId, scenario.Id);
         }
     }
+
+    private string? _runningScenarioId;
+
+    /// <summary>
+    /// The scripted scenario last started on this plant, until a stop or a reset. Every browser shows this one
+    /// (harness banner), so a scenario run or reset from another browser is seen everywhere.
+    /// </summary>
+    public string? RunningScenarioId => Volatile.Read(ref _runningScenarioId);
 
     public bool TryApplyFreeForm(string toolId, string? chamberId, string parameter, string shape, double magnitude, TimeSpan? duration = null)
     {
@@ -184,6 +193,8 @@ public sealed class PlantSimulation : Mps.Application.Lifecycle.IPlantFaultContr
     {
         lock (_gate)
         {
+            // Containment ends the demo scenario: the harness shows nothing running from here on.
+            Volatile.Write(ref _runningScenarioId, null);
             return Runtime.Simulator.RemoveFaults(fault => string.Equals(fault.ToolId, toolId, StringComparison.Ordinal));
         }
     }
@@ -193,6 +204,7 @@ public sealed class PlantSimulation : Mps.Application.Lifecycle.IPlantFaultContr
     {
         lock (_gate)
         {
+            Volatile.Write(ref _runningScenarioId, null);
             return Runtime.Simulator.RemoveFaults(_ => true);
         }
     }
@@ -213,6 +225,7 @@ public sealed class PlantSimulation : Mps.Application.Lifecycle.IPlantFaultContr
             _log.Clear();
             _pending.Clear();
             _primed = false;
+            Volatile.Write(ref _runningScenarioId, null);
             if (_options.Enabled)
             {
                 EnsurePrimedUnlocked();

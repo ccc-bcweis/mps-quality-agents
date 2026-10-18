@@ -23,7 +23,7 @@ public static partial class QualityEndpoints
             return Results.Ok(new AdminSessionResponse(caller.Mode, caller.IsAdmin, caller.DisplayName, member));
         });
         app.MapGet("/api/demo/speed", (Mps.Api.Live.PlantSimulation plant) =>
-            Results.Ok(new { speed = plant.Speed, strideSeconds = plant.StrideSeconds, speeds = Mps.Api.Live.PlantSimulation.Speeds, strides = Mps.Api.Live.PlantSimulation.Strides }));
+            Results.Ok(new { speed = plant.Speed, strideSeconds = plant.StrideSeconds, speeds = Mps.Api.Live.PlantSimulation.Speeds, strides = Mps.Api.Live.PlantSimulation.Strides, runningScenarioId = plant.RunningScenarioId }));
         app.MapPost("/api/demo/speed", (SpeedBody? body, HttpContext http, IConfiguration configuration, Mps.Api.Live.PlantSimulation plant) =>
         {
             if (!Caller(http, configuration).IsAdmin)
@@ -32,7 +32,7 @@ public static partial class QualityEndpoints
             }
 
             return body is not null && plant.TrySetSpeed(body.Speed, body.StrideSeconds)
-                ? Results.Ok(new { speed = plant.Speed, strideSeconds = plant.StrideSeconds, speeds = Mps.Api.Live.PlantSimulation.Speeds, strides = Mps.Api.Live.PlantSimulation.Strides })
+                ? Results.Ok(new { speed = plant.Speed, strideSeconds = plant.StrideSeconds, speeds = Mps.Api.Live.PlantSimulation.Speeds, strides = Mps.Api.Live.PlantSimulation.Strides, runningScenarioId = plant.RunningScenarioId })
                 : Results.Problem(title: "Speed must be 1, 2, 5 or 10 and samples every 5, 15, 30 or 60 seconds.", statusCode: StatusCodes.Status400BadRequest);
         });
         app.MapGet("/api/admin/reset/progress", (ResetProgress progress) => Results.Ok(progress.Current));

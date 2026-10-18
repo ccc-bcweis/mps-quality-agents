@@ -14,7 +14,17 @@ export function mockExtras(): MockExtras {
   return extras;
 }
 
+/** The harness state the mock server owns, like the API: speed, sample interval and the running scenario. */
+export const mockHarness: { speed: number; strideSeconds: number; runningScenarioId: string | null } = {
+  speed: 1,
+  strideSeconds: 15,
+  runningScenarioId: null,
+};
+
 export function resetMockState(): void {
+  mockHarness.speed = 1;
+  mockHarness.strideSeconds = 15;
+  mockHarness.runningScenarioId = null;
   extras.alerts = [];
   extras.tickets = [];
   extras.incidents = [];
