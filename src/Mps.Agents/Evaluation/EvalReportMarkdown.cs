@@ -26,6 +26,8 @@ public static class EvalReportMarkdown
         Score(text, "Category accuracy, top 1", report.CategoryAccuracy, EvalReport.CategoryGate);
         Score(text, "Expected cause in the top 2", report.CauseInTop2, EvalReport.CauseInTop2Gate);
         Score(text, "Citation precision", report.CitationPrecision, EvalReport.CitationGate);
+        text.AppendLine(Line($"| Decoys in support | {report.DecoyInSupport} | 0 |"));
+        Score(text, "Ruled-out coverage", report.RuledOutCoverage, EvalReport.RuledOutCoverageGate);
         text.AppendLine();
         text.AppendLine("## Confusion matrix");
         text.AppendLine();
@@ -42,12 +44,12 @@ public static class EvalReportMarkdown
         text.AppendLine();
         text.AppendLine("## Cases");
         text.AppendLine();
-        text.AppendLine("| Case | Group | Expected | Returned | Cause in top 2 | Cited in pack | Pass |");
-        text.AppendLine("|---|---|---|---|---|---:|---|");
+        text.AppendLine("| Case | Group | Expected | Returned | Cause in top 2 | Cited in pack | Decoys | Ruled out | Pass |");
+        text.AppendLine("|---|---|---|---|---|---:|---:|---:|---|");
         foreach (var result in report.Results)
         {
             text.AppendLine(Line(
-                $"| {result.Id} | {result.Group} | {result.ExpectedBehavior} {result.ExpectedCategory ?? string.Empty} | {result.ActualBehavior} {result.ActualCategory ?? string.Empty} | {Top2(result.CauseInTop2)} | {result.CitedInPack}/{result.Cited} | {(result.Passed ? "yes" : "no")} |"));
+                $"| {result.Id} | {result.Group} | {result.ExpectedBehavior} {result.ExpectedCategory ?? string.Empty} | {result.ActualBehavior} {result.ActualCategory ?? string.Empty} | {Top2(result.CauseInTop2)} | {result.CitedInPack}/{result.Cited} | {result.DecoyInSupport} | {Percent(result.RuledOutCoverage)} | {(result.Passed ? "yes" : "no")} |"));
         }
 
         return text.ToString().Replace("  |", " |", StringComparison.Ordinal).Replace("\r\n", "\n", StringComparison.Ordinal);
