@@ -16,7 +16,7 @@ namespace Mps.Api.Live;
 /// Runs Western Electric rules on series that have an injected fault. Alerts and tickets come from those points.
 /// A new ticket starts an investigation without blocking the next tick.
 /// </summary>
-public sealed partial class StreamSpcPublisher
+public sealed partial class StreamSpcPublisher : IDisposable
 {
     [LoggerMessage(EventId = 7101, Level = LogLevel.Information, Message = "SPC opened a ticket for {ToolId} {Parameter} from the live stream.")]
     private static partial void TicketOpened(ILogger logger, ToolId toolId, string parameter);
@@ -27,11 +27,15 @@ public sealed partial class StreamSpcPublisher
     [LoggerMessage(EventId = 7103, Level = LogLevel.Warning, Message = "Investigation for {IncidentId} failed.")]
     private static partial void InvestigationFailed(ILogger logger, Exception error, Guid incidentId);
 
+    [LoggerMessage(EventId = 7104, Level = LogLevel.Warning, Message = "An investigation did not stop within {Seconds} s of the reset cancelling it; the reset goes on without it.")]
+    private static partial void DrainTimedOut(ILogger logger, double seconds);
+
     private readonly PlantSimulation _plant;
     private readonly IServiceScopeFactory _scopes;
     private readonly ILogger<StreamSpcPublisher> _logger;
     private readonly ConcurrentDictionary<Guid, byte> _started = new();
     private readonly ConcurrentQueue<Task> _pending = new();
+    private CancellationTokenSource _runs = new();
 
     public StreamSpcPublisher(PlantSimulation plant, IServiceScopeFactory scopes, ILogger<StreamSpcPublisher> logger)
     {
@@ -42,6 +46,8 @@ public sealed partial class StreamSpcPublisher
         _scopes = scopes;
         _logger = logger;
     }
+
+    public void Dispose() => Volatile.Read(ref _runs).Dispose();
 
     public void Clear()
     {
@@ -94,16 +100,48 @@ public sealed partial class StreamSpcPublisher
             var hints = scope.ServiceProvider.GetService<ICascadeDirectory>();
             var correlation = outcome.Incident.CorrelationId;
             var parent = hints?.FindStep(correlation, "ticket") ?? hints?.FindStep(correlation, "alert");
-            _pending.Enqueue(InvestigationParent.Run(parent, () => InvestigateAsync(incidentId)));
+            // Take the token now, so a reset that cancels before the run gets going still stops it.
+            var stop = Volatile.Read(ref _runs).Token;
+            _pending.Enqueue(InvestigationParent.Run(parent, () => InvestigateAsync(incidentId, stop)));
         }
     }
 
-    public async Task DrainAsync()
+    public Task DrainAsync() => DrainAsync(Timeout.InfiniteTimeSpan);
+
+    /// <summary>
+    /// Cancels the investigations the stream started (and their waits for readings), then waits at most
+    /// <paramref name="limit"/> for them to stop. Investigations started afterwards run normally.
+    /// </summary>
+    public Task<bool> CancelAndDrainAsync(TimeSpan limit)
     {
+        var previous = Interlocked.Exchange(ref _runs, new CancellationTokenSource());
+        previous.Cancel();
+        return DrainAsync(limit);
+    }
+
+    /// <summary>
+    /// Waits for the investigations the stream started, at most <paramref name="limit"/> in all. A reset cancels them
+    /// first, so they end quickly; one that ignores the cancellation is left behind instead of holding the reset up.
+    /// </summary>
+    /// <returns>True when every investigation ended within the limit.</returns>
+    public async Task<bool> DrainAsync(TimeSpan limit)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
         while (_pending.TryDequeue(out var task))
         {
-            await task.ConfigureAwait(false);
+            var left = limit == Timeout.InfiniteTimeSpan ? limit : TimeSpan.FromTicks(Math.Max(0, (limit - watch.Elapsed).Ticks));
+            try
+            {
+                await task.WaitAsync(left).ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                DrainTimedOut(_logger, limit.TotalSeconds);
+                return false;
+            }
         }
+
+        return true;
     }
 
     /// <summary>Signals whose fault was removed. Watched for a while so their alerts can clear; never re-raised.</summary>
@@ -272,13 +310,13 @@ public sealed partial class StreamSpcPublisher
         };
     }
 
-    private async Task InvestigateAsync(IncidentId incidentId)
+    private async Task InvestigateAsync(IncidentId incidentId, CancellationToken cancellationToken)
     {
         try
         {
             await using var scope = _scopes.CreateAsyncScope();
             var investigations = scope.ServiceProvider.GetRequiredService<IInvestigationService>();
-            await investigations.StartAsync(incidentId, CancellationToken.None).ConfigureAwait(false);
+            await investigations.StartAsync(incidentId, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is LifecycleConflictException or ResourceNotFoundException or OperationCanceledException)
         {
