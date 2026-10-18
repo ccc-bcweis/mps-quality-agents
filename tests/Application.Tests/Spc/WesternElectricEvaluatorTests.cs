@@ -110,7 +110,7 @@ public sealed class WesternElectricEvaluatorTests
     [Fact]
     public void EightPointsOnOneSideFireRule4()
     {
-        var violations = Evaluate(0.5d, 0.5d, 0.5d, 0.5d, 0.5d, 0.5d, 0.5d, 0.5d);
+        var violations = Evaluate(1d, 1d, 1d, 1d, 1d, 1d, 1d, 1d);
 
         violations.Should().ContainSingle(violation => violation.Rule == SpcRuleNames.WesternElectric4)
             .Which.Severity.Should().Be(Severity.Medium);
@@ -147,6 +147,15 @@ public sealed class WesternElectricEvaluatorTests
         var violations = Evaluate(6d, 5d, 4d, 3d, 2d, 1d);
 
         violations.Should().NotContain(violation => violation.Rule == SpcRuleNames.NelsonSixRising);
+    }
+
+    [Fact]
+    public void SixFallingPointsFireTheFallingNelsonRule()
+    {
+        var violations = Evaluate(6d, 5d, 4d, 3d, 2d, 1d);
+
+        violations.Should().Contain(violation => violation.Rule == SpcRuleNames.NelsonSixFalling)
+            .Which.Severity.Should().Be(Severity.Low);
     }
 
     [Fact]

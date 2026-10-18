@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using Mps.Api.Demo;
+using Mps.Application.Faults;
 using Mps.Application.Tools;
 using Mps.Domain.Enterprise;
 using Mps.Domain.Identity;
@@ -132,18 +133,95 @@ public sealed class SeedEnterpriseTools : IMesTool, IQmsQueryTool, IPlmTool, IEr
             (Overlay?.Calibrations ?? []).Where(record => record.ToolId == toolId).Concat(_confounders?.Calibrations(toolId.Value) ?? []),
             record => record.CalibrationId));
 
-    /// <summary>The staged scenario's own records, or null when no scripted scenario is active.</summary>
+    /// <summary>
+    /// Records for the correlation bound on this async flow. Nothing when the caller did not bind one,
+    /// so one fault never sees another's records. Dates keep their spacing from the anchor, shifted to registration.
+    /// </summary>
     private Seed? Overlay
     {
         get
         {
-            if (_board?.ActiveScenarioId is not { } id || !_overlays.TryGetValue(id, out var overlay))
+            var board = _board;
+            if (board?.CurrentCorrelation is not { } correlation)
             {
                 return null;
             }
 
-            return overlay.AnchorAt is { } anchor && _board.ActivatedAt is { } staged ? overlay.Shifted(staged - anchor) : overlay;
+            var registration = board.Find(correlation);
+            if (registration is null)
+            {
+                return null;
+            }
+
+            Seed? scenario = null;
+            if (registration.ScenarioId is { } id && _overlays.TryGetValue(id, out var authored))
+            {
+                scenario = ShiftedTo(authored, registration.ActivatedAt);
+            }
+
+            var records = registration.Records is { IsEmpty: false } attachment
+                ? ShiftedTo(FromRecords(attachment), registration.ActivatedAt)
+                : null;
+            return Combine(scenario, records);
         }
+    }
+
+    private static Seed ShiftedTo(Seed overlay, DateTimeOffset? activatedAt) =>
+        overlay.AnchorAt is { } anchor && activatedAt is { } staged ? overlay.Shifted(staged - anchor) : overlay;
+
+    private static Seed FromRecords(FaultEvidenceAttachment records) => new()
+    {
+        AnchorAt = records.AnchorAt,
+        Ncrs = OrNull(records.Ncrs),
+        Ecos = OrNull(records.Ecos),
+        MaterialLots = OrNull(records.MaterialLots),
+        Notices = OrNull(records.Notices),
+        WorkOrders = OrNull(records.WorkOrders),
+        Calibrations = OrNull(records.Calibrations),
+        MaterialUses = records.MaterialUses.Count == 0
+            ? null
+            : records.MaterialUses.Select(use => new MaterialUse { LotId = use.LotId, ToolId = use.ToolId }).ToArray(),
+    };
+
+    private static T[]? OrNull<T>(IReadOnlyList<T> rows) => rows.Count == 0 ? null : rows.ToArray();
+
+    private static Seed? Combine(Seed? scenario, Seed? records)
+    {
+        if (scenario is null)
+        {
+            return records;
+        }
+
+        if (records is null)
+        {
+            return scenario;
+        }
+
+        return new Seed
+        {
+            Ncrs = Join(scenario.Ncrs, records.Ncrs),
+            Ecos = Join(scenario.Ecos, records.Ecos),
+            MaterialLots = Join(scenario.MaterialLots, records.MaterialLots),
+            MaterialUses = Join(scenario.MaterialUses, records.MaterialUses),
+            Notices = Join(scenario.Notices, records.Notices),
+            WorkOrders = Join(scenario.WorkOrders, records.WorkOrders),
+            Calibrations = Join(scenario.Calibrations, records.Calibrations),
+        };
+    }
+
+    private static T[]? Join<T>(T[]? left, T[]? right)
+    {
+        if (left is null || left.Length == 0)
+        {
+            return right is null || right.Length == 0 ? null : right;
+        }
+
+        if (right is null || right.Length == 0)
+        {
+            return left;
+        }
+
+        return [.. left, .. right];
     }
 
     /// <summary>Scenario rows win over seed rows with the same id, and are not date-filtered: the scenario scopes them.</summary>

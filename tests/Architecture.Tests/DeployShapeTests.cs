@@ -67,6 +67,16 @@ public sealed class DeployShapeTests
 
         apps.Should().Contain("minReplicas: 1");
         apps.Should().Contain("maxReplicas: 1");
+        apps.Should().Contain("cpu: json(cpu)");
+        apps.Should().Contain("memory: memory");
+        apps.Should().NotContain("json('0.25')");
+        apps.Should().NotContain("'0.5Gi'");
+        main.Should().Contain("param cpu string = '0.5'");
+        main.Should().Contain("param memory string = '1Gi'");
+        main.Should().Contain("cpu: cpu");
+        main.Should().Contain("memory: memory");
+        parameters.Should().Contain("param cpu = '0.5'");
+        parameters.Should().Contain("param memory = '1Gi'");
         apps.Should().Contain("targetPort: 8080");
         apps.Should().Contain("external: true");
         apps.Should().Contain("Microsoft.App/containerApps/authConfigs@2024-03-01");
@@ -114,6 +124,8 @@ public sealed class DeployShapeTests
         workflow.Should().NotContain("pull_request:");
         workflow.Should().NotContain("push:");
         workflow.Should().Contain("github.sha");
+        workflow.Should().NotContain("cpu=");
+        workflow.Should().NotContain("memory=");
     }
 
     [Fact]

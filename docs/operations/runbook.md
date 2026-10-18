@@ -15,6 +15,8 @@ Deploys are manual. `.github/workflows/deploy.yml` is `workflow_dispatch` only. 
 5. The job federates to Azure with OIDC (no stored client secret). A fork or a clone without `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, and `RESOURCE_GROUP` writes a notice and skips. The federated credential trusts only this repo's `azure-demo` environment.
 6. **Every deploy wipes the live demo data.** SQLite lives in the container. The app starts from seed 4242 with one rolling window of 600 healthy readings per sensor (`telemetryWindow.readingsPerSensor` in `data/metadata/simulation.yaml`). It does not seed a week.
 
+The container is 0.5 vCPU and 1 GiB, one replica (`minReplicas` 1, `maxReplicas` 1). `cpu` and `memory` are set in `infra/main.bicepparam`. `.github/workflows/deploy.yml` does not pass cpu or memory, so a deploy keeps that pair. The previous 0.25 vCPU / 0.5 GiB pair restarted the replica: on 18 Oct 2026 the working set was 590-673 MiB and failed probes killed it. Bryan approved about $33 more per month for the larger always-on replica. The Azure budget alert stays $40 a month.
+
 Two optional variables let another subscription use its own resource name prefix and region:
 
 ```text
@@ -54,7 +56,7 @@ WO-RCP-E03-RF
 - The model gateway stops live calls at $2 per day (UTC). Over the cap it serves saved answers. Plant data is not affected.
 - Offline mode (`MODEL_MODE=offline`) is the way to force saved answers. It is a start setting, not a harness button. It costs $0.
 - Model access on the hosted app uses managed identity. There are no keys to rotate in the app.
-- The Azure budget is `mpsdemo-monthly`, $40 a month, with alerts at 80% of actual spend and 100% of the forecast. October spend is $4.13 month to date as of 2026-10-18 about 05:00 Eastern Time (Azure Cost Management, resource group rg-mps-demo). The app is one Container Apps replica in East US 2, 0.25 vCPU and 0.5 GiB.
+- The Azure budget is `mpsdemo-monthly`, $40 a month, with alerts at 80% of actual spend and 100% of the forecast. October spend is $4.13 month to date as of 2026-10-18 about 05:00 Eastern Time (Azure Cost Management, resource group rg-mps-demo). The app is one Container Apps replica in East US 2, 0.5 vCPU and 1 GiB, always on. That size is about $33 more per month than 0.25 vCPU and 0.5 GiB. Bryan approved it after the replica's working set reached 590-673 MiB against the 0.5 GiB limit and failed probes restarted it on 18 Oct 2026. The $40 budget alert is unchanged.
 
 ## Alerts and incidents
 

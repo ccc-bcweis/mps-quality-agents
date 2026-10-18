@@ -69,18 +69,13 @@ public sealed class CausalTraceTests
                 now,
                 new { parameter, value = 4d, low = -100d, high = 100d }),
             CancellationToken.None);
-        var outcome = await spc.RaiseAsync(
-            new SpcSample(
-                new ToolId("E-02"),
-                "A",
-                parameter,
-                new ControlBaseline(0d, 1d, -100d, 100d),
-                [
-                    new TelemetryPoint(now.AddMinutes(-2), 0.2d),
-                    new TelemetryPoint(now.AddMinutes(-1), -0.1d),
-                    new TelemetryPoint(now, 4d),
-                ]),
-            CancellationToken.None);
+        var engine = new SpcRuleEngine(SpcRuleSettings.Shared);
+        engine.Observe(new SpcReading("E-02", "A", parameter, "periodic", now.AddMinutes(-1), 0.2d, 0.2d, 0d, 1d, -100d, 100d, correlationId, null));
+        var breaking = engine.Observe(new SpcReading("E-02", "A", parameter, "periodic", now, 4d, 4d, 0d, 1d, -100d, 100d, correlationId, null));
+        breaking.Should().NotBeNull();
+        breaking!.Action.Should().Be(SpcAction.Raise);
+        breaking.CorrelationId.Should().Be(correlationId);
+        var outcome = await spc.ApplyAsync(breaking, null, CancellationToken.None);
         outcome.Incident.Should().NotBeNull();
         outcome.Ticket.Should().NotBeNull();
 

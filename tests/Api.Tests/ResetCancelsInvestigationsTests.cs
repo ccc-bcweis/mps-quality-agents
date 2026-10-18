@@ -45,7 +45,7 @@ public sealed class ResetCancelsInvestigationsTests
         var client = factory.CreateClient();
         var plant = factory.Services.GetRequiredService<PlantSimulation>();
         var telemetry = factory.Services.GetRequiredService<TelemetryPublisher>();
-        var spc = factory.Services.GetRequiredService<StreamSpcPublisher>();
+        var spc = factory.Services.GetRequiredService<SpcRuleSubscriber>();
         var inFlight = factory.Services.GetRequiredService<InvestigationsInFlight>();
 
         // SC-3 steps the gas flow at once: the first readings break a rule and open a ticket, but far fewer readings
@@ -53,7 +53,6 @@ public sealed class ResetCancelsInvestigationsTests
         (await client.PostAsync("/api/injector/scenarios/SC-3", null)).EnsureSuccessStatusCode();
         plant.Advance(TimeSpan.FromSeconds(60));
         await telemetry.PublishPendingAsync(CancellationToken.None);
-        await spc.PublishAsync(CancellationToken.None);
         var waiting = DateTime.UtcNow.AddSeconds(10);
         while (inFlight.Running.Count == 0 && DateTime.UtcNow < waiting)
         {

@@ -5,15 +5,16 @@ using Mps.Simulator.Fleet;
 namespace Mps.Api.Live;
 
 /// <summary>
-/// Which live series get SPC limits and rule checks. Periodic series do; cumulative counters (a running count of
-/// wafers made) do not, because they climb by design. Anything charted with limits must be in <see cref="IsEvaluated"/>.
+/// Catalog helpers for charts and the console. Cumulative counters are not SPC series.
+/// <see cref="LimitSigma"/> and <see cref="RecentReadings"/> are the numbers the catalog shows.
+/// The rule engine does not use them as a gate; it evaluates every enabled reading from the bus.
 /// </summary>
 public static class SpcCoverage
 {
-    /// <summary>Limit rules applied to every periodic series, faulted or not: the control limit from spc-rules.yaml.</summary>
+    /// <summary>Control-limit sigma from spc-rules.yaml, shown with the chart. Not an evaluation pre-filter.</summary>
     public static double LimitSigma => Mps.Application.Spc.SpcRuleSettings.Shared.ControlLimitSigma;
 
-    /// <summary>How many recent readings a limit check looks at (spc-rules.yaml limitCheck.recentReadings).</summary>
+    /// <summary>Catalog figure for how many recent readings a limit check described (spc-rules.yaml limitCheck.recentReadings).</summary>
     public static int RecentReadings => Mps.Application.Spc.SpcRuleSettings.Shared.LimitCheck.RecentReadings;
 
     public static bool IsCumulative(string parameter, string? sensorId) =>

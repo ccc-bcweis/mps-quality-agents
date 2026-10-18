@@ -107,10 +107,9 @@ public sealed class OfflineScenarioTests
     {
         var plant = factory.Services.GetRequiredService<PlantSimulation>();
         var telemetry = factory.Services.GetRequiredService<TelemetryPublisher>();
-        var spc = factory.Services.GetRequiredService<StreamSpcPublisher>();
+        var spc = factory.Services.GetRequiredService<SpcRuleSubscriber>();
         plant.Advance(TimeSpan.FromMinutes(10));
         await telemetry.PublishPendingAsync(CancellationToken.None);
-        await spc.PublishAsync(CancellationToken.None);
         await spc.DrainAsync();
         return await client.PostAsync("/api/injector/scenarios/" + scenarioId, null);
     }
@@ -120,7 +119,7 @@ public sealed class OfflineScenarioTests
     {
         var plant = factory.Services.GetRequiredService<PlantSimulation>();
         var telemetry = factory.Services.GetRequiredService<TelemetryPublisher>();
-        var spc = factory.Services.GetRequiredService<StreamSpcPublisher>();
+        var spc = factory.Services.GetRequiredService<SpcRuleSubscriber>();
         // The live app holds the investigation until 20 or more readings since onset arrive (ShapeWait in
         // data/metadata/investigation.yaml). Stepped time has no such wait, so the first step carries about that many.
         // Off the wall clock a ramp develops at its natural pace (hours), so a ramp's first step carries the whole ramp.
@@ -134,7 +133,6 @@ public sealed class OfflineScenarioTests
             }
 
             await telemetry.PublishPendingAsync(CancellationToken.None);
-            await spc.PublishAsync(CancellationToken.None);
             await spc.DrainAsync();
             var finished = await FinishedOrNullAsync(client);
             if (finished is { } found)

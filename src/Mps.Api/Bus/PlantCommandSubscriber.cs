@@ -9,9 +9,9 @@ using Mps.Simulator.Scenarios;
 namespace Mps.Api.Bus;
 
 /// <summary>
-/// Applies a scenario or a manual fault when its command arrives. Scripted fault commands are records only:
-/// the scenario command already applied every signal, and applying them again would stack the fault.
-/// SC-6 runs like every other scenario; its oscilloscope sheet is added as one manual sample, not as a fault.
+/// Applies a scenario or a manual fault when its command arrives. A record-only fault command is the record of a
+/// signal the owning command already applied, so applying it again would stack the fault. Stopping a scenario
+/// or a fault drops that correlation's enterprise records.
 /// </summary>
 public sealed class PlantCommandSubscriber : IHostedService, IDisposable
 {
@@ -35,7 +35,9 @@ public sealed class PlantCommandSubscriber : IHostedService, IDisposable
     {
         _ = cancellationToken;
         _subscriptions.Add(_bus.Subscribe(EventTypes.ScenarioStart, OnScenario));
+        _subscriptions.Add(_bus.Subscribe(EventTypes.ScenarioStopped, OnScenarioStopped));
         _subscriptions.Add(_bus.Subscribe(EventTypes.FaultInject, OnFault));
+        _subscriptions.Add(_bus.Subscribe(EventTypes.FaultCleared, OnFaultCleared));
         return Task.CompletedTask;
     }
 
@@ -80,15 +82,38 @@ public sealed class PlantCommandSubscriber : IHostedService, IDisposable
             return ValueTask.CompletedTask;
         }
 
-        _board.Activate(scenario.Id, _plant.SimulatedNow);
         _plant.ApplyStream(scenario);
+        return ValueTask.CompletedTask;
+    }
+
+    private ValueTask OnScenarioStopped(EventEnvelope envelope, CancellationToken cancellationToken)
+    {
+        _ = cancellationToken;
+        var scenarioId = PayloadReader.String(envelope.Payload, "scenarioId");
+        if (scenarioId is null)
+        {
+            // The injector stop clears every fault on the plant, so every registered correlation goes with them.
+            _board.Clear();
+        }
+        else
+        {
+            _board.RemoveScenario(scenarioId);
+        }
+
+        return ValueTask.CompletedTask;
+    }
+
+    private ValueTask OnFaultCleared(EventEnvelope envelope, CancellationToken cancellationToken)
+    {
+        _ = cancellationToken;
+        _board.Remove(envelope.CorrelationId);
         return ValueTask.CompletedTask;
     }
 
     private ValueTask OnFault(EventEnvelope envelope, CancellationToken cancellationToken)
     {
         _ = cancellationToken;
-        if (PayloadReader.Bool(envelope.Payload, "scripted"))
+        if (PayloadReader.Bool(envelope.Payload, "recordOnly"))
         {
             return ValueTask.CompletedTask;
         }

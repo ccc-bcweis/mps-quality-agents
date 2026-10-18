@@ -1,5 +1,7 @@
 # ADR-012: Case lifecycle, alert clearing and stopping a scenario
 
+> Superseded in part by ADR-015 (2026-10-18): an alert clears only when the rule engine, subscribed to the bus, sees enough in-control readings. Containment still removes the fault. It does not clear the alert by itself.
+
 Status: Accepted (2026-10-15, Bryan Weis)
 
 ## Context

@@ -150,7 +150,7 @@ The durations above stay illustrative. The running demo adds these facts:
 - Control limits follow the recipe step at each reading. Each sensor keeps 600 readings. Older readings roll off.
 - Supplier notices are loaded only for the tool's own material lots.
 - CauseGuard escalates when a ruled-out record is cited as support or named as the cause of its own class. Mentioning it to dismiss it is allowed. The refused answer is stored and shown as "What the AI proposed (not accepted)".
-- Deploy is a manual `workflow_dispatch`. A merge does not deploy. The hosted app is one Container Apps replica on the `aspnet:10.0` image. CI jobs are build, web, slow tests, bicep, gitleaks, dependency review, and CodeQL analyze. None of them deploy.
+- Deploy is a manual `workflow_dispatch`. A merge does not deploy. The hosted app is one Container Apps replica, 0.5 vCPU and 1 GiB, on the `aspnet:10.0` image. CI jobs are build, web, slow tests, bicep, gitleaks, dependency review, and CodeQL analyze. None of them deploy.
 
 ## Glossary on the sheet
 

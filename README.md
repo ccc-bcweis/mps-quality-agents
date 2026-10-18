@@ -33,7 +33,7 @@ All companies, equipment, people and data in this repo are **fictional and synth
 
 The console is React 19.3.1, TypeScript 5.9.3, Vite 7.3.7, Tailwind, and Recharts 2.15.4. Tests use Vitest 3.2.7. Node is 22 in CI (`actions/setup-node`) and in `deploy/app.Dockerfile`. The repo has no `engines` field and no `.nvmrc`.
 
-Hosting is Azure Container Apps in East US 2: one replica, 0.25 vCPU and 0.5 GiB, image `mps-app` on `aspnet:10.0`. Easy Auth (Microsoft Entra). The hosted model is Azure OpenAI `gpt-5.4-mini` (`MODEL_MODE=azure`). Azure Container Registry, Application Insights, and the budget `mpsdemo-monthly` at $40 a month, with alerts at 80% of actual spend and 100% of the forecast. October spend is $4.13 month to date as of 2026-10-18 about 05:00 Eastern Time (Azure Cost Management, resource group rg-mps-demo). Offline mode costs $0.
+Hosting is Azure Container Apps in East US 2: one replica, 0.5 vCPU and 1 GiB, image `mps-app` on `aspnet:10.0`. Easy Auth (Microsoft Entra). The hosted model is Azure OpenAI `gpt-5.4-mini` (`MODEL_MODE=azure`). Azure Container Registry, Application Insights, and the budget `mpsdemo-monthly` at $40 a month, with alerts at 80% of actual spend and 100% of the forecast. October spend is $4.13 month to date as of 2026-10-18 about 05:00 Eastern Time (Azure Cost Management, resource group rg-mps-demo). The larger replica is about $33 more per month, approved after the 0.5 GiB replica restarted on failed probes on 18 Oct 2026 (working set 590-673 MiB). Offline mode costs $0.
 
 ## Clone and run
 

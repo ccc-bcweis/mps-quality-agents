@@ -8,7 +8,7 @@ The container setting `Mps__Model__DailyCapUsd` is `2`. That is the $2/day appli
 
 Other cost choices in the template:
 
-- One Container App serves the API and the built console. It scales from 0 to 3 replicas. The image is `<acrLoginServer>/mps-app:<tag>` after the workflow build. The first deploy uses the public ASP.NET runtime image only so the registry exists.
+- One Container App serves the API and the built console. `cpu` and `memory` in `infra/main.bicepparam` are `0.5` and `1Gi`. `minReplicas` and `maxReplicas` are 1. The deploy workflow passes that parameters file and does not set cpu or memory. The image is `<acrLoginServer>/mps-app:<tag>` after the workflow build. The first deploy uses the public ASP.NET runtime image only so the registry exists.
 - Azure Container Registry is Basic. The admin user is disabled. The app identity has AcrPull.
 - SQLite lives inside the container (`Data Source=/app/data/mps.db`), seeded on start, and is discarded with the replica. `deploySql` defaults to false. When it is true, Azure SQL is General Purpose serverless, 0.5 vCore minimum, auto-pause after 60 minutes, local backup redundancy, with no SQL password. The managed identity is the Entra-only administrator.
 - Log Analytics retention is 30 days on the PerGB2018 SKU.
@@ -16,4 +16,4 @@ Other cost choices in the template:
 - Key Vault is standard, RBAC, 7-day soft delete. The managed identity has Key Vault Secrets User.
 - `deployStaticWeb` defaults to false. The console is in the API image. Turning the parameter on creates a Standard Static Web App in `eastus2`, which is a fixed cost the demo does not need.
 
-Names derived from `namePrefix` (`mpsdemo` in the parameters file) must be globally unique at deploy time, including the registry (`mpsdemoacr`), the Key Vault, and the Azure OpenAI custom subdomain. Change the prefix before deploy if a name is taken. Do not put secrets in the parameters file. The API runs exactly one replica (`minReplicas` 1, `maxReplicas` 1) so demo state lives in one SQLite file and is not lost to scale-to-zero. One always-on replica adds a small idle cost.
+Names derived from `namePrefix` (`mpsdemo` in the parameters file) must be globally unique at deploy time, including the registry (`mpsdemoacr`), the Key Vault, and the Azure OpenAI custom subdomain. Change the prefix before deploy if a name is taken. Do not put secrets in the parameters file. The API runs exactly one replica (`minReplicas` 1, `maxReplicas` 1, 0.5 vCPU, 1 GiB) so demo state lives in one SQLite file and is not lost to scale-to-zero. Bryan approved about $33 more per month for that always-on size. On 18 Oct 2026 the replica's working set was 590-673 MiB against the 0.5 GiB limit, and failed probes restarted it. The Azure budget alert stays $40 a month.

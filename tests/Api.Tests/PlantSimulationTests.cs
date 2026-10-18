@@ -5,6 +5,7 @@ using System.Text.Json;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using Mps.Api.Bus;
 using Mps.Api.Live;
 using Mps.Domain.Identity;
 using Mps.Simulator.Telemetry;
@@ -21,13 +22,14 @@ public sealed class PlantSimulationTests
         await using var factory = new ApiFactory();
         var client = factory.CreateClient();
         var plant = factory.Services.GetRequiredService<PlantSimulation>();
-        var publisher = factory.Services.GetRequiredService<StreamSpcPublisher>();
+        var telemetry = factory.Services.GetRequiredService<TelemetryPublisher>();
+        var publisher = factory.Services.GetRequiredService<SpcRuleSubscriber>();
         plant.Advance(TimeSpan.FromSeconds(30));
         var onset = plant.SimulatedNow;
         plant.Inject(new FaultSignal("E-02", "E-02-A", "escTemperature", FaultShape.Step, MagnitudeKind.Sigma, 6d, onset));
         plant.Advance(TimeSpan.FromSeconds(30));
 
-        await publisher.PublishAsync(CancellationToken.None);
+        await telemetry.PublishPendingAsync(CancellationToken.None);
         await publisher.DrainAsync();
 
         var alerts = await client.GetFromJsonAsync<JsonElement>("/api/alerts?toolId=E-02", Json);

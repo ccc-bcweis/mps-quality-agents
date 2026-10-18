@@ -38,6 +38,8 @@ info:
     ticket, oldest first; Investigation gains round and maxRounds; InvestigationStage gains superseded (a round a
     person closed by adding evidence); EvidenceSource gains userProvided and EvidenceItem gains suppliedBy.
     A requestInfo decision carries the evidence text as comment and answers with the next round. All additive.
+    Fault injection accepts optional evidenceFaultId and evidence. Those records are registered under the
+    fault correlation. Earlier clients that omit them stay compatible.
     All names and data are synthetic.
   license:
     name: MIT
@@ -1858,6 +1860,168 @@ components:
           type: number
           minimum: 0
           description: Optional. The fault ends this many minutes after onset. Omit or 0 for no end.
+        evidenceFaultId:
+          type: string
+          description: Optional fault-catalog id. Its enterprise records are registered under this fault's correlation.
+        evidence:
+          $ref: "#/components/schemas/FaultEvidenceRequest"
+    FaultEvidenceRequest:
+      type: object
+      additionalProperties: false
+      description: Enterprise records sent with a fault. Dates stay spaced from anchorAt and shift to injection time.
+      properties:
+        anchorAt:
+          type: string
+          format: date-time
+          nullable: true
+        ecos:
+          type: array
+          items:
+            $ref: "#/components/schemas/FaultEcoRecord"
+        ncrs:
+          type: array
+          items:
+            $ref: "#/components/schemas/FaultNcrRecord"
+        workOrders:
+          type: array
+          items:
+            $ref: "#/components/schemas/FaultWorkOrderRecord"
+        calibrations:
+          type: array
+          items:
+            $ref: "#/components/schemas/FaultCalibrationRecord"
+        materialLots:
+          type: array
+          items:
+            $ref: "#/components/schemas/FaultMaterialLotRecord"
+        notices:
+          type: array
+          items:
+            $ref: "#/components/schemas/FaultNoticeRecord"
+        materialUses:
+          type: array
+          items:
+            $ref: "#/components/schemas/FaultMaterialUseRecord"
+    FaultEcoRecord:
+      type: object
+      additionalProperties: false
+      required: [ecoId, title, effectiveAt, changeSummary]
+      properties:
+        ecoId:
+          type: string
+        title:
+          type: string
+        toolId:
+          type: string
+          nullable: true
+        recipeId:
+          type: string
+          nullable: true
+        effectiveAt:
+          type: string
+          format: date-time
+        changeSummary:
+          type: string
+    FaultNcrRecord:
+      type: object
+      additionalProperties: false
+      required: [ncrId, toolId, title, openedAt]
+      properties:
+        ncrId:
+          type: string
+        toolId:
+          type: string
+        title:
+          type: string
+        openedAt:
+          type: string
+          format: date-time
+        lotId:
+          type: string
+          nullable: true
+    FaultWorkOrderRecord:
+      type: object
+      additionalProperties: false
+      required: [workOrderId, toolId, kind, performedAt, summary]
+      properties:
+        workOrderId:
+          type: string
+        toolId:
+          type: string
+        chamberId:
+          type: string
+          nullable: true
+        kind:
+          type: string
+        performedAt:
+          type: string
+          format: date-time
+        summary:
+          type: string
+    FaultCalibrationRecord:
+      type: object
+      additionalProperties: false
+      required: [calibrationId, toolId, instrument, dueAt]
+      properties:
+        calibrationId:
+          type: string
+        toolId:
+          type: string
+        instrument:
+          type: string
+        dueAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        isOverdue:
+          type: boolean
+    FaultMaterialLotRecord:
+      type: object
+      additionalProperties: false
+      required: [lotId, materialCode, supplierName, receivedAt]
+      properties:
+        lotId:
+          type: string
+        materialCode:
+          type: string
+        supplierName:
+          type: string
+        receivedAt:
+          type: string
+          format: date-time
+        noticeId:
+          type: string
+          nullable: true
+    FaultNoticeRecord:
+      type: object
+      additionalProperties: false
+      required: [noticeId, supplierName, materialCode, lotId, summary, issuedAt]
+      properties:
+        noticeId:
+          type: string
+        supplierName:
+          type: string
+        materialCode:
+          type: string
+        lotId:
+          type: string
+        summary:
+          type: string
+        issuedAt:
+          type: string
+          format: date-time
+    FaultMaterialUseRecord:
+      type: object
+      additionalProperties: false
+      required: [lotId, toolId]
+      properties:
+        lotId:
+          type: string
+        toolId:
+          type: string
     FaultInjectionAccepted:
       type: object
       additionalProperties: false

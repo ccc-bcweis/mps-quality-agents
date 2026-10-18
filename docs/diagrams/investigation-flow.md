@@ -159,7 +159,7 @@ The violet **AGENT** badge is on triage, hypotheses, tool calls, why-lines, rank
 
 ## Narrative
 
-An alert that clears the severity threshold is raised by **statistical process control** (SPC on the sheet) using Western Electric rules, not by a model. The rules **open a ticket**. The console moves from Alerts to Tickets and the lifecycle bar advances. The engineer opens the ticket. Nothing has been written to the quality system.
+An alert-tier signal is raised by **statistical process control** (SPC on the sheet) on each reading on the bus, using Western Electric rules and the spec window, not by a model. The rules **open a ticket**. A watch does not. The console moves from Alerts to Tickets and the lifecycle bar advances. The engineer opens the ticket. Nothing has been written to the quality system.
 
 The console then opens the **tool schematic**. This is the evidence entry point for a reader who does not live in the fab. SPEC 2.10 calls for one picture per tool family (deposition, etch, strip, clean) with the chamber, radio-frequency source, gas box and flow controllers, vacuum and pump, chuck and heater, and the wafer handler. Each sensor point shows the live value, the unit, and a status color, and opens its control chart. The card on the sheet names the chamber, gas, vacuum, chuck, and radio-frequency source, and says a sensor opens its chart. Heater and wafer handler are the same picture; the card does not have a sixth line. Sensor identity, type, and unit come from the fleet spec when that catalog exists (`sensors` with `id`, `type`, `unit`, `subsystem`, `schematicAnchor`). The schematic does not decide a cause. It is where the evidence starts.
 

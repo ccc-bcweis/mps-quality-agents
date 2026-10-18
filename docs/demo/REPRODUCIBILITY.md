@@ -44,13 +44,13 @@ The eight scenarios and the sentences below are `data/scenarios/catalog.yaml` (`
 | SC-3 | Supply-chain material | Bad CF4 gas lot PL-2044. Flow steps down on E-01 and E-02. | Immediate step |
 | SC-4 | Process drift | Slow chamber seasoning after a clean. Etch rate ramps down on E-01 chamber A. | Ramp 20 min / 2 min |
 | SC-5 | Supply-chain material | Precursor lot MX4419 at Northwater D-03 and Ironwood I-D-01. Film thickness steps down. | Immediate step |
-| SC-6 | Equipment calibration | Oscilloscope printout of RF source power oscillating on E-01. | Starts on confirm |
+| SC-6 | Equipment calibration | Oscilloscope printout of RF source power oscillating on E-01. The file and timing live in the scenario catalog. | Printout at plant time, then the oscillation |
 | SC-7 | Equipment calibration | Foreline pump bearing past its service interval on D-02. Vibration ramps up. | Ramp 25 min / 2 min 30 s |
 | SC-8 | Process drift | Operator edited the RF bias setpoint on E-03 without an engineering change order. | Immediate step |
 
 An alert fires when the rules see it, usually before a ramp finishes. Trigger a scenario from the demo harness bar (the scenario picker sits above the console) or from `POST /api/injector/scenarios/{id}`. The free-form fault form is the harness fault-injector panel and still posts `POST /api/faults`. Unknown ids return 404. Which screens are the harness and which are the application: `docs/demo/SCREENS.md`.
 
-A scenario starts at the moment it is run. Its records keep their spacing from the scenario onset, so the evidence reads the same on every run.
+A scenario starts at the moment it is run. Its records keep their spacing from the scenario onset, so the evidence reads the same on every run. Those records, and any records sent with an injected fault, are keyed by the fault correlation. The tools read the correlation of the investigation in progress. Two faults do not see each other's records. Stopping the injector, stopping one fault, or resetting the demo removes the entries for what stopped. The ambient scenario hint is only for model replay while that scenario request runs.
 
 ## Plant-data replay
 

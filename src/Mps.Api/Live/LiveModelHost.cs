@@ -106,16 +106,18 @@ public static class LiveModelHost
             var key = provider.GetRequiredService<Mps.Application.Decisions.ApprovalPolicy>().SigningKey;
             return new MafInvestigationWorkflow(
                 new StoreIncidentSource(provider.GetRequiredService<IServiceScopeFactory>()),
-                new InvestigationAgent(
-                    tools,
-                    gateway,
-                    prompts,
-                    provider.GetRequiredService<TimeProvider>(),
-                    measurements: provider.GetRequiredService<Mps.Application.Printouts.IManualMeasurementLog>(),
-                    // Waiting for readings only makes sense when the plant streams in real time; a stepped plant never sends more on its own.
-                    shapeWait: SimulationOptions.From(config) is { RealTime: true, Enabled: true }
-                        ? Mps.Agents.Investigation.ShapeWait.Load()
-                        : Mps.Agents.Investigation.ShapeWait.None),
+                new Mps.Api.Demo.CorrelationBoundInvestigationAgent(
+                    new InvestigationAgent(
+                        tools,
+                        gateway,
+                        prompts,
+                        provider.GetRequiredService<TimeProvider>(),
+                        measurements: provider.GetRequiredService<Mps.Application.Printouts.IManualMeasurementLog>(),
+                        // Waiting for readings only makes sense when the plant streams in real time; a stepped plant never sends more on its own.
+                        shapeWait: SimulationOptions.From(config) is { RealTime: true, Enabled: true }
+                            ? Mps.Agents.Investigation.ShapeWait.Load()
+                            : Mps.Agents.Investigation.ShapeWait.None),
+                    provider.GetRequiredService<Mps.Api.Demo.ScenarioEvidenceBoard>()),
                 new ResolutionAgent(gateway, prompts),
                 key,
                 provider.GetRequiredService<TimeProvider>(),

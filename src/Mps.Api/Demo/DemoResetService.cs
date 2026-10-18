@@ -44,7 +44,7 @@ public sealed class DemoResetService
 
     private readonly QualityDbContext _db;
     private readonly PlantSimulation _plant;
-    private readonly StreamSpcPublisher _traces;
+    private readonly SpcRuleSubscriber _traces;
     private readonly SqliteEventStore _events;
     private readonly ICascadeDirectory _cascade;
     private readonly ILifecycleEventSink _sink;
@@ -65,7 +65,7 @@ public sealed class DemoResetService
     public DemoResetService(
         QualityDbContext db,
         PlantSimulation plant,
-        StreamSpcPublisher traces,
+        SpcRuleSubscriber traces,
         SqliteEventStore events,
         ICascadeDirectory cascade,
         ILifecycleEventSink sink,
@@ -197,6 +197,8 @@ public sealed class DemoResetService
         // so the clock moves on the first tick after the reset reports done, and those readings fill the telemetry window.
         _events.ClearTelemetry();
         _plant.Reset();
+        _traces.ResetTicketCap();
+        await _traces.RebuildFromStoreAsync(cancellationToken).ConfigureAwait(false);
         return await BaselineAsync(published.EventId, "hard", cancellationToken).ConfigureAwait(false);
     }
 
@@ -207,6 +209,8 @@ public sealed class DemoResetService
         await CloseOpenWorkAsync(published.EventId, published.CorrelationId, cancellationToken).ConfigureAwait(false);
         ClearOverlays();
         _plant.Reset();
+        _traces.ResetTicketCap();
+        await _traces.RebuildFromStoreAsync(cancellationToken).ConfigureAwait(false);
         _progress.Report("nominal", "Sending a fresh healthy reading for every sensor.");
         await PublishNominalPulseAsync(published.EventId, published.CorrelationId, cancellationToken).ConfigureAwait(false);
         return await BaselineAsync(published.EventId, "soft", cancellationToken).ConfigureAwait(false);
@@ -346,6 +350,7 @@ public sealed class DemoResetService
                             unit = sensor.Unit,
                             low = sensor.Limits.Minimum,
                             high = sensor.Limits.Maximum,
+                            kind = sensor.Kind,
                         }));
                     if (chunk.Count >= ChunkSize)
                     {

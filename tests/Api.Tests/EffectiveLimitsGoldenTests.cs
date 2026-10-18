@@ -62,7 +62,18 @@ public sealed class EffectiveLimitsGoldenTests
         Put("spc.limitCheck.sigma (SpcCoverage)", Mps.Api.Live.SpcCoverage.LimitSigma);
         Put("spc.limitCheck.readings (SpcCoverage)", Mps.Api.Live.SpcCoverage.RecentReadings);
         Put("spc.clearing", $"{spc.Clearing.Readings} readings within {Text(spc.Clearing.Sigma)} sigma");
-        Put("spc.recoveryWatch (StreamSpcPublisher)", Member(typeof(Mps.Api.Live.StreamSpcPublisher), "WatchFor"));
+        Put("spc.rule1.tier", spc.WesternElectric.Rule1.Tier);
+        Put("spc.rule2.tier", spc.WesternElectric.Rule2.Tier);
+        Put("spc.rule3.tier", spc.WesternElectric.Rule3.Tier);
+        Put("spc.rule4.tier", spc.WesternElectric.Rule4.Tier);
+        Put("spc.rule4.minMagnitudeSigma", spc.WesternElectric.Rule4.MinMagnitudeSigma);
+        Put("spc.nelsonRising.tier", spc.NelsonRising.Tier);
+        Put("spc.nelsonRising.minMagnitudeSigma", spc.NelsonRising.MinMagnitudeSigma);
+        Put("spc.nelsonFalling", spc.NelsonFalling.Count + " " + spc.NelsonFalling.Tier + " min " + Text(spc.NelsonFalling.MinMagnitudeSigma));
+        Put("spc.specWindow.tier", spc.SpecWindow.Tier);
+        Put("spc.watchExpiry", spc.WatchExpiry.Readings + " readings or " + Text(spc.WatchExpiry.Minutes) + " minutes");
+        Put("spc.ticketCap.perToolPerHour", spc.TicketCap.PerToolPerHour);
+        Put("spc.sensors.enabledKinds", string.Join(',', spc.Sensors.EnabledKinds));
         using (var scope = factory.Services.CreateScope())
         {
             var alerts = scope.ServiceProvider.GetRequiredService<SpcAlertService>();
@@ -157,7 +168,11 @@ public sealed class EffectiveLimitsGoldenTests
         limits.GetProperty("zoneSigmas").EnumerateArray().Select(zone => zone.GetDouble()).Should()
             .Equal([spc.WesternElectric.Rule3.Sigma, spc.WesternElectric.Rule2.Sigma, spc.WesternElectric.Rule1.Sigma], "the chart zones are the rule sigmas");
         limits.GetProperty("zoneSigmas")[2].GetDouble().Should().Be(spc.ControlLimitSigma, "the chart UCL sits on the control limit the rules check");
-        ((TimeSpan)Member(typeof(Mps.Api.Live.StreamSpcPublisher), "WatchFor")!).Should().Be(spc.RecoveryWatch);
+        spc.WesternElectric.Rule1.Tier.Should().Be("alert");
+        spc.WesternElectric.Rule4.Tier.Should().Be("watch");
+        spc.WesternElectric.Rule4.MinMagnitudeSigma.Should().BeGreaterThan(0);
+        spc.WatchExpiry.Readings.Should().BeGreaterThan(0);
+        spc.TicketCap.PerToolPerHour.Should().BeGreaterThan(0);
         using (var scope = factory.Services.CreateScope())
         {
             var alerts = scope.ServiceProvider.GetRequiredService<SpcAlertService>();

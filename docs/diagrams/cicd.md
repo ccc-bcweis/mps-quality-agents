@@ -45,7 +45,7 @@ flowchart LR
     SKIP["Fork without secrets skips"]
     OIDC["OIDC trusts azure-demo"]
     PUSH["Build image mps-app"]
-    APPLY["One replica, aspnet 10.0"]
+    APPLY["One replica, 0.5 vCPU, 1 GiB, aspnet 10.0"]
   end
 
   SMOKE["Smoke - health 200, API 401, landing redirect"]

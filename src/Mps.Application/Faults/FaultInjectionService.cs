@@ -21,8 +21,10 @@ public sealed record FaultInjectionRequest(
     string? CorrelationId = null,
     bool PublishCommand = true,
     Guid? FaultId = null,
-    bool Scripted = false,
-    double? DurationMinutes = null);
+    bool RecordOnly = false,
+    double? DurationMinutes = null,
+    string? EvidenceFaultId = null,
+    FaultEvidenceAttachment? Evidence = null);
 
 public sealed record FaultAccepted(Guid FaultId, string CorrelationId, Guid IncidentId);
 
@@ -51,6 +53,8 @@ public sealed class FaultInjectionService : IFaultInjectionService
     private readonly ILifecycleEventSink? _events;
     private readonly ICascadeDirectory? _cascade;
     private readonly ConfounderBoard? _confounders;
+    private readonly IFaultEvidenceBoard? _evidence;
+    private readonly IFaultEvidenceCatalog? _evidenceCatalog;
 
     public FaultInjectionService(
         IFleetCatalog fleet,
@@ -59,7 +63,9 @@ public sealed class FaultInjectionService : IFaultInjectionService
         TimeProvider time,
         ILifecycleEventSink? events = null,
         ICascadeDirectory? cascade = null,
-        ConfounderBoard? confounders = null)
+        ConfounderBoard? confounders = null,
+        IFaultEvidenceBoard? evidence = null,
+        IFaultEvidenceCatalog? evidenceCatalog = null)
     {
         ArgumentNullException.ThrowIfNull(fleet);
         ArgumentNullException.ThrowIfNull(faults);
@@ -72,6 +78,8 @@ public sealed class FaultInjectionService : IFaultInjectionService
         _events = events;
         _cascade = cascade;
         _confounders = confounders;
+        _evidence = evidence;
+        _evidenceCatalog = evidenceCatalog;
     }
 
     public async Task<FaultAccepted> InjectAsync(FaultInjectionRequest request, CancellationToken cancellationToken)
@@ -108,26 +116,37 @@ public sealed class FaultInjectionService : IFaultInjectionService
         var correlationId = request.CorrelationId
             ?? CommandAmbient.CorrelationId
             ?? "fault-" + faultId.ToString("N");
+        var attachment = ResolveEvidence(request);
         var shape = request.Shape.Trim().ToLowerInvariant();
         var category = ToCamelCase(request.RootCauseCategory.ToString());
         var parent = CommandAmbient.EventId;
 
-        // Misleading records (to rule out). Scripted scenarios carry their own confounders in their evidence files.
+        // Misleading records (to rule out). A record-only fault already brings its own records.
         IReadOnlyList<string> confounderIds = [];
-        if (request.Confounders && !request.Scripted && _confounders is not null)
+        if (request.Confounders && !request.RecordOnly && _confounders is not null)
         {
             var written = ConfounderFactory.For(request.RootCauseCategory, toolId, string.IsNullOrWhiteSpace(request.ChamberId) ? null : request.ChamberId.Trim(), faultId, now);
             _confounders.Add(written);
             confounderIds = written.RecordIds;
         }
 
-        // Ground truth (SPEC 2.1): the real cause as business records the agents read. Scripted scenarios bring their own.
+        // Ground truth (SPEC 2.1): the real cause as business records the agents read. A record-only fault brings its own.
         IReadOnlyList<string> causeIds = [];
-        if (!request.Scripted && _confounders is not null)
+        if (!request.RecordOnly && _confounders is not null)
         {
             var cause = GroundTruthFactory.For(request.RootCauseCategory, toolId, string.IsNullOrWhiteSpace(request.ChamberId) ? null : request.ChamberId.Trim(), request.Parameter.Trim(), faultId, now);
             _confounders.AddCause(cause);
             causeIds = cause.RecordIds;
+        }
+
+        if (attachment is not null)
+        {
+            if (_evidence is null)
+            {
+                throw new InvalidOperationException("Fault evidence was supplied but no evidence board is configured.");
+            }
+
+            _evidence.RegisterRecords(correlationId, attachment, now);
         }
 
         if (request.PublishCommand && _events is not null)
@@ -151,7 +170,7 @@ public sealed class FaultInjectionService : IFaultInjectionService
                         shape,
                         magnitude = request.Magnitude,
                         rootCauseCategory = category,
-                        scripted = request.Scripted,
+                        recordOnly = request.RecordOnly,
                         durationMinutes = request.DurationMinutes is > 0 ? request.DurationMinutes : null,
                         confounders = request.Confounders,
                         confounderRecordIds = confounderIds,
@@ -177,6 +196,28 @@ public sealed class FaultInjectionService : IFaultInjectionService
         await _faults.AddAsync(fault, cancellationToken).ConfigureAwait(false);
         await _notifier.FaultInjectedAsync(faultId, correlationId, fault.ToolId, cancellationToken).ConfigureAwait(false);
         return new FaultAccepted(faultId, correlationId, Guid.Empty);
+    }
+
+    private FaultEvidenceAttachment? ResolveEvidence(FaultInjectionRequest request)
+    {
+        FaultEvidenceAttachment? fromCatalog = null;
+        if (!string.IsNullOrWhiteSpace(request.EvidenceFaultId))
+        {
+            if (_evidenceCatalog is null || !_evidenceCatalog.TryGet(request.EvidenceFaultId, out var found))
+            {
+                throw new IntakeValidationException("Fault evidence was not found.");
+            }
+
+            fromCatalog = found;
+        }
+
+        var inline = request.Evidence is { IsEmpty: false } ? request.Evidence : null;
+        if (fromCatalog is null)
+        {
+            return inline;
+        }
+
+        return inline is null ? fromCatalog : FaultEvidenceAttachment.Merge(fromCatalog, inline);
     }
 
     private static string ToCamelCase(string pascal)

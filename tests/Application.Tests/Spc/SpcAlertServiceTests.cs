@@ -8,7 +8,6 @@ using Mps.Application.Tests.Metadata;
 using Mps.Domain.Equipment;
 using Mps.Domain.Identity;
 using Mps.Domain.Incidents;
-using Mps.Domain.Telemetry;
 
 namespace Mps.Application.Tests.Spc;
 
@@ -17,9 +16,10 @@ public sealed class SpcAlertServiceTests
     [Fact]
     public async Task AHighRuleOpensOneAlertAndOneTicket()
     {
-        var fixture = new Fixture();
+        var drive = new SpcDrive();
 
-        var outcome = await fixture.Service.RaiseAsync(SpcSeries.Sample(0d, 3.5d), CancellationToken.None);
+        await drive.PushAsync("escTemperature", 0, 0d);
+        var outcome = await drive.PushAsync("escTemperature", 1, 3.5d);
 
         outcome.Debounced.Should().BeFalse();
         outcome.Alert.Should().NotBeNull();
@@ -31,165 +31,146 @@ public sealed class SpcAlertServiceTests
         outcome.Incident!.Channel.Should().Be(IncidentChannel.IotSpcAlert);
         outcome.Incident.Stage.Should().Be(IncidentStage.TicketOpened);
         outcome.Ticket.IncidentId.Should().Be(outcome.Incident.Id);
-        fixture.Ticketing.Tickets.Should().ContainSingle();
+        drive.Ticketing.Tickets.Should().ContainSingle();
     }
 
     [Fact]
     public async Task ALowTrendAlertsWithoutOpeningATicket()
     {
-        var fixture = new Fixture();
-        var baseline = new ControlBaseline(0d, 10d, null, null);
-        var sample = new SpcSample(
-            SpcSeries.Tool,
-            "A",
-            "rfHours",
-            baseline,
-            SpcSeries.Values(0d, 0.1d, 0.2d, 0.3d, 0.4d, 0.5d));
+        var drive = new SpcDrive();
+        SpcAlertOutcome? outcome = null;
+        var index = 0;
+        foreach (var value in new[] { 0d, 0.4d, 0.8d, 1.2d, 1.6d, 2.0d })
+        {
+            outcome = await drive.PushAsync("rfHours", index, value);
+            index++;
+        }
 
-        var outcome = await fixture.Service.RaiseAsync(sample, CancellationToken.None);
-
-        outcome.Alert.Should().NotBeNull();
+        outcome!.Alert.Should().NotBeNull();
         outcome.Alert!.Severity.Should().Be(Severity.Low);
-        outcome.Alert.Rule.Should().Be(SpcRuleNames.NelsonSixRising);
+        outcome.Alert.Rule.Should().Contain(SpcRuleNames.NelsonSixRising);
         outcome.Ticket.Should().BeNull();
         outcome.Incident.Should().BeNull();
-        fixture.Ticketing.Tickets.Should().BeEmpty();
+        drive.Ticketing.Tickets.Should().BeEmpty();
     }
 
     [Fact]
     public async Task InControlSamplesDoNotAlert()
     {
-        var fixture = new Fixture();
+        var drive = new SpcDrive();
+        foreach (var value in new[] { 0.2d, -0.1d, 0.4d, -0.3d, 0.1d })
+        {
+            var outcome = await drive.PushAsync("escTemperature", drive.Next, value);
+            outcome.Alert.Should().BeNull();
+            outcome.Ticket.Should().BeNull();
+        }
 
-        var outcome = await fixture.Service.RaiseAsync(
-            SpcSeries.Sample(0.2, -0.1, 0.4, -0.3, 0.1),
-            CancellationToken.None);
-
-        outcome.Violations.Should().BeEmpty();
-        outcome.Alert.Should().BeNull();
-        outcome.Ticket.Should().BeNull();
+        drive.Alerts.Alerts.Should().BeEmpty();
     }
 
     [Fact]
     public async Task ARepeatInsideTheDebounceWindowDoesNotOpenAnotherAlertOrTicket()
     {
-        var fixture = new Fixture();
-        var sample = SpcSeries.Sample(0d, 3.5d);
-
-        var first = await fixture.Service.RaiseAsync(sample, CancellationToken.None);
-        var second = await fixture.Service.RaiseAsync(sample, CancellationToken.None);
+        var drive = new SpcDrive();
+        var first = await drive.PushAsync("escTemperature", 1, 3.5d);
+        var second = await drive.PushAsync("escTemperature", 2, 3.5d);
 
         first.Ticket.Should().NotBeNull();
-        second.Debounced.Should().BeTrue();
         second.Alert.Should().BeNull();
         second.Ticket.Should().BeNull();
-        fixture.Alerts.Alerts.Should().ContainSingle();
-        fixture.Ticketing.Tickets.Should().ContainSingle();
+        drive.Alerts.Alerts.Should().ContainSingle();
+        drive.Ticketing.Tickets.Should().ContainSingle();
     }
 
     [Fact]
     public async Task AnotherParameterIsNotDebouncedWithTheFirst()
     {
-        var fixture = new Fixture();
-        var pressure = new SpcSample(SpcSeries.Tool, "A", "chamberPressure", SpcSeries.Unit, SpcSeries.Values(4d));
-        var temperature = new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, SpcSeries.Values(4d));
-
-        await fixture.Service.RaiseAsync(pressure, CancellationToken.None);
-        var second = await fixture.Service.RaiseAsync(temperature, CancellationToken.None);
+        var drive = new SpcDrive();
+        await drive.PushAsync("chamberPressure", 0, 4d);
+        var second = await drive.PushAsync("escTemperature", 0, 4d);
 
         second.Debounced.Should().BeFalse();
         second.Ticket.Should().NotBeNull();
-        fixture.Alerts.Alerts.Should().HaveCount(2);
+        drive.Alerts.Alerts.Should().HaveCount(2);
     }
 
     [Fact]
-    public async Task ALaterExcursionWhileStillActiveUpdatesTheSameAlert()
+    public async Task ALaterPointOnTheSameRuleDoesNotOpenAnotherTicket()
     {
-        var fixture = new Fixture();
-        await fixture.Service.RaiseAsync(SpcSeries.Sample(4d), CancellationToken.None);
-        var later = new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, SpcSeries.Shifted(TimeSpan.FromMinutes(10), 4d));
+        var drive = new SpcDrive();
+        var first = await drive.PushAsync("escTemperature", 0, 4d);
+        var second = await drive.PushAsync("escTemperature", 10, 4d);
 
-        var second = await fixture.Service.RaiseAsync(later, CancellationToken.None);
-
-        second.Debounced.Should().BeTrue();
-        var alert = fixture.Alerts.Alerts.Should().ContainSingle().Subject;
-        alert.LastSeenAt.Should().Be(SpcSeries.Start.AddMinutes(10));
-        alert.Occurrences.Should().Be(2);
-        fixture.Ticketing.Tickets.Should().ContainSingle();
+        second.Ticket.Should().BeNull();
+        var alert = drive.Alerts.Alerts.Should().ContainSingle().Subject;
+        alert.Id.Should().Be(first.Alert!.Id);
+        alert.IsActive.Should().BeTrue();
+        drive.Ticketing.Tickets.Should().ContainSingle();
     }
 
     [Fact]
-    public async Task ASustainedStepForSeventyMinutesKeepsExactlyOneAlertPerSignal()
+    public async Task ASustainedStepKeepsExactlyOneAlertPerSignal()
     {
-        // SC-3: CF4 flow steps down and stays down. 15-second samples; the publisher sends the last 20 points each tick.
-        var fixture = new Fixture();
-        var points = new List<TelemetryPoint>();
-        for (var index = 0; index < 20; index++)
+        var drive = new SpcDrive();
+        for (var index = 0; index < 40; index++)
         {
-            points.Add(new TelemetryPoint(SpcSeries.Start.AddSeconds(15 * index), index % 2 == 0 ? 0.1d : -0.1d));
+            await drive.PushAsync("cf4Flow", index, -4d + (index % 2 == 0 ? 0.2d : -0.2d));
         }
 
-        for (var index = 20; index < 20 + (70 * 4); index++)
-        {
-            points.Add(new TelemetryPoint(SpcSeries.Start.AddSeconds(15 * index), -4d + (index % 2 == 0 ? 0.2d : -0.2d)));
-            await fixture.Service.RaiseAsync(new SpcSample(SpcSeries.Tool, "A", "cf4Flow", SpcSeries.Unit, points.Skip(points.Count - 20).ToArray()), CancellationToken.None);
-        }
-
-        var alert = fixture.Alerts.Alerts.Should().ContainSingle("one signal in one sustained condition is one alert").Subject;
+        var alert = drive.Alerts.Alerts.Should().ContainSingle("one signal in one sustained condition is one alert").Subject;
         alert.IsActive.Should().BeTrue();
         alert.Severity.Should().BeOneOf(Severity.High, Severity.Critical);
-        alert.LastSeenAt.Should().BeAfter(alert.RaisedAt.AddMinutes(60));
-        // Occurrences counts distinct readings that broke a rule, not evaluation passes: at most one per sample.
-        alert.Occurrences.Should().BeInRange(60 * 4, 70 * 4, "the count is distinct out-of-limit readings, not rule checks");
         alert.Rule.Split('+').Should().OnlyHaveUniqueItems();
-        fixture.Ticketing.Tickets.Should().ContainSingle();
+        alert.Occurrences.Should().BeLessThan(20, "the store is written when the rule state changes, not on every reading");
+        drive.Ticketing.Tickets.Should().ContainSingle();
     }
 
     [Fact]
     public async Task AWatchThatEscalatesToAlarmUpgradesTheSameAlertAndOpensTheTicket()
     {
-        var fixture = new Fixture();
-        var watch = await fixture.Service.RaiseAsync(SpcSeries.Sample(0d, 0.1d, 0.2d, 0.3d, 0.4d, 0.5d), CancellationToken.None);
-        watch.Alert!.Severity.Should().Be(Severity.Low);
-        fixture.Ticketing.Tickets.Should().BeEmpty();
+        var drive = new SpcDrive();
+        SpcAlertOutcome? watch = null;
+        var index = 0;
+        foreach (var value in new[] { 0d, 0.4d, 0.8d, 1.2d, 1.6d, 2.0d })
+        {
+            watch = await drive.PushAsync("escTemperature", index, value);
+            index++;
+        }
 
-        var alarm = await fixture.Service.RaiseAsync(
-            new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, SpcSeries.Values(0d, 0.1d, 0.2d, 0.3d, 0.4d, 0.5d, 4.5d)),
-            CancellationToken.None);
+        watch!.Alert!.Severity.Should().Be(Severity.Low);
+        drive.Ticketing.Tickets.Should().BeEmpty();
 
-        var alert = fixture.Alerts.Alerts.Should().ContainSingle().Subject;
+        var alarm = await drive.PushAsync("escTemperature", index, 4.5d);
+
+        var alert = drive.Alerts.Alerts.Should().ContainSingle().Subject;
         alert.Id.Should().Be(watch.Alert.Id);
         alert.Severity.Should().BeOneOf(Severity.High, Severity.Critical);
-        alert.Rule.Should().StartWith(SpcRuleNames.NelsonSixRising).And.Contain("western-electric-1");
+        alert.Rule.Should().Contain(SpcRuleNames.NelsonSixRising).And.Contain(SpcRuleNames.WesternElectric1);
         alarm.Ticket.Should().NotBeNull("an escalation to alarm opens the ticket, as a new alarm would");
-        fixture.Ticketing.Tickets.Should().ContainSingle();
+        drive.Ticketing.Tickets.Should().ContainSingle();
     }
 
     [Fact]
     public async Task AClearFollowedByANewViolationRaisesASecondAlert()
     {
-        var fixture = new Fixture();
-        await fixture.Service.RaiseAsync(SpcSeries.Sample(0d, 4d), CancellationToken.None);
-        var nominal = SpcSeries.Shifted(TimeSpan.FromMinutes(2), 0d, 0.1d, -0.2d, 0.3d, 0d, 0.1d, -0.1d, 0.2d);
-        await fixture.Service.RaiseAsync(new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, nominal), CancellationToken.None);
-        fixture.Alerts.Alerts.Single().IsActive.Should().BeFalse();
+        var drive = new SpcDrive();
+        await drive.PushAsync("escTemperature", 0, 4d);
+        await drive.RecoverAsync("escTemperature", 1);
+        drive.Alerts.Alerts.Single().IsActive.Should().BeFalse();
 
-        var again = nominal.Concat(SpcSeries.Shifted(TimeSpan.FromMinutes(30), 4.2d)).ToArray();
-        var outcome = await fixture.Service.RaiseAsync(new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, again), CancellationToken.None);
+        var outcome = await drive.PushAsync("escTemperature", 30, 4.2d);
 
         outcome.Alert.Should().NotBeNull();
-        fixture.Alerts.Alerts.Should().HaveCount(2);
-        fixture.Alerts.Alerts.Count(item => item.IsActive).Should().Be(1);
+        drive.Alerts.Alerts.Should().HaveCount(2);
+        drive.Alerts.Alerts.Count(item => item.IsActive).Should().Be(1);
     }
 
     [Fact]
     public async Task ASpecWindowBreachAboveTheThresholdOpensATicket()
     {
-        var fixture = new Fixture();
-        var baseline = new ControlBaseline(50d, 5d, 40d, 60d);
-        var sample = new SpcSample(SpcSeries.Tool, null, "chamberPressure", baseline, SpcSeries.Values(50d, 61d));
-
-        var outcome = await fixture.Service.RaiseAsync(sample, CancellationToken.None);
+        var drive = new SpcDrive();
+        await drive.PushAsync("chamberPressure", 0, 0d, raw: 50d, center: 50d, sigma: 5d, specLow: 40d, specHigh: 60d, chamber: null);
+        var outcome = await drive.PushAsync("chamberPressure", 1, 2.2d, raw: 61d, center: 50d, sigma: 5d, specLow: 40d, specHigh: 60d, chamber: null);
 
         outcome.Alert.Should().NotBeNull();
         outcome.Alert!.Rule.Should().Contain(SpcRuleNames.Window);
@@ -200,112 +181,193 @@ public sealed class SpcAlertServiceTests
     [Fact]
     public async Task AnAlertClearsAfterEightInControlReadingsInARow()
     {
-        var fixture = new Fixture();
-        var raised = await fixture.Service.RaiseAsync(SpcSeries.Sample(0d, 4d), CancellationToken.None);
+        var drive = new SpcDrive();
+        var raised = await drive.PushAsync("escTemperature", 0, 4d);
         raised.Alert.Should().NotBeNull();
         raised.Alert!.IsActive.Should().BeTrue();
 
-        var seven = new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, SpcSeries.Shifted(TimeSpan.FromMinutes(2), 0d, 0.1d, -0.2d, 0.3d, 0d, 0.1d, -0.1d));
-        await fixture.Service.RaiseAsync(seven, CancellationToken.None);
-        fixture.Alerts.Alerts.Single().IsActive.Should().BeTrue();
+        await drive.PushAsync("escTemperature", 1, 0d);
+        await drive.PushAsync("escTemperature", 2, 0.1d);
+        await drive.PushAsync("escTemperature", 3, -0.2d);
+        await drive.PushAsync("escTemperature", 4, 0.3d);
+        await drive.PushAsync("escTemperature", 5, 0d);
+        await drive.PushAsync("escTemperature", 6, 0.1d);
+        await drive.PushAsync("escTemperature", 7, -0.1d);
+        drive.Alerts.Alerts.Single().IsActive.Should().BeTrue();
 
-        var eight = new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, SpcSeries.Shifted(TimeSpan.FromMinutes(2), 0d, 0.1d, -0.2d, 0.3d, 0d, 0.1d, -0.1d, 0.2d));
-        await fixture.Service.RaiseAsync(eight, CancellationToken.None);
-        var alert = fixture.Alerts.Alerts.Single();
+        var cleared = await drive.PushAsync("escTemperature", 8, 0.2d);
+        var alert = drive.Alerts.Alerts.Single();
         alert.IsActive.Should().BeFalse();
         alert.Status.Should().Be("cleared");
-        alert.ClearedAt.Should().Be(SpcSeries.Start.AddMinutes(9));
+        alert.ClearedAt.Should().Be(SpcSeries.Start.AddMinutes(8));
+        cleared.Alert.Should().BeSameAs(alert);
     }
 
     [Fact]
-    public async Task AClearedPointDoesNotRaiseAgainFromALaterWindow()
+    public async Task AClearedSeriesStaysClearUntilANewViolation()
     {
-        // A point alerts once. After the alert clears, a window that still holds the old breaking point must not reopen it.
-        var fixture = new Fixture();
-        await fixture.Service.RaiseAsync(SpcSeries.Sample(0d, 4d), CancellationToken.None);
-        var nominal = SpcSeries.Shifted(TimeSpan.FromMinutes(2), 0d, 0.1d, -0.2d, 0.3d, 0d, 0.1d, -0.1d, 0.2d);
-        await fixture.Service.RaiseAsync(new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, nominal), CancellationToken.None);
-        fixture.Alerts.Alerts.Single().IsActive.Should().BeFalse();
+        var drive = new SpcDrive();
+        await drive.PushAsync("escTemperature", 0, 4d);
+        await drive.RecoverAsync("escTemperature", 1);
+        await drive.PushAsync("escTemperature", 20, 0.1d);
+        await drive.PushAsync("escTemperature", 21, -0.1d);
 
-        var window = SpcSeries.Values(0d, 4d).Concat(nominal).ToArray();
-        await fixture.Service.RaiseAsync(new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, window), CancellationToken.None);
-
-        fixture.Alerts.Alerts.Should().ContainSingle().Which.IsActive.Should().BeFalse();
+        drive.Alerts.Alerts.Should().ContainSingle().Which.IsActive.Should().BeFalse();
     }
 
     [Fact]
-    public async Task SlowDriftLikeSc4At10xStaysActiveEscalatesToAlarmAndOpensATicket()
+    public async Task AnAlertClearsAfterARestartWhenNominalReadingsArrive()
     {
-        // SC-4: etch rate ramps down about 3.5 sigma, 15-second samples, the publisher sends the last 20 points each tick.
-        var fixture = new Fixture();
-        var values = new List<double>();
-        for (var index = 0; index < 120; index++)
-        {
-            var ramp = -3.5d * Math.Min(1d, index / 90d);
-            values.Add(ramp + (index % 2 == 0 ? 0.15d : -0.15d));
-        }
+        var drive = new SpcDrive();
+        await drive.PushAsync("escTemperature", 0, 4d);
+        var stored = drive.Alerts.Alerts.Should().ContainSingle().Subject;
+        stored.IsActive.Should().BeTrue();
 
-        var raisedAny = false;
-        for (var count = 1; count <= values.Count; count++)
+        var restarted = new SpcRuleEngine(drive.Settings);
+        restarted.Rebuild(
+        [
+            new SpcSeriesSeed(stored.ToolId.ToString(), stored.ChamberId, stored.Parameter, stored.Severity, stored.Rule, stored.CorrelationId, stored.LastSeenAt),
+        ]);
+        for (var index = 1; index <= 8; index++)
         {
-            var points = values.Take(count).Select((value, index) => new TelemetryPoint(SpcSeries.Start.AddSeconds(15 * index), value)).ToArray();
-            var sample = new SpcSample(SpcSeries.Tool, "A", "etchRate", SpcSeries.Unit, points.Skip(Math.Max(0, points.Length - 20)).ToArray());
-            await fixture.Service.RaiseAsync(sample, CancellationToken.None);
-            raisedAny |= fixture.Alerts.Alerts.Count > 0;
-            if (raisedAny)
+            var observation = restarted.Observe(SpcDrive.Reading("escTemperature", index, index % 2 == 0 ? 0.1d : -0.1d));
+            if (observation is not null && observation.Action != SpcAction.None)
             {
-                fixture.Alerts.Alerts.Should().Contain(alert => alert.IsActive, $"the drift is still out of control at point {count}");
-                fixture.Alerts.Alerts.Should().OnlyContain(alert => alert.IsActive, $"nothing clears mid-drift (point {count})");
+                await drive.Service.ApplyAsync(observation, null, CancellationToken.None);
             }
         }
 
-        fixture.Alerts.Alerts.Should().Contain(alert => alert.Severity >= Severity.High, "crossing 3 sigma escalates the watch to an alarm");
-        (await fixture.Incidents.ListAsync(CancellationToken.None)).Should().NotBeEmpty("an alarm opens an incident for investigation");
-        fixture.Ticketing.Tickets.Should().NotBeEmpty("an alarm opens a ticket");
+        stored.IsActive.Should().BeFalse();
+    }
 
-        // The fault ends: back to center with noise for a sustained run, then every alert clears.
-        for (var index = 0; index < 20; index++)
+    [Fact]
+    public async Task SlowDriftInsideAndPastThreeSigmaEscalatesAndThenClears()
+    {
+        var drive = new SpcDrive();
+        for (var index = 0; index < 120; index++)
         {
-            values.Add(index % 2 == 0 ? 0.2d : -0.2d);
+            var ramp = -3.5d * Math.Min(1d, index / 90d);
+            await drive.PushAsync("etchRate", index, ramp + (index % 2 == 0 ? 0.15d : -0.15d));
         }
 
-        var all = values.Select((value, index) => new TelemetryPoint(SpcSeries.Start.AddSeconds(15 * index), value)).ToArray();
-        await fixture.Service.RaiseAsync(new SpcSample(SpcSeries.Tool, "A", "etchRate", SpcSeries.Unit, all.Skip(all.Length - 20).ToArray()), CancellationToken.None);
-        fixture.Alerts.Alerts.Should().OnlyContain(alert => !alert.IsActive);
+        drive.Alerts.Alerts.Should().Contain(alert => alert.IsActive && alert.Severity >= Severity.High);
+        drive.Ticketing.Tickets.Should().NotBeEmpty();
+
+        for (var index = 120; index < 140; index++)
+        {
+            await drive.PushAsync("etchRate", index, index % 2 == 0 ? 0.2d : -0.2d);
+        }
+
+        drive.Alerts.Alerts.Should().OnlyContain(alert => !alert.IsActive);
     }
 
     [Fact]
     public async Task EightReadingsOnOneSideInsideTwoSigmaDoNotClearAnAlert()
     {
-        var fixture = new Fixture();
-        await fixture.Service.RaiseAsync(SpcSeries.Sample(0d, 4d), CancellationToken.None);
-        var oneSide = new SpcSample(SpcSeries.Tool, "A", "escTemperature", SpcSeries.Unit, SpcSeries.Shifted(TimeSpan.FromMinutes(2), -0.5d, -0.6d, -0.4d, -0.7d, -0.5d, -0.6d, -0.8d, -0.5d, -0.6d));
-        await fixture.Service.ClearRecoveredAsync(oneSide, CancellationToken.None);
-        fixture.Alerts.Alerts.Should().Contain(alert => alert.IsActive);
+        var drive = new SpcDrive();
+        await drive.PushAsync("escTemperature", 0, 4d);
+        for (var index = 1; index <= 8; index++)
+        {
+            await drive.PushAsync("escTemperature", index, -1d);
+        }
+
+        drive.Alerts.Alerts.Should().Contain(alert => alert.IsActive);
     }
 
     [Fact]
-    public async Task AnUnchangedActiveAlertIsNotBroadcastAgainOnEveryEvaluation()
+    public async Task AnUnchangedActiveAlertIsNotBroadcastAgainOnEveryReading()
     {
-        // SC-3 style sustained step: the publisher re-evaluates every tick; only new alerts and real changes go out.
         var notifier = new CountingNotifier();
-        var fixture = new Fixture(notifier);
-        var points = new List<TelemetryPoint>();
-        for (var index = 0; index < 20; index++)
+        var drive = new SpcDrive(notifier);
+        for (var index = 0; index < 40; index++)
         {
-            points.Add(new TelemetryPoint(SpcSeries.Start.AddSeconds(15 * index), index % 2 == 0 ? 0.1d : -0.1d));
+            await drive.PushAsync("cf4Flow", index, -4d + (index % 2 == 0 ? 0.2d : -0.2d));
         }
 
-        for (var index = 20; index < 20 + (30 * 4); index++)
+        var alert = drive.Alerts.Alerts.Should().ContainSingle().Subject;
+        alert.Occurrences.Should().BeLessThan(20);
+        notifier.Alerts.Should().BeInRange(1, 8);
+    }
+
+    [Fact]
+    public async Task ADriftInsideThreeSigmaIsCaughtByWe2We3AndWe4()
+    {
+        var drive = new SpcDrive();
+        SpcAlertOutcome? last = null;
+        for (var index = 0; index < 8; index++)
         {
-            points.Add(new TelemetryPoint(SpcSeries.Start.AddSeconds(15 * index), -4d + (index % 2 == 0 ? 0.2d : -0.2d)));
-            await fixture.Service.RaiseAsync(new SpcSample(SpcSeries.Tool, "A", "cf4Flow", SpcSeries.Unit, points.Skip(points.Count - 20).ToArray()), CancellationToken.None);
+            last = await drive.PushAsync("escTemperature", index, 2.2d);
         }
 
-        var alert = fixture.Alerts.Alerts.Should().ContainSingle().Subject;
-        alert.Occurrences.Should().BeGreaterThan(100, "every out-of-limit reading is still folded into the alert");
-        var distinctStates = alert.Rule.Split('+').Length + 2;
-        notifier.Alerts.Should().BeInRange(1, distinctStates, "only the new alert, a severity change or a newly broken rule is broadcast");
+        var alert = drive.Alerts.Alerts.Should().ContainSingle().Subject;
+        alert.Rule.Should().Contain(SpcRuleNames.WesternElectric2);
+        alert.Rule.Should().Contain(SpcRuleNames.WesternElectric3);
+        alert.Rule.Should().Contain(SpcRuleNames.WesternElectric4);
+        alert.Rule.Should().NotContain(SpcRuleNames.WesternElectric1);
+        alert.Severity.Should().Be(Severity.High);
+        last.Should().NotBeNull();
+        drive.Ticketing.Tickets.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task AWatchExpiresAfterQuietReadings()
+    {
+        var settings = SpcRuleSettings.Shared.Copy();
+        settings.WatchExpiry.Readings = 5;
+        var drive = new SpcDrive(settings: settings);
+        for (var index = 0; index < 8; index++)
+        {
+            await drive.PushAsync("escTemperature", index, 1d);
+        }
+
+        var watch = drive.Alerts.Alerts.Should().ContainSingle().Subject;
+        watch.Severity.Should().Be(Severity.Medium);
+        watch.IsActive.Should().BeTrue();
+
+        for (var index = 8; index < 12; index++)
+        {
+            await drive.PushAsync("escTemperature", index, 0d);
+        }
+
+        watch.IsActive.Should().BeTrue();
+        await drive.PushAsync("escTemperature", 12, 0d);
+        watch.IsActive.Should().BeFalse();
+        watch.ClearedAt.Should().Be(SpcSeries.Start.AddMinutes(12));
+    }
+
+    [Fact]
+    public async Task TheHourlyTicketCapStillRaisesTheAlert()
+    {
+        var settings = SpcRuleSettings.Shared.Copy();
+        settings.TicketCap.PerToolPerHour = 1;
+        var drive = new SpcDrive(settings: settings, cap: new SpcTicketCap());
+
+        var first = await drive.PushAsync("chamberPressure", 0, 4d);
+        var second = await drive.PushAsync("escTemperature", 1, 4d);
+
+        first.Ticket.Should().NotBeNull();
+        second.Alert.Should().NotBeNull();
+        second.Ticket.Should().BeNull();
+        second.TicketSuppressed.Should().BeTrue();
+        drive.Alerts.Alerts.Should().HaveCount(2);
+        drive.Alerts.Alerts.Should().OnlyContain(alert => alert.IsActive);
+        drive.Ticketing.Tickets.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task ADisabledParameterIsNotEvaluated()
+    {
+        var settings = SpcRuleSettings.Shared.Copy();
+        settings.Sensors.DisabledParameters.Add("escTemperature");
+        var drive = new SpcDrive(settings: settings);
+
+        var outcome = await drive.PushAsync("escTemperature", 0, 4d);
+
+        outcome.Alert.Should().BeNull();
+        drive.Alerts.Alerts.Should().BeEmpty();
+        drive.Engine.Evaluates("escTemperature", "periodic").Should().BeFalse();
+        drive.Engine.Evaluates("chamberPressure", "periodic").Should().BeTrue();
+        drive.Engine.Evaluates("waferCount", "cumulative").Should().BeFalse();
     }
 
     private sealed class CountingNotifier : IQualityNotifier
@@ -329,18 +391,35 @@ public sealed class SpcAlertServiceTests
         public Task FaultInjectedAsync(Guid faultId, string correlationId, string toolId, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
-    private sealed class Fixture
+    private sealed class SpcDrive
     {
-        public Fixture(IQualityNotifier? notifier = null)
+        private int _minute;
+
+        public SpcDrive(IQualityNotifier? notifier = null, SpcRuleSettings? settings = null, SpcTicketCap? cap = null)
         {
+            Settings = settings ?? SpcRuleSettings.Shared;
+            Engine = new SpcRuleEngine(Settings);
             Alerts = new InMemoryAlertLog();
             Incidents = new InMemoryIncidentLog();
             Ticketing = new InMemoryTicketingPort();
             var fleet = new InMemoryFleetCatalog();
             fleet.Add(new Tool(SpcSeries.Tool, "Etch 02", ToolFamily.Etch, "MPS-E7", "Bay-2", [new Chamber("A", "Chamber A")]));
             var intake = new IntakeService(fleet, Incidents, Ticketing, NullQualityNotifier.Instance, TimeProvider.System, DemoRules.Engine);
-            Service = new SpcAlertService(Alerts, intake, notifier ?? NullQualityNotifier.Instance, SpcRuleSettings.Shared.AlertDebounce, DemoRules.Engine);
+            Service = new SpcAlertService(
+                Alerts,
+                intake,
+                notifier ?? NullQualityNotifier.Instance,
+                Settings.AlertDebounce,
+                DemoRules.Engine,
+                hints: null,
+                events: null,
+                ticketCap: cap,
+                settings: Settings);
         }
+
+        public SpcRuleSettings Settings { get; }
+
+        public SpcRuleEngine Engine { get; }
 
         public InMemoryAlertLog Alerts { get; }
 
@@ -349,5 +428,59 @@ public sealed class SpcAlertServiceTests
         public InMemoryTicketingPort Ticketing { get; }
 
         public SpcAlertService Service { get; }
+
+        public int Next => _minute;
+
+        public static SpcReading Reading(string parameter, int minute, double z, double? raw = null, double center = 0d, double sigma = 1d, double? specLow = null, double? specHigh = null, string? chamber = "A") =>
+            new(
+                SpcSeries.Tool.ToString(),
+                chamber,
+                parameter,
+                "periodic",
+                SpcSeries.Start.AddMinutes(minute),
+                z,
+                raw ?? (center + (z * sigma)),
+                center,
+                sigma,
+                specLow,
+                specHigh,
+                "nominal-" + SpcSeries.Tool,
+                null);
+
+        public async Task<SpcAlertOutcome> PushAsync(
+            string parameter,
+            int minute,
+            double z,
+            double? raw = null,
+            double center = 0d,
+            double sigma = 1d,
+            double? specLow = null,
+            double? specHigh = null,
+            string? chamber = "A")
+        {
+            _minute = minute + 1;
+            var observation = Engine.Observe(Reading(parameter, minute, z, raw, center, sigma, specLow, specHigh, chamber));
+            if (observation is null || observation.Action == SpcAction.None)
+            {
+                return new SpcAlertOutcome([], null, null, null, debounced: false);
+            }
+
+            var outcome = await Service.ApplyAsync(observation, null, CancellationToken.None);
+            if (outcome.Debounced && observation.Action == SpcAction.Raise)
+            {
+                Engine.RevertRaise(SpcSeries.Tool.ToString(), chamber, parameter);
+            }
+
+            return outcome;
+        }
+
+        public async Task RecoverAsync(string parameter, int startMinute)
+        {
+            var values = new[] { 0d, 0.1d, -0.2d, 0.3d, 0d, 0.1d, -0.1d, 0.2d };
+            for (var index = 0; index < values.Length; index++)
+            {
+                await PushAsync(parameter, startMinute + index, values[index]);
+            }
+        }
     }
 }

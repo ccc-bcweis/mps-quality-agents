@@ -101,7 +101,7 @@ public sealed class InvestigationService : IInvestigationService
             .Where(item => item.IncidentId == incidentId)
             .OrderBy(item => item.Round)
             .ToList();
-        if (_inFlight.ForIncident(incidentId) is { } running && saved.All(item => item.Id != running.Id))
+        if (_inFlight.ForIncident(incidentId) is { } running && !_inFlight.IsAlreadySaved(running, saved))
         {
             saved.Add(running);
         }
@@ -152,7 +152,7 @@ public sealed class InvestigationService : IInvestigationService
         InvestigationId? saved = null;
         try
         {
-            var result = await RunAsync(incidentId, stored, userEvidence, round, cancellationToken).ConfigureAwait(false);
+            var result = await RunAsync(incidentId, stored, userEvidence, round, placeholder, cancellationToken).ConfigureAwait(false);
             saved = result.Id;
             return result;
         }
@@ -167,6 +167,7 @@ public sealed class InvestigationService : IInvestigationService
         StoredIncident stored,
         IReadOnlyList<EvidenceItem> userEvidence,
         int round,
+        InvestigationSnapshot placeholder,
         CancellationToken cancellationToken)
     {
         var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -194,6 +195,8 @@ public sealed class InvestigationService : IInvestigationService
         LifecycleMoves.WalkTo(stored, target);
         await _incidents.SaveAsync(stored, _time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
         await _investigations.AddAsync(aligned, cancellationToken).ConfigureAwait(false);
+        // Drop the placeholder before the notifiers. The list also filters, in case it already read this row.
+        _inFlight.MarkSaved(placeholder, aligned.Id);
         await _notifier.InvestigationChangedAsync(aligned, cancellationToken).ConfigureAwait(false);
         await _notifier.IncidentChangedAsync(stored.Incident, cancellationToken).ConfigureAwait(false);
         var elapsed = watch.Elapsed.TotalMilliseconds;
@@ -224,17 +227,27 @@ public sealed class InvestigationService : IInvestigationService
     {
         _ = await _incidents.GetAsync(incidentId, cancellationToken).ConfigureAwait(false)
             ?? throw new ResourceNotFoundException("Incident was not found.");
-        return _inFlight.ForIncident(incidentId)
-            ?? await _investigations.FindLatestByIncidentAsync(incidentId, cancellationToken).ConfigureAwait(false)
-            ?? throw new ResourceNotFoundException("Investigation was not found.");
+        var latest = await _investigations.FindLatestByIncidentAsync(incidentId, cancellationToken).ConfigureAwait(false);
+        if (_inFlight.ForIncident(incidentId) is { } running && (latest is null || !_inFlight.IsAlreadySaved(running, [latest])))
+        {
+            return running;
+        }
+
+        return latest ?? throw new ResourceNotFoundException("Investigation was not found.");
     }
 
-    /// <summary>Saved investigations plus the ones still gathering evidence, newest first.</summary>
+    /// <summary>Saved investigations plus any still gathering, newest first. A saved round is listed once.</summary>
     public async Task<IReadOnlyList<InvestigationSnapshot>> ListAsync(CancellationToken cancellationToken)
     {
         var saved = await _investigations.ListAsync(cancellationToken).ConfigureAwait(false);
         var running = _inFlight.Running;
-        return running.Count == 0 ? saved : running.Concat(saved).ToArray();
+        if (running.Count == 0)
+        {
+            return saved;
+        }
+
+        var pending = running.Where(placeholder => !_inFlight.IsAlreadySaved(placeholder, saved)).ToArray();
+        return pending.Length == 0 ? saved : pending.Concat(saved).ToArray();
     }
 
     public static IncidentStage Map(InvestigationStage stage) => stage switch

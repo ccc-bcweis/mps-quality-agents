@@ -3,6 +3,7 @@
 using Mps.Api.Live;
 using Mps.Application.Bus;
 using Mps.Domain.Events;
+using Mps.Simulator.Fleet;
 using Mps.Simulator.Telemetry;
 
 namespace Mps.Api.Bus;
@@ -69,6 +70,23 @@ public sealed class TelemetryPublisher
                 unit = window?.Unit ?? frame.Unit,
                 low = window?.Minimum,
                 high = window?.Maximum,
+                kind = KindOf(frame),
             });
+    }
+
+    private string KindOf(TelemetryFrame frame)
+    {
+        try
+        {
+            var tool = _plant.Runtime.Fleet.GetRequired(frame.ToolId);
+            var sensor = tool.Sensors.FirstOrDefault(item =>
+                string.Equals(item.Id, frame.SensorId, StringComparison.Ordinal)
+                || string.Equals(item.Parameter, frame.Parameter, StringComparison.Ordinal));
+            return sensor?.Kind ?? SensorKinds.Periodic;
+        }
+        catch (FleetSpecException)
+        {
+            return SensorKinds.Periodic;
+        }
     }
 }

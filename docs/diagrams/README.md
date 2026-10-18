@@ -4,7 +4,7 @@ Copyright (c) 2026 Bryan C. Weis and Common Consulting Company.
 
 Pitch drawings for Meridian Precision Systems. The mermaid sources are the review text. The plotter files are separate, hand-composed sheets in `sheets.mjs`.
 
-Checked against the code on 2026-10-18: .NET 10 and the `aspnet:10.0` image, one Container Apps replica, model modes offline / OpenAI / Azure OpenAI `gpt-5.4-mini` with a 20-second failover to saved answers, a rolling window of 600 readings per sensor, recipe-step limits, CauseGuard mention versus cite, the rejected answer kept on escalation, and a manual `workflow_dispatch` deploy. CI jobs are build, web, slow tests, bicep, gitleaks, dependency review, and CodeQL analyze. A merge does not deploy. The ARCH D sheets are not regenerated from these sentences. Their labels live in `sheets.mjs`.
+Checked against the code on 2026-10-18: .NET 10 and the `aspnet:10.0` image, one Container Apps replica at 0.5 vCPU and 1 GiB, model modes offline / OpenAI / Azure OpenAI `gpt-5.4-mini` with a 20-second failover to saved answers, a rolling window of 600 readings per sensor, recipe-step limits, CauseGuard mention versus cite, the rejected answer kept on escalation, and a manual `workflow_dispatch` deploy. CI jobs are build, web, slow tests, bicep, gitleaks, dependency review, and CodeQL analyze. A merge does not deploy. The ARCH D sheets are not regenerated from these sentences. Their labels live in `sheets.mjs`.
 
 | Issue | Source | What it shows |
 |---|---|---|
@@ -17,6 +17,7 @@ Checked against the code on 2026-10-18: .NET 10 and the `aspnet:10.0` image, one
 | G5 (#74) | `print/as-is-vs-to-be-archD.pdf` | As-is and to-be side by side, matching stage bands, simulated benefits |
 | G7a-c | [`fab-floor.md`](fab-floor.md) | Floor plans for Northwater Fab, Ironwood Fab and Lumen Pilot Works, built from `data/fleet/sites.yaml`. Not the Azure sheet |
 | K7 | [`mps-sites.svg`](mps-sites.svg) | Opening-slide map. Northwater Fab, Ironwood Fab, and Lumen Pilot Works on an invented coast |
+| SPC | [`spc-alert-flow.md`](spc-alert-flow.md) | Reading to rule state to alert, ticket, and clear. Review mermaid only; not an ARCH D sheet |
 
 ## What to print
 
