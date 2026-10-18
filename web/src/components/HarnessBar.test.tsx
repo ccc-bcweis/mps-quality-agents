@@ -20,7 +20,7 @@ const baseline = {
   investigationCount: 0,
   approvalCount: 0,
   capaCount: 0,
-  telemetryCount: 12000,
+  telemetryCount: 0,
   eventCount: 1,
   resetEventId: "reset-event",
   kind: "hard" as const,
@@ -102,8 +102,8 @@ describe("harness collapse, replay, and soft reset", () => {
         HttpResponse.json({
           running: true,
           kind: "hard",
-          phase: "seeding",
-          message: "Filling a week of healthy readings.",
+          phase: "rebuilding",
+          message: "Rebuilding the fleet.",
         }),
       ),
       http.post("/api/admin/reset", async () => {
@@ -116,7 +116,7 @@ describe("harness collapse, replay, and soft reset", () => {
     const harness = await expandHarness();
     await user.click(within(harness).getByRole("button", { name: "Hard reset" }));
     await user.click(screen.getByRole("button", { name: "Confirm hard reset" }));
-    expect(await screen.findByText("Filling a week of healthy readings.")).toBeInTheDocument();
+    expect(await screen.findByText("Rebuilding the fleet.")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Production line overview" })).toBeInTheDocument();
     release();

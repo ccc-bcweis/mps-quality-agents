@@ -22,6 +22,8 @@ public sealed class SimulationSettings
 
     public SiteComparisonSettings SiteComparison { get; set; } = new();
 
+    public TelemetryWindowSettings TelemetryWindow { get; set; } = new();
+
     public static SimulationSettings Load(string? path)
     {
         if (path is null || !File.Exists(path))
@@ -34,7 +36,7 @@ public sealed class SimulationSettings
             ?? throw new InvalidOperationException("simulation.yaml is empty.");
         if (settings.RecipeSchedule.StepSeconds <= 0 || settings.RecipeSchedule.WaferSeconds <= 0 || settings.RecipeSchedule.WafersPerLot <= 0
             || settings.Noise.Phi <= 0 || settings.Noise.Scale <= 0 || settings.Noise.ExcursionChance < 0 || settings.Noise.ExcursionSigma <= 0
-            || settings.RealTimeFaultPace <= 0 || settings.SiteComparison.SpreadRatio <= 0)
+            || settings.RealTimeFaultPace <= 0 || settings.SiteComparison.SpreadRatio <= 0 || settings.TelemetryWindow.ReadingsPerSensor <= 0)
         {
             throw new InvalidOperationException("simulation.yaml is missing a setting.");
         }
@@ -65,5 +67,11 @@ public sealed class SimulationSettings
     public sealed class SiteComparisonSettings
     {
         public double SpreadRatio { get; set; }
+    }
+
+    /// <summary>How many readings each sensor keeps. Memory and the telemetry table stay this size however long the plant runs.</summary>
+    public sealed class TelemetryWindowSettings
+    {
+        public int ReadingsPerSensor { get; set; }
     }
 }

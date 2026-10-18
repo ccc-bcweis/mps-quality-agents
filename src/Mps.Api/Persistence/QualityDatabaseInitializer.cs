@@ -39,13 +39,9 @@ public sealed class QualityDatabaseInitializer : IHostedService
         await EnsureColumnAsync(db, "Investigations", "DecisionJson", "TEXT NULL", cancellationToken).ConfigureAwait(false);
         await SeedToolsAsync(db, cancellationToken).ConfigureAwait(false);
 
-        // Real time: every app load refills a week of healthy history ending at now().
-        var simulation = scope.ServiceProvider.GetService<Mps.Api.Live.SimulationOptions>();
-        var seeder = scope.ServiceProvider.GetService<Mps.Application.Bus.INominalHistorySeeder>();
-        if (simulation is { RealTime: true, Enabled: true } && seeder is not null)
-        {
-            await seeder.SeedAsync(Mps.Application.Bus.NominalWindow.LastWeek, cancellationToken).ConfigureAwait(false);
-        }
+        // No history refill on start: the plant primes one telemetry window (data/metadata/simulation.yaml) on its first tick,
+        // and the telemetry table keeps only that rolling window per sensor.
+        scope.ServiceProvider.GetService<Mps.Api.Bus.SqliteEventStore>()?.ClearTelemetry();
     }
 
     private static async Task SeedToolsAsync(QualityDbContext db, CancellationToken cancellationToken)

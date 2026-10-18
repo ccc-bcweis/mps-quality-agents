@@ -18,7 +18,7 @@ The plant runs in real time (`Mps:Simulation:RealTime` is true). The plant clock
 
 `POST /api/admin/reset` takes `kind`. The harness polls `GET /api/admin/reset/progress` while either reset runs.
 
-- Omitted or `hard` wipes transactional data and keeps metadata. It rebuilds the fleet, fills a week of healthy history that ends now, and sets speed to 1x with a 15-second sample gap. Ticket numbers start again at TKT-1001. The response reports `simulatedOrigin`, the start of today in UTC.
+- Omitted or `hard` wipes transactional data and keeps metadata. It rebuilds the fleet, clears the telemetry window, restarts the plant clock at now with one window of healthy readings (`telemetryWindow` in data/metadata/simulation.yaml), and sets speed to 1x with a 15-second sample gap. Ticket numbers start again at TKT-1001. The response reports `simulatedOrigin`, the start of today in UTC.
 - `soft` deletes nothing. It closes open tickets, investigations, and pending approvals with the status Closed by demo reset, clears live faults, and sends one healthy reading for every sensor. History stays browsable.
 
 The same seed produces the same scenario telemetry. Live model wording can still vary slightly. Every live call is pinned to temperature 0. The OpenAI seed parameter is set when the provider supports it (`Mps:Model:Seed`, falling back to `Mps:Demo:Seed`). Pinning reduces variation. It does not make every provider return the same sentences.

@@ -158,7 +158,7 @@ public sealed class DemoResetTests
     }
 
     [Fact]
-    public async Task HardResetKeepsMetadataAndRefillsTelemetry()
+    public async Task HardResetKeepsMetadataAndStartsAFreshTelemetryWindow()
     {
         await using var factory = new ApiFactory();
         var client = factory.CreateClient();
@@ -183,7 +183,8 @@ public sealed class DemoResetTests
         body.GetProperty("approvalCount").GetInt32().Should().Be(0);
         body.GetProperty("capaCount").GetInt32().Should().Be(0);
         body.GetProperty("fleetToolCount").GetInt32().Should().Be(8);
-        body.GetProperty("telemetryCount").GetInt64().Should().BeGreaterThan(10000);
+        // No week of history any more: the reset clears telemetry and the plant primes one window on its next tick.
+        body.GetProperty("telemetryCount").GetInt64().Should().Be(0);
         body.GetProperty("eventCount").GetInt64().Should().BeGreaterThan(0);
         incidents.GetArrayLength().Should().Be(0);
         trace.GetProperty("tree").GetProperty("type").GetString().Should().Be("command.reset.hard");
