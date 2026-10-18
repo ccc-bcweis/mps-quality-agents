@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://contracts.meridian-precision.example/metadata/capabilities.schema.json",
   "title": "CapabilitiesMetadataFile",
+  "description": "What each site can do. Every capability is modeled. Only manufacturing is simulated.",
   "type": "object",
   "additionalProperties": false,
   "required": ["capabilities"],
@@ -19,10 +20,11 @@
           "name": { "type": "string", "minLength": 1 },
           "type": {
             "type": "string",
+            "description": "Capability kind. Manufacturing, warehousing, research and development, sales, back office, or other.",
             "enum": ["Manufacturing", "Warehousing", "ResearchAndDevelopment", "Sales", "BackOffice", "Other"]
           },
-          "description": { "type": "string", "minLength": 1 },
-          "simulated": { "type": "boolean" }
+          "description": { "type": "string", "minLength": 1, "description": "Short description of the capability." },
+          "simulated": { "type": "boolean", "description": "True only for the manufacturing capability the plant simulates." }
         }
       }
     }

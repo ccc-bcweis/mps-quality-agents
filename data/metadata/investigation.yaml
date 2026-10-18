@@ -1,18 +1,19 @@
 # Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 # Investigation settings, loaded at startup.
-# The investigation re-reads the signal and its rule breaks until the shape is clear and at least
-# minReadingsSinceOnset readings have arrived since the first rule break (20 readings at 15 s = 5 minutes,
-# about two cycles of an injected oscillation), trying this many times, this many seconds apart.
-# If the shape is still unclear after maxReadingsSinceOnset readings, triage goes on with "no clear shape"
-# rather than waiting out every attempt (180 readings = 3 minutes at 10x; at 1x the attempts run out first). 0 turns the cap off.
-# 0 attempts turns waiting off.
+# Shape wait: re-read the signal until the shape is clear and at least minReadingsSinceOnset readings have
+# arrived since the incident opened. If there is no incident time, onset is the first serious rule break.
+# It tries attempts times, delaySeconds apart. Once maxReadingsSinceOnset readings have arrived and the shape
+# is still unclear, triage goes on with no clear shape instead of using every attempt.
+# 0 attempts turns waiting off. 0 on maxReadingsSinceOnset turns that cap off.
 shapeWait:
   attempts: 30
   delaySeconds: 20
   minReadingsSinceOnset: 20
   maxReadingsSinceOnset: 180
-# Evidence loop: a person can add evidence to a round and the agents run again (round 2, 3 ...).
-# max is the most rounds one ticket can have; at the last round only approve, override or reject remain.
+# Evidence loop: a person can add evidence to a round and the agents run again (round 2, 3, ...).
+# max is the most rounds one ticket can have; at the last round only approve, override, or reject remain.
+# The round number is Investigations.Sequence. While a round gathers, linked records show one Started placeholder.
+# The saved investigation replaces that placeholder, so the list keeps one entry for the round.
 evidenceRounds:
   max: 5
 # The signal-shape classifier. Shares are of the trace range; a noisy step must move the mean by noisyStepSigmas noise
@@ -29,8 +30,12 @@ shapeClassifier:
   noisyStepMinSide: 6
   noisyStepSmoothing: 5
   noisyStepEdgeReadings: 10
-# Model call budget: a resolution reply that is not JSON is retried up to maxModelCalls calls; an answer whose shape or
-# category disagrees with the evidence is asked again shapeRetries times before the case escalates.
+# CauseGuard distinguishes a mention from a citation. A ruled-out record may be mentioned to dismiss a rival
+# (by class, not by putting its id in evidenceIds). That record fails the guard when it is cited as support
+# (evidenceIds) or named as the cause of its own class. A citation miss is not retried.
+# A shape or category miss is asked again shapeRetries times, then the case escalates.
+# On escalation the refused answer is saved (Investigations.RejectedAnswerJson; API field rejectedAnswer).
+# Model call budget: a resolution reply that is not JSON is retried up to maxModelCalls calls.
 resolution:
   maxModelCalls: 2
   shapeRetries: 1

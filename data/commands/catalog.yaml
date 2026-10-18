@@ -45,6 +45,7 @@ commands:
     payload:
       - name: scenarioId
         type: string
+  # Does not seed a week of history. Telemetry is cleared, then the plant primes one window in memory, not on the bus.
   - name: command.reset.hard
     kind: system
     summary: Wipe tickets, investigations, and telemetry, then restart the plant with one window of healthy readings. Metadata is kept.
