@@ -62,6 +62,7 @@ These fail the build on a pattern rather than a behavior.
 | `ConsoleCatalogTests` (.NET) | The web test fixtures (`web/src/test/catalog.fixture.json`, `settings.fixture.json`) differ from what `/api/metadata/catalog` and `/api/metadata/settings` serve |
 | `SimulationSettingsTests`, `InvestigationTuningTests` (.NET) | `data/metadata/simulation.yaml` or the `shapeClassifier`/`resolution` sections of `investigation.yaml` change the simulator or classifier values by accident, or a missing setting loads silently |
 | `SpcChart.bands.test.tsx` (web), `LiveStreamTests` (.NET) | The SPC chart stops drawing its UCL/LCL/mean lines or the three sigma bands for a series with a center, or the live tool stream stops sending `center` and `sigma` (#338) |
+| `EffectiveLimitsGoldenTests` (.NET) | Any limit, threshold or label changes as a consumer reads it (rules engine, limit check, clearing, debounce, recovery watch, simulator schedule/noise/fault pace/scripted faults, sites, shape classifier, model-call budget, shape wait, rounds, override minimum, rule sentences, parameter names, Rules & Process, console catalog), or a consumer stops equalling the catalog. Regenerate deliberately with `UPDATE_GOLDEN=1` (#341) |
 | `GlossaryTests` | An acronym or unit in `docs/` or `data/` has no glossary entry |
 | `LayeringTests` | A layer references one it must not (NetArchTest) |
 | `DeployShapeTests` | The image, compose file, Bicep or deploy workflow loses a required setting, or gains a key |
