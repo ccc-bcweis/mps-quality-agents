@@ -81,6 +81,44 @@ public sealed class DemoResetTests
         tools.GetArrayLength().Should().Be(32);
     }
 
+    /// <summary>
+    /// Live (Oct 17): a browser kept showing "Running SC-2" and 10x after another browser reset the plant. The server now
+    /// reports the running scenario with the speed (GET /api/demo/speed and the clock message), cleared by Stop, containment,
+    /// a soft reset or a hard reset.
+    /// </summary>
+    [Fact]
+    public async Task TheRunningScenarioIsReportedUntilStopContainmentOrAReset()
+    {
+        await using var factory = new ApiFactory();
+        var client = factory.CreateClient();
+
+        (await RunningAsync(client)).Should().BeNull();
+        (await client.PostAsync("/api/injector/scenarios/SC-2", null)).EnsureSuccessStatusCode();
+        (await RunningAsync(client)).Should().Be("SC-2");
+        (await client.PostAsync("/api/injector/stop", null)).EnsureSuccessStatusCode();
+        (await RunningAsync(client)).Should().BeNull();
+
+        // Containment (a CAPA moved to containment clears the tool's faults) ends the scenario too.
+        (await client.PostAsync("/api/injector/scenarios/SC-2", null)).EnsureSuccessStatusCode();
+        factory.Services.GetRequiredService<PlantSimulation>().ClearTool("E-01");
+        (await RunningAsync(client)).Should().BeNull();
+
+        (await client.PostAsync("/api/injector/scenarios/SC-5", null)).EnsureSuccessStatusCode();
+        (await client.PostAsJsonAsync("/api/admin/reset", new { kind = "soft" })).EnsureSuccessStatusCode();
+        (await RunningAsync(client)).Should().BeNull();
+
+        (await client.PostAsync("/api/injector/scenarios/SC-7", null)).EnsureSuccessStatusCode();
+        (await client.PostAsJsonAsync("/api/demo/speed", new { speed = 10, strideSeconds = 5 })).EnsureSuccessStatusCode();
+        (await client.PostAsync("/api/admin/reset", null)).EnsureSuccessStatusCode();
+        var state = await client.GetFromJsonAsync<JsonElement>("/api/demo/speed");
+        state.GetProperty("runningScenarioId").ValueKind.Should().Be(JsonValueKind.Null);
+        state.GetProperty("speed").GetInt32().Should().Be(1);
+        state.GetProperty("strideSeconds").GetInt32().Should().Be(15);
+    }
+
+    private static async Task<string?> RunningAsync(HttpClient client) =>
+        (await client.GetFromJsonAsync<JsonElement>("/api/demo/speed")).GetProperty("runningScenarioId").GetString();
+
     [Fact]
     public async Task ResetRejectsANonAdminPrincipal()
     {

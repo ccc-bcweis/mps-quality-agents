@@ -10,7 +10,7 @@ import { incidents, investigationFor, investigations, tools } from "./demoData";
 import { toolInPlant } from "../sites/selection";
 import { matchesPlant } from "./plants";
 import { familyComparison, siteDetail, siteSummaries, toolRecord } from "./sites/fixtures";
-import { mockExtras, resetMockState } from "./state";
+import { mockExtras, mockHarness, resetMockState } from "./state";
 import catalogFixture from "../test/catalog.fixture.json";
 import settingsFixture from "../test/settings.fixture.json";
 
@@ -542,9 +542,13 @@ export const handlers = [
     });
   }),
 
-  http.post("/api/injector/stop", () => HttpResponse.json({ removed: 0 })),
+  http.post("/api/injector/stop", () => {
+    mockHarness.runningScenarioId = null;
+    return HttpResponse.json({ removed: 0 });
+  }),
   http.post("/api/injector/scenarios/:scenarioId", ({ params }) => {
     const scenarioId = String(params.scenarioId);
+    mockHarness.runningScenarioId = scenarioId;
     const run: ScenarioRun = {
       scenarioId,
       seed: 4242,
@@ -570,6 +574,11 @@ export const handlers = [
       kind = "hard";
     }
     if (kind === "hard") resetMockState();
+    else {
+      mockHarness.speed = 1;
+      mockHarness.strideSeconds = 15;
+      mockHarness.runningScenarioId = null;
+    }
     return HttpResponse.json({
       seed: 4242,
       simulatedOrigin: "2026-09-01T00:00:00Z",
@@ -585,10 +594,12 @@ export const handlers = [
     });
   }),
 
-  http.get("/api/demo/speed", () => HttpResponse.json({ speed: 1, strideSeconds: 15, speeds: [1, 2, 5, 10], strides: [5, 15, 30, 60] })),
+  http.get("/api/demo/speed", () => HttpResponse.json({ ...mockHarness, speeds: [1, 2, 5, 10], strides: [5, 15, 30, 60] })),
   http.post("/api/demo/speed", async ({ request }) => {
     const body = (await request.json()) as { speed: number; strideSeconds: number };
-    return HttpResponse.json({ ...body, speeds: [1, 2, 5, 10], strides: [5, 15, 30, 60] });
+    mockHarness.speed = body.speed;
+    mockHarness.strideSeconds = body.strideSeconds;
+    return HttpResponse.json({ ...mockHarness, speeds: [1, 2, 5, 10], strides: [5, 15, 30, 60] });
   }),
   http.get("/api/demo/data-mode", () => HttpResponse.json({ mode: "live", scenarioId: null, messageCount: 0 })),
 

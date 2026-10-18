@@ -134,4 +134,5 @@ export const api = {
   getTrace: (eventId: string) => apiSend<CausalTrace>(`/api/trace/${encodeURIComponent(eventId)}`),
 };
 
-export type DemoSpeed = { speed: number; strideSeconds: number; speeds: number[]; strides: number[] };
+/** Harness state from the server: speed, seconds between kept samples, and the running scripted scenario (null when none). */
+export type DemoSpeed = { speed: number; strideSeconds: number; speeds: number[]; strides: number[]; runningScenarioId?: string | null };

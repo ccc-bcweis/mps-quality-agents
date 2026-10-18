@@ -2,7 +2,7 @@
 import { JoinLinksDialog } from "./JoinLinks";
 import { useEffect, useState } from "react";
 import { SpeedControl } from "./SpeedControl";
-import { readRunning, readScenario, RUNNING_EVENT, storeRunning, storeScenario } from "./harnessSession";
+import { HARNESS_REFRESH_EVENT, readRunning, readScenario, refreshHarness, RUNNING_EVENT, storeRunning, storeScenario } from "./harnessSession";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { hubConnected, onHub } from "../live/fleetHub";
@@ -70,6 +70,46 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
     window.addEventListener(RUNNING_EVENT, sync);
     return () => window.removeEventListener(RUNNING_EVENT, sync);
   }, []);
+  // The running scenario is the server's, so a run, stop or reset from another browser shows here too: read it once,
+  // follow the clock message, and read it again after a resync (a reset).
+  useEffect(() => {
+    let cancelled = false;
+    const adopt = (id: string | null | undefined) => {
+      const next = id ?? "";
+      if (!cancelled && next !== readRunning()) storeRunning(next);
+    };
+    // Only the newest read applies: a slow answer from before a stop or reset must not bring the old state back.
+    let latest = 0;
+    const load = () => {
+      const ticket = ++latest;
+      api
+        .getSpeed()
+        .then((state) => {
+          if (ticket === latest && state && "runningScenarioId" in state) adopt(state.runningScenarioId);
+        })
+        .catch(() => undefined);
+    };
+    load();
+    const stopClock = onHub("clock", (payload) => {
+      const clock = payload as { runningScenarioId?: string | null } | null;
+      if (clock && "runningScenarioId" in clock) adopt(clock.runningScenarioId);
+    });
+    const stopResync = onHub("resync", (payload) => {
+      load();
+      // After a reset (from any browser) nothing is picked or running.
+      if ((payload as { reason?: string } | null)?.reason === "reset" && !cancelled) {
+        storeScenario("");
+        setScenarioIdState("");
+      }
+    });
+    window.addEventListener(HARNESS_REFRESH_EVENT, load);
+    return () => {
+      cancelled = true;
+      stopClock();
+      stopResync();
+      window.removeEventListener(HARNESS_REFRESH_EVENT, load);
+    };
+  }, []);
   const [scenarioError, setScenarioError] = useState<string | null>(null);
   const [resetKind, setResetKind] = useState<ResetKind | null>(null);
   const [resetPending, setResetPending] = useState(false);
@@ -81,6 +121,7 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
     try {
       const result = await api.stopScenario();
       storeRunning("");
+      refreshHarness();
       setResetMessage(`Scenario stopped. ${result.removed} fault${result.removed === 1 ? "" : "s"} removed; telemetry returns to nominal.`);
     } catch (reason) {
       setResetMessage(reason instanceof ApiProblem ? reason.title : "The scenario did not stop.");
@@ -98,7 +139,8 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
       .then((next) => {
         if (cancelled) return;
         setScenarios(next);
-        setScenarioIdState((current) => (current && next.some((item) => item.id === current) ? current : next[0]?.id || ""));
+        // No default pick: until the presenter chooses, the picker says "Choose a scenario".
+        setScenarioIdState((current) => (current && next.some((item) => item.id === current) ? current : ""));
       })
       .catch(() => {
         if (!cancelled) setScenarioError("The scenario list did not load.");
@@ -151,6 +193,8 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
     try {
       const result = await api.resetDemo(kind);
       storeRunning("");
+      setScenarioId("");
+      refreshHarness();
       active = false;
       clearDemo();
       setResetMessage(
@@ -189,13 +233,12 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
     }
   }
 
+  // "Running SC-x" only while the server runs one; otherwise just the data mode and the AI engine.
   const activeScenario =
-    dataMode === "replay" && dataScenarioId
-      ? dataScenarioId
-      : running
-        ? `Running ${running}`
-        : scenarioId || "No scenario";
-  const statusLine = `${dataMode === "replay" ? "Replay" : "Live"} · ${activeScenario} · ${modelStatus?.label ?? "…"}`;
+    dataMode === "replay" && dataScenarioId ? dataScenarioId : running ? `Running ${running}` : null;
+  const statusLine = [dataMode === "replay" ? "Replay" : "Live", activeScenario, modelStatus?.label ?? "…"]
+    .filter(Boolean)
+    .join(" · ");
   const admin = session?.isAdmin === true;
   const [joinOpen, setJoinOpen] = useState(false);
   const dialogCopy = resetKind === "soft" ? SOFT_COPY : HARD_COPY;

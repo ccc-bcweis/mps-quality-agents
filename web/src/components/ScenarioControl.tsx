@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
-import { storeRunning } from "./harnessSession";
+import { refreshHarness } from "./harnessSession";
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
@@ -73,7 +73,7 @@ export function ScenarioControl({
     setError(null);
     try {
       await api.runScenario(selected.id);
-      storeRunning(selected.id);
+      refreshHarness();
       const parameter = encodeURIComponent(selected.parameter);
       navigate(
         `/tools/${encodeURIComponent(toolId)}?streaming=1&parameter=${parameter}`,
@@ -107,6 +107,7 @@ export function ScenarioControl({
               disabled={pending || scenarios.length === 0}
               onChange={(event) => onScenarioId(event.target.value)}
             >
+              <option value="">Choose a scenario</option>
               {scenarios.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.id} · {item.title}

@@ -292,8 +292,11 @@ public sealed record ToolLiveDelta(
 /// <summary>Hub message fleetLive, sent to the pages watching a plant: only the tools whose readings changed.</summary>
 public sealed record FleetLiveDelta(DateTimeOffset SimulatedNow, IReadOnlyList<FleetLiveToolResponse> Tools);
 
-/// <summary>Hub message clock: the plant clock every record is stamped with.</summary>
-public sealed record LiveClockMessage(DateTimeOffset SimulatedNow);
+/// <summary>
+/// Hub message clock: the plant clock every record is stamped with, plus the harness state every browser shows
+/// (speed, seconds between kept samples, and the running scripted scenario, null when none).
+/// </summary>
+public sealed record LiveClockMessage(DateTimeOffset SimulatedNow, int? Speed = null, int? StrideSeconds = null, string? RunningScenarioId = null);
 
 /// <summary>Hub message resync: live data was rebuilt (a reset), so every page loads its data again.</summary>
 public sealed record LiveResyncMessage(string Reason);
