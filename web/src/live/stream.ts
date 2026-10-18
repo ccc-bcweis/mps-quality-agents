@@ -78,7 +78,8 @@ export function mergeSegments(
       merged[merged.length - 1] = segment;
       continue;
     }
-    if (last && last.center === segment.center && last.sigma === segment.sigma) continue;
+    // Same step continuing (a delta inside the step the window already ends in): keep the step's first point.
+    if (last && sameStep(last, segment)) continue;
     merged.push(segment);
   }
   if (!firstAt) return merged;
@@ -86,6 +87,16 @@ export function mergeSegments(
   let start = 0;
   while (start + 1 < merged.length && Date.parse(merged[start + 1].from) <= first) start += 1;
   return merged.slice(start);
+}
+
+/** Two segments of one recipe step: same recipe, step and limits. A new step always starts a new segment. */
+function sameStep(left: LiveLimitSegment, right: LiveLimitSegment): boolean {
+  return (
+    left.center === right.center &&
+    left.sigma === right.sigma &&
+    (left.recipe ?? null) === (right.recipe ?? null) &&
+    (left.step ?? null) === (right.step ?? null)
+  );
 }
 
 /** Replaces the changed tools in the plant snapshot. Null when there is no first load to patch. */

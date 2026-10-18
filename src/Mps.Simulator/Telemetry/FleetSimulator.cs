@@ -257,12 +257,11 @@ public sealed class FleetSimulator : ITelemetrySource
         return parameters;
     }
 
-    /// <summary>The recipe window when the recipe controls the parameter, otherwise the sensor's own limits.</summary>
+    /// <summary>The running step's window. Every step defines every parameter of its tool, so there is no fallback (#367).</summary>
     private static OperatingWindow WindowFor(RecipeCursor schedule, SensorSpec sensor, string parameter)
     {
-        return RecipeSchedule.Parameters(schedule.Recipe).Contains(parameter, StringComparer.Ordinal)
-            ? RecipeSchedule.Resolve(schedule, parameter)
-            : new OperatingWindow(parameter, sensor.Unit, sensor.Limits.Minimum, sensor.Limits.Maximum, sensor.Limits.Nominal);
+        _ = sensor;
+        return RecipeSchedule.Resolve(schedule, parameter);
     }
 
     /// <summary>Baseline noise stays well inside spec. Rarely one kept point jumps past the watch line and the next is back to normal.</summary>

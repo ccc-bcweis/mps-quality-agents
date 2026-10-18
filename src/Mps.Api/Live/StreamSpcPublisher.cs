@@ -234,7 +234,7 @@ public sealed partial class StreamSpcPublisher : IDisposable
             return false;
         }
 
-        var z = (point.Value - window.Nominal) / Math.Max(window.Sigma, 1e-6);
+        var z = _plant.Score(toolId, parameter, point.Value, window);
         return Math.Abs(z) > SpcCoverage.LimitSigma || point.Value < window.Minimum || point.Value > window.Maximum;
     }
 
@@ -289,8 +289,7 @@ public sealed partial class StreamSpcPublisher : IDisposable
                 continue;
             }
 
-            var sigma = Math.Max(window.Sigma, 1e-6);
-            zPoints.Add(new TelemetryPoint(point.At, (point.Value - window.Nominal) / sigma));
+            zPoints.Add(new TelemetryPoint(point.At, _plant.Score(toolId, parameter, point.Value, window)));
         }
 
         if (zPoints.Count == 0)

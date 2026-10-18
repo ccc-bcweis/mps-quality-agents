@@ -11,6 +11,15 @@ recipes:
         windows:
           - { parameter: chamberPressure, unit: Torr, minimum: 2.8, maximum: 4.2, nominal: 3.5 }
           - { parameter: heaterTemperature, unit: C, minimum: 365, maximum: 385, nominal: 375 }
+          - { parameter: rfPower, unit: W, minimum: 400, maximum: 550, nominal: 480, idle: true }
+          - { parameter: sih4Flow, unit: sccm, minimum: 18, maximum: 32, nominal: 24, idle: true }
+          - { parameter: n2oFlow, unit: sccm, minimum: 600, maximum: 900, nominal: 750, idle: true }
+          - { parameter: nh3Flow, unit: sccm, minimum: 40, maximum: 90, nominal: 60, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.7, idle: true }
+          - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.04, idle: true }
+          - { parameter: filmThickness, unit: nm, minimum: 180, maximum: 220, nominal: 200, idle: true }
+          - { parameter: filmUniformity, unit: percent, minimum: 0, maximum: 2.0, nominal: 0.8, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 8, nominal: 2, idle: true }
       - id: deposit
         name: Deposit
         windows:
@@ -21,12 +30,24 @@ recipes:
           - { parameter: n2oFlow, unit: sccm, minimum: 600, maximum: 900, nominal: 750 }
           - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.04 }
           - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.7 }
+          - { parameter: nh3Flow, unit: sccm, minimum: 40, maximum: 90, nominal: 60, idle: true }
+          - { parameter: filmThickness, unit: nm, minimum: 180, maximum: 220, nominal: 200, idle: true }
+          - { parameter: filmUniformity, unit: percent, minimum: 0, maximum: 2.0, nominal: 0.8, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 8, nominal: 2, idle: true }
       - id: measure
         name: Measure
         windows:
           - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 8, nominal: 2 }
           - { parameter: filmThickness, unit: nm, minimum: 180, maximum: 220, nominal: 200 }
           - { parameter: filmUniformity, unit: percent, minimum: 0, maximum: 2.0, nominal: 0.8 }
+          - { parameter: heaterTemperature, unit: C, minimum: 365, maximum: 385, nominal: 375, idle: true }
+          - { parameter: chamberPressure, unit: Torr, minimum: 2.8, maximum: 4.2, nominal: 3.5, idle: true }
+          - { parameter: rfPower, unit: W, minimum: 400, maximum: 550, nominal: 480, idle: true }
+          - { parameter: sih4Flow, unit: sccm, minimum: 18, maximum: 32, nominal: 24, idle: true }
+          - { parameter: n2oFlow, unit: sccm, minimum: 600, maximum: 900, nominal: 750, idle: true }
+          - { parameter: nh3Flow, unit: sccm, minimum: 40, maximum: 90, nominal: 60, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.7, idle: true }
+          - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.04, idle: true }
   - id: PECVD-NITRIDE
     name: PECVD nitride
     steps:
@@ -35,6 +56,15 @@ recipes:
         windows:
           - { parameter: chamberPressure, unit: Torr, minimum: 2.4, maximum: 3.6, nominal: 3.0 }
           - { parameter: heaterTemperature, unit: C, minimum: 360, maximum: 385, nominal: 372 }
+          - { parameter: rfPower, unit: W, minimum: 350, maximum: 500, nominal: 420, idle: true }
+          - { parameter: sih4Flow, unit: sccm, minimum: 12, maximum: 28, nominal: 18, idle: true }
+          - { parameter: n2oFlow, unit: sccm, minimum: 250, maximum: 500, nominal: 360, idle: true }
+          - { parameter: nh3Flow, unit: sccm, minimum: 40, maximum: 90, nominal: 60, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.7, idle: true }
+          - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.04, idle: true }
+          - { parameter: filmThickness, unit: nm, minimum: 80, maximum: 120, nominal: 100, idle: true }
+          - { parameter: filmUniformity, unit: percent, minimum: 0, maximum: 2.5, nominal: 1.0, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 8, nominal: 2, idle: true }
       - id: deposit
         name: Deposit
         windows:
@@ -43,12 +73,26 @@ recipes:
           - { parameter: sih4Flow, unit: sccm, minimum: 12, maximum: 28, nominal: 18 }
           - { parameter: nh3Flow, unit: sccm, minimum: 40, maximum: 90, nominal: 60 }
           - { parameter: n2oFlow, unit: sccm, minimum: 250, maximum: 500, nominal: 360 }
+          - { parameter: chamberPressure, unit: Torr, minimum: 2.4, maximum: 3.6, nominal: 3.0, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.7, idle: true }
+          - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.04, idle: true }
+          - { parameter: filmThickness, unit: nm, minimum: 80, maximum: 120, nominal: 100, idle: true }
+          - { parameter: filmUniformity, unit: percent, minimum: 0, maximum: 2.5, nominal: 1.0, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 8, nominal: 2, idle: true }
       - id: measure
         name: Measure
         windows:
           - { parameter: filmThickness, unit: nm, minimum: 80, maximum: 120, nominal: 100 }
           - { parameter: filmUniformity, unit: percent, minimum: 0, maximum: 2.5, nominal: 1.0 }
           - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 8, nominal: 2 }
+          - { parameter: heaterTemperature, unit: C, minimum: 360, maximum: 385, nominal: 372, idle: true }
+          - { parameter: chamberPressure, unit: Torr, minimum: 2.4, maximum: 3.6, nominal: 3.0, idle: true }
+          - { parameter: rfPower, unit: W, minimum: 350, maximum: 500, nominal: 420, idle: true }
+          - { parameter: sih4Flow, unit: sccm, minimum: 12, maximum: 28, nominal: 18, idle: true }
+          - { parameter: n2oFlow, unit: sccm, minimum: 250, maximum: 500, nominal: 360, idle: true }
+          - { parameter: nh3Flow, unit: sccm, minimum: 40, maximum: 90, nominal: 60, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.7, idle: true }
+          - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.04, idle: true }
 tools:
   - id: D-01
     name: Deposition D-01

@@ -284,8 +284,21 @@ public sealed record LiveSeriesResponse(string Parameter, string ChamberId, IRea
     public IReadOnlyList<LiveLimitSegment>? Segments { get; init; }
 }
 
-/// <summary>Center and one sigma for the points from <paramref name="From"/> until the next segment (one recipe step).</summary>
-public sealed record LiveLimitSegment(DateTimeOffset From, double Center, double Sigma);
+/// <summary>
+/// Center and one sigma for the points from <paramref name="From"/> until the next segment: one recipe step. The
+/// recipe and step name the step; <paramref name="Idle"/> is true when that step does not set the parameter.
+/// <paramref name="Floor"/> and <paramref name="Ceiling"/> are what the sensor can physically read; every limit is
+/// clamped to them (#368). Null when the series has no sensor range.
+/// </summary>
+public sealed record LiveLimitSegment(
+    DateTimeOffset From,
+    double Center,
+    double Sigma,
+    string? Recipe = null,
+    string? Step = null,
+    bool Idle = false,
+    double? Floor = null,
+    double? Ceiling = null);
 
 public sealed record LivePointResponse(DateTimeOffset At, double Value);
 

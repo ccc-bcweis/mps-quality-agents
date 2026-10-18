@@ -58,24 +58,15 @@ public static class RecipeSchedule
         return seen;
     }
 
+    /// <summary>
+    /// The step's own window for the parameter. Every step defines every parameter of its tool (its own window, or
+    /// idle with a window), which the fleet schema checks at load, so there is no fallback to another step or to the
+    /// sensor's physical range.
+    /// </summary>
     public static OperatingWindow Resolve(RecipeCursor cursor, string parameter)
     {
-        var onStep = cursor.Step.WindowFor(parameter);
-        if (onStep is not null)
-        {
-            return onStep;
-        }
-
-        foreach (var step in cursor.Recipe.Steps)
-        {
-            var window = step.WindowFor(parameter);
-            if (window is not null)
-            {
-                return window;
-            }
-        }
-
-        throw new InvalidOperationException($"Recipe {cursor.Recipe.Id} has no window for {parameter}.");
+        return cursor.Step.WindowFor(parameter)
+            ?? throw new InvalidOperationException($"Recipe {cursor.Recipe.Id} step {cursor.Step.Id} has no window for {parameter}.");
     }
 
     private static List<RecipeCursor> Flatten(ToolSpec tool)

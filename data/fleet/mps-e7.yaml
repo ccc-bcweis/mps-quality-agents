@@ -13,6 +13,17 @@ recipes:
           - { parameter: escTemperature, unit: C, minimum: 46, maximum: 54, nominal: 50 }
           - { parameter: wallTemperature, unit: C, minimum: 58, maximum: 62, nominal: 60 }
           - { parameter: arFlow, unit: sccm, minimum: 80, maximum: 150, nominal: 110 }
+          - { parameter: rfSourcePower, unit: W, minimum: 1400, maximum: 1800, nominal: 1600, idle: true }
+          - { parameter: rfBiasPower, unit: W, minimum: 280, maximum: 420, nominal: 350, idle: true }
+          - { parameter: cf4Flow, unit: sccm, minimum: 40, maximum: 70, nominal: 55, idle: true }
+          - { parameter: chf3Flow, unit: sccm, minimum: 15, maximum: 35, nominal: 25, idle: true }
+          - { parameter: o2Flow, unit: sccm, minimum: 8, maximum: 20, nominal: 12, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.6, idle: true }
+          - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.03, idle: true }
+          - { parameter: edgeRingHeight, unit: mm, minimum: 1.85, maximum: 2.15, nominal: 2.00, idle: true }
+          - { parameter: etchRate, unit: nm/min, minimum: 280, maximum: 420, nominal: 350, idle: true }
+          - { parameter: endpointTime, unit: s, minimum: 40, maximum: 90, nominal: 60, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 12, nominal: 4, idle: true }
       - id: main-etch
         name: Main etch
         windows:
@@ -28,12 +39,27 @@ recipes:
           - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.03 }
           - { parameter: edgeRingHeight, unit: mm, minimum: 1.85, maximum: 2.15, nominal: 2.00 }
           - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.6 }
+          - { parameter: etchRate, unit: nm/min, minimum: 280, maximum: 420, nominal: 350, idle: true }
+          - { parameter: endpointTime, unit: s, minimum: 40, maximum: 90, nominal: 60, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 12, nominal: 4, idle: true }
       - id: endpoint
         name: Endpoint
         windows:
           - { parameter: etchRate, unit: nm/min, minimum: 280, maximum: 420, nominal: 350 }
           - { parameter: endpointTime, unit: s, minimum: 40, maximum: 90, nominal: 60 }
           - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 12, nominal: 4 }
+          - { parameter: escTemperature, unit: C, minimum: 46, maximum: 54, nominal: 50, idle: true }
+          - { parameter: wallTemperature, unit: C, minimum: 58, maximum: 62, nominal: 60, idle: true }
+          - { parameter: chamberPressure, unit: mTorr, minimum: 35, maximum: 55, nominal: 45, idle: true }
+          - { parameter: rfSourcePower, unit: W, minimum: 1400, maximum: 1800, nominal: 1600, idle: true }
+          - { parameter: rfBiasPower, unit: W, minimum: 280, maximum: 420, nominal: 350, idle: true }
+          - { parameter: cf4Flow, unit: sccm, minimum: 40, maximum: 70, nominal: 55, idle: true }
+          - { parameter: chf3Flow, unit: sccm, minimum: 15, maximum: 35, nominal: 25, idle: true }
+          - { parameter: o2Flow, unit: sccm, minimum: 8, maximum: 20, nominal: 12, idle: true }
+          - { parameter: arFlow, unit: sccm, minimum: 80, maximum: 150, nominal: 110, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.6, idle: true }
+          - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.03, idle: true }
+          - { parameter: edgeRingHeight, unit: mm, minimum: 1.85, maximum: 2.15, nominal: 2.00, idle: true }
   - id: POLY-ETCH
     name: Polysilicon etch
     steps:
@@ -42,6 +68,19 @@ recipes:
         windows:
           - { parameter: chamberPressure, unit: mTorr, minimum: 25, maximum: 45, nominal: 35 }
           - { parameter: escTemperature, unit: C, minimum: 44, maximum: 54, nominal: 49 }
+          - { parameter: wallTemperature, unit: C, minimum: 58, maximum: 62, nominal: 60, idle: true }
+          - { parameter: rfSourcePower, unit: W, minimum: 1200, maximum: 1600, nominal: 1400, idle: true }
+          - { parameter: rfBiasPower, unit: W, minimum: 220, maximum: 360, nominal: 280, idle: true }
+          - { parameter: cf4Flow, unit: sccm, minimum: 30, maximum: 60, nominal: 45, idle: true }
+          - { parameter: chf3Flow, unit: sccm, minimum: 15, maximum: 35, nominal: 25, idle: true }
+          - { parameter: o2Flow, unit: sccm, minimum: 4, maximum: 16, nominal: 8, idle: true }
+          - { parameter: arFlow, unit: sccm, minimum: 80, maximum: 150, nominal: 110, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.6, idle: true }
+          - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.03, idle: true }
+          - { parameter: edgeRingHeight, unit: mm, minimum: 1.85, maximum: 2.15, nominal: 2.00, idle: true }
+          - { parameter: etchRate, unit: nm/min, minimum: 180, maximum: 320, nominal: 240, idle: true }
+          - { parameter: endpointTime, unit: s, minimum: 30, maximum: 80, nominal: 50, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 12, nominal: 4, idle: true }
       - id: main-etch
         name: Main etch
         windows:
@@ -49,11 +88,35 @@ recipes:
           - { parameter: rfBiasPower, unit: W, minimum: 220, maximum: 360, nominal: 280 }
           - { parameter: cf4Flow, unit: sccm, minimum: 30, maximum: 60, nominal: 45 }
           - { parameter: o2Flow, unit: sccm, minimum: 4, maximum: 16, nominal: 8 }
+          - { parameter: escTemperature, unit: C, minimum: 44, maximum: 54, nominal: 49, idle: true }
+          - { parameter: wallTemperature, unit: C, minimum: 58, maximum: 62, nominal: 60, idle: true }
+          - { parameter: chamberPressure, unit: mTorr, minimum: 25, maximum: 45, nominal: 35, idle: true }
+          - { parameter: chf3Flow, unit: sccm, minimum: 15, maximum: 35, nominal: 25, idle: true }
+          - { parameter: arFlow, unit: sccm, minimum: 80, maximum: 150, nominal: 110, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.6, idle: true }
+          - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.03, idle: true }
+          - { parameter: edgeRingHeight, unit: mm, minimum: 1.85, maximum: 2.15, nominal: 2.00, idle: true }
+          - { parameter: etchRate, unit: nm/min, minimum: 180, maximum: 320, nominal: 240, idle: true }
+          - { parameter: endpointTime, unit: s, minimum: 30, maximum: 80, nominal: 50, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 12, nominal: 4, idle: true }
       - id: endpoint
         name: Endpoint
         windows:
           - { parameter: etchRate, unit: nm/min, minimum: 180, maximum: 320, nominal: 240 }
           - { parameter: endpointTime, unit: s, minimum: 30, maximum: 80, nominal: 50 }
+          - { parameter: escTemperature, unit: C, minimum: 44, maximum: 54, nominal: 49, idle: true }
+          - { parameter: wallTemperature, unit: C, minimum: 58, maximum: 62, nominal: 60, idle: true }
+          - { parameter: chamberPressure, unit: mTorr, minimum: 25, maximum: 45, nominal: 35, idle: true }
+          - { parameter: rfSourcePower, unit: W, minimum: 1200, maximum: 1600, nominal: 1400, idle: true }
+          - { parameter: rfBiasPower, unit: W, minimum: 220, maximum: 360, nominal: 280, idle: true }
+          - { parameter: cf4Flow, unit: sccm, minimum: 30, maximum: 60, nominal: 45, idle: true }
+          - { parameter: chf3Flow, unit: sccm, minimum: 15, maximum: 35, nominal: 25, idle: true }
+          - { parameter: o2Flow, unit: sccm, minimum: 4, maximum: 16, nominal: 8, idle: true }
+          - { parameter: arFlow, unit: sccm, minimum: 80, maximum: 150, nominal: 110, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.6, idle: true }
+          - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.03, idle: true }
+          - { parameter: edgeRingHeight, unit: mm, minimum: 1.85, maximum: 2.15, nominal: 2.00, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 12, nominal: 4, idle: true }
 tools:
   - id: E-01
     name: Etch E-01

@@ -3,7 +3,7 @@ import type { FleetLiveTool, LiveReading, LiveSeries, ToolLive } from "../api/ty
 import type { Tone } from "../api/labels";
 import { statusFromAlerts, type ToolTile, type WindowRow } from "../fleet/catalog";
 import { formatValue, type SensorStatus } from "../fleet/telemetry";
-import type { SpcPoint } from "../spc/series";
+import type { SpcPoint, StepLimit } from "../spc/series";
 import { LIMIT_LABEL, limitTone, rangeLabel } from "../investigation/limits";
 import { unitLabel } from "../sites/parameters";
 import { parameterLabel } from "../labels";
@@ -96,7 +96,7 @@ export function seriesPoints(live: ToolLive | null, parameter: string, chamberId
  * The center and sigma for each point, from the per-recipe-step segments: the limits the rules engine scored that
  * point against. Undefined when the server sent no segments (counters, older servers).
  */
-export function pointLimits(live: ToolLive | null, parameter: string, chamberId?: string): { mean: number; sigma: number }[] | undefined {
+export function pointLimits(live: ToolLive | null, parameter: string, chamberId?: string): StepLimit[] | undefined {
   const match = chartSeries(live, parameter, chamberId);
   const segments = match?.segments;
   if (!match || !segments || segments.length === 0) return undefined;
@@ -106,15 +106,38 @@ export function pointLimits(live: ToolLive | null, parameter: string, chamberId?
     const at = Date.parse(point.at);
     while (cursor + 1 < segments.length && starts[cursor + 1] <= at) cursor += 1;
     const segment = segments[cursor];
-    return { mean: segment.center, sigma: segment.sigma };
+    return {
+      mean: segment.center,
+      sigma: segment.sigma,
+      floor: segment.floor ?? undefined,
+      ceiling: segment.ceiling ?? undefined,
+      recipe: segment.recipe ?? undefined,
+      step: segment.step ?? undefined,
+      idle: segment.idle ?? false,
+      // Each segment is one recipe step: its index tells two steps with the same name apart.
+      segment: cursor,
+    };
   });
 }
 
+/** The recipe and step the newest reading was taken in, for the chart header. Undefined without segments. */
+export function currentStep(live: ToolLive | null, parameter: string, chamberId?: string): { recipe?: string; step?: string; idle: boolean } | undefined {
+  const match = chartSeries(live, parameter, chamberId);
+  const last = match?.segments?.[match.segments.length - 1];
+  if (!last) return undefined;
+  return { recipe: last.recipe ?? undefined, step: last.step ?? undefined, idle: last.idle ?? false };
+}
+
 /** The center and sigma the rules engine uses for this series, when the server sent them. */
-export function seriesLimits(live: ToolLive | null, parameter: string, chamberId?: string): { mean: number; sigma: number } | undefined {
+export function seriesLimits(
+  live: ToolLive | null,
+  parameter: string,
+  chamberId?: string,
+): { mean: number; sigma: number; floor?: number; ceiling?: number } | undefined {
   const match = chartSeries(live, parameter, chamberId);
   if (!match || match.center == null || match.sigma == null || !(match.sigma > 0)) return undefined;
-  return { mean: match.center, sigma: match.sigma };
+  const last = match.segments?.[match.segments.length - 1];
+  return { mean: match.center, sigma: match.sigma, floor: last?.floor ?? undefined, ceiling: last?.ceiling ?? undefined };
 }
 
 /** The running recipe's readable name from the fleet data; a dash until the first live load. */

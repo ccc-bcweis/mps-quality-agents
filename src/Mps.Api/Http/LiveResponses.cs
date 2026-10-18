@@ -164,9 +164,10 @@ public static class LiveResponses
         var counter = IsCounter(reading.Parameter, reading.SensorId);
         var window = counter ? null : plant.WindowAt(reading.ToolId, reading.Parameter, reading.At);
         double? sigma = window is null ? null : Math.Max(window.Sigma, 1e-6);
-        var rules = Mps.Application.Spc.SpcRuleSettings.Shared;
-        double? controlLow = window is null ? null : rules.ControlLimits(window.Nominal, sigma!.Value).Low;
-        double? controlHigh = window is null ? null : rules.ControlLimits(window.Nominal, sigma!.Value).High;
+        // Clamped to what the sensor can physically read: no negative flow or power limits (#368).
+        var clamped = window is null ? ((double Low, double High)?)null : plant.ClampedControlLimits(reading.ToolId, reading.Parameter, window.Nominal, sigma!.Value);
+        double? controlLow = clamped?.Low;
+        double? controlHigh = clamped?.High;
         return new LiveReadingResponse(
             reading.SensorId,
             reading.Parameter,
@@ -186,7 +187,7 @@ public static class LiveResponses
     /// <summary>The wafer output counter climbs all hour by design, so it never sets a watch or alarm.</summary>
     private static LiveLimitSegment[] Segments(PlantSimulation plant, string toolId, string parameter, IReadOnlyList<LivePointResponse> points) =>
         plant.LimitSegments(toolId, parameter, points.Select(point => point.At).ToArray())
-            .Select(segment => new LiveLimitSegment(segment.From, segment.Center, segment.Sigma))
+            .Select(segment => new LiveLimitSegment(segment.From, segment.Center, segment.Sigma, segment.Recipe, segment.Step, segment.Idle, segment.Floor, segment.Ceiling))
             .ToArray();
 
     private static bool IsCounter(string parameter, string? sensorId) => Mps.Api.Live.SpcCoverage.IsCumulative(parameter, sensorId);

@@ -49,9 +49,8 @@ public static class FleetTelemetry
         while (at <= until)
         {
             var schedule = RecipeSchedule.Locate(tool, elapsed);
-            if (RecipeSchedule.Parameters(schedule.Recipe).Contains(parameter.Trim(), StringComparer.Ordinal))
+            if (schedule.Step.WindowFor(parameter.Trim()) is { } window)
             {
-                var window = RecipeSchedule.Resolve(schedule, parameter.Trim());
                 var value = cursor.Next(window, at, applied, tool.Id, chamberId.Trim(), parameter.Trim());
                 if (at >= from)
                 {

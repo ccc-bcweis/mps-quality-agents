@@ -288,43 +288,102 @@ public sealed class PlantSimulation : Mps.Application.Lifecycle.IPlantFaultContr
         }
     }
 
+    /// <summary>One recipe step's limits on a chart: from its first point, with the step's name and the sensor's physical range.</summary>
+    public readonly record struct LimitSegment(
+        DateTimeOffset From,
+        double Center,
+        double Sigma,
+        string? Recipe,
+        string? Step,
+        bool Idle,
+        double? Floor,
+        double? Ceiling);
+
     /// <summary>
-    /// The control limits for each point, merged into one segment per run of equal limits (one recipe step). Each
-    /// point gets <see cref="WindowAt"/> at its own time, the same limits the rules engine scores it against.
+    /// The control limits for each point, one segment per recipe step (a new segment at every step change, even when
+    /// two steps share limits, so the chart can mark each step). Each point gets <see cref="WindowAt"/> at its own
+    /// time, the same limits the rules engine scores it against, before, during and after a fault.
     /// </summary>
-    public IReadOnlyList<(DateTimeOffset From, double Center, double Sigma)> LimitSegments(string toolId, string parameter, IReadOnlyList<DateTimeOffset> times)
+    public IReadOnlyList<LimitSegment> LimitSegments(string toolId, string parameter, IReadOnlyList<DateTimeOffset> times)
     {
         ArgumentNullException.ThrowIfNull(times);
-        var segments = new List<(DateTimeOffset From, double Center, double Sigma)>();
+        var segments = new List<LimitSegment>();
         var origin = Runtime.Simulator.Origin;
         var step = Math.Max(1, RecipeSchedule.StepSeconds);
+        var range = PhysicalRange(toolId, parameter);
         long? bucket = null;
         OperatingWindow? window = null;
+        RecipeCursor? cursor = null;
         foreach (var at in times)
         {
             // The recipe step only changes on step boundaries, so look the window up once per step.
             var current = (long)Math.Floor(Math.Max(0, (at - origin).TotalSeconds)) / step;
-            if (current != bucket)
+            if (current == bucket)
             {
-                bucket = current;
-                window = WindowAt(toolId, parameter, at);
+                continue;
             }
 
+            bucket = current;
+            window = WindowAt(toolId, parameter, at);
+            cursor = StepAt(toolId, at);
             if (window is null)
             {
                 continue;
             }
 
             var sigma = Math.Max(window.Sigma, 1e-6);
-            if (segments.Count == 0 || segments[^1].Center != window.Nominal || segments[^1].Sigma != sigma)
+            var recipe = cursor?.Recipe.Name;
+            var name = cursor?.Step.Name;
+            if (segments.Count > 0 && segments[^1].Center == window.Nominal && segments[^1].Sigma == sigma
+                && string.Equals(segments[^1].Recipe, recipe, StringComparison.Ordinal) && string.Equals(segments[^1].Step, name, StringComparison.Ordinal))
             {
-                segments.Add((at, window.Nominal, sigma));
+                continue;
             }
+
+            segments.Add(new LimitSegment(at, window.Nominal, sigma, recipe, name, window.Idle, range?.Minimum, range?.Maximum));
         }
 
         return segments;
     }
 
+    /// <summary>
+    /// The control limits for a center and sigma, clamped to what the sensor can physically read, so a flow or power
+    /// never gets a negative limit (#368). The same clamp the chart applies to every band.
+    /// </summary>
+    public (double Low, double High) ClampedControlLimits(string toolId, string parameter, double center, double sigma)
+    {
+        var (low, high) = SpcRuleSettings.Shared.ControlLimits(center, sigma);
+        return PhysicalRange(toolId, parameter) is { } range ? (Math.Max(low, range.Minimum), Math.Min(high, range.Maximum)) : (low, high);
+    }
+
+    /// <summary>
+    /// The standard score the rules engine checks a reading with. Inside the sensor's physical range it is the usual
+    /// (value - center) / sigma, which against clamped limits gives the same answer as the raw limits. A reading the
+    /// sensor cannot physically produce is past every clamped limit, so it scores at least the critical sigma (#368).
+    /// </summary>
+    public double Score(string toolId, string parameter, double value, OperatingWindow window)
+    {
+        ArgumentNullException.ThrowIfNull(window);
+        var z = (value - window.Nominal) / Math.Max(window.Sigma, 1e-6);
+        if (PhysicalRange(toolId, parameter) is not { } range)
+        {
+            return z;
+        }
+
+        var beyond = SpcRuleSettings.Shared.CriticalSigma;
+        if (value < range.Minimum)
+        {
+            return Math.Min(z, -beyond);
+        }
+
+        return value > range.Maximum ? Math.Max(z, beyond) : z;
+    }
+
+    /// <summary>
+    /// The limits a reading at <paramref name="at"/> is scored against. A process parameter always takes the window of
+    /// the recipe step running at that moment (every step defines every parameter, #367), before, during and after a
+    /// fault. Reflected RF power and tool counters are not recipe parameters; they use their sensor's own window.
+    /// </summary>
     public OperatingWindow? WindowAt(string toolId, string parameter, DateTimeOffset at)
     {
         ToolSpec tool;
@@ -339,20 +398,58 @@ public sealed class PlantSimulation : Mps.Application.Lifecycle.IPlantFaultContr
 
         var elapsed = (int)Math.Max(0, (at - Runtime.Simulator.Origin).TotalSeconds);
         var schedule = RecipeSchedule.Locate(tool, elapsed);
-        if (RecipeSchedule.Parameters(schedule.Recipe).Contains(parameter, StringComparer.Ordinal))
+        var step = schedule.Step.WindowFor(parameter);
+        if (step is not null)
         {
-            return RecipeSchedule.Resolve(schedule, parameter);
+            return step;
         }
 
         var sensor = tool.Sensors.FirstOrDefault(item =>
-            string.Equals(item.Parameter, parameter, StringComparison.Ordinal)
-            || string.Equals(item.Id, parameter, StringComparison.Ordinal));
+            string.Equals(item.Id, parameter, StringComparison.Ordinal)
+            && item.Parameter is null);
         if (sensor is null || sensor.Limits.Maximum <= sensor.Limits.Minimum)
         {
             return null;
         }
 
         return new OperatingWindow(parameter, sensor.Unit, sensor.Limits.Minimum, sensor.Limits.Maximum, sensor.Limits.Nominal);
+    }
+
+    /// <summary>
+    /// What the sensor behind a series can physically read (its minimum and maximum in the fleet data). Limits are
+    /// clamped to it, so no chart or rule ever uses a negative flow or power limit (#368). Null for an unknown sensor.
+    /// </summary>
+    public (double Minimum, double Maximum)? PhysicalRange(string toolId, string parameter)
+    {
+        ToolSpec tool;
+        try
+        {
+            tool = Runtime.Fleet.GetRequired(toolId);
+        }
+        catch (FleetSpecException)
+        {
+            return null;
+        }
+
+        var sensor = tool.Sensors.FirstOrDefault(item =>
+            string.Equals(item.Parameter, parameter, StringComparison.Ordinal)
+            || (item.Parameter is null && string.Equals(item.Id, parameter, StringComparison.Ordinal)));
+        return sensor is null ? null : (sensor.Limits.Minimum, sensor.Limits.Maximum);
+    }
+
+    /// <summary>The recipe and step running on the tool at <paramref name="at"/>; null for an unknown tool.</summary>
+    public RecipeCursor? StepAt(string toolId, DateTimeOffset at)
+    {
+        try
+        {
+            var tool = Runtime.Fleet.GetRequired(toolId);
+            var elapsed = (int)Math.Max(0, (at - Runtime.Simulator.Origin).TotalSeconds);
+            return RecipeSchedule.Locate(tool, elapsed);
+        }
+        catch (FleetSpecException)
+        {
+            return null;
+        }
     }
 
     public IReadOnlyList<TelemetryPoint> ReadParameter(string toolId, string parameter, string? chamberId, DateTimeOffset from, DateTimeOffset until)

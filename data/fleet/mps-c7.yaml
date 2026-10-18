@@ -13,16 +13,38 @@ recipes:
           - { parameter: bathTemperature, unit: C, minimum: 62, maximum: 68, nominal: 65 }
           - { parameter: sc1Flow, unit: L/min, minimum: 0.8, maximum: 1.4, nominal: 1.1 }
           - { parameter: megasonicPower, unit: W, minimum: 600, maximum: 800, nominal: 700 }
+          - { parameter: sc2Flow, unit: L/min, minimum: 0.8, maximum: 1.4, nominal: 1.1, idle: true }
+          - { parameter: diwFlow, unit: L/min, minimum: 1.2, maximum: 2.0, nominal: 1.6, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.2, nominal: 0.9, idle: true }
+          - { parameter: spinChuckRunout, unit: mm, minimum: 0, maximum: 0.08, nominal: 0.02, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 4, nominal: 1, idle: true }
+          - { parameter: residueCount, unit: count, minimum: 0, maximum: 3, nominal: 0, idle: true }
       - id: rinse
         name: Rinse
         windows:
           - { parameter: diwFlow, unit: L/min, minimum: 1.2, maximum: 2.0, nominal: 1.6 }
           - { parameter: bathTemperature, unit: C, minimum: 60, maximum: 66, nominal: 63 }
+          - { parameter: ambientPressure, unit: atm, minimum: 0.99, maximum: 1.01, nominal: 1.00, idle: true }
+          - { parameter: megasonicPower, unit: W, minimum: 600, maximum: 800, nominal: 700, idle: true }
+          - { parameter: sc1Flow, unit: L/min, minimum: 0.8, maximum: 1.4, nominal: 1.1, idle: true }
+          - { parameter: sc2Flow, unit: L/min, minimum: 0.8, maximum: 1.4, nominal: 1.1, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.2, nominal: 0.9, idle: true }
+          - { parameter: spinChuckRunout, unit: mm, minimum: 0, maximum: 0.08, nominal: 0.02, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 4, nominal: 1, idle: true }
+          - { parameter: residueCount, unit: count, minimum: 0, maximum: 3, nominal: 0, idle: true }
       - id: sc2
         name: SC2
         windows:
           - { parameter: sc2Flow, unit: L/min, minimum: 0.8, maximum: 1.4, nominal: 1.1 }
           - { parameter: bathTemperature, unit: C, minimum: 62, maximum: 68, nominal: 65 }
+          - { parameter: ambientPressure, unit: atm, minimum: 0.99, maximum: 1.01, nominal: 1.00, idle: true }
+          - { parameter: megasonicPower, unit: W, minimum: 600, maximum: 800, nominal: 700, idle: true }
+          - { parameter: sc1Flow, unit: L/min, minimum: 0.8, maximum: 1.4, nominal: 1.1, idle: true }
+          - { parameter: diwFlow, unit: L/min, minimum: 1.2, maximum: 2.0, nominal: 1.6, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.2, nominal: 0.9, idle: true }
+          - { parameter: spinChuckRunout, unit: mm, minimum: 0, maximum: 0.08, nominal: 0.02, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 4, nominal: 1, idle: true }
+          - { parameter: residueCount, unit: count, minimum: 0, maximum: 3, nominal: 0, idle: true }
       - id: dry
         name: Dry
         windows:
@@ -30,6 +52,12 @@ recipes:
           - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.2, nominal: 0.9 }
           - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 4, nominal: 1 }
           - { parameter: residueCount, unit: count, minimum: 0, maximum: 3, nominal: 0 }
+          - { parameter: bathTemperature, unit: C, minimum: 62, maximum: 68, nominal: 65, idle: true }
+          - { parameter: ambientPressure, unit: atm, minimum: 0.99, maximum: 1.01, nominal: 1.00, idle: true }
+          - { parameter: megasonicPower, unit: W, minimum: 600, maximum: 800, nominal: 700, idle: true }
+          - { parameter: sc1Flow, unit: L/min, minimum: 0.8, maximum: 1.4, nominal: 1.1, idle: true }
+          - { parameter: sc2Flow, unit: L/min, minimum: 0.8, maximum: 1.4, nominal: 1.1, idle: true }
+          - { parameter: diwFlow, unit: L/min, minimum: 1.2, maximum: 2.0, nominal: 1.6, idle: true }
   - id: DIW-RINSE
     name: DIW rinse
     steps:
@@ -38,15 +66,40 @@ recipes:
         windows:
           - { parameter: diwFlow, unit: L/min, minimum: 1.0, maximum: 1.8, nominal: 1.4 }
           - { parameter: bathTemperature, unit: C, minimum: 61, maximum: 67, nominal: 64 }
+          - { parameter: ambientPressure, unit: atm, minimum: 0.99, maximum: 1.01, nominal: 1.00, idle: true }
+          - { parameter: megasonicPower, unit: W, minimum: 550, maximum: 750, nominal: 650, idle: true }
+          - { parameter: sc1Flow, unit: L/min, minimum: 0.8, maximum: 1.4, nominal: 1.1, idle: true }
+          - { parameter: sc2Flow, unit: L/min, minimum: 0.8, maximum: 1.4, nominal: 1.1, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.2, nominal: 0.9, idle: true }
+          - { parameter: spinChuckRunout, unit: mm, minimum: 0, maximum: 0.08, nominal: 0.02, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 4, nominal: 1, idle: true }
+          - { parameter: residueCount, unit: count, minimum: 0, maximum: 3, nominal: 0, idle: true }
       - id: megasonic
         name: Megasonic
         windows:
           - { parameter: megasonicPower, unit: W, minimum: 550, maximum: 750, nominal: 650 }
+          - { parameter: bathTemperature, unit: C, minimum: 61, maximum: 67, nominal: 64, idle: true }
+          - { parameter: ambientPressure, unit: atm, minimum: 0.99, maximum: 1.01, nominal: 1.00, idle: true }
+          - { parameter: sc1Flow, unit: L/min, minimum: 0.8, maximum: 1.4, nominal: 1.1, idle: true }
+          - { parameter: sc2Flow, unit: L/min, minimum: 0.8, maximum: 1.4, nominal: 1.1, idle: true }
+          - { parameter: diwFlow, unit: L/min, minimum: 1.0, maximum: 1.8, nominal: 1.4, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.2, nominal: 0.9, idle: true }
+          - { parameter: spinChuckRunout, unit: mm, minimum: 0, maximum: 0.08, nominal: 0.02, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 4, nominal: 1, idle: true }
+          - { parameter: residueCount, unit: count, minimum: 0, maximum: 3, nominal: 0, idle: true }
       - id: dry
         name: Dry
         windows:
           - { parameter: spinChuckRunout, unit: mm, minimum: 0, maximum: 0.08, nominal: 0.02 }
           - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 4, nominal: 1 }
+          - { parameter: bathTemperature, unit: C, minimum: 61, maximum: 67, nominal: 64, idle: true }
+          - { parameter: ambientPressure, unit: atm, minimum: 0.99, maximum: 1.01, nominal: 1.00, idle: true }
+          - { parameter: megasonicPower, unit: W, minimum: 550, maximum: 750, nominal: 650, idle: true }
+          - { parameter: sc1Flow, unit: L/min, minimum: 0.8, maximum: 1.4, nominal: 1.1, idle: true }
+          - { parameter: sc2Flow, unit: L/min, minimum: 0.8, maximum: 1.4, nominal: 1.1, idle: true }
+          - { parameter: diwFlow, unit: L/min, minimum: 1.0, maximum: 1.8, nominal: 1.4, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.2, nominal: 0.9, idle: true }
+          - { parameter: residueCount, unit: count, minimum: 0, maximum: 3, nominal: 0, idle: true }
 tools:
   - id: C-01
     name: Clean C-01

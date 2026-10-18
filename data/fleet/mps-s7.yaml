@@ -11,6 +11,13 @@ recipes:
         windows:
           - { parameter: chamberPressure, unit: Torr, minimum: 0.9, maximum: 1.2, nominal: 1.05 }
           - { parameter: temperature, unit: C, minimum: 255, maximum: 270, nominal: 262 }
+          - { parameter: remotePlasmaPower, unit: W, minimum: 2500, maximum: 3200, nominal: 2800, idle: true }
+          - { parameter: o2Flow, unit: sccm, minimum: 1500, maximum: 2500, nominal: 2000, idle: true }
+          - { parameter: n2h2Flow, unit: sccm, minimum: 200, maximum: 500, nominal: 320, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.7, idle: true }
+          - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.04, idle: true }
+          - { parameter: ashRate, unit: nm/min, minimum: 800, maximum: 1400, nominal: 1100, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 8, nominal: 3, idle: true }
       - id: ash
         name: Ash
         windows:
@@ -20,12 +27,21 @@ recipes:
           - { parameter: o2Flow, unit: sccm, minimum: 1500, maximum: 2500, nominal: 2000 }
           - { parameter: n2h2Flow, unit: sccm, minimum: 200, maximum: 500, nominal: 320 }
           - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.04 }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.7, idle: true }
+          - { parameter: ashRate, unit: nm/min, minimum: 800, maximum: 1400, nominal: 1100, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 8, nominal: 3, idle: true }
       - id: quench
         name: Quench
         windows:
           - { parameter: ashRate, unit: nm/min, minimum: 800, maximum: 1400, nominal: 1100 }
           - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 8, nominal: 3 }
           - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.7 }
+          - { parameter: temperature, unit: C, minimum: 255, maximum: 270, nominal: 262, idle: true }
+          - { parameter: chamberPressure, unit: Torr, minimum: 0.9, maximum: 1.2, nominal: 1.05, idle: true }
+          - { parameter: remotePlasmaPower, unit: W, minimum: 2500, maximum: 3200, nominal: 2800, idle: true }
+          - { parameter: o2Flow, unit: sccm, minimum: 1500, maximum: 2500, nominal: 2000, idle: true }
+          - { parameter: n2h2Flow, unit: sccm, minimum: 200, maximum: 500, nominal: 320, idle: true }
+          - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.04, idle: true }
   - id: ASH-HIGH
     name: High-dose ash
     steps:
@@ -34,15 +50,37 @@ recipes:
         windows:
           - { parameter: temperature, unit: C, minimum: 265, maximum: 278, nominal: 272 }
           - { parameter: chamberPressure, unit: Torr, minimum: 0.95, maximum: 1.25, nominal: 1.1 }
+          - { parameter: remotePlasmaPower, unit: W, minimum: 3000, maximum: 3800, nominal: 3400, idle: true }
+          - { parameter: o2Flow, unit: sccm, minimum: 2200, maximum: 3600, nominal: 2800, idle: true }
+          - { parameter: n2h2Flow, unit: sccm, minimum: 200, maximum: 500, nominal: 320, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.7, idle: true }
+          - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.04, idle: true }
+          - { parameter: ashRate, unit: nm/min, minimum: 1200, maximum: 2000, nominal: 1600, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 8, nominal: 3, idle: true }
       - id: ash
         name: Ash
         windows:
           - { parameter: remotePlasmaPower, unit: W, minimum: 3000, maximum: 3800, nominal: 3400 }
           - { parameter: o2Flow, unit: sccm, minimum: 2200, maximum: 3600, nominal: 2800 }
+          - { parameter: temperature, unit: C, minimum: 265, maximum: 278, nominal: 272, idle: true }
+          - { parameter: chamberPressure, unit: Torr, minimum: 0.95, maximum: 1.25, nominal: 1.1, idle: true }
+          - { parameter: n2h2Flow, unit: sccm, minimum: 200, maximum: 500, nominal: 320, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.7, idle: true }
+          - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.04, idle: true }
+          - { parameter: ashRate, unit: nm/min, minimum: 1200, maximum: 2000, nominal: 1600, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 8, nominal: 3, idle: true }
       - id: quench
         name: Quench
         windows:
           - { parameter: ashRate, unit: nm/min, minimum: 1200, maximum: 2000, nominal: 1600 }
+          - { parameter: temperature, unit: C, minimum: 265, maximum: 278, nominal: 272, idle: true }
+          - { parameter: chamberPressure, unit: Torr, minimum: 0.95, maximum: 1.25, nominal: 1.1, idle: true }
+          - { parameter: remotePlasmaPower, unit: W, minimum: 3000, maximum: 3800, nominal: 3400, idle: true }
+          - { parameter: o2Flow, unit: sccm, minimum: 2200, maximum: 3600, nominal: 2800, idle: true }
+          - { parameter: n2h2Flow, unit: sccm, minimum: 200, maximum: 500, nominal: 320, idle: true }
+          - { parameter: vibrationRms, unit: mm/s, minimum: 0, maximum: 2.0, nominal: 0.7, idle: true }
+          - { parameter: waferCenterOffset, unit: mm, minimum: 0, maximum: 0.12, nominal: 0.04, idle: true }
+          - { parameter: particlesAdders, unit: count, minimum: 0, maximum: 8, nominal: 3, idle: true }
 tools:
   - id: S-01
     name: Strip S-01

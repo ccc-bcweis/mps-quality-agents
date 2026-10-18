@@ -115,4 +115,33 @@ describe("tool detail on the fleet stream", () => {
 
     expect(await screen.findByRole("figure", { name: /No active SPC alert on this series/ })).toBeInTheDocument();
   });
+
+  it("shows the current recipe and step in the chart header (#366)", async () => {
+    counted("/api/tools/:toolId/live", () => ({
+      ...liveBody([
+        { at: "2026-09-01T00:00:15Z", value: 351 },
+        { at: "2026-09-01T00:02:15Z", value: 349 },
+      ]),
+      series: [
+        {
+          parameter: "etchRate",
+          chamberId: "E-01-A",
+          center: 350,
+          sigma: 20,
+          points: [
+            { at: "2026-09-01T00:00:15Z", value: 351 },
+            { at: "2026-09-01T00:02:15Z", value: 349 },
+          ],
+          segments: [
+            { from: "2026-09-01T00:00:15Z", center: 350, sigma: 20, recipe: "Oxide main etch", step: "Main etch", idle: true, floor: 50, ceiling: 800 },
+            { from: "2026-09-01T00:02:15Z", center: 350, sigma: 20, recipe: "Oxide main etch", step: "Endpoint", idle: false, floor: 50, ceiling: 800 },
+          ],
+        },
+      ],
+    }));
+    renderConsole("/tools/E-01?parameter=etchRate");
+    const header = await screen.findByText(/Recipe Oxide main etch · step Endpoint/);
+    expect(header).toBeInTheDocument();
+    expect(header.textContent).not.toMatch(/idle/);
+  });
 });
