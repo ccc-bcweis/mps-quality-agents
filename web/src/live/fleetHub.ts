@@ -176,20 +176,6 @@ export function watchedGroups(): string[] {
   return [...watches.keys()];
 }
 
-export function subscribeRecordEvents(listener: (event: RecordEvent, payload: unknown) => void): () => void {
-  const offs = RECORD_EVENTS.map((name) => onHub(name, (payload) => listener(name, payload)));
-  return () => {
-    for (const off of offs) off();
-  };
-}
-
-/** Calls onChange whenever an alert, ticket, incident, investigation or CAPA changes. */
-export function useRecordEvents(onChange: (event: RecordEvent, payload: unknown) => void): void {
-  const ref = useRef(onChange);
-  ref.current = onChange;
-  useEffect(() => subscribeRecordEvents((event, payload) => ref.current(event, payload)), []);
-}
-
 /** Calls handler for one hub message while the component is mounted. */
 export function useHubEvent(name: HubEvent, handler: Handler): void {
   const ref = useRef(handler);

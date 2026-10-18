@@ -19,10 +19,6 @@ export function setCatalog(next: ConsoleCatalog): void {
   listeners.forEach((listener) => listener());
 }
 
-export function catalog(): ConsoleCatalog {
-  return current;
-}
-
 export function catalogLoaded(): boolean {
   return current.limits !== null;
 }

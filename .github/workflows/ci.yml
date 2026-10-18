@@ -78,7 +78,12 @@ jobs:
       - name: Lint, test, and build
         if: hashFiles('web/package.json') != ''
         working-directory: web
-        run: npm ci && npm run lint && npm test && npm run build
+        run: npm ci && npm run lint && npm test && npm run build && test ! -e dist/mockServiceWorker.js
+
+      - name: Unused files and exports (knip)
+        if: hashFiles('web/package.json') != ''
+        working-directory: web
+        run: npm run knip
 
       - name: Production dependency audit
         if: hashFiles('web/package.json') != ''

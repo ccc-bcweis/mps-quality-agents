@@ -2,18 +2,16 @@
 // Demo fleet for the console. Shapes match contracts/openapi.yaml.
 // S1 ids match contracts/msw/handlers.ts. Ticket numbers follow the wireframes.
 
-import type { Alert, EvidenceItem, Incident, Investigation, Ticket, Tool } from "../api/types";
+import type { EvidenceItem, Incident, Investigation, Ticket, Tool } from "../api/types";
 
 export const S1_INCIDENT_ID = "8d0a1c4e-1b7a-4e5a-9c1d-0a6b2e3f4a5b";
 export const S1_INVESTIGATION_ID = "2c6e1a40-7b2d-4f1e-8a33-91d0c5b6e7f8";
 export const S1_EVIDENCE_ID = "11111111-1111-4111-8111-111111111111";
 export const S1_HYPOTHESIS_ID = "22222222-2222-4222-8222-222222222222";
-export const S1_ALERT_ID = "33333333-3333-4333-8333-333333333333";
 export const S1_TICKET_ID = "44444444-4444-4444-8444-444444444444";
 
 export const S2_INCIDENT_ID = "a1111111-1111-4111-8111-111111111111";
 export const S2_INVESTIGATION_ID = "a2222222-2222-4222-8222-222222222222";
-export const S2_ALERT_ID = "a3333333-3333-4333-8333-333333333333";
 export const S2_TICKET_ID = "a4444444-4444-4444-8444-444444444444";
 
 export const NCR_INCIDENT_ID = "b1111111-1111-4111-8111-111111111111";
@@ -44,29 +42,6 @@ export const tools: Tool[] = [
   { id: "S-02", name: "Strip 02", family: "strip", model: "MPS-S7", bay: "Bay-2", siteId: "northwater", chambers: chambers(["Chamber A", "Chamber B"]) },
   { id: "C-01", name: "Clean 01", family: "clean", model: "MPS-C7", bay: "Bay-1", siteId: "northwater", chambers: chambers(["Chamber A"]) },
   { id: "C-02", name: "Clean 02", family: "clean", model: "MPS-C7", bay: "Bay-2", siteId: "northwater", chambers: chambers(["Chamber A"]) },
-];
-
-export const alerts: Alert[] = [
-  {
-    id: S2_ALERT_ID,
-    toolId: "D-01",
-    chamberId: "C1",
-    parameter: "chamberPressure",
-    severity: "high",
-    rule: "western-electric-1",
-    raisedAt: "2026-10-14T14:40:00Z",
-    correlationId: "corr-s2",
-  },
-  {
-    id: S1_ALERT_ID,
-    toolId: "E-02",
-    chamberId: "C2",
-    parameter: "escTemperature",
-    severity: "medium",
-    rule: "westernElectric2",
-    raisedAt: "2026-10-14T14:59:00Z",
-    correlationId: "corr-s1",
-  },
 ];
 
 export const incidents: Incident[] = [
