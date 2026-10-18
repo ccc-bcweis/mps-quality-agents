@@ -2,6 +2,8 @@
 
 using System.Net;
 
+using Xunit.Abstractions;
+
 namespace Mps.Api.IntegrationTests;
 
 /// <summary>
@@ -15,8 +17,10 @@ public sealed class PromptInjectionTests : IClassFixture<MpsApiFactory>
 
     private readonly MpsApiFactory _factory;
 
-    public PromptInjectionTests(MpsApiFactory factory)
+    public PromptInjectionTests(MpsApiFactory factory, ITestOutputHelper output)
     {
+        ArgumentNullException.ThrowIfNull(factory);
+        factory.ServerLog.Attach(output);
         _factory = factory;
     }
 

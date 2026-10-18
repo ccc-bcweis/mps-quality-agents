@@ -2,6 +2,8 @@
 
 using System.Net;
 
+using Xunit.Abstractions;
+
 namespace Mps.Api.IntegrationTests;
 
 /// <summary>
@@ -11,8 +13,10 @@ public sealed class ServiceBehaviorContractTests : IClassFixture<MpsApiFactory>
 {
     private readonly MpsApiFactory _factory;
 
-    public ServiceBehaviorContractTests(MpsApiFactory factory)
+    public ServiceBehaviorContractTests(MpsApiFactory factory, ITestOutputHelper output)
     {
+        ArgumentNullException.ThrowIfNull(factory);
+        factory.ServerLog.Attach(output);
         _factory = factory;
     }
 
