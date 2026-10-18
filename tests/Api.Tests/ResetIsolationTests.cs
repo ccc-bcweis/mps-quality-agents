@@ -17,6 +17,7 @@ public sealed class ResetIsolationTests
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     [Fact]
+    [Trait("Category", "Slow")]
     public async Task HardResetBetweenSc2AndSc3LeavesNoAlertFromSc2()
     {
         await using var factory = new ApiFactory().WithWebHostBuilder(builder =>

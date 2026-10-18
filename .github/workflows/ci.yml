@@ -39,7 +39,8 @@ jobs:
         run: dotnet format MPS.sln --verify-no-changes --no-restore
 
       - name: Test
-        run: dotnet test MPS.sln --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory coverage --settings coverlet.runsettings
+        # The four whole-plant simulation tests (Category=Slow) run in the slow-tests job, in parallel with this one.
+        run: dotnet test MPS.sln --configuration Release --no-build --filter "Category!=Slow" --collect:"XPlat Code Coverage" --results-directory coverage --settings coverlet.runsettings
 
       - name: Eval (replay mode, gates)
         run: dotnet run --project eval/Eval.Runner --configuration Release --no-build -- eval/cases "$RUNNER_TEMP/eval-latest.json"
@@ -55,6 +56,26 @@ jobs:
           name: coverage-report
           path: coverage/report
           if-no-files-found: error
+
+  slow-tests:
+    # Whole-plant simulation tests: a quarter hour of baseline, reset isolation across SC-2/SC-3, replay record/swap
+    # and the scenario bus chain. Same tests on every PR, on their own runner so they do not queue behind the rest.
+    name: slow tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Build
+        run: dotnet build tests/Api.Tests/Api.Tests.csproj --configuration Release
+
+      - name: Test (Category=Slow)
+        run: dotnet test tests/Api.Tests/Api.Tests.csproj --configuration Release --no-build --filter "Category=Slow"
 
   web:
     name: web
