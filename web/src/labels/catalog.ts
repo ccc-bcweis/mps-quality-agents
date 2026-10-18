@@ -37,6 +37,31 @@ export function loadCatalog(fetcher: () => Promise<ConsoleCatalog>): Promise<Con
   return loading;
 }
 
+/** Waits between catalog retries, in milliseconds. The last wait repeats until the catalog lands. */
+export const CATALOG_RETRY_MS = [1000, 2000, 5000, 10000, 30000];
+
+/**
+ * Loads the catalog and keeps retrying with backoff until it lands, so one failed request (an app restart during a
+ * deploy, a cold start) cannot leave the console without limits, chart bands, plants and labels until a reload.
+ * Returns a stop function for effect cleanup.
+ */
+export function keepLoadingCatalog(fetcher: () => Promise<ConsoleCatalog>, waits: number[] = CATALOG_RETRY_MS): () => void {
+  let stopped = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const attempt = (tries: number) => {
+    if (stopped || catalogLoaded()) return;
+    loadCatalog(fetcher).catch(() => {
+      if (stopped || catalogLoaded()) return;
+      timer = setTimeout(() => attempt(tries + 1), waits[Math.min(tries, waits.length - 1)]);
+    });
+  };
+  attempt(0);
+  return () => {
+    stopped = true;
+    if (timer !== undefined) clearTimeout(timer);
+  };
+}
+
 /** Re-renders the caller when the catalog arrives. */
 export function useCatalog(): ConsoleCatalog {
   const [, setVersion] = useState(0);
