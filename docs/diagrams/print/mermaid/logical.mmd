@@ -11,7 +11,7 @@ flowchart LR
     INJ["Fault injector"]
     SCN["Scenario picker"]
     RST["Reset demo"]
-    MODE["Live, replay, mock"]
+    MODE["Model mode chip"]
   end
 
   subgraph Intake["Intake"]
@@ -63,11 +63,11 @@ flowchart LR
   subgraph Gw["Model gateway"]
     direction TB
     LEDGER["Spend cap"]
-    ROUTE["Route and retry"]
-    M1["Azure OpenAI"]
+    ROUTE["20 s timeout, no SDK retry"]
+    M1["Azure gpt-5.4-mini"]
     M2["OpenAI"]
-    M3["Replay"]
-    M4["Mock reasoner"]
+    M3["Saved answers"]
+    M4["Offline, no key"]
   end
 
   subgraph Gov["Eval"]
@@ -134,8 +134,8 @@ flowchart LR
   ROUTE --> LEDGER
   LEDGER -->|"under cap"| M1
   LEDGER -->|"under cap"| M2
-  LEDGER -->|"over cap"| M3
-  LEDGER -->|"no recording"| M4
+  LEDGER -->|"timeout, failure, or cap"| M3
+  LEDGER -->|"no key"| M4
   REG --> ROUTE
   MODE --> LEDGER
 

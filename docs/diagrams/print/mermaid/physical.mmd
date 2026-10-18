@@ -20,25 +20,25 @@ flowchart TB
   APP --> GUESTS
 
   subgraph RG["rg-mps-demo"]
-    subgraph Edge["Static Web App"]
+    subgraph Edge["Console, served by the API"]
       HRN["Harness bar"]
       CON["Meridian console"]
     end
 
     subgraph Net["Container Apps"]
-      APIc["API"]
+      APIc[".NET 10 API, one replica, aspnet 10.0"]
       SITES["Sites API"]
       EGATE["Escalation gate"]
       WRK["Investigation worker"]
-      SIMc["Simulator, one replica"]
+      SIMc["Simulator, same app"]
       MOCK["Mock enterprise"]
       EVD["Scenario evidence"]
     end
 
-    Q["Storage queue"]
-    SQL[("Serverless SQL")]
-    SRCH[("Search index")]
-    AOAI["Azure OpenAI"]
+    Q["Queue (demo: in-process)<br/>Production: Azure Service Bus"]
+    SQL[("Store (demo: SQLite)<br/>Production: Azure SQL")]
+    SRCH[("Index (demo: in-process)<br/>Production: Azure AI Search")]
+    AOAI["Azure OpenAI gpt-5.4-mini"]
     KV["Key Vault"]
     MI["Managed identity"]
     AI["Traces"]
@@ -74,6 +74,6 @@ flowchart TB
   CON --> AI
   BUD --> AI
 
-  GH -->|manual deploy| ACR
+  GH -->|manual workflow_dispatch, OIDC| ACR
   GH --> APIc
   GH --> HRN
