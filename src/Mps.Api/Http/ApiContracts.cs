@@ -91,7 +91,21 @@ public sealed record EvidenceResponse(
     double? ControlHigh = null,
     double? Center = null,
     string? LimitState = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? SuppliedBy = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? SuppliedBy = null)
+{
+    /// <summary>candidate, ruledOut, or context. A signal or a ticket is context. A record the plant data dismisses is ruledOut.</summary>
+    public string Status { get; init; } = EvidenceItemStatus.Candidate;
+}
+
+/// <summary>How an evidence item sits in the round: a possible cause, already dismissed by the plant data, or context.</summary>
+public static class EvidenceItemStatus
+{
+    public const string Candidate = "candidate";
+
+    public const string RuledOut = "ruledOut";
+
+    public const string Context = "context";
+}
 
 public sealed record EvidenceMatrixResponse(
     RootCauseCategory Category,
@@ -99,8 +113,18 @@ public sealed record EvidenceMatrixResponse(
     EvidenceStance Stance,
     string? WhyItMatters);
 
-/// <summary>The AI answer a guard refused: its cause text, class (null when it named none) and the evidence ids it cited as support.</summary>
-public sealed record RejectedAnswerResponse(string? Cause, RootCauseCategory? Category, IReadOnlyList<Guid> EvidenceIds);
+/// <summary>One record the refused answer proposed as ruled out.</summary>
+public sealed record RejectedRuledOutResponse(Guid EvidenceId, string Reason);
+
+/// <summary>The AI answer a guard refused: its cause text, class (null when it named none), the evidence ids it cited as support, and the records it ruled out.</summary>
+public sealed record RejectedAnswerResponse(
+    string? Cause,
+    RootCauseCategory? Category,
+    IReadOnlyList<Guid> EvidenceIds,
+    IReadOnlyList<RejectedRuledOutResponse> RuledOutIds);
+
+/// <summary>One record considered and ruled out. Source is record (the plant data) or agent (the answer).</summary>
+public sealed record RuledOutItemResponse(Guid EvidenceId, string Reason, RuledOutSource Source, RootCauseCategory? Category = null);
 
 public sealed record HypothesisResponse(
     Guid Id,
@@ -109,7 +133,8 @@ public sealed record HypothesisResponse(
     double Confidence,
     IReadOnlyList<Guid> EvidenceIds,
     IReadOnlyList<string> CounterEvidence,
-    IReadOnlyList<string> Actions);
+    IReadOnlyList<string> Actions,
+    IReadOnlyList<RuledOutItemResponse> RuledOut);
 
 public sealed record InvestigationResponse(
     Guid Id,

@@ -1385,10 +1385,14 @@ components:
     EvidenceSource:
       type: string
       enum: [telemetry, spc, mes, qms, plm, erp, cmms, document, ticketing, manualMeasurement, userProvided]
+    EvidenceItemStatus:
+      type: string
+      description: candidate can support a cause. ruledOut is a record the plant data already dismisses. context is a signal, a chart, or a ticket.
+      enum: [candidate, ruledOut, context]
     EvidenceItem:
       type: object
       additionalProperties: false
-      required: [id, source, title, excerpt, observedAt]
+      required: [id, source, title, excerpt, observedAt, status]
       properties:
         id:
           type: string
@@ -1451,6 +1455,8 @@ components:
           type: string
           nullable: true
           description: Who typed this record in (source userProvided, the evidence loop). Absent for gathered records.
+        status:
+          $ref: "#/components/schemas/EvidenceItemStatus"
     CausalTrace:
       type: object
       additionalProperties: false
@@ -1523,10 +1529,31 @@ components:
     RootCauseCategory:
       type: string
       enum: [engineeringChange, equipmentCalibrationOrAlignment, supplyChainMaterial, processDrift]
+    RuledOutSource:
+      type: string
+      description: record means the plant data already rules the record out. agent means the answer dismissed it.
+      enum: [record, agent]
+    RuledOutItem:
+      type: object
+      additionalProperties: false
+      required: [evidenceId, reason, source]
+      properties:
+        evidenceId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        source:
+          $ref: "#/components/schemas/RuledOutSource"
+        category:
+          allOf:
+            - $ref: "#/components/schemas/RootCauseCategory"
+          nullable: true
+          description: The class the record would have supported. Absent or null when the answer named none.
     Hypothesis:
       type: object
       additionalProperties: false
-      required: [id, category, cause, confidence, evidenceIds, counterEvidence, actions]
+      required: [id, category, cause, confidence, evidenceIds, counterEvidence, actions, ruledOut]
       properties:
         id:
           type: string
@@ -1553,6 +1580,11 @@ components:
           type: array
           items:
             type: string
+        ruledOut:
+          type: array
+          description: Records considered and dismissed. May be empty. An agent ruling does not by itself change evidence status.
+          items:
+            $ref: "#/components/schemas/RuledOutItem"
     InvestigationStage:
       type: string
       enum:
@@ -1615,11 +1647,21 @@ components:
           description: The most rounds a ticket can have (data/metadata/investigation.yaml evidenceRounds.max).
         rejectedAnswer:
           $ref: "#/components/schemas/RejectedAnswer"
+    RejectedRuledOutItem:
+      type: object
+      additionalProperties: false
+      required: [evidenceId, reason]
+      properties:
+        evidenceId:
+          type: string
+          format: uuid
+        reason:
+          type: string
     RejectedAnswer:
       type: object
       nullable: true
       additionalProperties: false
-      required: [evidenceIds]
+      required: [evidenceIds, ruledOutIds]
       description: What the AI proposed when a guard refused its answer and the round escalated. Present only on an escalated investigation.
       properties:
         cause:
@@ -1635,6 +1677,11 @@ components:
           items:
             type: string
             format: uuid
+        ruledOutIds:
+          type: array
+          description: Records the refused answer proposed as ruled out. May be empty.
+          items:
+            $ref: "#/components/schemas/RejectedRuledOutItem"
     DecisionRecord:
       type: object
       nullable: true

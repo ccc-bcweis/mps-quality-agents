@@ -22,6 +22,18 @@ public sealed record EvidenceMatrixEntry(
 
 public sealed record RejectedRuledOut(Guid EvidenceId, string Reason);
 
+/// <summary>A guard or grounding refusal that names the id and the list it was in.</summary>
+public sealed record GuardListHit(Guid EvidenceId, string List)
+{
+    public const string EvidenceIds = "evidenceIds";
+
+    public const string RuledOutIds = "ruledOutIds";
+
+    public string List { get; init; } = List is EvidenceIds or RuledOutIds
+        ? List
+        : throw new ArgumentOutOfRangeException(nameof(List), "A guard escalation names evidenceIds or ruledOutIds.");
+}
+
 /// <summary>
 /// Plain-language notes and the root-cause matrix carried beside an investigation.
 /// Domain evidence does not store these fields yet, so the API persists them here.
@@ -62,11 +74,19 @@ public sealed class InvestigationNarrative
     /// <summary>The refused AI answer when a guard escalated the round; null otherwise.</summary>
     public RejectedAnswer? Rejected { get; init; }
 
+    /// <summary>Pack records the plant data rules out. Used when the round ended without a hypothesis.</summary>
+    public IReadOnlyList<Mps.Domain.Hypotheses.RuledOutEntry> RecordRuledOut { get; init; } = [];
+
+    /// <summary>The id a guard found in the wrong list, when the round escalated for that reason.</summary>
+    public GuardListHit? GuardHit { get; init; }
+
     public static InvestigationNarrative Create(
         IReadOnlyList<EvidenceNote> notes,
         IReadOnlyList<EvidenceMatrixEntry> matrix,
         IReadOnlySet<Guid> evidenceIds,
-        RejectedAnswer? rejected = null)
+        RejectedAnswer? rejected = null,
+        IReadOnlyList<Mps.Domain.Hypotheses.RuledOutEntry>? recordRuledOut = null,
+        GuardListHit? guardHit = null)
     {
         ArgumentNullException.ThrowIfNull(notes);
         ArgumentNullException.ThrowIfNull(matrix);
@@ -110,6 +130,8 @@ public sealed class InvestigationNarrative
             Rejected = rejected is null
                 ? null
                 : rejected with { EvidenceIds = rejected.EvidenceIds.Where(evidenceIds.Contains).Distinct().ToArray() },
+            RecordRuledOut = recordRuledOut?.ToArray() ?? [],
+            GuardHit = guardHit,
         };
     }
 

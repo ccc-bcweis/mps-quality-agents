@@ -306,6 +306,8 @@ public sealed class EfQualityStore :
         var rejected = string.IsNullOrWhiteSpace(row.RejectedAnswerJson)
             ? null
             : JsonSerializer.Deserialize<RejectedDocument>(row.RejectedAnswerJson, JsonOptions);
+        var hasAnswer = rejected is not null
+            && (rejected.Cause is not null || rejected.Category is not null || rejected.EvidenceIds is not null);
         return new InvestigationNarrative(
             notes,
             matrix.Select(item => new EvidenceMatrixEntry(
@@ -314,12 +316,15 @@ public sealed class EfQualityStore :
                 Enum.Parse<EvidenceStance>(item.Stance),
                 item.WhyItMatters)).ToArray())
         {
-            Rejected = rejected is null
-                ? null
-                : new RejectedAnswer(
-                    rejected.Cause,
+            Rejected = hasAnswer
+                ? new RejectedAnswer(
+                    rejected!.Cause,
                     Enum.TryParse<RootCauseCategory>(rejected.Category, out var category) ? category : null,
-                    rejected.EvidenceIds ?? []),
+                    rejected.EvidenceIds ?? [],
+                    rejected.RuledOutIds?.Select(item => new RejectedRuledOut(item.EvidenceId, item.Reason)).ToArray())
+                : null,
+            RecordRuledOut = rejected?.RecordRuledOut?.Select(ToRecordRuledOut).ToArray() ?? [],
+            GuardHit = rejected?.GuardHit is { } hit ? new GuardListHit(hit.EvidenceId, hit.List) : null,
         };
     }
 
@@ -685,9 +690,9 @@ public sealed class EfQualityStore :
         }
 
         row.EvidenceJson = JsonSerializer.Serialize(evidence, JsonOptions);
-        row.RejectedAnswerJson = narrative.Rejected is { } rejected
-            ? JsonSerializer.Serialize(new RejectedDocument(rejected.Cause, rejected.Category?.ToString(), rejected.EvidenceIds.ToArray()), JsonOptions)
-            : null;
+        row.RejectedAnswerJson = narrative.Rejected is null && narrative.RecordRuledOut.Count == 0 && narrative.GuardHit is null
+            ? null
+            : JsonSerializer.Serialize(ToRejectedDocument(narrative), JsonOptions);
         row.EvidenceMatrixJson = JsonSerializer.Serialize(
             narrative.Matrix.Select(entry => new MatrixDocument(
                 entry.Category.ToString(),
@@ -753,7 +758,8 @@ public sealed class EfQualityStore :
             hypothesis.Confidence,
             hypothesis.EvidenceIds.Select(id => id.Value).ToArray(),
             hypothesis.CounterEvidence.ToArray(),
-            hypothesis.Actions.ToArray());
+            hypothesis.Actions.ToArray(),
+            hypothesis.RuledOut.Select(ToRuledOutDocument).ToArray());
 
     private static Hypothesis ToHypothesis(HypothesisDocument document) =>
         new(
@@ -763,7 +769,37 @@ public sealed class EfQualityStore :
             document.Confidence,
             document.EvidenceIds.Select(id => new EvidenceId(id)).ToArray(),
             document.CounterEvidence,
-            document.Actions);
+            document.Actions,
+            document.RuledOut?.Select(ToRuledOutEntry).ToArray());
+
+    private static RuledOutDocument ToRuledOutDocument(RuledOutEntry entry) =>
+        new(entry.Id.Value, entry.Reason, entry.Source.ToString(), entry.Class?.ToString());
+
+    private static RuledOutEntry ToRuledOutEntry(RuledOutDocument document) =>
+        new(
+            new EvidenceId(document.EvidenceId),
+            document.Reason,
+            Enum.Parse<RuledOutSource>(document.Source),
+            string.IsNullOrWhiteSpace(document.Class) ? null : Enum.Parse<RootCauseCategory>(document.Class));
+
+    private static RuledOutEntry ToRecordRuledOut(RecordRuledOutDocument document) =>
+        new(
+            new EvidenceId(document.EvidenceId),
+            document.Reason,
+            RuledOutSource.Record,
+            string.IsNullOrWhiteSpace(document.Class) ? null : Enum.Parse<RootCauseCategory>(document.Class));
+
+    private static RejectedDocument ToRejectedDocument(InvestigationNarrative narrative)
+    {
+        var rejected = narrative.Rejected;
+        return new RejectedDocument(
+            rejected?.Cause,
+            rejected?.Category?.ToString(),
+            rejected?.EvidenceIds.ToArray(),
+            rejected?.RuledOutIds.Select(item => new RejectedRuledOutDocument(item.EvidenceId, item.Reason)).ToArray() ?? [],
+            narrative.RecordRuledOut.Select(item => new RecordRuledOutDocument(item.Id.Value, item.Reason, item.Class?.ToString())).ToArray(),
+            narrative.GuardHit is { } hit ? new GuardHitDocument(hit.EvidenceId, hit.List) : null);
+    }
 
     private static StoredCapa ToCapa(CapaRow row) =>
         new(
@@ -800,7 +836,21 @@ public sealed class EfQualityStore :
 
     private sealed record MatrixDocument(string Category, Guid EvidenceId, string Stance, string? WhyItMatters);
 
-    private sealed record RejectedDocument(string? Cause, string? Category, Guid[]? EvidenceIds);
+    private sealed record RejectedRuledOutDocument(Guid EvidenceId, string Reason);
+
+    private sealed record RecordRuledOutDocument(Guid EvidenceId, string Reason, string? Class);
+
+    private sealed record GuardHitDocument(Guid EvidenceId, string List);
+
+    private sealed record RejectedDocument(
+        string? Cause,
+        string? Category,
+        Guid[]? EvidenceIds,
+        RejectedRuledOutDocument[]? RuledOutIds = null,
+        RecordRuledOutDocument[]? RecordRuledOut = null,
+        GuardHitDocument? GuardHit = null);
+
+    private sealed record RuledOutDocument(Guid EvidenceId, string Reason, string Source, string? Class);
 
     private sealed record HypothesisDocument(
         Guid Id,
@@ -809,5 +859,6 @@ public sealed class EfQualityStore :
         double Confidence,
         Guid[] EvidenceIds,
         string[] CounterEvidence,
-        string[] Actions);
+        string[] Actions,
+        RuledOutDocument[]? RuledOut = null);
 }

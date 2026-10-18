@@ -3,6 +3,7 @@
 using Mps.Application.Errors;
 using Mps.Application.Evidence;
 using Mps.Domain.Hypotheses;
+using Mps.Domain.Identity;
 
 namespace Mps.Application.Tests.Evidence;
 
@@ -89,6 +90,36 @@ public sealed class InvestigationNarrativeTests
             Ids());
 
         act.Should().Throw<IntakeValidationException>().WithMessage("*already cites*");
+    }
+
+    [Fact]
+    public void CreateKeepsRuledOutIdsThePackListAndTheGuardHit()
+    {
+        var ruledOutId = Guid.NewGuid();
+        var unknownCited = Guid.NewGuid();
+        var record = new RuledOutEntry(
+            new EvidenceId(ruledOutId),
+            "It matches the specification.",
+            RuledOutSource.Record,
+            RootCauseCategory.SupplyChainMaterial);
+        var rejected = new RejectedAnswer(
+            "A guess.",
+            RootCauseCategory.ProcessDrift,
+            [EvidenceId, unknownCited],
+            [new RejectedRuledOut(ruledOutId, "The answer dismissed it.")]);
+        var hit = new GuardListHit(unknownCited, GuardListHit.EvidenceIds);
+
+        var narrative = InvestigationNarrative.Create([], [], Ids(), rejected, [record], hit);
+
+        narrative.Rejected.Should().NotBeNull();
+        narrative.Rejected!.EvidenceIds.Should().Equal(EvidenceId);
+        narrative.Rejected.RuledOutIds.Should().ContainSingle(item =>
+            item.EvidenceId == ruledOutId && item.Reason == "The answer dismissed it.");
+        narrative.RecordRuledOut.Should().ContainSingle(item =>
+            item.Id.Value == ruledOutId && item.Source == RuledOutSource.Record && item.Class == RootCauseCategory.SupplyChainMaterial);
+        narrative.GuardHit.Should().Be(hit);
+        var badList = () => new GuardListHit(Guid.NewGuid(), "causes");
+        badList.Should().Throw<ArgumentOutOfRangeException>();
     }
 
     private static HashSet<Guid> Ids() => [EvidenceId];

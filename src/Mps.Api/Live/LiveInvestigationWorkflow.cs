@@ -84,6 +84,12 @@ public sealed class LiveInvestigationWorkflow : IInvestigationWorkflow
         var matrix = EvidenceMatrixBuilder.FromItems(snapshot.Evidence, SignalShape.Unknown, chosen, _catalog)
             .Select(entry => new AppMatrixEntry(entry.Category, entry.EvidenceId.Value, (AppStance)(int)entry.Stance, entry.WhyItMatters))
             .ToArray();
-        return InvestigationNarrative.Create(notes, matrix, snapshot.Evidence.Select(item => item.Id.Value).ToHashSet(), rejected);
+        return InvestigationNarrative.Create(
+            notes,
+            matrix,
+            snapshot.Evidence.Select(item => item.Id.Value).ToHashSet(),
+            rejected,
+            _inner.RecordRuledOutFor(snapshot.Id),
+            _inner.GuardHitFor(snapshot.Id));
     }
 }
