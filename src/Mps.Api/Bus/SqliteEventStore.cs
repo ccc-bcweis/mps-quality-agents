@@ -11,6 +11,8 @@ namespace Mps.Api.Bus;
 
 /// <summary>
 /// Append-only event log plus a telemetry table. Readings are not copied into the log.
+/// The telemetry table is a rolling window: each sensor keeps its newest <see cref="TelemetryRowsPerSeries"/> readings
+/// (data/metadata/simulation.yaml, telemetryWindow) and older ones are pruned as new ones arrive, so the file stays one size.
 /// One connection, write-ahead logging, and a short busy wait so the request thread and the bus reader can share the file.
 /// </summary>
 public sealed class SqliteEventStore : IDisposable
@@ -19,6 +21,7 @@ public sealed class SqliteEventStore : IDisposable
     private readonly object _gate = new();
     private readonly string _dataSource;
     private bool _ready;
+    private long _rowsSincePrune;
     private bool _disposed;
 
     public SqliteEventStore(string connectionString)
@@ -28,6 +31,12 @@ public sealed class SqliteEventStore : IDisposable
         _dataSource = builder.DataSource;
         _connection = new SqliteConnection(builder.ConnectionString);
     }
+
+    /// <summary>Readings each sensor keeps in the telemetry table. 0 keeps everything (the scale benchmark).</summary>
+    public int TelemetryRowsPerSeries { get; init; }
+
+    /// <summary>Rows written between two prunes: 50 sensor windows, so a prune runs every few minutes at 10x, not every tick.</summary>
+    private long PruneEvery => TelemetryRowsPerSeries * 50L;
 
     public void AppendLog(EventEnvelope envelope)
     {
@@ -114,10 +123,42 @@ public sealed class SqliteEventStore : IDisposable
                 low.Value = (object?)PayloadReader.Number(envelope.Payload, "low") ?? DBNull.Value;
                 high.Value = (object?)PayloadReader.Number(envelope.Payload, "high") ?? DBNull.Value;
                 command.ExecuteNonQuery();
+                _rowsSincePrune++;
             }
 
             transaction.Commit();
+            if (TelemetryRowsPerSeries > 0 && _rowsSincePrune >= PruneEvery)
+            {
+                PruneTelemetryUnlocked(TelemetryRowsPerSeries);
+            }
         }
+    }
+
+    /// <summary>Keeps the newest <paramref name="perSeries"/> readings of each sensor (tool, chamber, parameter); deletes the rest.</summary>
+    public int PruneTelemetry(int perSeries)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(perSeries);
+        Ready();
+        lock (_gate)
+        {
+            return PruneTelemetryUnlocked(perSeries);
+        }
+    }
+
+    private int PruneTelemetryUnlocked(int perSeries)
+    {
+        _rowsSincePrune = 0;
+        using var command = _connection.CreateCommand();
+        command.CommandText =
+            """
+            DELETE FROM telemetry WHERE rowid IN (
+              SELECT rowid FROM (
+                SELECT rowid, ROW_NUMBER() OVER (PARTITION BY tool, chamber, parameter ORDER BY "time" DESC, rowid DESC) AS newest
+                FROM telemetry)
+              WHERE newest > $keep);
+            """;
+        command.Parameters.AddWithValue("$keep", perSeries);
+        return command.ExecuteNonQuery();
     }
 
     public void Clear()

@@ -47,7 +47,7 @@ commands:
         type: string
   - name: command.reset.hard
     kind: system
-    summary: Wipe tickets, investigations, and telemetry, then rebuild a week of healthy plant history. Metadata is kept.
+    summary: Wipe tickets, investigations, and telemetry, then restart the plant with one window of healthy readings. Metadata is kept.
     whoMayIssue:
       - presenter
     emits:

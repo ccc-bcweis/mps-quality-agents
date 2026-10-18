@@ -401,7 +401,10 @@ public sealed class PlantSimulation : Mps.Application.Lifecycle.IPlantFaultContr
 
         if (_options.PrimeSeconds > 0)
         {
-            AppendUnlocked(TimeSpan.FromSeconds(_options.PrimeSeconds));
+            // The prime is one window of healthy history for the charts, the rules and the AI, which all read the
+            // in-memory window. It does not go through the event bus: a window of every sensor (about 530k readings at
+            // 10x) through the bus held the tick loop and froze the plant clock about 20 s after each reset.
+            _log.Append(Runtime.Simulator.Advance(TimeSpan.FromSeconds(_options.PrimeSeconds), EffectiveStride));
         }
 
         _primed = true;

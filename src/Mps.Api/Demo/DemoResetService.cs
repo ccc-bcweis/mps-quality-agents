@@ -21,7 +21,7 @@ using Mps.Simulator.Telemetry;
 namespace Mps.Api.Demo;
 
 /// <summary>
-/// Hard reset deletes transactional rows and refills a week of healthy telemetry.
+/// Hard reset deletes transactional rows and the telemetry window; the plant then primes a fresh window of healthy readings.
 /// Soft reset closes open work, clears live faults, and keeps the history.
 /// Plant metadata lives outside this database, so neither reset reads or deletes it.
 /// </summary>
@@ -49,7 +49,6 @@ public sealed class DemoResetService
     private readonly ICascadeDirectory _cascade;
     private readonly ILifecycleEventSink _sink;
     private readonly TimeProvider _time;
-    private readonly INominalHistorySeeder _seeder;
     private readonly IIncidentLog _incidents;
     private readonly IInvestigationLog _investigations;
     private readonly ScenarioEvidenceBoard _board;
@@ -71,7 +70,6 @@ public sealed class DemoResetService
         ICascadeDirectory cascade,
         ILifecycleEventSink sink,
         TimeProvider time,
-        INominalHistorySeeder seeder,
         IIncidentLog incidents,
         IInvestigationLog investigations,
         ScenarioEvidenceBoard board,
@@ -89,7 +87,6 @@ public sealed class DemoResetService
         ArgumentNullException.ThrowIfNull(cascade);
         ArgumentNullException.ThrowIfNull(sink);
         ArgumentNullException.ThrowIfNull(time);
-        ArgumentNullException.ThrowIfNull(seeder);
         ArgumentNullException.ThrowIfNull(incidents);
         ArgumentNullException.ThrowIfNull(investigations);
         ArgumentNullException.ThrowIfNull(board);
@@ -105,7 +102,6 @@ public sealed class DemoResetService
         _drainLimit = DrainLimit(configuration);
         _sink = sink;
         _time = time;
-        _seeder = seeder;
         _incidents = incidents;
         _investigations = investigations;
         _board = board;
@@ -197,9 +193,10 @@ public sealed class DemoResetService
         _db.TicketSequences.Add(new TicketSequenceRow { Id = 1, NextNumber = 1000 });
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         var published = await PublishResetAsync(EventTypes.ResetHard, cancellationToken).ConfigureAwait(false);
+        // No history refill: the plant restarts its clock now and primes one window of healthy readings inside its lock,
+        // so the clock moves on the first tick after the reset reports done, and those readings fill the telemetry window.
+        _events.ClearTelemetry();
         _plant.Reset();
-        _progress.Report("seeding", "Filling a week of healthy history.");
-        await _seeder.SeedAsync(NominalWindow.LastWeek, cancellationToken).ConfigureAwait(false);
         return await BaselineAsync(published.EventId, "hard", cancellationToken).ConfigureAwait(false);
     }
 

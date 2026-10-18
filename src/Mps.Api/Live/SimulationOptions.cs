@@ -23,7 +23,7 @@ public sealed class SimulationOptions
 
     public int SampleStrideSeconds { get; init; } = 15;
 
-    public int MaxPointsPerSeries { get; init; } = 960;
+    public int MaxPointsPerSeries { get; init; } = Mps.Simulator.SimulationSettings.Shared.TelemetryWindow.ReadingsPerSensor;
 
     /// <summary>Shortest wall time between two live hub messages for the same page (toolLive, fleetLive).</summary>
     public int PushIntervalMilliseconds { get; init; } = 1000;
@@ -46,7 +46,8 @@ public sealed class SimulationOptions
             SimSecondsPerWallSecond = Positive(section.GetValue("SimSecondsPerWallSecond", Mps.Simulator.Demo.DemoDefaults.ClockScale), Mps.Simulator.Demo.DemoDefaults.ClockScale),
             PrimeSeconds = NonNegative(section.GetValue("PrimeSeconds", 600)),
             SampleStrideSeconds = Positive(section.GetValue("SampleStrideSeconds", 15), 15),
-            MaxPointsPerSeries = Positive(section.GetValue("MaxPointsPerSeries", 960), 960),
+            // The window lives in data/metadata/simulation.yaml (telemetryWindow.readingsPerSensor), not in app settings.
+            MaxPointsPerSeries = Mps.Simulator.SimulationSettings.Shared.TelemetryWindow.ReadingsPerSensor,
             PushIntervalMilliseconds = Positive(section.GetValue("PushIntervalMilliseconds", 1000), 1000),
             ClockIntervalSeconds = Positive(section.GetValue("ClockIntervalSeconds", 5), 5),
             MaxPushPointsPerSeries = Positive(section.GetValue("MaxPushPointsPerSeries", 120), 120),

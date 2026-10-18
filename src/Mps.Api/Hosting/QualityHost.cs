@@ -168,7 +168,7 @@ public static class QualityHost
         builder.Services.AddScoped<IFaultInjectionService>(services => ActivatorUtilities.CreateInstance<FaultInjectionService>(services, (TimeProvider)services.GetRequiredService<Mps.Application.RecordClock>()));
         builder.Services.AddSingleton<IEventBus>(services =>
             new InProcessEventBus(time: services.GetRequiredService<TimeProvider>()));
-        builder.Services.AddSingleton(_ => new SqliteEventStore(connectionString));
+        builder.Services.AddSingleton(_ => new SqliteEventStore(connectionString) { TelemetryRowsPerSeries = Mps.Simulator.SimulationSettings.Shared.TelemetryWindow.ReadingsPerSensor });
         builder.Services.AddSingleton<CascadeRegistry>();
         builder.Services.AddSingleton<ICascadeDirectory>(services => services.GetRequiredService<CascadeRegistry>());
         builder.Services.AddSingleton<ILifecycleEventSink>(services => ActivatorUtilities.CreateInstance<BusEventSink>(services, (TimeProvider)services.GetRequiredService<Mps.Application.RecordClock>()));

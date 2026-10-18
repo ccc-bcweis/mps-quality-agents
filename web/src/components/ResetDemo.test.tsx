@@ -8,7 +8,7 @@ import { expandHarness } from "../test/harness";
 import { renderConsole } from "../test/render";
 
 const RESET_COPY =
-  "Hard reset wipes tickets, alerts, investigations, and history, then fills a week of healthy readings. Company rules stay.";
+  "Hard reset wipes tickets, alerts, investigations, and history, then starts a fresh window of healthy readings. Company rules stay.";
 
 describe("reset demo", () => {
   it("asks what is reset and restores a nominal console", async () => {

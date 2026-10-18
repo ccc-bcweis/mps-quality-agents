@@ -26,12 +26,12 @@ const DATA_TIP =
 const REPLAY_TIP =
   "Show the recorded messages for the scenario picked above. The recording stays when you switch back to Live.";
 const HARD_TIP =
-  "Wipes tickets, alerts, and history, then fills a week of healthy readings. Company rules stay.";
+  "Wipes tickets, alerts, and history, then starts a fresh window of healthy readings. Company rules stay.";
 const SOFT_TIP =
   "Closes open tickets and investigations as Closed by demo reset. Deletes nothing. History stays, and every tool returns to nominal.";
 
 const HARD_COPY =
-  "Hard reset wipes tickets, alerts, investigations, and history, then fills a week of healthy readings. Company rules stay.";
+  "Hard reset wipes tickets, alerts, investigations, and history, then starts a fresh window of healthy readings. Company rules stay.";
 const SOFT_COPY =
   "Soft reset closes open tickets and investigations as Closed by demo reset. It deletes nothing. History stays, and every tool returns to nominal.";
 
