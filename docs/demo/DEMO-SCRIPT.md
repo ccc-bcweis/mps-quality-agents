@@ -164,7 +164,7 @@ WO-RCP-E03-RF
 
 Also under **Tickets → Operator report**: pick a **Tool**. The **Parameter** list shows only that tool's real sensors, with units and spec ranges. Then **Open ticket**.
 
-(SC-6 · Oscilloscope RF oscillation on E-01 is the same idea with an oscilloscope printout: `oscilloscope-e01.pdf`.)
+(SC-6 · Oscilloscope RF oscillation on E-01 is the same idea with an oscilloscope printout: `oscilloscope-e01.pdf`. The scenario catalog names that file and confirms it at plant time.)
 
 ---
 
