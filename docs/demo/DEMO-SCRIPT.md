@@ -23,7 +23,7 @@ Control names were checked against the code on `main` on 2026-10-17.
 | 3 | **Hard reset** → **Confirm hard reset** | Wait until the progress note finishes. Production line: every tool **Nominal**. Alerts, Tickets, Investigation and CAPA lists are empty. Speed is back at 1x. Tool charts show 7 days of healthy history |
 | 4 | **Speed** = **1x**, **Sample every** = **5 s** | 1x is real time: the plant clock matches the wall clock |
 | 5 | Plant data: **Live** (not **Replay**) | Live follows the running plant. Replay shows a recorded scenario |
-| 6 | AI engine: **Replay (saved answers, free, repeatable)** or **Live (real model)** | Replay is safest. Live costs a few cents a run; the gateway stops at $2 a day and falls back to saved answers |
+| 6 | AI engine chip (read-only): **Azure OpenAI**, **OpenAI** or **Offline (saved answers)** | Set at start by `MODEL_MODE`, not in the console. A live model costs a few cents a run; the gateway stops at $2 a day, or after repeated failures, and falls back to saved answers. The chip then says so |
 | 7 | **Metrics** (presenter bar) | Spend today well under the $2 cap. Cost per success reads **n/a** before any run |
 | 8 | Console header **Plant** = **All sites** | 32 tools across three plants |
 | 9 | **Join links** → **Create and copy link** (if guests need access) → **Close** | Paste the link in the meeting chat. **Copy** recopies an existing link |
@@ -202,7 +202,7 @@ Also under **Tickets → Operator report**: pick a **Tool**. The **Parameter** l
 | Need it faster | **Speed** → **2x**, **5x** or **10x**. The plant clock stays real time; only the fault develops faster. Set it back to **1x** before the next step |
 | Wrong scenario running | **Stop scenario**, pick the right one, **Run scenario** |
 | Leftover alerts or tickets from a rehearsal | **Hard reset** → **Confirm hard reset**; wait for it to finish (about 30 seconds) |
-| Investigation slow, or the live model errors | AI engine → **Replay (saved answers, free, repeatable)**, then re-open. Plant data is unchanged |
+| Investigation slow, or the live model errors | The gateway falls back to saved answers by itself after 2 failures (20 s timeout each) and the chip says so; re-run the scenario. Check the speed is 10x (at 1x the agents wait about 5 minutes for readings). Plant data is unchanged |
 | Spend meter near $2 | Same: switch to Replay |
 | A tab looks empty | Header **Plant** → **All sites**; that list may have no records for the selected plant |
 | Printout read a field wrong | Edit the field before **Confirm reading** |

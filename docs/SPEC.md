@@ -328,7 +328,7 @@ flowchart TB
 /.env.example  /Directory.Build.props  /.editorconfig  /.github/{pull_request_template.md, ISSUE_TEMPLATE/task.yml, CODEOWNERS}
 ```
 ### 7.2 Run experience
-Local: `git clone … && cp .env.example .env && docker compose up` → console at :5173 (banner **REPLAY MODE**), API :8080, Aspire dashboard :18888. Live: set `LLM_MODE=azure|openai` + key. Alt: `dotnet run --project src/Mps.Api` + `npm run dev`. Tests: `dotnet test`, `npm test`; eval: `dotnet run --project eval/Eval.Runner`.
+Local: `git clone … && cp .env.example .env && docker compose up` → console and API at :8080 (chip **Offline (saved answers)**), Aspire dashboard :18888. Live: set `MODEL_MODE=openai` + `OPENAI_API_KEY`, or `MODEL_MODE=azure` + endpoint and deployment. Alt: `dotnet run --project src/Mps.Api` + `npm run dev`. Tests: `dotnet test`, `npm test`; eval: `dotnet run --project eval/Eval.Runner`.
 Hosted: URL shared by invite; badge **LIVE AI** and a "today's spend: $x of $cap" meter.
 No secrets in the repo: `.env` git-ignored, gitleaks in CI, OIDC for deploy.
 ### 7.3 What's mocked
