@@ -2,20 +2,30 @@
 # Control-chart settings, loaded at startup. Sigma is the recipe window's noise sigma (window width / 6).
 # Control limits are the step center plus or minus controlLimitSigma, then clamped to the sensor's physical range.
 # They follow the recipe step of each reading, including during a fault. They are not statistics of the telemetry.
-# Every number here is shown on Rules & Process and used in the rule sentences; no copy lives in code.
+# The rule engine reads every number it acts on from this file. Sentences on Rules & Process stay in the rule text.
 controlLimitSigma: 3          # control limits: centre plus or minus this many sigma
 watchSigma: 2                 # live tile turns amber (watch) past this many sigma from nominal
 criticalSigma: 4              # Western Electric rule 1 is critical at or past this many sigma
 westernElectric:
-  rule1: { sigma: 3, count: 1, window: 1 }   # one reading beyond 3 sigma
-  rule2: { sigma: 2, count: 2, window: 3 }   # 2 of 3 beyond 2 sigma, one side
-  rule3: { sigma: 1, count: 4, window: 5 }   # 4 of 5 beyond 1 sigma, one side
-  rule4: { count: 8 }                        # 8 in a row on one side
-nelsonRising: { count: 6 }                   # 6 in a row strictly rising
+  rule1: { sigma: 3, count: 1, window: 1, tier: alert }   # one reading beyond 3 sigma
+  rule2: { sigma: 2, count: 2, window: 3, tier: alert }   # 2 of 3 beyond 2 sigma, one side
+  rule3: { sigma: 1, count: 4, window: 5, tier: watch }   # 4 of 5 beyond 1 sigma, one side
+  rule4: { count: 8, tier: watch, minMagnitudeSigma: 1 } # 8 in a row on one side; mean |z| must reach 1 so AR(1) noise runs do not fire
+nelsonRising: { count: 6, tier: watch, minMagnitudeSigma: 1 }   # 6 in a row strictly rising, same magnitude gate
+nelsonFalling: { count: 6, tier: watch, minMagnitudeSigma: 1 }  # 6 in a row strictly falling, same magnitude gate
+specWindow: { tier: alert }   # a reading outside the recipe spec, even inside the 3-sigma rule
 limitCheck:
-  recentReadings: 20          # every live series: a limit check looks at this many recent readings against the recipe-step window, clamped to the physical range
+  recentReadings: 20          # catalog figure for Rules & Process; the engine evaluates every reading and does not use this as a gate
 clearing:
   readings: 8                 # an alert clears after this many readings in a row ...
-  sigma: 2                    # ... inside plus or minus this many sigma of the centre
+  sigma: 2                    # ... inside plus or minus this many sigma of the centre, with no live rule
 alertDebounceMinutes: 10      # a repeat break inside this time updates the same alert instead of opening a new one
-recoveryWatchMinutes: 30      # a signal whose fault was removed is watched this long so its alert can clear
+recoveryWatchMinutes: 30      # catalog figure for Rules & Process; clearing is the hysteresis above, not a timed watch list
+watchExpiry:
+  readings: 24                # a watch with no new violation for this many readings clears
+  minutes: 30                 # ... or after this many simulated minutes, whichever comes first
+ticketCap:
+  perToolPerHour: 6           # tickets past this still raise the alert, and do not open another ticket
+sensors:
+  enabledKinds: [periodic]    # cumulative counters are not evaluated
+  disabledParameters: []      # parameter names skipped even when their kind is enabled

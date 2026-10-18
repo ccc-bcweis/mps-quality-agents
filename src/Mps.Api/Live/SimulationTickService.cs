@@ -16,7 +16,6 @@ public sealed partial class SimulationTickService : BackgroundService
     private static partial void TickFailed(ILogger logger, Exception error);
 
     private readonly PlantSimulation _plant;
-    private readonly StreamSpcPublisher _publisher;
     private readonly TelemetryPublisher _telemetry;
     private readonly SimulationOptions _options;
     private readonly TimeProvider _time;
@@ -24,20 +23,17 @@ public sealed partial class SimulationTickService : BackgroundService
 
     public SimulationTickService(
         PlantSimulation plant,
-        StreamSpcPublisher publisher,
         TelemetryPublisher telemetry,
         SimulationOptions options,
         TimeProvider time,
         ILogger<SimulationTickService> logger)
     {
         ArgumentNullException.ThrowIfNull(plant);
-        ArgumentNullException.ThrowIfNull(publisher);
         ArgumentNullException.ThrowIfNull(telemetry);
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(time);
         ArgumentNullException.ThrowIfNull(logger);
         _plant = plant;
-        _publisher = publisher;
         _telemetry = telemetry;
         _options = options;
         _time = time;
@@ -81,7 +77,6 @@ public sealed partial class SimulationTickService : BackgroundService
             {
                 _plant.AdvanceTick();
                 await _telemetry.PublishPendingAsync(stoppingToken).ConfigureAwait(false);
-                await _publisher.PublishAsync(stoppingToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {

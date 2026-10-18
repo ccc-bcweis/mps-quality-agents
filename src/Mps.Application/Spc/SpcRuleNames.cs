@@ -17,8 +17,11 @@ public static class SpcRuleNames
 
     public const string WesternElectric4 = "western-electric-4";
 
-    /// <summary>Nelson trend: six strictly rising points. Six falling points are not this rule.</summary>
+    /// <summary>Nelson trend: N strictly rising points.</summary>
     public const string NelsonSixRising = "nelson-6-rising";
+
+    /// <summary>Nelson trend: N strictly falling points.</summary>
+    public const string NelsonSixFalling = "nelson-6-falling";
 
     /// <summary>A typed-in or scanned reading outside the printed spec.</summary>
     public const string ManualMeasurement = "manualMeasurement";
@@ -52,12 +55,20 @@ public static class SpcRuleNames
             phrases.Add("Nelson rule 6 (rising trend)");
         }
 
+        if (ids.Contains(NelsonSixFalling))
+        {
+            phrases.Add("Nelson rule 6 (falling trend)");
+        }
+
         if (ids.Contains(Window))
         {
             phrases.Add("reading outside the spec window");
         }
 
-        phrases.AddRange(ids.Where(id => !id.StartsWith("western-electric-", StringComparison.Ordinal) && id != NelsonSixRising && id != Window));
+        phrases.AddRange(ids.Where(id => !id.StartsWith("western-electric-", StringComparison.Ordinal)
+            && id != NelsonSixRising
+            && id != NelsonSixFalling
+            && id != Window));
         return JoinAnd(phrases.ToArray());
     }
 

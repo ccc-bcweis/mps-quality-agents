@@ -29,7 +29,7 @@ public sealed class ResetIsolationTests
         var client = factory.CreateClient();
         var plant = factory.Services.GetRequiredService<PlantSimulation>();
         var telemetry = factory.Services.GetRequiredService<TelemetryPublisher>();
-        var spc = factory.Services.GetRequiredService<StreamSpcPublisher>();
+        var spc = factory.Services.GetRequiredService<SpcRuleSubscriber>();
 
         async Task RunAsync(string scenarioId)
         {
@@ -38,7 +38,6 @@ public sealed class ResetIsolationTests
             {
                 plant.Advance(TimeSpan.FromMinutes(20));
                 await telemetry.PublishPendingAsync(CancellationToken.None);
-                await spc.PublishAsync(CancellationToken.None);
             }
 
             await spc.DrainAsync();

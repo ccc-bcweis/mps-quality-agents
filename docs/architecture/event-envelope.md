@@ -9,7 +9,7 @@ One bus is the entry point for telemetry, system commands, and application comma
 | Field | Meaning |
 |---|---|
 | eventId | Identifier assigned by the bus. 26 characters, Crockford alphabet, sortable by time. |
-| type | Dotted name. Examples: `telemetry.reading`, `alert.raised`, `ticket.created`, `investigation.step`, `approval.granted`, `capa.created`, `command.fault.inject`, `command.scenario.start`, `command.reset.hard`, `command.reset.soft`, `document.uploaded`. |
+| type | Dotted name. Examples: `telemetry.reading`, `alert.raised`, `alert.cleared`, `ticket.created`, `ticket.capped`, `investigation.step`, `approval.granted`, `capa.created`, `command.fault.inject`, `command.scenario.start`, `command.reset.hard`, `command.reset.soft`, `document.uploaded`. |
 | correlationId | One cascade. A fault command and everything it causes share it. |
 | causationId | The event that caused this one. |
 | parentEventId | Where this event hangs in the trace tree. A fan-out (many readings from one fault) uses the fault id as both parent and cause. |
@@ -31,6 +31,8 @@ One bus is the entry point for telemetry, system commands, and application comma
 4. `ticket.created` hangs from the alert.
 5. `command.investigation.start` hangs from the ticket. Each `investigation.step` hangs from the step before it. Evidence records the reading id it was derived from.
 6. `command.approval.grant` hangs from the recommendation. `approval.granted` hangs from that command. `capa.created` hangs from the approval.
+
+`telemetry.reading` carries `kind` (`periodic` or `cumulative`, or `periodic` when the sensor does not say). The SPC subscriber listens only to `telemetry.reading`, `command.reset.hard`, `command.reset.soft`, `command.scenario.stop`, and `fault.cleared`. A new alert uses the reading's correlation id. A correlation that is missing or starts with `nominal-` becomes `spc-` plus a new id. `ticket.capped` is written when the hourly ticket cap is already full: the alert still raises, and intake does not open another ticket. The payload is `signal` = `ticketCapped`, plus `toolId`, `parameter`, `at`, `cap`, and `opened`.
 
 Commands are listed in `data/commands/catalog.yaml` (kind, payload, who may issue, events emitted). The HTTP handlers stay thin: check the caller, then the existing service publishes the command after its own checks. The response shapes are unchanged. The caller gets a correlation id back where the route already returned one.
 

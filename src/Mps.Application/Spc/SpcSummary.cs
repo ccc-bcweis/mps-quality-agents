@@ -122,6 +122,10 @@ public static class SpcSummary
                 {
                     numbers.Add(number);
                 }
+                else if (rule == SpcRuleNames.NelsonSixFalling && !extras.Contains("falling trend"))
+                {
+                    extras.Add("falling trend");
+                }
                 else if (rule.StartsWith("nelson", StringComparison.Ordinal) && !extras.Contains("rising trend"))
                 {
                     extras.Add("rising trend");
