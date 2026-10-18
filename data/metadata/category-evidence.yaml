@@ -22,3 +22,8 @@ rules:
     sources: [cmms]
     allOf: [calibration, deferred]
     implies: equipmentCalibrationOrAlignment
+  - id: recipeSetpointEditWithoutEco
+    description: a work order says a recipe setpoint was edited with no engineering change order
+    sources: [cmms]
+    allOf: [recipe setpoint, no engineering change order]
+    implies: processDrift

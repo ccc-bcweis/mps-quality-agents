@@ -4,7 +4,9 @@ using Mps.Agents.Evidence;
 using Mps.Agents.Grounding;
 using Mps.Agents.Impact;
 using Mps.Domain.Enterprise;
+using Mps.Domain.Evidence;
 using Mps.Domain.Hypotheses;
+using Mps.Domain.Identity;
 
 namespace Mps.Agents.Tests;
 
@@ -49,11 +51,45 @@ public sealed class CauseGuardTests
         CauseGuard.Check(Claim("ECO-4471 changed the edge ring before onset.", "unknown"), Pack(SignalShape.Unknown)).Should().BeNull();
     }
 
+    private static readonly SupplierNotice InSpec =
+        new("SN-SIH4-088", "Cinderwell", "GAS-SIH4", "SIH4-088", "Silane lot SIH4-088 matches the purchase specification.", Now);
+
+    private static readonly EvidenceItem NoticeItem =
+        new(EvidenceId.New(), EvidenceSource.Erp, "Ruled out: Silane lot SIH4-088 matches the purchase specification.", "Supplier notice SN-SIH4-088.", Now, null, "SN-SIH4-088");
+
+    private static readonly EvidenceItem RecipeEdit =
+        new(EvidenceId.New(), EvidenceSource.Cmms, "Recipe edit", "An operator edited the RF power recipe setpoint on E-03. There is no engineering change order for that edit.", Now, "E-03", "WO-RCP-E03-RF");
+
+    private static EvidencePack PackWithItems(SignalShape shape) =>
+        new([NoticeItem, RecipeEdit], [], [], [], [], [], [InSpec], true, shape);
+
+    private static ResolutionClaim Claim(RootCauseCategory category, string cause, string shape, params EvidenceId[] cited) =>
+        new(category, cause, 0.9, cited, [], [], [], null, null, shape);
+
     [Fact]
-    public void ARuledOutRecordCannotBeTheCause()
+    public void ARuledOutRecordNamedAsTheCauseOfItsOwnClassEscalates()
     {
-        var notice = new SupplierNotice("SN-SIH4-088", "Cinderwell", "GAS-SIH4", "SIH4-088", "Silane lot SIH4-088 matches the purchase specification.", Now);
-        CauseGuard.Check(Claim("Silane lot SIH4-088 is the cause.", "oscillation"), Pack(SignalShape.Oscillation, notice)).Should().Contain("SIH4-088");
+        CauseGuard.Check(Claim(RootCauseCategory.SupplyChainMaterial, "Silane lot SIH4-088 is the cause.", "oscillation"), Pack(SignalShape.Oscillation, InSpec))
+            .Should().Contain("SN-SIH4-088");
+    }
+
+    [Fact]
+    public void ARuledOutRecordCitedAsSupportEscalatesWhateverTheClass()
+    {
+        var claim = Claim(RootCauseCategory.ProcessDrift, "WO-RCP-E03-RF: an operator edited the recipe setpoint on E-03 with no engineering change order; a step followed.", "step", RecipeEdit.Id, NoticeItem.Id);
+        CauseGuard.Check(claim, PackWithItems(SignalShape.Step)).Should().Contain("SN-SIH4-088");
+    }
+
+    /// <summary>Live SC-8 (Oct 18): the answer dismissed the in-spec silane notice by id in its cause and was escalated.</summary>
+    [Fact]
+    public void NamingARuledOutRecordToDismissARivalClassPasses()
+    {
+        var claim = Claim(
+            RootCauseCategory.ProcessDrift,
+            "Work order WO-RCP-E03-RF says an operator edited the RF power recipe setpoint on E-03 with no engineering change order, and a step followed. Supply chain is ruled out: SN-SIH4-088 says lot SIH4-088 matches the purchase specification.",
+            "step",
+            RecipeEdit.Id);
+        CauseGuard.Check(claim, PackWithItems(SignalShape.Step)).Should().BeNull("the record is mentioned only to dismiss a rival class, and it is not cited as support");
     }
 
     [Fact]

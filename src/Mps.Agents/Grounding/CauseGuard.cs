@@ -2,13 +2,15 @@
 
 using Mps.Agents.Evidence;
 using Mps.Agents.Impact;
+using Mps.Domain.Hypotheses;
+using Mps.Domain.Identity;
 
 namespace Mps.Agents.Grounding;
 
 /// <summary>
-/// Checks a proposed cause against the evidence pack after grounding. The cause may not name a record that rules
-/// itself out, and the shape the agent reports in its structured "shape" field must be the shape measured from the
-/// readings. The cause prose is not scanned for shape words. A failed check escalates to a person.
+/// Checks a proposed cause against the evidence pack after grounding. A record that rules itself out may not be cited
+/// as support or named as the cause of the class it would imply (naming it to dismiss a rival is fine), and the shape
+/// the agent reports in its structured "shape" field must be the shape measured from the readings. The cause prose is not scanned for shape words. A failed check escalates to a person.
 /// </summary>
 public static class CauseGuard
 {
@@ -17,14 +19,11 @@ public static class CauseGuard
     {
         ArgumentNullException.ThrowIfNull(claim);
         ArgumentNullException.ThrowIfNull(pack);
-        if (claim.Cause is { } cause)
+        foreach (var record in RuledOutRecords(pack))
         {
-            foreach (var id in RuledOutIds(pack))
+            if (CitedAsSupport(claim, pack, record) || NamedAsTheChosenClass(claim, record))
             {
-                if (cause.Contains(id, StringComparison.OrdinalIgnoreCase))
-                {
-                    return "The AI named " + id + " as the cause, but that record says in its own words it is not the cause. A person should review it.";
-                }
+                return "The AI named " + record.Id + " as the cause, but that record says in its own words it is not the cause. A person should review it.";
             }
         }
 
@@ -77,8 +76,32 @@ public static class CauseGuard
                 + ". Set shape to \"" + measured.Id + "\", describe the signal only as " + measured.Description + " and re-rank the cause with that shape, or escalate if no record fits it." + avoid;
     }
 
-    private static IEnumerable<string> RuledOutIds(EvidencePack pack) =>
-        pack.Ecos.Where(eco => RuledOut.Reason(eco) is not null).Select(eco => eco.EcoId)
-            .Concat(pack.SupplierNotices.Where(notice => RuledOut.Reason(notice) is not null).SelectMany(notice => new[] { notice.NoticeId, notice.LotId }))
-            .Concat(pack.WorkOrders.Where(order => RuledOut.Reason(order) is not null).Select(order => order.WorkOrderId));
+    /// <summary>A record that rules itself out: its id, the other ids it goes by, and the class it would imply.</summary>
+    private sealed record RuledOutRecord(string Id, IReadOnlyList<string> Names, RootCauseCategory Category);
+
+    private static IEnumerable<RuledOutRecord> RuledOutRecords(EvidencePack pack) =>
+        pack.Ecos.Where(eco => RuledOut.Reason(eco) is not null)
+            .Select(eco => new RuledOutRecord(eco.EcoId, [eco.EcoId], RootCauseCategory.EngineeringChange))
+            .Concat(pack.SupplierNotices.Where(notice => RuledOut.Reason(notice) is not null)
+                .Select(notice => new RuledOutRecord(notice.NoticeId, [notice.NoticeId, notice.LotId], RootCauseCategory.SupplyChainMaterial)))
+            .Concat(pack.WorkOrders.Where(order => RuledOut.Reason(order) is not null)
+                .Select(order => new RuledOutRecord(order.WorkOrderId, [order.WorkOrderId], RootCauseCategory.EquipmentCalibrationOrAlignment)));
+
+    /// <summary>The record is in the answer's supporting evidence ids (counterEvidence is where a ruled-out record belongs).</summary>
+    private static bool CitedAsSupport(ResolutionClaim claim, EvidencePack pack, RuledOutRecord record)
+    {
+        var cited = new HashSet<EvidenceId>(claim.EvidenceIds);
+        return pack.Items.Any(item => cited.Contains(item.Id)
+            && item.ExternalRef is { } reference
+            && record.Names.Any(name => string.Equals(reference, name, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    /// <summary>
+    /// The answer chose the class this record would imply and its cause names the record. Naming a ruled-out record
+    /// while ranking another class is the answer dismissing a rival, which the prompt asks for, so it passes.
+    /// </summary>
+    private static bool NamedAsTheChosenClass(ResolutionClaim claim, RuledOutRecord record) =>
+        claim.Category == record.Category
+        && claim.Cause is { } cause
+        && record.Names.Any(name => !string.IsNullOrWhiteSpace(name) && cause.Contains(name, StringComparison.OrdinalIgnoreCase));
 }

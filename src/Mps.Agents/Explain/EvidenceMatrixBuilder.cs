@@ -41,15 +41,17 @@ public static class EvidenceMatrixBuilder
             return [];
         }
 
+        var process = Ids(items, item => ImpliesProcessDrift(item.Source.ToString(), item.Title, item.Excerpt));
         var engineering = Ids(items, item => item.Source == EvidenceSource.Plm);
-        var equipment = Ids(items, item => item.Source == EvidenceSource.Cmms);
+        var equipment = Ids(items, item => item.Source == EvidenceSource.Cmms && !process.Contains(item.Id));
         var material = Ids(items, item => item.Source == EvidenceSource.Erp);
         var signal = Ids(items, item => item.Source is EvidenceSource.Telemetry or EvidenceSource.Spc);
+        signal.InsertRange(0, process);
         var fallback = items[0].Id;
         var entries = new List<EvidenceMatrixEntry>(Categories.Length);
         foreach (var category in Categories)
         {
-            var own = Own(category, engineering, equipment, material, signal, shape == SignalShape.Ramp, chosen);
+            var own = Own(category, engineering, equipment, material, signal, shape == SignalShape.Ramp || process.Count > 0, chosen);
             var id = Pick(category, own, signal, fallback);
             var stance = Stance(category, chosen, own);
             var why = stance == EvidenceStance.Supports
@@ -78,15 +80,17 @@ public static class EvidenceMatrixBuilder
         var engineering = Parse(request.EcoEvidenceIds);
         var equipment = Parse(request.OverdueEvidenceIds);
         equipment.AddRange(Parse(request.AlignmentEvidenceIds));
-        equipment.AddRange(Parse(request.PmEvidenceIds));
+        var process = Parse(request.Notes.Where(note => ImpliesProcessDrift(note.Source, note.Title, note.Detail)).Select(note => note.Id).ToArray());
+        equipment.AddRange(Parse(request.PmEvidenceIds).Where(id => !process.Contains(id)));
         var material = Parse(request.LotEvidenceIds);
         var signal = Parse(request.SignalEvidenceIds);
+        signal.InsertRange(0, process);
         var ramp = string.Equals(request.SignalShape, "ramp", StringComparison.OrdinalIgnoreCase);
         var fallback = cited[0];
         var entries = new List<EvidenceMatrixEntry>(Categories.Length);
         foreach (var category in Categories)
         {
-            var own = Own(category, engineering, equipment, material, signal, ramp, chosen);
+            var own = Own(category, engineering, equipment, material, signal, ramp || process.Count > 0, chosen);
             var id = Pick(category, own, signal, fallback);
             var stance = Stance(category, chosen, own);
             string why;
@@ -136,7 +140,7 @@ public static class EvidenceMatrixBuilder
         IReadOnlyList<EvidenceId> equipment,
         IReadOnlyList<EvidenceId> material,
         IReadOnlyList<EvidenceId> signal,
-        bool ramp,
+        bool driftEvidence,
         RootCauseCategory? chosen)
     {
         return category switch
@@ -144,7 +148,7 @@ public static class EvidenceMatrixBuilder
             RootCauseCategory.EngineeringChange => engineering.ToList(),
             RootCauseCategory.EquipmentCalibrationOrAlignment => equipment.ToList(),
             RootCauseCategory.SupplyChainMaterial => material.ToList(),
-            RootCauseCategory.ProcessDrift when ramp || chosen == RootCauseCategory.ProcessDrift => signal.ToList(),
+            RootCauseCategory.ProcessDrift when driftEvidence || chosen == RootCauseCategory.ProcessDrift => signal.ToList(),
             _ => [],
         };
     }
@@ -176,6 +180,17 @@ public static class EvidenceMatrixBuilder
         }
 
         return own.Count > 0 ? EvidenceStance.Neutral : EvidenceStance.RulesOut;
+    }
+
+    /// <summary>
+    /// A record that a category-evidence rule maps to process drift (a recipe setpoint edited with no engineering
+    /// change order). It is process evidence, not maintenance, so it sits with the process drift class.
+    /// </summary>
+    private static bool ImpliesProcessDrift(string source, string? title, string? detail)
+    {
+        var note = new EvidenceNote { Source = source, Title = title ?? string.Empty, Detail = detail };
+        return Mps.Agents.Grounding.CategoryEvidenceRules.Shared.Rules
+            .Any(rule => rule.Implies == RootCauseCategory.ProcessDrift && rule.Matches(note));
     }
 
     private static List<EvidenceId> Ids(IReadOnlyList<EvidenceItem> items, Func<EvidenceItem, bool> predicate)

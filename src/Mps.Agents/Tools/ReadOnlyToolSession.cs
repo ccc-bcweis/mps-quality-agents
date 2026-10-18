@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
 using Mps.Application.Tools;
+using Mps.Domain.Enterprise;
 using Mps.Domain.Incidents;
 
 namespace Mps.Agents.Tools;
@@ -111,13 +112,26 @@ public sealed class ReadOnlyToolSession
                 return "workOrders:" + orders.Count;
             case AgentToolNames.ErpGetMaterialLots:
                 var materials = await _erp.GetMaterialLotsAsync(incident.ToolId, from, until, cancellationToken).ConfigureAwait(false);
-                harvest.MaterialLots.AddRange(materials);
+                AddLots(harvest, materials);
                 return "materialLots:" + materials.Count;
             case AgentToolNames.ErpGetSupplierNotices:
-                var materialCode = harvest.MaterialLots.FirstOrDefault()?.MaterialCode;
-                var notices = await _erp.GetSupplierNoticesAsync(materialCode, from, until, cancellationToken).ConfigureAwait(false);
-                harvest.Notices.AddRange(notices);
-                return "notices:" + notices.Count;
+                // Notices only for materials this tool used. A tool with no material lots gets none: an unfiltered
+                // lookup once handed every notice in the plant to tools that never used that material (SC-8, Oct 18).
+                if (harvest.MaterialLots.Count == 0)
+                {
+                    AddLots(harvest, await _erp.GetMaterialLotsAsync(incident.ToolId, from, until, cancellationToken).ConfigureAwait(false));
+                }
+
+                var noticeCount = 0;
+                foreach (var code in harvest.MaterialLots.Select(lot => lot.MaterialCode).Where(code => !string.IsNullOrWhiteSpace(code)).Distinct(StringComparer.OrdinalIgnoreCase))
+                {
+                    var notices = await _erp.GetSupplierNoticesAsync(code, from, until, cancellationToken).ConfigureAwait(false);
+                    var fresh = notices.Where(notice => harvest.Notices.All(known => known.NoticeId != notice.NoticeId)).ToArray();
+                    harvest.Notices.AddRange(fresh);
+                    noticeCount += fresh.Length;
+                }
+
+                return "notices:" + noticeCount;
             case AgentToolNames.DocsSearch:
                 var hits = await _documents.SearchAsync(incident.Parameter, null, cancellationToken).ConfigureAwait(false);
                 harvest.Documents.AddRange(hits);
@@ -126,4 +140,8 @@ public sealed class ReadOnlyToolSession
                 throw new InvalidOperationException("Disallowed tool calls are not executed.");
         }
     }
+
+    /// <summary>Lots once each, whether the agent asked for lots or the notice lookup needed them first.</summary>
+    private static void AddLots(ToolHarvest harvest, IReadOnlyList<MaterialLot> lots) =>
+        harvest.MaterialLots.AddRange(lots.Where(lot => harvest.MaterialLots.All(known => known.LotId != lot.LotId)));
 }
