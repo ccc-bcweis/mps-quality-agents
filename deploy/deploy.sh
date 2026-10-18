@@ -11,6 +11,8 @@
 #   ENTRA_ISSUER     For example https://login.microsoftonline.com/<your-tenant-id>/v2.0
 #   ADMIN_EMAILS     Comma-separated admins. Default: the running app's list, else the signed-in az user (you).
 #   BUDGET_EMAIL     Budget alert address. Blank skips the budget.
+#   CUSTOM_DOMAIN          Optional host name. Blank means no custom domain.
+#   CUSTOM_DOMAIN_CERT_ID  Optional full resource id of the managed certificate. Set with CUSTOM_DOMAIN, or leave both blank.
 #   IMAGE_TAG        Default: the current git commit.
 # The approval signing key is created in the new Key Vault on first deploy (random, never printed) if it is not there yet.
 set -euo pipefail
@@ -22,6 +24,8 @@ NAME_PREFIX="${NAME_PREFIX:-mpsdemo}"
 ENTRA_CLIENT_ID="${ENTRA_CLIENT_ID:-}"
 ENTRA_ISSUER="${ENTRA_ISSUER:-}"
 BUDGET_EMAIL="${BUDGET_EMAIL:-}"
+CUSTOM_DOMAIN="${CUSTOM_DOMAIN:-}"
+CUSTOM_DOMAIN_CERT_ID="${CUSTOM_DOMAIN_CERT_ID:-}"
 IMAGE_TAG="${IMAGE_TAG:-$(git rev-parse --short=12 HEAD)}"
 APP_NAME="${NAME_PREFIX}-api"
 VAULT="${NAME_PREFIX}kv"
@@ -42,6 +46,10 @@ if [ -n "$ENTRA_CLIENT_ID" ] && [ -z "$admins" ]; then
   echo "No admin email: set ADMIN_EMAILS. The app will not start in Entra mode without one." >&2
   exit 1
 fi
+if { [ -n "$CUSTOM_DOMAIN" ] && [ -z "$CUSTOM_DOMAIN_CERT_ID" ]; } || { [ -z "$CUSTOM_DOMAIN" ] && [ -n "$CUSTOM_DOMAIN_CERT_ID" ]; }; then
+  echo "Set both CUSTOM_DOMAIN and CUSTOM_DOMAIN_CERT_ID, or leave both blank. One without the other stops the deploy so the custom domain binding is not dropped." >&2
+  exit 1
+fi
 echo "Admins: ${admins:-(none, local sign-in mode)}"
 
 deploy() { # $1 image, $2 approval key secret name ('' while the secret does not exist yet)
@@ -59,6 +67,8 @@ deploy() { # $1 image, $2 approval key secret name ('' while the secret does not
       openIdIssuer="$ENTRA_ISSUER" \
       adminEmails="$admins" \
       budgetContactEmail="$BUDGET_EMAIL" \
+      customDomainName="$CUSTOM_DOMAIN" \
+      customDomainCertificateId="$CUSTOM_DOMAIN_CERT_ID" \
       deploySql=false \
       deployStaticWeb=false \
     -o none
