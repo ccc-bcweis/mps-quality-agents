@@ -288,6 +288,43 @@ public sealed class PlantSimulation : Mps.Application.Lifecycle.IPlantFaultContr
         }
     }
 
+    /// <summary>
+    /// The control limits for each point, merged into one segment per run of equal limits (one recipe step). Each
+    /// point gets <see cref="WindowAt"/> at its own time, the same limits the rules engine scores it against.
+    /// </summary>
+    public IReadOnlyList<(DateTimeOffset From, double Center, double Sigma)> LimitSegments(string toolId, string parameter, IReadOnlyList<DateTimeOffset> times)
+    {
+        ArgumentNullException.ThrowIfNull(times);
+        var segments = new List<(DateTimeOffset From, double Center, double Sigma)>();
+        var origin = Runtime.Simulator.Origin;
+        var step = Math.Max(1, RecipeSchedule.StepSeconds);
+        long? bucket = null;
+        OperatingWindow? window = null;
+        foreach (var at in times)
+        {
+            // The recipe step only changes on step boundaries, so look the window up once per step.
+            var current = (long)Math.Floor(Math.Max(0, (at - origin).TotalSeconds)) / step;
+            if (current != bucket)
+            {
+                bucket = current;
+                window = WindowAt(toolId, parameter, at);
+            }
+
+            if (window is null)
+            {
+                continue;
+            }
+
+            var sigma = Math.Max(window.Sigma, 1e-6);
+            if (segments.Count == 0 || segments[^1].Center != window.Nominal || segments[^1].Sigma != sigma)
+            {
+                segments.Add((at, window.Nominal, sigma));
+            }
+        }
+
+        return segments;
+    }
+
     public OperatingWindow? WindowAt(string toolId, string parameter, DateTimeOffset at)
     {
         ToolSpec tool;

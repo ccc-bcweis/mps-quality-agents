@@ -269,7 +269,17 @@ public sealed record LiveReadingResponse(
     string? LimitState = null);
 
 /// <summary>One live series. Center and Sigma are the limits the rules engine checks; null when the series has none.</summary>
-public sealed record LiveSeriesResponse(string Parameter, string ChamberId, IReadOnlyList<LivePointResponse> Points, double? Center = null, double? Sigma = null);
+public sealed record LiveSeriesResponse(string Parameter, string ChamberId, IReadOnlyList<LivePointResponse> Points, double? Center = null, double? Sigma = null)
+{
+    /// <summary>
+    /// Control limits per recipe step: each segment holds from its first point until the next segment. These are the
+    /// center and sigma the rules engine scores each point against. Null for cumulative counters.
+    /// </summary>
+    public IReadOnlyList<LiveLimitSegment>? Segments { get; init; }
+}
+
+/// <summary>Center and one sigma for the points from <paramref name="From"/> until the next segment (one recipe step).</summary>
+public sealed record LiveLimitSegment(DateTimeOffset From, double Center, double Sigma);
 
 public sealed record LivePointResponse(DateTimeOffset At, double Value);
 

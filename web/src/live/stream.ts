@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 // Pure patches for the fleet hub messages. A page keeps its first load and applies each message to it.
-import type { FleetLive, FleetLiveTool, LiveReading, LiveSeries, LiveStatus, ToolLive } from "../api/types";
+import type { FleetLive, FleetLiveTool, LiveLimitSegment, LiveReading, LiveSeries, LiveStatus, ToolLive } from "../api/types";
 
 /** Points kept per chart series; the same window GET /api/tools/{id}/live returns. */
 export const LIVE_WINDOW_POINTS = 600;
@@ -36,12 +36,14 @@ export function applyToolDelta(previous: ToolLive | null, delta: ToolLiveDelta, 
     const lastAt = current && current.points.length > 0 ? Date.parse(current.points[current.points.length - 1].at) : Number.NEGATIVE_INFINITY;
     const fresh = incoming.points.filter((point) => Date.parse(point.at) > lastAt);
     const points = [...(current?.points ?? []), ...fresh];
+    const kept = points.length > maxPoints ? points.slice(points.length - maxPoints) : points;
     byKey.set(key, {
       parameter: incoming.parameter,
       chamberId: incoming.chamberId,
-      points: points.length > maxPoints ? points.slice(points.length - maxPoints) : points,
+      points: kept,
       center: incoming.center ?? null,
       sigma: incoming.sigma ?? null,
+      segments: mergeSegments(current?.segments, incoming.segments, kept[0]?.at),
     });
   }
   const series = [...byKey.values()].sort((left, right) =>
@@ -55,6 +57,35 @@ export function applyToolDelta(previous: ToolLive | null, delta: ToolLiveDelta, 
     series,
     recipeName: delta.recipeName ?? previous.recipeName,
   };
+}
+
+/**
+ * Appends the newer per-step limits and drops the ones that end before the oldest kept point, so each point keeps
+ * the limits of the recipe step it was read in.
+ */
+export function mergeSegments(
+  previous: LiveLimitSegment[] | null | undefined,
+  incoming: LiveLimitSegment[] | null | undefined,
+  firstAt: string | undefined,
+): LiveLimitSegment[] | null {
+  if (!previous?.length && !incoming?.length) return incoming ?? previous ?? null;
+  const merged = [...(previous ?? [])];
+  for (const segment of incoming ?? []) {
+    const last = merged[merged.length - 1];
+    const at = Date.parse(segment.from);
+    if (last && at < Date.parse(last.from)) continue;
+    if (last && at === Date.parse(last.from)) {
+      merged[merged.length - 1] = segment;
+      continue;
+    }
+    if (last && last.center === segment.center && last.sigma === segment.sigma) continue;
+    merged.push(segment);
+  }
+  if (!firstAt) return merged;
+  const first = Date.parse(firstAt);
+  let start = 0;
+  while (start + 1 < merged.length && Date.parse(merged[start + 1].from) <= first) start += 1;
+  return merged.slice(start);
 }
 
 /** Replaces the changed tools in the plant snapshot. Null when there is no first load to patch. */
