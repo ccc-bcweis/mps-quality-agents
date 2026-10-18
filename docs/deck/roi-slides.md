@@ -12,7 +12,7 @@ The hosted demo is a separate, smaller fact, for the speaker if someone asks wha
 |---|---|
 | Model | Azure OpenAI `gpt-5.4-mini` (`MODEL_MODE=azure`). The console shows a read-only model mode chip. There is no Replay/Live toggle for the answer engine. Offline mode costs $0. A live call times out at 20 seconds and fails over to saved answers |
 | App spend cap | $2 per day in the gateway, separate from the Azure budget |
-| Azure budget | `mpsdemo-monthly`, $40 a month, alerts at 80% of actual spend and 100% of the forecast. October spend was about $3.36 as of 17 Oct 2026, 21:23 Eastern Time |
+| Azure budget | `mpsdemo-monthly`, $40 a month, alerts at 80% of actual spend and 100% of the forecast. October spend is $4.13 month to date as of 2026-10-18 about 05:00 Eastern Time (Azure Cost Management, resource group rg-mps-demo) |
 | Host | Azure Container Apps, East US 2, one replica, 0.25 vCPU and 0.5 GiB |
 | Evidence the demo is real | 8 scenarios, SC-1 through SC-8. Replay eval: 29 cases, all passed on CI run 39110761511 (category accuracy, safe escalation, injection resistance, cause in the top 2, and citation precision all 100%). 1,144 automated tests passing. CI wall time 5 minutes 13 seconds |
 

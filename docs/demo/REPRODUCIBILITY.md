@@ -16,7 +16,7 @@ The seed and scenario records were written against 2026-09-01. On start, every d
 
 **Speed** does not change the clock. The allowed speeds are 1, 2, 5, and 10. The allowed sample strides are 5, 15, 30, and 60 seconds (`PlantSimulation.Speeds` and `PlantSimulation.Strides`). The default stride is 15 seconds (`Mps:Simulation:SampleStrideSeconds`). The kept gap is the stride divided by the speed, and at least one second. Fault pace comes from `data/metadata/simulation.yaml`: `realTimeFaultPace` is 6, so at 1x a fault develops 6 times faster than it was written, and at 10x it develops 60 times faster. A two-hour written ramp is about 20 minutes at 1x and about 2 minutes at 10x. The same file sets the telemetry window at 600 readings per sensor and the recipe schedule (`stepSeconds` 120, `waferSeconds` 300, `wafersPerLot` 25). It does not list the speeds or the scenarios.
 
-The checked hosted smoke used 10x and a 5-second stride (deploy #14, 03:23–03:24 Eastern Time): SC-1 reached `recommendationReady` for ECO-4471 47 seconds after reset, and SC-8 reached `recommendationReady` for process drift (confidence 0.96, no escalation) in about 31 seconds. The SC-8 work order id is:
+The checked hosted smoke used 10x and a 5-second stride (deploy #14). The SC-1 fault was injected at 03:23:03 Eastern Time. The investigation appeared 5 seconds after that injection, and SC-1 reached `recommendationReady` for ECO-4471 47 seconds after that injection. SC-8 reached `recommendationReady` for process drift (confidence 0.96, no escalation) 31 seconds after its injection, and its investigation appeared 5 seconds after that injection. The SC-8 work order id is:
 
 ```text
 WO-RCP-E03-RF

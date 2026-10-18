@@ -33,8 +33,8 @@ LOCATION
 | Spend meter | Visible. Under the $2 daily cap after a fresh day |
 | `GET /api/metrics` | `mode` is `live` while Azure or OpenAI answers and `replay` for offline saved answers. `spendCapUsd` is 2. `categoryAccuracy` comes from the 29-case replay eval. `costPerInvestigationUsd` stays null until an investigation succeeds |
 | Production line, All sites | Every tool Nominal after a reset. Charts hold 600 readings, not a week |
-| Run SC-1 at 10x, sample every 5 s | E-02 alarms. The investigation reaches `recommendationReady` for an engineering change (ECO-4471). On deploy #14 that was 47 seconds after reset (03:23–03:24 Eastern Time). Deploy #16 at 04:24 Eastern Time also reached `recommendationReady` |
-| Run SC-8 the same way | `recommendationReady` for process drift, confidence 0.96, no escalation, about 31 seconds on that same deploy #14 run. The work order id is in the block under this table |
+| Run SC-1 at 10x, sample every 5 s | E-02 alarms. The investigation appears 5 seconds after the fault injection and reaches `recommendationReady` for an engineering change (ECO-4471) 47 seconds after that injection. On deploy #14 the fault was injected at 03:23:03 Eastern Time. Deploy #16 at 04:24 Eastern Time also reached `recommendationReady` |
+| Run SC-8 the same way | `recommendationReady` for process drift, confidence 0.96, no escalation, 31 seconds after the fault injection on that same deploy #14 run. The investigation appeared 5 seconds after that injection. The work order id is in the block under this table |
 
 The SC-8 work order id on that run:
 
@@ -54,7 +54,7 @@ WO-RCP-E03-RF
 - The model gateway stops live calls at $2 per day (UTC). Over the cap it serves saved answers. Plant data is not affected.
 - Offline mode (`MODEL_MODE=offline`) is the way to force saved answers. It is a start setting, not a harness button. It costs $0.
 - Model access on the hosted app uses managed identity. There are no keys to rotate in the app.
-- The Azure budget is `mpsdemo-monthly`, $40 a month, with alerts at 80% of actual spend and 100% of the forecast. October spend was about $3.36 as of 17 Oct 2026, 21:23 Eastern Time. The app is one Container Apps replica in East US 2, 0.25 vCPU and 0.5 GiB.
+- The Azure budget is `mpsdemo-monthly`, $40 a month, with alerts at 80% of actual spend and 100% of the forecast. October spend is $4.13 month to date as of 2026-10-18 about 05:00 Eastern Time (Azure Cost Management, resource group rg-mps-demo). The app is one Container Apps replica in East US 2, 0.25 vCPU and 0.5 GiB.
 
 ## Alerts and incidents
 
