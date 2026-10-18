@@ -25,8 +25,15 @@ public sealed class SimulationOptions
 
     public int MaxPointsPerSeries { get; init; } = Mps.Simulator.SimulationSettings.Shared.TelemetryWindow.ReadingsPerSensor;
 
-    /// <summary>Shortest wall time between two live hub messages for the same page (toolLive, fleetLive).</summary>
+    /// <summary>Shortest wall time between two toolLive messages for the same tool page.</summary>
     public int PushIntervalMilliseconds { get; init; } = 1000;
+
+    /// <summary>
+    /// Shortest wall time between two fleetLive messages for a plant. Fleet tiles show each tool's latest values (about
+    /// 44 kB per plant per message), so they refresh less often than a tool chart; alert and ticket status patches in
+    /// from record events at once.
+    /// </summary>
+    public int FleetPushIntervalMilliseconds { get; init; } = 5000;
 
     /// <summary>Shortest wall time between two clock messages to every page.</summary>
     public int ClockIntervalSeconds { get; init; } = 5;
@@ -49,6 +56,7 @@ public sealed class SimulationOptions
             // The window lives in data/metadata/simulation.yaml (telemetryWindow.readingsPerSensor), not in app settings.
             MaxPointsPerSeries = Mps.Simulator.SimulationSettings.Shared.TelemetryWindow.ReadingsPerSensor,
             PushIntervalMilliseconds = Positive(section.GetValue("PushIntervalMilliseconds", 1000), 1000),
+            FleetPushIntervalMilliseconds = Positive(section.GetValue("FleetPushIntervalMilliseconds", 5000), 5000),
             ClockIntervalSeconds = Positive(section.GetValue("ClockIntervalSeconds", 5), 5),
             MaxPushPointsPerSeries = Positive(section.GetValue("MaxPushPointsPerSeries", 120), 120),
         };
