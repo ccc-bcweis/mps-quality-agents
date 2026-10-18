@@ -181,7 +181,7 @@ public sealed partial class LiveStreamPublisher : IHostedService, IDisposable
             if (clockDue)
             {
                 await _hub.Clients.Group(FleetHub.FleetGroup)
-                    .SendAsync("clock", new LiveClockMessage(_plant.SimulatedNow), cancellationToken)
+                    .SendAsync("clock", new LiveClockMessage(_plant.SimulatedNow, _plant.Speed, _plant.StrideSeconds, _plant.RunningScenarioId), cancellationToken)
                     .ConfigureAwait(false);
             }
 

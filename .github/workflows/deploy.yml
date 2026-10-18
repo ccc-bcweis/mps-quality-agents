@@ -110,7 +110,7 @@ jobs:
             echo "No admin email. Set the ADMIN_EMAILS variable on the azure-demo environment or the adminEmails input. Nothing was changed."
             exit 1
           fi
-          count="$(printf '%s' "$admins" | tr ',;' '\n\n' | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')"
+          count="$(printf '%s\n' "$admins" | tr ',;' '\n\n' | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')"
           echo "Admin emails: ${count} from ${source}."
           echo "list=${admins}" >> "$GITHUB_OUTPUT"
 
