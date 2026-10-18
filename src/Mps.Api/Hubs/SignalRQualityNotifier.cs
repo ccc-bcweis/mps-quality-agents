@@ -60,7 +60,7 @@ public sealed class SignalRQualityNotifier : IQualityNotifier
             "spc",
             toolId,
             alert.ChamberId,
-            alert.RaisedAt,
+            alert.LastSeenAt,
             new
             {
                 signal = "alertRaised",

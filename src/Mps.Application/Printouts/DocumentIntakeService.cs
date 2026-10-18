@@ -132,9 +132,8 @@ public sealed class DocumentIntakeService : IDocumentIntake
             FileName = fileName,
         });
 
-        // No printout workflow: the reading becomes one sample in the same series as the tool's sensor, and the
-        // generic pipeline (spec window, SPC and Western Electric rules, alert, ticket, investigation, auto-clear) decides.
-        await PublishReadingAsync(reading, catalogParameter, correlationId, cancellationToken).ConfigureAwait(false);
+        // No printout workflow: the reading becomes one sample in the same series as the tool's sensor.
+        // The plant publishes that frame on the bus, and the rule engine evaluates it once, at the observed time.
         var ingested = _samples.Ingest(new ManualSample(
             reading.ToolId,
             reading.ChamberId,
@@ -223,40 +222,6 @@ public sealed class DocumentIntakeService : IDocumentIntake
                 }),
             cancellationToken).ConfigureAwait(false);
         return evidence.WithSourceEventIds([eventId]);
-    }
-
-    private async Task PublishReadingAsync(
-        PrintoutReading reading,
-        string catalogParameter,
-        string correlationId,
-        CancellationToken cancellationToken)
-    {
-        if (_events is null)
-        {
-            return;
-        }
-
-        var parent = CommandAmbient.EventId;
-        await _events.PublishAsync(
-            new LifecycleEvent(
-                EventTypes.TelemetryReading,
-                correlationId,
-                parent,
-                parent,
-                "printout",
-                null,
-                reading.ToolId,
-                reading.ChamberId,
-                _time.GetUtcNow(),
-                new
-                {
-                    parameter = catalogParameter,
-                    value = reading.Value,
-                    unit = reading.Unit,
-                    low = reading.SpecMinimum,
-                    high = reading.SpecMaximum,
-                }),
-            cancellationToken).ConfigureAwait(false);
     }
 
     private static string Summary(PrintoutReading reading, string catalogParameter)

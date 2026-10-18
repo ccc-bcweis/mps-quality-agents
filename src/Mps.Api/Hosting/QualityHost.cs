@@ -117,7 +117,12 @@ public static class QualityHost
             return new Mps.Application.RecordClock(() => plant.SimulatedNow);
         });
         builder.Services.AddSingleton(services => services.GetRequiredService<PlantSimulation>().Runtime);
-        builder.Services.AddSingleton<StreamSpcPublisher>();
+        builder.Services.AddSingleton(SpcOptions.From(builder.Configuration));
+        builder.Services.AddSingleton(SpcRuleSettings.Shared);
+        builder.Services.AddSingleton(services => new SpcRuleEngine(services.GetRequiredService<SpcRuleSettings>()));
+        builder.Services.AddSingleton<SpcTicketCap>();
+        builder.Services.AddSingleton<SpcShadowLedger>();
+        builder.Services.AddSingleton<SpcRuleSubscriber>();
         builder.Services.AddSingleton<ScriptedScenarioContext>();
         builder.Services.AddSingleton(services => ModelGatewayRegistration.Create(
             services.GetRequiredService<IConfiguration>(),
@@ -145,7 +150,9 @@ public static class QualityHost
                 debounce,
                 services.GetRequiredService<IBusinessRuleEngine>(),
                 services.GetRequiredService<ICascadeDirectory>(),
-                services.GetRequiredService<ILifecycleEventSink>());
+                services.GetRequiredService<ILifecycleEventSink>(),
+                services.GetRequiredService<SpcTicketCap>(),
+                services.GetRequiredService<SpcRuleSettings>());
         });
         if (!builder.TryAddLiveInvestigation())
         {
@@ -178,6 +185,7 @@ public static class QualityHost
         builder.Services.AddSingleton<INominalHistorySeeder, NominalHistorySeeder>();
         builder.Services.AddSingleton<CausalTraceService>();
         builder.Services.AddHostedService<QualityDatabaseInitializer>();
+        builder.Services.AddHostedService(services => services.GetRequiredService<SpcRuleSubscriber>());
         builder.Services.AddHostedService<EventLogSubscriber>();
         builder.Services.AddHostedService<PlantCommandSubscriber>();
         builder.Services.AddHostedService<BusSignalRBridge>();
