@@ -12,6 +12,7 @@ namespace Mps.Api.Hosting;
 
 /// <summary>
 /// Builds the pinned gateway from <c>Mps:Model</c>. Live calls use temperature 0 and the configured seed.
+/// The model mode host (<see cref="Mps.Api.Live.LiveModelHost"/>) replaces it with a wired gateway in every mode but placeholder.
 /// </summary>
 public static class ModelGatewayRegistration
 {
@@ -23,7 +24,7 @@ public static class ModelGatewayRegistration
         var demoSeed = Mps.Simulator.Demo.DemoDefaults.PlantSeedFrom(configuration);
         var options = new ModelGatewayOptions
         {
-            Mode = Route(configuration["LLM_MODE"]),
+            Mode = Route(new[] { Mps.Api.Live.ModelModeSettings.ModeSetting, "MODEL_MODE", "LLM_MODE" }.Select(key => configuration[key]).FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))),
             DailySpendCapUsd = (decimal)configuration.GetValue("Metrics:SpendCapUsd", 2d),
             ScriptedReplay = configuration.GetValue("Mps:Model:ScriptedReplay", false),
             Temperature = configuration.GetValue("Mps:Model:Temperature", 0f),
