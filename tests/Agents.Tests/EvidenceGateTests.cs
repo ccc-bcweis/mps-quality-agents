@@ -52,6 +52,31 @@ public sealed class EvidenceGateTests
     }
 
     [Fact]
+    public void ARecipeSetpointEditWithNoEngineeringChangeIsSufficient()
+    {
+        // Live SC-8: the recipe edit was the only discriminator; the gate had passed on an unrelated supplier notice.
+        var recipe = EvidenceSamples.Pack(
+            items:
+            [
+                EvidenceSamples.Item(1, EvidenceSource.Telemetry, "Bias RF power step", "TEL-1"),
+                EvidenceSamples.Item(2, EvidenceSource.Cmms, "An operator edited the RF power recipe setpoint. There is no engineering change order for that edit.", "WO-RCP-1"),
+            ],
+            workOrders: [new WorkOrder("WO-RCP-1", EvidenceSamples.Tool, "E-03", "process", EvidenceSamples.At.AddDays(-2), "Recipe setpoint edit")],
+            signalShape: SignalShape.Step);
+        var plainPm = EvidenceSamples.Pack(
+            items:
+            [
+                EvidenceSamples.Item(1, EvidenceSource.Telemetry, "Bias RF power step", "TEL-1"),
+                EvidenceSamples.Item(2, EvidenceSource.Cmms, "Preventive maintenance", "WO-PM-1"),
+            ],
+            workOrders: [new WorkOrder("WO-PM-1", EvidenceSamples.Tool, "E-03", "PM", EvidenceSamples.At.AddDays(-2), "Preventive maintenance")],
+            signalShape: SignalShape.Step);
+
+        EvidenceGate.Evaluate(recipe).Outcome.Should().Be(GateOutcome.Sufficient);
+        EvidenceGate.Evaluate(plainPm).Gaps.Should().Contain("missing-discriminator");
+    }
+
+    [Fact]
     public void SupplyChainMaterialIsSufficient()
     {
         var pack = EvidenceSamples.Pack(

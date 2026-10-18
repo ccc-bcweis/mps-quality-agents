@@ -14,7 +14,7 @@ public sealed class EvalSuiteTests
     {
         var root = Root();
         var cases = EvalSuite.Load(Path.Combine(root, "eval", "cases"));
-        cases.Should().HaveCount(28);
+        cases.Should().HaveCount(29);
         var report = EvalSuite.Run(cases);
 
         report.GatesPass.Should().BeTrue(string.Join("; ", report.Results.Where(r => !r.Passed).Select(r => r.Id)));

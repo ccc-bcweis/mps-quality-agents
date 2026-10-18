@@ -1,7 +1,7 @@
 {
   "mode": "replay",
-  "cases": 28,
-  "passed": 28,
+  "cases": 29,
+  "passed": 29,
   "taskCompletion": 1,
   "categoryAccuracy": 1,
   "safeEscalation": 1,
@@ -42,7 +42,7 @@
         0,
         0,
         0,
-        5,
+        6,
         0
       ],
       [
@@ -344,6 +344,20 @@
       "actualCategory": "equipmentCalibrationOrAlignment",
       "passed": true,
       "actualCause": "A maintenance record shows the pump bearing is past its service interval, and vibration is rising.",
+      "causeInTop2": true,
+      "cited": 1,
+      "citedInPack": 1,
+      "categoryWithoutUserEvidence": null
+    },
+    {
+      "id": "SC8-01",
+      "group": "processDrift",
+      "expectedBehavior": "recommend",
+      "expectedCategory": "processDrift",
+      "actualBehavior": "recommend",
+      "actualCategory": "processDrift",
+      "passed": true,
+      "actualCause": "An operator changed a recipe setpoint and there is no engineering change order for that edit.",
       "causeInTop2": true,
       "cited": 1,
       "citedInPack": 1,
