@@ -29,6 +29,15 @@ public sealed class EvalExpectation
 
     public string[] ForbiddenInCause { get; set; } = [];
 
+    /// <summary>Evidence ids or external refs that must not appear in evidenceIds.</summary>
+    public string[] ForbiddenInSupport { get; set; } = [];
+
+    /// <summary>Evidence ids or external refs that must appear in ruledOutIds.</summary>
+    public string[] RequiredRuledOut { get; set; } = [];
+
+    /// <summary>Evidence ids or external refs that must appear in evidenceIds.</summary>
+    public string[] RequiredSupport { get; set; } = [];
+
     /// <summary>The specific cause: at least one of these terms (a record id, lot, instrument or part) must appear in a top-2 cause.</summary>
     public string[] CauseTerms { get; set; } = [];
 
@@ -93,6 +102,8 @@ public static class EvalSuite
     {
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+        // The committed replay report uses LF. The serializer default follows the OS newline.
+        NewLine = "\n",
     };
 
     public static IReadOnlyList<EvalCase> Load(string casesDirectory) =>

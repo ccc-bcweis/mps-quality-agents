@@ -1,0 +1,28 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# Records the plant data already rules out, and the root-cause class that record cannot support.
+# A row matches when its source is listed, the record text contains anyOf (at least one phrase) or allOf (every phrase),
+# and it contains none of the noneOf phrases. Phrase checks ignore case unless matchCase is true.
+# reason is one sentence. Placeholders: {ecoId}, {lotId}, {noticeId}, {workOrderId}, {kind}.
+# rulesOut: engineeringChange, equipmentCalibrationOrAlignment, supplyChainMaterial, or processDrift.
+# sources: eco, workOrder, calibration, materialLot, supplierNotice, alignment, userEvidence.
+rules:
+  - id: documentOnlyEco
+    description: an engineering change order is document-only and names no physical change
+    sources: [eco]
+    anyOf: [document-only, document only]
+    noneOf: [replace, install, edge ring]
+    rulesOut: engineeringChange
+    reason: "{ecoId} is a document-only change. Setpoints were not changed."
+  - id: noticeMatchesPurchaseSpecification
+    description: a supplier notice says the lot matches the purchase specification and is not out of spec
+    sources: [supplierNotice]
+    allOf: [matches the purchase specification]
+    noneOf: [out of spec]
+    rulesOut: supplyChainMaterial
+    reason: "Lot {lotId} ({noticeId}) matches its specification."
+  - id: inspectionWithNoFindings
+    description: an inspection work order changed no parts and reported no findings
+    sources: [workOrder]
+    allOf: [no parts changed, no findings]
+    rulesOut: equipmentCalibrationOrAlignment
+    reason: "Work order {workOrderId} ({kind}) was an inspection with no findings. Nothing was changed."

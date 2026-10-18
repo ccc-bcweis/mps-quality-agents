@@ -20,6 +20,8 @@ public sealed record EvidenceMatrixEntry(
     EvidenceStance Stance,
     string? WhyItMatters);
 
+public sealed record RejectedRuledOut(Guid EvidenceId, string Reason);
+
 /// <summary>
 /// Plain-language notes and the root-cause matrix carried beside an investigation.
 /// Domain evidence does not store these fields yet, so the API persists them here.
@@ -28,7 +30,14 @@ public sealed record EvidenceMatrixEntry(
 /// The AI answer a guard refused, kept so a person reviewing the escalation sees what the AI proposed: its cause text,
 /// class and the evidence ids it cited as support.
 /// </summary>
-public sealed record RejectedAnswer(string? Cause, RootCauseCategory? Category, IReadOnlyList<Guid> EvidenceIds);
+public sealed record RejectedAnswer(
+    string? Cause,
+    RootCauseCategory? Category,
+    IReadOnlyList<Guid> EvidenceIds,
+    IReadOnlyList<RejectedRuledOut>? RuledOutIds = null)
+{
+    public IReadOnlyList<RejectedRuledOut> RuledOutIds { get; init; } = RuledOutIds?.ToArray() ?? [];
+}
 
 public sealed class InvestigationNarrative
 {
