@@ -7,7 +7,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api, ApiProblem } from "../api/client";
 import { hubConnected, onHub } from "../live/fleetHub";
 import type { AdminSession, ResetKind, ScriptedScenario } from "../api/types";
-import { useConsole, type BannerMode } from "../context/ConsoleContext";
+import { useConsole } from "../context/ConsoleContext";
 import { HARNESS_LINKS } from "../shell/navigation";
 import { HarnessPrintout } from "./HarnessPrintout";
 import { ModeBanner } from "./ModeBanner";
@@ -52,16 +52,10 @@ function readExpanded(): boolean {
   }
 }
 
-function engineLabel(mode: BannerMode): string {
-  if (mode === "live") return "Live model";
-  if (mode === "mockReasoner") return "Fixed reasoner";
-  return "Saved answers";
-}
-
 export function HarnessBar({ session }: { session: AdminSession | null }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { bannerMode, clearDemo, dataMode, dataScenarioId, setDataMode } =
+  const { modelStatus, clearDemo, dataMode, dataScenarioId, setDataMode } =
     useConsole();
   const [expanded, setExpanded] = useState(readExpanded);
   const [scenarios, setScenarios] = useState<ScriptedScenario[]>([]);
@@ -201,7 +195,7 @@ export function HarnessBar({ session }: { session: AdminSession | null }) {
       : running
         ? `Running ${running}`
         : scenarioId || "No scenario";
-  const statusLine = `${dataMode === "replay" ? "Replay" : "Live"} · ${activeScenario} · ${engineLabel(bannerMode)}`;
+  const statusLine = `${dataMode === "replay" ? "Replay" : "Live"} · ${activeScenario} · ${modelStatus?.label ?? "…"}`;
   const admin = session?.isAdmin === true;
   const [joinOpen, setJoinOpen] = useState(false);
   const dialogCopy = resetKind === "soft" ? SOFT_COPY : HARD_COPY;

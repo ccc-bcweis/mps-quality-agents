@@ -26,6 +26,11 @@ public sealed class ModelGatewayOptions
     public int CircuitBreakerFailures { get; set; } = 5;
 
     /// <summary>
+    /// How long an open circuit serves saved answers before one live call is tried again.
+    /// </summary>
+    public TimeSpan CircuitCooldown { get; set; } = TimeSpan.FromSeconds(60);
+
+    /// <summary>
     /// When a replay lookup misses, store the mock reasoner response under that prompt hash.
     /// </summary>
     public bool RecordReplayMisses { get; set; }

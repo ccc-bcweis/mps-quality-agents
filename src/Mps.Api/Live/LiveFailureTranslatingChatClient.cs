@@ -39,7 +39,16 @@ public sealed partial class LiveFailureTranslatingChatClient : DelegatingChatCli
         {
             var status = (error as ClientResultException)?.Status ?? (error.InnerException as ClientResultException)?.Status;
             Failed(_logger, error, status);
-            throw new HttpRequestException("Live model call failed: " + error.Message, error);
+            throw new HttpRequestException(
+                "Live model call failed: " + error.Message,
+                error,
+                status is > 0 ? (System.Net.HttpStatusCode)status.Value : null);
+        }
+        catch (OperationCanceledException error) when (!cancellationToken.IsCancellationRequested)
+        {
+            // The client's network timeout cancels the call without the caller asking: report it as a timeout so the gateway falls back.
+            Failed(_logger, error, null);
+            throw new TimeoutException("Live model call timed out.", error);
         }
     }
 }

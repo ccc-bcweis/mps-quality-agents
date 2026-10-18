@@ -37,7 +37,7 @@ describe("harness collapse, replay, and soft reset", () => {
     expect(within(harness).queryByRole("combobox", { name: "Scenario" })).not.toBeInTheDocument();
     expect(harness.className).not.toMatch(/truncate|overflow-hidden/);
     await waitFor(() => {
-      expect(within(harness).getByRole("status", { name: "Harness status" })).toHaveTextContent("Live · SC-1 · Saved answers");
+      expect(within(harness).getByRole("status", { name: "Harness status" })).toHaveTextContent("Live · SC-1 · Offline (saved answers)");
     });
     await user.click(expand);
     expect(localStorage.getItem(HARNESS_STORAGE_KEY)).toBe("expanded");
@@ -72,12 +72,12 @@ describe("harness collapse, replay, and soft reset", () => {
     expect(harness.contains(banner)).toBe(false);
     expect(banner.className).toContain("shrink-0");
     expect(banner.compareDocumentPosition(within(consoleRegion).getByRole("main")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(within(harness).getByRole("status", { name: "Harness status" })).toHaveTextContent("Replay · SC-4 · Saved answers");
+    expect(within(harness).getByRole("status", { name: "Harness status" })).toHaveTextContent("Replay · SC-4 · Offline (saved answers)");
     await user.click(within(plant).getByRole("button", { name: "Live" }));
     await waitFor(() => {
       expect(screen.queryByRole("status", { name: "Replay banner" })).not.toBeInTheDocument();
     });
-    expect(within(harness).getByRole("status", { name: "Harness status" })).toHaveTextContent("Live · SC-4 · Saved answers");
+    expect(within(harness).getByRole("status", { name: "Harness status" })).toHaveTextContent("Live · SC-4 · Offline (saved answers)");
   });
 
   it("closes open work on a soft reset and keeps the page", async () => {

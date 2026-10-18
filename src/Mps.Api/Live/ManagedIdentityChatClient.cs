@@ -19,13 +19,14 @@ public static class ManagedIdentityChatClient
 {
     private const string Scope = "https://cognitiveservices.azure.com/.default";
 
-    public static IChatClient Create(Uri endpoint, string deployment, TokenCredential credential)
+    public static IChatClient Create(Uri endpoint, string deployment, TokenCredential credential, OpenAIClientOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(endpoint);
         ArgumentException.ThrowIfNullOrWhiteSpace(deployment);
         ArgumentNullException.ThrowIfNull(credential);
         var root = endpoint.ToString().TrimEnd('/');
-        var options = new OpenAIClientOptions { Endpoint = new Uri(root + "/openai/v1/") };
+        options ??= new OpenAIClientOptions();
+        options.Endpoint = new Uri(root + "/openai/v1/");
         options.AddPolicy(new BearerPolicy(credential), PipelinePosition.PerTry);
 
         // The placeholder key is replaced by the bearer policy on every attempt.

@@ -31,6 +31,11 @@ public sealed class ModelGateway : IChatClient
     private readonly TimeProvider _time;
     private readonly SemaphoreSlim _mutex = new(1, 1);
     private int _consecutiveFailures;
+    private DateTimeOffset? _circuitOpenedAt;
+    private string? _lastRoute;
+    private bool _lastFellBack;
+    private DateTimeOffset? _lastFailureAt;
+    private string? _lastFailure;
 
     public ModelGateway(
         ModelGatewayOptions options,
@@ -84,6 +89,16 @@ public sealed class ModelGateway : IChatClient
         _scenarioHint = scenarioHint;
         _time = timeProvider;
     }
+
+    /// <summary>What the gateway did most recently: the route that answered, and whether live calls are failing over.</summary>
+    public ModelGatewayStatus Status => new(
+        _options.Mode,
+        _lastRoute,
+        _lastFellBack,
+        _consecutiveFailures,
+        _circuitOpenedAt is not null,
+        _lastFailureAt,
+        _lastFailure);
 
     public async Task<ChatResponse> GetResponseAsync(
         IEnumerable<ChatMessage> messages,
@@ -173,9 +188,22 @@ public sealed class ModelGateway : IChatClient
         }
 
         var spend = await _ledger.GetSpendAsync(today, cancellationToken).ConfigureAwait(false);
-        if (spend >= _options.DailySpendCapUsd || _consecutiveFailures >= _options.CircuitBreakerFailures)
+        if (spend >= _options.DailySpendCapUsd)
         {
             return RouteDecision.Replay(liveRefused: true);
+        }
+
+        if (_consecutiveFailures >= _options.CircuitBreakerFailures)
+        {
+            var now = _time.GetUtcNow();
+            _circuitOpenedAt ??= now;
+            if (now - _circuitOpenedAt.Value < _options.CircuitCooldown)
+            {
+                return RouteDecision.Replay(liveRefused: true);
+            }
+
+            // Half-open: one live call is tried. A failure re-opens the circuit for another cooldown.
+            _circuitOpenedAt = now;
         }
 
         if (_options.Mode == ModelRoute.AzureOpenAI)
@@ -208,6 +236,7 @@ public sealed class ModelGateway : IChatClient
             if (live is not null)
             {
                 _consecutiveFailures = 0;
+                _circuitOpenedAt = null;
                 return new ServedCall(live, decision.Route, LiveRefused: false, FellBack: false);
             }
 
@@ -232,22 +261,38 @@ public sealed class ModelGateway : IChatClient
             {
                 return await client.GetResponseAsync(messages, Pin(options), cancellationToken).ConfigureAwait(false);
             }
-            catch (HttpRequestException) when (!cancellationToken.IsCancellationRequested)
+            catch (HttpRequestException error) when (!cancellationToken.IsCancellationRequested)
             {
-                _consecutiveFailures++;
+                NoteFailure(error);
             }
-            catch (TimeoutException) when (!cancellationToken.IsCancellationRequested)
+            catch (TimeoutException error) when (!cancellationToken.IsCancellationRequested)
             {
-                _consecutiveFailures++;
+                NoteFailure(error);
             }
-            catch (IOException) when (!cancellationToken.IsCancellationRequested)
+            catch (IOException error) when (!cancellationToken.IsCancellationRequested)
             {
-                _consecutiveFailures++;
+                NoteFailure(error);
             }
         }
 
         return null;
     }
+
+    private void NoteFailure(Exception error)
+    {
+        _consecutiveFailures++;
+        _lastFailureAt = _time.GetUtcNow();
+        _lastFailure = FailureText(error);
+    }
+
+    /// <summary>A short, key-free reason for the console: the kind of failure, never a request body or header.</summary>
+    private static string FailureText(Exception error) => error switch
+    {
+        TimeoutException => "The model did not answer in time.",
+        HttpRequestException { StatusCode: { } status } => "The model service answered " + ((int)status).ToString(CultureInfo.InvariantCulture) + ".",
+        HttpRequestException => "The model service could not be reached.",
+        _ => "The model call failed.",
+    };
 
     private async Task<ServedCall> ServeReplayOrMockAsync(
         IReadOnlyList<ChatMessage> messages,
@@ -284,8 +329,12 @@ public sealed class ModelGateway : IChatClient
         string hash,
         CancellationToken cancellationToken)
     {
+        _lastRoute = served.Route;
+        _lastFellBack = served.FellBack || served.LiveRefused;
         var (input, output) = TokenCost.Count(served.Response, messages);
-        var cost = TokenCost.Compute(input, output, _options.InputUsdPerMillionTokens, _options.OutputUsdPerMillionTokens);
+        // Saved answers and the offline reasoner cost nothing; only a live model answer is priced.
+        var live = served.Route is ModelRoutes.AzureOpenAI or ModelRoutes.OpenAI;
+        var cost = live ? TokenCost.Compute(input, output, _options.InputUsdPerMillionTokens, _options.OutputUsdPerMillionTokens) : 0m;
         var entry = new CostEntry(
             Guid.NewGuid().ToString("D"),
             served.Route,

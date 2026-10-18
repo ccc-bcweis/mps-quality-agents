@@ -31,7 +31,7 @@ public sealed class DeployShapeTests
 
         compose.Should().Contain("dockerfile: deploy/app.Dockerfile", "a clone-and-run reviewer gets the same console and API the hosted demo serves");
         compose.Should().Contain("\"127.0.0.1:8080:8080\"", "local sign-in mode has no login, so the port stays on this machine");
-        compose.Should().Contain("LLM_MODE: ${LLM_MODE:-replay}");
+        compose.Should().Contain("Mps__Model__Mode: ${MODEL_MODE:-}");
         compose.Should().NotContain("web.Dockerfile");
         File.Exists(Path.Combine(Root, "deploy", "web.Dockerfile")).Should().BeFalse("the placeholder console image was retired");
     }

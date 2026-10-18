@@ -233,9 +233,8 @@ public static class ContractMapper
         };
     }
 
-    public static string ModeFrom(string? configured) => configured?.Trim().ToLowerInvariant() switch
-    {
-        "live" or "azure" or "openai" => "live",
-        _ => "replay",
-    };
+    /// <summary>The metrics contract's run mode: live when a real model answers, replay for offline saved answers.</summary>
+    public static string ModeFrom(Mps.Api.Live.ModelMode mode) => mode is Mps.Api.Live.ModelMode.Azure or Mps.Api.Live.ModelMode.OpenAI
+        ? "live"
+        : "replay";
 }
