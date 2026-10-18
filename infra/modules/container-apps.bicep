@@ -21,6 +21,24 @@ param entraClientId string = ''
 @description('OpenID issuer, for example https://login.microsoftonline.com/<tenant>/v2.0. Empty skips the auth config.')
 param openIdIssuer string = ''
 
+@description('Host name to bind on the container app. Empty means no custom domain. Set this together with customDomainCertificateId, or leave both empty.')
+param customDomainName string = ''
+
+@description('Full resource id of a managed certificate in this Container Apps environment. Empty means no custom domain. Set this together with customDomainName, or leave both empty.')
+param customDomainCertificateId string = ''
+
+// Both empty: no custom domain, which is what a clone gets. Both set: bind the host name to the
+// existing managed certificate. Only one set: stop, so a deploy cannot drop the binding by accident.
+var domainNameSet = !empty(customDomainName)
+var domainCertificateSet = !empty(customDomainCertificateId)
+var customDomains = (domainNameSet && domainCertificateSet) ? [
+  {
+    name: customDomainName
+    certificateId: customDomainCertificateId
+    bindingType: 'SniEnabled'
+  }
+] : (domainNameSet || domainCertificateSet) ? fail('Set both customDomainName and customDomainCertificateId, or leave both empty. One without the other stops the deploy so the custom domain binding is not dropped.') : []
+
 @description('Comma-separated emails that get the demo admin harness (join links, resets). No default: main.bicep passes the deployer-supplied list.')
 param adminEmails string
 
@@ -68,6 +86,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
         targetPort: 8080
         transport: 'auto'
         allowInsecure: false
+        customDomains: customDomains
       }
       registries: [
         {

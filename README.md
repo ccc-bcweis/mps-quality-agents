@@ -188,6 +188,8 @@ GitHub environment **variables**:
 | `BUDGET_EMAIL` | Budget notification address. Empty skips the budget resource. |
 | `NAME_PREFIX`, `LOCATION` | Optional. Resource name prefix and region; blank keeps `infra/main.bicepparam`. |
 | `ADMIN_EMAILS` | Comma-separated app admins. The **Run workflow** input `adminEmails` overrides it. If both are blank, the workflow keeps the running app's list; if there is none, it stops before changing anything. |
+| `CUSTOM_DOMAIN` | Optional host name. Blank means no custom domain. Set it with `CUSTOM_DOMAIN_CERT_ID`, or leave both blank. See [Add your own domain](#add-your-own-domain). |
+| `CUSTOM_DOMAIN_CERT_ID` | Optional full resource id of the managed certificate in the Container Apps environment. Blank means no custom domain. |
 
 If the secrets or `RESOURCE_GROUP` are missing (a fork, a fresh clone), the workflow writes a notice and skips every step; it does not fail.
 
@@ -209,18 +211,32 @@ az account set --subscription <your-subscription-id>
 RESOURCE_GROUP=rg-mps-mine NAME_PREFIX=mpsmine LOCATION=eastus2 deploy/deploy.sh
 ```
 
-`deploy/deploy.sh` creates the resource group if needed, deploys `infra/main.bicep`, creates the approval signing key in your new Key Vault (random, never printed), builds the image in your registry and deploys the app. **You are the admin by default**: `ADMIN_EMAILS` falls back to the list on the running app, then to your `az login` user. Without `ENTRA_CLIENT_ID` and `ENTRA_ISSUER` the app has no Entra sign-in. To turn it on, create your own sign-in app (next path, step 4), rerun with those two values, then run `deploy/entra-setup.sh <signin-app-id> <app-fqdn> [your-upn]` as printed at the end.
+`deploy/deploy.sh` creates the resource group if needed, deploys `infra/main.bicep`, creates the approval signing key in your new Key Vault (random, never printed), builds the image in your registry and deploys the app. **You are the admin by default**: `ADMIN_EMAILS` falls back to the list on the running app, then to your `az login` user. Without `ENTRA_CLIENT_ID` and `ENTRA_ISSUER` the app has no Entra sign-in. To turn it on, create your own sign-in app (next path, step 4), rerun with those two values, then run `deploy/entra-setup.sh <signin-app-id> <app-fqdn> [your-upn]` as printed at the end. The script also passes `CUSTOM_DOMAIN` and `CUSTOM_DOMAIN_CERT_ID` on both template runs. Leave both unset until you add a domain (below).
 
 **Path 2: your own GitHub Actions.** In your fork or copy:
 
 1. Create an Entra app registration (or a user-assigned managed identity) for deploys. Give it **Contributor** and **User Access Administrator** on your resource group (the template assigns roles to the app's identity).
 2. Add a federated credential to it: issuer `https://token.actions.githubusercontent.com`, subject `repo:<your-org>/<your-repo>:environment:azure-demo`, audience `api://AzureADTokenExchange`. No client secret is needed.
-3. In your repo, create the environment `azure-demo` (add yourself as required reviewer), with secrets `AZURE_CLIENT_ID` (step 1), `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, and variables `RESOURCE_GROUP`, `ADMIN_EMAILS` (your email), `NAME_PREFIX` (your own prefix; registry and Key Vault names are global), and optionally `LOCATION` and `BUDGET_EMAIL`.
+3. In your repo, create the environment `azure-demo` (add yourself as required reviewer), with secrets `AZURE_CLIENT_ID` (step 1), `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, and variables `RESOURCE_GROUP`, `ADMIN_EMAILS` (your email), `NAME_PREFIX` (your own prefix; registry and Key Vault names are global), and optionally `LOCATION`, `BUDGET_EMAIL`, `CUSTOM_DOMAIN`, and `CUSTOM_DOMAIN_CERT_ID`. Leave the last two blank until you add a domain (below).
 4. For sign-in, register your own Entra web app in your tenant and set variables `ENTRA_CLIENT_ID` (its client id) and `ENTRA_ISSUER` (`https://login.microsoftonline.com/<your-tenant-id>/v2.0`). After the first deploy, run `deploy/entra-setup.sh` once as that app's owner.
 5. The first deploy needs the approval signing key in your Key Vault. Either run Path 1 once, or create it after the bootstrap step: `az keyvault secret set --vault-name <prefix>kv --name approval-signing-key --file <(openssl rand -hex 32 | tr -d '\n') -o none`. Then run the workflow again.
 6. Run **Deploy** from the Actions tab and approve the environment.
 
 In GitHub Actions the deployer is a service principal with no email, so the workflow cannot make "the person deploying" the admin; that is what `ADMIN_EMAILS` (or the `adminEmails` input) is for.
+
+### Add your own domain
+
+The app uses its default host name until you bind your own. A clone leaves `customDomainName` and `customDomainCertificateId` empty, so it gets no custom domain. Set both, or neither. A deploy with only one of them stops with an error instead of dropping the binding.
+
+1. Add a CNAME record from your host name to the app's default host name (the `appFqdn` output).
+2. Add a TXT record at `asuid.<host>` whose value is the environment verification id. The TXT record proves you own the domain. Read the id with `az containerapp env show --name <environment> --resource-group <group> --query properties.customDomainConfiguration.customDomainVerificationId -o tsv`.
+3. Add the host name to the app: `az containerapp hostname add --hostname <host> --resource-group <group> --name <app>`.
+4. Bind it and create the free managed certificate: `az containerapp hostname bind --hostname <host> --resource-group <group> --name <app> --environment <environment> --validation-method CNAME`.
+5. On the Entra app, add the redirect URI `https://<domain>/.auth/login/aad/callback`. Run `deploy/entra-setup.sh` first if you use it: that script sets the redirect list to the default host name only, so add this URI after it, and again if you run the script later.
+6. Copy the certificate's full resource id: `az containerapp env certificate list --name <environment> --resource-group <group> --managed-certificates-only`.
+7. On the GitHub environment `azure-demo`, set `CUSTOM_DOMAIN` to the host name and `CUSTOM_DOMAIN_CERT_ID` to that resource id. Later deploys pass both, so the binding stays. Leave both blank when you do not want a custom domain. `deploy/deploy.sh` reads the same two names.
+
+`<environment>` is `<namePrefix>-cae` and `<app>` is `<namePrefix>-api`.
 
 ## Ownership
 All intellectual property in this build (design, specification, plan, code, data, documents and presentation materials) is owned by **Bryan C. Weis / Common Consulting Company**. It is a fictional demonstration built with AI assistance. All companies, equipment and data in it are fictional and synthetic. It is released under the MIT License (see LICENSE). The license grants usage rights but doesn't transfer ownership.

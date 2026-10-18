@@ -36,6 +36,12 @@ param entraClientId string = ''
 @description('OpenID issuer for Easy Auth, for example https://login.microsoftonline.com/<tenant>/v2.0.')
 param openIdIssuer string = ''
 
+@description('Host name to bind on the container app. Empty means no custom domain. Set this together with customDomainCertificateId, or leave both empty.')
+param customDomainName string = ''
+
+@description('Full resource id of a managed certificate in the Container Apps environment. Empty means no custom domain. Set this together with customDomainName, or leave both empty.')
+param customDomainCertificateId string = ''
+
 @description('Comma-separated admin emails (join links, resets). Required when Entra sign-in is on: the app will not start without one. The deploy fills it from ADMIN_EMAILS, the running app, or the signed-in deployer.')
 param adminEmails string = ''
 
@@ -149,6 +155,8 @@ module apps 'modules/container-apps.bicep' = {
     modelDeployment: openai.outputs.deploymentName
     entraClientId: entraClientId
     openIdIssuer: openIdIssuer
+    customDomainName: customDomainName
+    customDomainCertificateId: customDomainCertificateId
     adminEmails: adminEmails
     appInsightsConnectionString: insights.outputs.connectionString
     approvalKeySecretUri: empty(approvalKeySecretName) ? '' : '${vault.outputs.uri}secrets/${approvalKeySecretName}'

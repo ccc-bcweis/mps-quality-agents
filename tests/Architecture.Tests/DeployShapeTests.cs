@@ -128,6 +128,60 @@ public sealed class DeployShapeTests
         workflow.Should().NotContain("memory=");
     }
 
+    [Fact]
+    public void CustomDomainStaysOnlyWhenBothTheNameAndCertificateArePassed()
+    {
+        var main = Read("infra/main.bicep");
+        var apps = Read("infra/modules/container-apps.bicep");
+        var parameters = Read("infra/main.bicepparam");
+        var workflow = Read(".github/workflows/deploy.yml");
+        var script = Read("deploy/deploy.sh");
+        var readme = Read("README.md");
+        var entra = Read("infra/ENTRA.md");
+
+        main.Should().Contain("param customDomainName string = ''");
+        main.Should().Contain("param customDomainCertificateId string = ''");
+        main.Should().Contain("customDomainName: customDomainName");
+        main.Should().Contain("customDomainCertificateId: customDomainCertificateId");
+        parameters.Should().Contain("param customDomainName = ''");
+        parameters.Should().Contain("param customDomainCertificateId = ''");
+
+        apps.Should().Contain("bindingType: 'SniEnabled'");
+        apps.Should().Contain("customDomains: customDomains");
+        apps.Should().Contain("Set both customDomainName and customDomainCertificateId, or leave both empty.");
+
+        workflow.Should().Contain("CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}");
+        workflow.Should().Contain("CUSTOM_DOMAIN_CERT_ID: ${{ vars.CUSTOM_DOMAIN_CERT_ID }}");
+        Occurrences(workflow, "customDomainName=\"$CUSTOM_DOMAIN\"").Should().Be(2, "the bootstrap deploy and the app deploy both keep the binding");
+        Occurrences(workflow, "customDomainCertificateId=\"$CUSTOM_DOMAIN_CERT_ID\"").Should().Be(2);
+
+        script.Should().Contain("customDomainName=\"$CUSTOM_DOMAIN\"");
+        script.Should().Contain("customDomainCertificateId=\"$CUSTOM_DOMAIN_CERT_ID\"");
+
+        readme.Should().Contain("The TXT record proves you own the domain.");
+        readme.Should().Contain("properties.customDomainConfiguration.customDomainVerificationId");
+        readme.Should().Contain("az containerapp hostname add");
+        readme.Should().Contain("az containerapp hostname bind");
+        readme.Should().Contain("--validation-method CNAME");
+        readme.Should().Contain("https://<domain>/.auth/login/aad/callback");
+        readme.Should().Contain("--managed-certificates-only");
+        entra.Should().Contain("The TXT record proves you own the domain.");
+        entra.Should().Contain("--managed-certificates-only");
+    }
+
+    private static int Occurrences(string text, string token)
+    {
+        var count = 0;
+        var index = 0;
+        while ((index = text.IndexOf(token, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += token.Length;
+        }
+
+        return count;
+    }
+
     private static string Read(string relative) => File.ReadAllText(Path.Combine(Root, relative));
 
     private static string FindRoot()
