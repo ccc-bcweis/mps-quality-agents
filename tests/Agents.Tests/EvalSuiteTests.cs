@@ -14,7 +14,7 @@ public sealed class EvalSuiteTests
     {
         var root = Root();
         var cases = EvalSuite.Load(Path.Combine(root, "eval", "cases"));
-        cases.Should().HaveCount(30);
+        cases.Should().HaveCount(33);
         var report = EvalSuite.Run(cases);
 
         report.DecoyInSupport.Should().Be(0);
@@ -84,6 +84,37 @@ public sealed class EvalSuiteTests
         result.ActualCategory.Should().Be("equipmentCalibrationOrAlignment");
         result.DecoyInSupport.Should().Be(0);
         result.CauseInTop2.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("SC1-01", "engineeringChange", "ECO-4471", "WO-PM-8821", "ECO-4471", "bdedb86e-2939-4810-95da-7c2d14488592")]
+    [InlineData("SC3-01", "supplyChainMaterial", "PL-2044", "WAF-14", "PL-2044", "c919ec91-4041-41ef-ab4c-b2a860a24c0e")]
+    [InlineData("SC7-03", "equipmentCalibrationOrAlignment", "WO-PMP-D02-BRG", "SN-SIH4-088", "bearing", "aad42389-8da9-40c4-9ca6-4f746bacb3f4")]
+    public void LivePackReplayRecommendsTheScenarioCauseAndDoesNotCiteARuledOutRecord(
+        string caseId,
+        string category,
+        string support,
+        string ruledOut,
+        string causeTerm,
+        string investigationId)
+    {
+        var item = EvalSuite.Load(Path.Combine(Root(), "eval", "cases")).Single(c => c.Id == caseId);
+
+        item.GroundTruth.Should().Contain(investigationId);
+        item.Expected.Behavior.Should().Be("recommend");
+        item.Expected.Category.Should().Be(category);
+        item.Expected.RequiredSupport.Should().Contain(support);
+        item.Expected.CauseTerms.Should().Contain(causeTerm);
+        item.Expected.ForbiddenInSupport.Should().Contain(ruledOut);
+        item.Expected.RequiredRuledOut.Should().Contain(ruledOut);
+
+        var result = EvalSuite.Score(item);
+        result.Passed.Should().BeTrue("behavior {0}, category {1}, cause {2}", result.ActualBehavior, result.ActualCategory, result.ActualCause);
+        result.ActualBehavior.Should().Be("recommend");
+        result.ActualCategory.Should().Be(category);
+        result.DecoyInSupport.Should().Be(0);
+        result.CauseInTop2.Should().BeTrue();
+        result.RuledOutCoverage.Should().Be(1d);
     }
 
     private static string Root()

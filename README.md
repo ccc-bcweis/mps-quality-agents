@@ -37,7 +37,7 @@ Hosting is Azure Container Apps in East US 2: one replica, 0.5 vCPU and 1 GiB, i
 
 ## Clone and run
 
-No Azure account, model key, Entra tenant or Key Vault is needed. With no model configured the app runs **offline on saved answers**: the real agents, evidence gate and guards run, and the model's part comes from the same saved answers the 30-case replay eval scores, so SC-1 to SC-8 reach their real causes with no network call. The resolution prompt is `prompts/resolution.md` version 1.13.0.
+No Azure account, model key, Entra tenant or Key Vault is needed. With no model configured the app runs **offline on saved answers**: the real agents, evidence gate and guards run, and the model's part comes from the same saved answers the 33-case replay eval scores, so SC-1 to SC-8 reach their real causes with no network call. The resolution prompt is `prompts/resolution.md` version 1.14.0.
 
 You need either Docker, or the **.NET 10 SDK** (10.0.100) and **Node 22** (the version CI and `deploy/app.Dockerfile` use).
 
@@ -132,7 +132,7 @@ No email address is built into the code.
 
 ## Tests and evaluation
 
-CI run 39110761511 on `main` `0a3375f` (2026-10-18, 04:15–04:20 Eastern Time) passed **1,144** automated tests: **872** .NET tests passed and **1** skipped, plus **272** Vitest tests in 63 files. The skipped test is `LiveModelEvalTests`, which runs only when `MPS_LIVE_EVAL=1` and a model key are set. The replay eval is separate from that total. On that run it was **29** cases, all passed (category accuracy, safe escalation, injection resistance, expected cause in the top 2, and citation precision all 100%). The suite in this tree is **30** cases, including SC7-02, scored with the resolution prompt at version 1.13.0. The committed replay report is 30 of 30: decoys in support 0, ruled-out coverage 100%, and the other gate scores at 100%. Live-model samples and gates (`samplesPerCase` 5 for SC7-02, SC7-01, and SC8-01) are in `data/metadata/live-eval.yaml`. Wiring `LiveModelEvalTests` to that file comes in a later round.
+CI run 39110761511 on `main` `0a3375f` (2026-10-18, 04:15–04:20 Eastern Time) passed **1,144** automated tests: **872** .NET tests passed and **1** skipped, plus **272** Vitest tests in 63 files. The skipped test is `LiveModelEvalTests`, which runs only when `MPS_LIVE_EVAL=1` and a model key are set. The replay eval is separate from that total. On that run it was **29** cases, all passed (category accuracy, safe escalation, injection resistance, expected cause in the top 2, and citation precision all 100%). The suite in this tree is **33** cases, including SC7-03, SC1-01, and SC3-01, scored with the resolution prompt at version 1.14.0. The committed replay report is 33 of 33: decoys in support 0, ruled-out coverage 100%, and the other gate scores at 100%. Live-model samples and gates (`samplesPerCase` 5 for SC7-02, SC7-01, and SC8-01) are in `data/metadata/live-eval.yaml`. Wiring `LiveModelEvalTests` to that file comes in a later round.
 
 Wall time was 5 minutes 13 seconds. Jobs run in parallel: build 5:09, slow tests 3:41, web 1:13, Bicep 8 seconds, gitleaks 6 seconds. CodeQL is a separate workflow (about 4:46 on that day).
 
@@ -158,7 +158,7 @@ The build job's .NET counts, with `Category!=Slow`: Domain 39, ModelGateway 18, 
 - [docs/demo/REPRODUCIBILITY.md](docs/demo/REPRODUCIBILITY.md): seed, resets, clock, replay
 - [docs/operations/runbook.md](docs/operations/runbook.md): deploy, smoke, reset, rollback, teardown
 - [docs/TESTING.md](docs/TESTING.md): test harness
-- [eval/README.md](eval/README.md): replay eval (30 cases, CI gate; live-model settings in `data/metadata/live-eval.yaml`)
+- [eval/README.md](eval/README.md): replay eval (33 cases, CI gate; live-model settings in `data/metadata/live-eval.yaml`)
 
 ## Deploy to Azure
 

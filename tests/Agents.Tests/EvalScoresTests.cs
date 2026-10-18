@@ -95,9 +95,14 @@ public sealed class EvalScoresTests
         text.Should().Contain("| Citation precision | 100% | 90% |");
         text.Should().Contain("| Decoys in support | 0 | 0 |");
         text.Should().Contain("| Ruled-out coverage |");
-        text.Should().Contain("| `supplyChainMaterial` | 0 | 0 | 4 | 0 | 0 |");
+        text.Should().Contain("| `engineeringChange` | 5 | 0 | 0 | 0 | 0 |");
+        text.Should().Contain("| `equipmentCalibrationOrAlignment` | 0 | 9 | 0 | 0 | 0 |");
+        text.Should().Contain("| `supplyChainMaterial` | 0 | 0 | 5 | 0 | 0 |");
+        text.Should().Contain("| SC1-01 |");
+        text.Should().Contain("| SC3-01 |");
         text.Should().Contain("| SC7-01 |");
         text.Should().Contain("| SC7-02 |");
+        text.Should().Contain("| SC7-03 |");
     }
 
     [Fact]

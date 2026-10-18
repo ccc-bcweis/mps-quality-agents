@@ -1418,7 +1418,7 @@ components:
           type: string
           nullable: true
           maxLength: 240
-          description: One plain-language sentence on why this evidence matters (ADR-003). Set by the agent; grounding validator checks it is attached to a cited evidence id.
+          description: One plain sentence from data/metadata/plain-sentence.yaml on why this evidence matters (ADR-003). A glossary term is allowed. Any other acronym is not. Set by the agent; the grounding validator checks it is attached to a cited evidence id.
         signalId:
           type: string
           nullable: true
@@ -1545,6 +1545,7 @@ components:
           format: uuid
         reason:
           type: string
+          description: Why the record was dismissed. One plain sentence from data/metadata/plain-sentence.yaml. A glossary term is allowed. Any other acronym is not.
         source:
           $ref: "#/components/schemas/RuledOutSource"
         category:
@@ -1571,6 +1572,7 @@ components:
         evidenceIds:
           type: array
           minItems: 1
+          description: Ids that support the chosen cause. An id is in this list or in ruledOut, never both. A record that passed its checks, had no findings, or is in date is not support.
           items:
             type: string
             format: uuid
@@ -1584,7 +1586,7 @@ components:
             type: string
         ruledOut:
           type: array
-          description: Records considered and dismissed. May be empty. An agent ruling does not by itself change evidence status.
+          description: Records considered and dismissed. May be empty. An id here is not in evidenceIds. A record that passed its checks, had no findings, or is in date belongs here, not in evidenceIds. An agent ruling does not by itself change evidence status.
           items:
             $ref: "#/components/schemas/RuledOutItem"
     InvestigationStage:
@@ -1659,6 +1661,7 @@ components:
           format: uuid
         reason:
           type: string
+          description: Why the refused answer dismissed this record. One plain sentence from data/metadata/plain-sentence.yaml. Support and dismissal are exclusive.
     RejectedAnswer:
       type: object
       nullable: true
@@ -1675,13 +1678,13 @@ components:
           nullable: true
         evidenceIds:
           type: array
-          description: Evidence ids the refused answer cited as support.
+          description: Ids the refused answer cited as support for the chosen cause. An id here is not also in ruledOutIds. A record that passed its checks is not support.
           items:
             type: string
             format: uuid
         ruledOutIds:
           type: array
-          description: Records the refused answer proposed as ruled out. May be empty.
+          description: Records the refused answer dismissed. An id here is not also in evidenceIds. A passed check, a record with no findings, or an in-date calibration belongs here.
           items:
             $ref: "#/components/schemas/RejectedRuledOutItem"
     DecisionRecord:

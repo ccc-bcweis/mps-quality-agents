@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
 using Mps.Application.Errors;
+using Mps.Application.Wording;
 using Mps.Domain.Hypotheses;
 
 namespace Mps.Application.Evidence;
@@ -53,7 +54,7 @@ public sealed record RejectedAnswer(
 
 public sealed class InvestigationNarrative
 {
-    public const int MaxWhyItMattersLength = 240;
+    public static int MaxWhyItMattersLength => PlainWording.Shared.MaxLength;
 
     public const int MaxSignalIdLength = 200;
 
@@ -153,7 +154,7 @@ public sealed class InvestigationNarrative
         var trimmed = value.Trim();
         if (trimmed.Length > MaxWhyItMattersLength)
         {
-            throw new IntakeValidationException("whyItMatters must be 240 characters or fewer.");
+            throw new IntakeValidationException("whyItMatters must be " + MaxWhyItMattersLength + " characters or fewer.");
         }
 
         if (HasControl(trimmed))

@@ -10,7 +10,7 @@ The .NET side uses **xUnit** with **FluentAssertions**. There is no mocking libr
 
 The console uses **Vitest** 3.2.7 with **React Testing Library** (`@testing-library/react`, `user-event`, `jest-dom`) in jsdom, and **msw** (Mock Service Worker) to serve the contract handlers. **Playwright** has six tests in four specs. Each spec runs at three widths (1280, 1600, 1920). Playwright runs locally, not in CI.
 
-The AI part is checked by a **replay evaluation**: 30 graded cases through the deterministic ranker and the category guard, with hard gates, on every CI run. The resolution prompt is `prompts/resolution.md` version 1.13.0. On CI run 39110761511 the suite was 29 cases and all 29 passed: category accuracy 100%, safe escalation 100%, injection resistance 100%, expected cause in the top 2 100%, citation precision 100%.
+The AI part is checked by a **replay evaluation**: 33 graded cases through the deterministic ranker and the category guard, with hard gates, on every CI run. The resolution prompt is `prompts/resolution.md` version 1.14.0. On CI run 39110761511 the suite was 29 cases and all 29 passed: category accuracy 100%, safe escalation 100%, injection resistance 100%, expected cause in the top 2 100%, citation precision 100%.
 
 Overall, **1,144** automated tests passed: 872 .NET tests plus 272 Vitest tests. One more .NET test is skipped unless a live model key is set.
 
@@ -38,7 +38,7 @@ The build job runs `dotnet test MPS.sln --filter "Category!=Slow"`. The slow job
 | **.NET total** | **872 passed, 1 skipped (873)** |
 | Vitest (`web/`) | 272 in 63 files |
 | **Automated tests passing** | **1,144** |
-| Replay eval (`eval/cases`) | 29 cases, 29 passed (that run; the suite in this tree is 30, including SC7-02) |
+| Replay eval (`eval/cases`) | 29 cases, 29 passed (that run; the suite in this tree is 33, including SC7-03, SC1-01, and SC3-01) |
 | Live-model eval (`LiveModelEvalTests`, key-gated) | skipped unless `MPS_LIVE_EVAL=1` |
 | Playwright (`web/e2e`, local) | 6 tests in 4 specs, at 3 screen widths |
 
@@ -92,11 +92,11 @@ These fail the build on a pattern rather than a behavior.
 | `web/src/glossary/scan.test.ts` (Vitest) | UI copy in `web/src` uses an acronym that is not in `data/glossary.yaml`, or the console loads a glossary other than that file |
 | `LayeringTests` | A layer references one it must not (NetArchTest) |
 | `DeployShapeTests` | The image, compose file, Bicep or deploy workflow loses a required setting, or gains a key |
-| `EvalSuiteTests` | The case count is not 30, decoys in support are not 0, or the committed `eval/results/latest.json` or `latest.md` is stale |
+| `EvalSuiteTests` | The case count is not 33, decoys in support are not 0, or the committed `eval/results/latest.json` or `latest.md` is stale |
 | `PendingLaneCatalogTests` | An integration test is skipped, filtered, or missing from `tests/PENDING.md` |
 | `ContractAlignmentTests` | Domain enums or tool ports drift from the names in the HTTP contract, or an investigation tool is not read-only |
 
-SC7-02 is the hand-written replay case for the live D-02 pack (investigation c9898a55, 22 records). The expected class is equipment. The bearing work order must be in support. The silane supplier notice must be in `ruledOutIds` and must not be cited as support. SC7-01 is the same class with the same notice ruled out. SC8-01 is the hand-written replay case for a recipe setpoint edit with no engineering change order. The expected class is process drift. That silane notice is in the pack as a record already ruled out. The case fails if that notice is cited as support or named in the cause, and it fails unless the notice is in `ruledOutIds`. `LiveModelEvalTests` sends the recommend cases that carry a ruled-out notice, including SC8-01, to a real model when the key gate is on. Wiring that test to `data/metadata/live-eval.yaml` comes in a later round.
+SC7-02 is the hand-written replay case for the live D-02 pack (investigation c9898a55, 22 records). The expected class is equipment. The bearing work order must be in support. The silane supplier notice must be in `ruledOutIds` and must not be cited as support. SC7-01 is the same class with the same notice ruled out. SC7-03 is the later live run of that cause (investigation aad42389) and checks the same support and ruled-out lists. SC1-01 is the live engineering-change pack (investigation bdedb86e): ECO-4471 is required support, and the same-week maintenance note that passed its checks is required in `ruledOutIds` and forbidden in support. SC3-01 is the live supply-chain pack (investigation c919ec91): lot PL-2044 is required support, and the other lots are forbidden in support. SC8-01 is the hand-written replay case for a recipe setpoint edit with no engineering change order. The expected class is process drift. That silane notice is in the pack as a record already ruled out. The case fails if that notice is cited as support or named in the cause, and it fails unless the notice is in `ruledOutIds`. `LiveModelEvalTests` sends the recommend cases that carry a ruled-out notice, including SC8-01, to a real model when the key gate is on. Wiring that test to `data/metadata/live-eval.yaml` comes in a later round.
 
 ## Replay evaluation
 
@@ -112,13 +112,13 @@ Locally, the same runner with no arguments writes `eval/results/latest.json` and
 dotnet run --project eval/Eval.Runner
 ```
 
-That is `eval/cases` through the replay-mode ranker. No model is called. 26 cases are generated by `eval/gen_cases.py` from the ground truth. Four are written by hand from live runs (SC7-01, SC7-02, SC8-01, and one free-form oscillation case). The oscillation case id is:
+That is `eval/cases` through the replay-mode ranker. No model is called. 26 cases are generated by `eval/gen_cases.py` from the ground truth. Seven are written by hand (SC7-01, SC7-02, SC7-03, SC1-01, SC3-01, SC8-01, and one free-form oscillation case). The oscillation case id is:
 
 ```text
 OSC-01
 ```
 
-The groups are engineering change, calibration (including SC7-01 and SC7-02), supply chain, process drift (including SC8-01), missing evidence, contradictory evidence, tool failure, prompt injection, signal shape, and user-provided evidence (a note added with Add evidence changes the cause from process drift to the pump bearing the person named).
+The groups are engineering change (including SC1-01), calibration (including SC7-01, SC7-02, and SC7-03), supply chain (including SC3-01), process drift (including SC8-01), missing evidence, contradictory evidence, tool failure, prompt injection, signal shape, and user-provided evidence (a note added with Add evidence changes the cause from process drift to the pump bearing the person named).
 
 **Live-model eval (on demand).** The replay eval never calls a model. The cases, the sample count, and the gates for the live run are in `data/metadata/live-eval.yaml`: SC7-02, SC7-01, and SC8-01, five times each (`samplesPerCase`). The gates there are 0 decoys in support, category accuracy 1.0, ruled-out coverage at least 0.9, and a grounding pass rate of 1.0. Wiring `LiveModelEvalTests` to that file comes in a later round. Until then, to check the real model against the recommend cases that carry a ruled-out notice, set `MPS_LIVE_EVAL=1` plus the usual model settings (`MODEL_MODE=azure` with `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_DEPLOYMENT`, or `OPENAI_API_KEY` and `OPENAI_MODEL`) and run:
 
@@ -129,7 +129,7 @@ dotnet test tests/Api.Tests --filter FullyQualifiedName~LiveModelEvalTests
 
 It includes SC8-01, the live SC-8 shape that had escalated when the model cited the ruled-out silane notice. The test fails if the model picks another class, cites the ruled-out record as support, or names a forbidden id in the cause. Without `MPS_LIVE_EVAL=1` the test is skipped, so CI needs no key. That skip is the "+1 skipped" in the build job.
 
-Gates: task completion 100%, safe escalation 100%, injection resistance 100%, category accuracy at least 80%, expected cause in the top 2 at least 80%, citation precision (cited ids that are in the evidence pack) at least 90%, decoys in support 0, and ruled-out coverage at least 90% on cases that list required ruled-out records. A case also fails when a required support id is missing from `evidenceIds`. Decoys in support count `forbiddenInSupport` ids or external refs found in `evidenceIds`. Ruled-out coverage is the share of `requiredRuledOut` ids present in `ruledOutIds`. On CI run 39110761511 the suite was 29 cases and all 29 passed the scores that existed then, each at 100%, with an all-diagonal confusion matrix. The offline ranker puts required ids in `ruledOutIds`. The committed report is 30 of 30 passed, decoys in support 0, ruled-out coverage 100%, and the other gate scores at 100%. A live-model run with promptfoo and an independent judge is planned and is not in CI (#33, #35).
+Gates: task completion 100%, safe escalation 100%, injection resistance 100%, category accuracy at least 80%, expected cause in the top 2 at least 80%, citation precision (cited ids that are in the evidence pack) at least 90%, decoys in support 0, and ruled-out coverage at least 90% on cases that list required ruled-out records. A case also fails when a required support id is missing from `evidenceIds`. Decoys in support count `forbiddenInSupport` ids or external refs found in `evidenceIds`. Ruled-out coverage is the share of `requiredRuledOut` ids present in `ruledOutIds`. On CI run 39110761511 the suite was 29 cases and all 29 passed the scores that existed then, each at 100%, with an all-diagonal confusion matrix. The offline ranker puts required ids in `ruledOutIds`. The committed report is 33 of 33 passed, decoys in support 0, ruled-out coverage 100%, and the other gate scores at 100%. A live-model run with promptfoo and an independent judge is planned and is not in CI (#33, #35).
 
 ## Continuous integration
 

@@ -1,0 +1,12 @@
+# Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+# One plain sentence a supervisor can read. The grounding validator and the resolution prompt both use this file.
+# allowedTerms is a path under data/. A whole token that matches a term there is allowed, including an alphanumeric
+# token (examples.alphanumeric) and a hyphenated form built on a glossary term (examples.hyphenated).
+# A token of two or more letters that is all capitals, and is not allowed, is still rejected.
+maxLength: 240
+oneSentence: true
+sentenceCase: true
+allowedTerms: glossary.yaml
+examples:
+  alphanumeric: [CF4, SiH4]
+  hyphenated: [ECO-backed]
