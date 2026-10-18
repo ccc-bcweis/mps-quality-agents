@@ -73,8 +73,23 @@ function glossaryPlugin(): Plugin {
   };
 }
 
+/** The mock service worker is for `npm run dev` and tests only; production builds never start MSW, so it is not shipped. */
+function dropMockWorkerPlugin(): Plugin {
+  let outDir = "dist";
+  return {
+    name: "mps-drop-mock-worker",
+    apply: "build",
+    configResolved(config) {
+      outDir = path.resolve(config.root, config.build.outDir);
+    },
+    closeBundle() {
+      fs.rmSync(path.join(outDir, "mockServiceWorker.js"), { force: true });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), glossaryPlugin(), fleetSensorPlugin()],
+  plugins: [react(), glossaryPlugin(), fleetSensorPlugin(), dropMockWorkerPlugin()],
   resolve: {
     alias: {
       // contracts/msw/handlers.ts lives outside this package and imports "msw".
