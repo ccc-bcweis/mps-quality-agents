@@ -6,7 +6,7 @@ These figures are illustrative and synthetic. They describe one fictional year a
 
 `Mps.Simulator.Roi.RoiCalculator` is the source. `tools/DataGen --roi data/roi` writes `data/roi/baseline.csv`, `data/roi/projection.csv`, and `data/roi/sensitivity.csv`. The same assumptions always produce the same bytes. Seed `20261014` is stamped on every row and does not scale the dollars. Changing the incident count changes labor by the formula below.
 
-The console ROI screen and deck slides 3 and 9 (`docs/PLAN.md` section 7, and `docs/deck/roi-slides.md`) can read the three CSV files directly. The $180,000 platform line is this illustrative model. It is not the hosted demo's Azure budget (`mpsdemo-monthly`, $40 a month). Dollars are whole numbers with no thousands separators. Day and hour counts use two decimal places. Rates use four. Payback months use two decimal places and are blank when gross savings are zero.
+The console ROI screen and deck slides 3 and 9 (`docs/PLAN.md` section 7, and `docs/deck/roi-slides.md`) can read the three CSV files directly. The $180,000 platform line is this illustrative model. It is not the hosted demo's Azure budget (`mpsdemo-monthly`, $40 a month). The hosted container is also separate: one always-on replica at 0.5 vCPU and 1 GiB. Bryan approved about $33 more per month for that size on 18 Oct 2026, after the replica reached a 590-673 MiB working set on a 0.5 GiB limit and failed probes restarted it. The $40 budget alert was not raised. Dollars are whole numbers with no thousands separators. Day and hour counts use two decimal places. Rates use four. Payback months use two decimal places and are blank when gross savings are zero.
 
 ## Inputs from the plan
 

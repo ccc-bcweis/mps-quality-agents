@@ -128,7 +128,7 @@ Scripted scenarios carry their own evidence on the mock read path. The resolutio
 |---|---|
 | API p95 | **&lt; 300 ms**. Investigations are async (queue + worker); the HTTP call returns an investigation id. |
 | Investigation p95 | **&lt; 45 s** wall time (tool calls + two model completions + gates). |
-| API replicas | **One** replica (`minReplicas` 1, `maxReplicas` 1), 0.25 vCPU, 0.5 GiB. The image is `mps-app` on `mcr.microsoft.com/dotnet/aspnet:10.0`. The worker and the simulator run in that same app. |
+| API replicas | **One** replica (`minReplicas` 1, `maxReplicas` 1), 0.5 vCPU, 1 GiB. About $33 more per month than 0.25 vCPU and 0.5 GiB, approved after failed probes on 18 Oct 2026 (working set 590-673 MiB). The image is `mps-app` on `mcr.microsoft.com/dotnet/aspnet:10.0`. The worker and the simulator run in that same app. |
 | Store | SQLite in the container. `deploySql` is false. Replacing the replica wipes the demo data. |
 | Azure OpenAI | `gpt-5.4-mini` in `eastus2` (managed identity) for both investigation and resolution. A live call times out after 20 seconds with no SDK retries, then the gateway uses saved answers. |
 | **Unit cost** | **≈ $0.02–0.10 per successful investigation** (tokens + tiny compute). Measure on the metrics screen; do not quote as a contract price. |
