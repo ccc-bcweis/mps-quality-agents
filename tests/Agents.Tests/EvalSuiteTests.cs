@@ -24,18 +24,9 @@ public sealed class EvalSuiteTests
         report.CauseInTop2.Should().Be(1d);
         report.CitationPrecision.Should().Be(1d);
         var misses = report.Results.Where(result => !result.Passed).Select(result => result.Id).ToArray();
-        if (report.RuledOutCoverage is null || report.RuledOutCoverage >= EvalReport.RuledOutCoverageGate)
-        {
-            report.GatesPass.Should().BeTrue(string.Join("; ", misses));
-            report.Passed.Should().Be(report.Cases);
-        }
-        else
-        {
-            // The offline ranker does not emit ruledOutIds until that change lands. Those cases are the only misses.
-            report.GatesPass.Should().BeFalse();
-            misses.Should().NotBeEmpty();
-            misses.Should().OnlyContain(id => report.Results.Single(result => result.Id == id).RuledOutCoverage < 1d);
-        }
+        report.RuledOutCoverage.Should().NotBeNull().And.BeGreaterThanOrEqualTo(EvalReport.RuledOutCoverageGate);
+        report.GatesPass.Should().BeTrue(string.Join("; ", misses));
+        report.Passed.Should().Be(report.Cases);
         var committed = File.ReadAllText(Path.Combine(root, "eval", "results", "latest.json")).Trim();
         committed.Should().Be(JsonSerializer.Serialize(report, EvalSuite.Json).Trim(), "run `dotnet run --project eval/Eval.Runner` and commit eval/results/latest.json");
         var table = File.ReadAllText(Path.Combine(root, "eval", "results", "latest.md")).ReplaceLineEndings("\n");

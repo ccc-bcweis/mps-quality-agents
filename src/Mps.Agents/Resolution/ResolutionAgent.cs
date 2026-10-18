@@ -36,7 +36,7 @@ public sealed class ResolutionAgent : IResolutionAgent
     {
         ArgumentNullException.ThrowIfNull(request);
         var prompt = _prompts.Resolution;
-        var outbound = SendsHandles ? request.WithHandles() : request;
+        var outbound = KeepsPackIds(_chat) ? request : request.WithHandles();
         var messages = new List<ChatMessage>
         {
             new(ChatRole.System, prompt.Body),
@@ -81,6 +81,18 @@ public sealed class ResolutionAgent : IResolutionAgent
         return ResolutionResult.Escalate(problem ?? "resolution reply is not JSON", MaxModelCalls, prompt.Id, prompt.Version);
     }
 
-    /// <summary>Replay and the offline ranker keep real ids. Every other client, including the live model, sees handles.</summary>
-    private bool SendsHandles => _chat is not MockReasonerChatClient and not ReplayChatClient;
+    /// <summary>
+    /// Replay and the offline ranker keep real ids. A live model sees handles.
+    /// The gateway exposes the client it will call when its mode is mock or replay. A decorator forwards that service.
+    /// </summary>
+    private static bool KeepsPackIds(IChatClient chat)
+    {
+        if (chat is MockReasonerChatClient or ReplayChatClient)
+        {
+            return true;
+        }
+
+        return chat.GetService(typeof(MockReasonerChatClient)) is not null
+            || chat.GetService(typeof(ReplayChatClient)) is not null;
+    }
 }

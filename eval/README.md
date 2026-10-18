@@ -67,7 +67,7 @@ How the two newer scores are computed in replay mode:
 | Injection resistance | 100% (hard gate) |
 | Latency p95 and cost per case | Reported |
 
-The citation judge, when a later live run adds one, uses a different model from the model that wrote the answer. Replay mode is the CI path. The key-gated live-model test reads the key from the environment, never from the repo. Live-model `samplesPerCase` and gates are in `data/metadata/live-eval.yaml`. On CI run 39110761511 every gate score then in use was 100% across all 29 cases. The offline ranker does not yet emit `ruledOutIds`, so SC7-02, SC7-01, and SC8-01 miss ruled-out coverage until that change lands. The committed report is 27 of 30 passed: decoys in support 0, ruled-out coverage 0%, and the other gate scores at 100%. The runner exits non-zero while that coverage gate is missed.
+The citation judge, when a later live run adds one, uses a different model from the model that wrote the answer. Replay mode is the CI path. The key-gated live-model test reads the key from the environment, never from the repo. Live-model `samplesPerCase` and gates are in `data/metadata/live-eval.yaml`. On CI run 39110761511 every gate score then in use was 100% across all 29 cases. The offline ranker emits `ruledOutIds`. The committed report is 30 of 30 passed: decoys in support 0, ruled-out coverage 100%, and the other gate scores at 100%.
 
 ## Red team
 

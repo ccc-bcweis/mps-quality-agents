@@ -1,7 +1,7 @@
 {
   "mode": "replay",
   "cases": 30,
-  "passed": 27,
+  "passed": 30,
   "taskCompletion": 1,
   "categoryAccuracy": 1,
   "safeEscalation": 1,
@@ -9,7 +9,7 @@
   "causeInTop2": 1,
   "citationPrecision": 1,
   "decoyInSupport": 0,
-  "ruledOutCoverage": 0,
+  "ruledOutCoverage": 1,
   "confusionMatrix": {
     "labels": [
       "engineeringChange",
@@ -384,14 +384,14 @@
       "expectedCategory": "equipmentCalibrationOrAlignment",
       "actualBehavior": "recommend",
       "actualCategory": "equipmentCalibrationOrAlignment",
-      "passed": false,
+      "passed": true,
       "actualCause": "A maintenance record shows the pump bearing is past its service interval, and vibration is rising.",
       "causeInTop2": true,
       "cited": 1,
       "citedInPack": 1,
       "categoryWithoutUserEvidence": null,
       "decoyInSupport": 0,
-      "ruledOutCoverage": 0
+      "ruledOutCoverage": 1
     },
     {
       "id": "SC7-02",
@@ -400,14 +400,14 @@
       "expectedCategory": "equipmentCalibrationOrAlignment",
       "actualBehavior": "recommend",
       "actualCategory": "equipmentCalibrationOrAlignment",
-      "passed": false,
+      "passed": true,
       "actualCause": "A maintenance record shows the pump bearing is past its service interval, and vibration is rising.",
       "causeInTop2": true,
       "cited": 3,
       "citedInPack": 3,
       "categoryWithoutUserEvidence": null,
       "decoyInSupport": 0,
-      "ruledOutCoverage": 0
+      "ruledOutCoverage": 1
     },
     {
       "id": "SC8-01",
@@ -416,14 +416,14 @@
       "expectedCategory": "processDrift",
       "actualBehavior": "recommend",
       "actualCategory": "processDrift",
-      "passed": false,
+      "passed": true,
       "actualCause": "An operator changed a recipe setpoint and there is no engineering change order for that edit.",
       "causeInTop2": true,
       "cited": 1,
       "citedInPack": 1,
       "categoryWithoutUserEvidence": null,
       "decoyInSupport": 0,
-      "ruledOutCoverage": 0
+      "ruledOutCoverage": 1
     },
     {
       "id": "SUP-01",
@@ -538,5 +538,5 @@
       "ruledOutCoverage": null
     }
   ],
-  "gatesPass": false
+  "gatesPass": true
 }
