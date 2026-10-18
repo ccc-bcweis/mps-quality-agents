@@ -8,9 +8,12 @@ using Mps.Domain.Investigations;
 namespace Mps.Application.Lifecycle;
 
 /// <summary>
-/// Investigations that are gathering evidence now. The record is only saved when gathering ends (which can take
-/// minutes while the agent waits for enough readings), so until then this shows a "started" placeholder: the list,
+/// Investigations that are gathering evidence now. The record is saved when gathering ends (which can take
+/// minutes while the agent waits for enough readings). Until that save, this shows a "started" placeholder: the list,
 /// the ticket link and a second Start all see it instead of "no investigation".
+/// The placeholder is dropped as soon as the save returns (<see cref="MarkSaved"/>), before notifiers and metrics,
+/// so the list never shows the placeholder beside the saved record. The list also skips a placeholder whose id,
+/// or whose incident and round, is already saved.
 /// A demo reset cancels every investigation in flight (<see cref="CancelAll"/>): one waiting for readings would
 /// otherwise wait out its whole budget, because the reset stops the plant that sends them.
 /// </summary>
@@ -43,15 +46,46 @@ public sealed class InvestigationsInFlight : IDisposable
         return ReferenceEquals(running, placeholder);
     }
 
+    /// <summary>
+    /// The record is in the log. Remember the saved id before dropping the placeholder, so a get by the placeholder
+    /// id still finds the record, and a list cannot show both.
+    /// </summary>
+    public void MarkSaved(InvestigationSnapshot placeholder, InvestigationId savedId) => End(placeholder, savedId);
+
     /// <summary>Gathering ended: drop the placeholder and remember which saved record it became.</summary>
     public void End(InvestigationSnapshot placeholder, InvestigationId? saved)
     {
         ArgumentNullException.ThrowIfNull(placeholder);
-        _running.TryRemove(new KeyValuePair<IncidentId, InvestigationSnapshot>(placeholder.IncidentId, placeholder));
         if (saved is { } id)
         {
             _finished[placeholder.Id] = id;
         }
+
+        _running.TryRemove(new KeyValuePair<IncidentId, InvestigationSnapshot>(placeholder.IncidentId, placeholder));
+    }
+
+    /// <summary>
+    /// True when <paramref name="placeholder"/> is already in <paramref name="saved"/>: the same id, the id
+    /// <see cref="MarkSaved"/> recorded, or the same incident and round. A later round that is still gathering is not a match.
+    /// </summary>
+    public bool IsAlreadySaved(InvestigationSnapshot placeholder, IReadOnlyCollection<InvestigationSnapshot> saved)
+    {
+        ArgumentNullException.ThrowIfNull(placeholder);
+        ArgumentNullException.ThrowIfNull(saved);
+        if (_finished.ContainsKey(placeholder.Id))
+        {
+            return true;
+        }
+
+        foreach (var item in saved)
+        {
+            if (item.Id == placeholder.Id || (item.IncidentId == placeholder.IncidentId && item.Round == placeholder.Round))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public InvestigationSnapshot? ForIncident(IncidentId incidentId) => _running.TryGetValue(incidentId, out var running) ? running : null;
