@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using Mps.Agents.Evidence;
 using Mps.Agents.Explain;
 using Mps.Agents.Impact;
 using Mps.Domain.Evidence;
@@ -47,7 +48,8 @@ public static class GroundingValidator
                 claim.Claims,
                 claim.Explanations.Where(Keep).ToArray(),
                 claim.EvidenceMatrix,
-                claim.Shape);
+                claim.Shape,
+                claim.RuledOutIds);
         }
 
         var failures = new List<string>();
@@ -80,6 +82,25 @@ public static class GroundingValidator
             if (!known.ContainsKey(evidenceId))
             {
                 failures.Add("unknown-evidence-id:" + evidenceId);
+            }
+        }
+
+        var cited = new HashSet<EvidenceId>(claim.EvidenceIds);
+        foreach (var ruledOut in claim.RuledOutIds)
+        {
+            if (!known.ContainsKey(ruledOut.Id))
+            {
+                failures.Add("ruled-out-unknown-id:" + ruledOut.Id);
+            }
+
+            if (cited.Contains(ruledOut.Id))
+            {
+                failures.Add("ruled-out-and-cited:" + ruledOut.Id);
+            }
+
+            if (!ReasonOk(ruledOut.Reason))
+            {
+                failures.Add("ruled-out-reason:" + ruledOut.Id);
             }
         }
 
@@ -171,8 +192,29 @@ public static class GroundingValidator
             claim.Claims,
             explanations,
             matrix,
-            claim.Shape);
+            claim.Shape,
+            claim.RuledOutIds);
         return new GroundingResult(true, [], replacement, true);
+    }
+
+    /// <summary>
+    /// One plain sentence, or a reason filled from a ruled-out.yaml template. The plant templates name the record and
+    /// may be more than one sentence; a model sentence that is not one of those templates still has to be plain.
+    /// </summary>
+    private static bool ReasonOk(string? reason)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            return false;
+        }
+
+        var text = reason.Trim();
+        if (text.Length > PlainSentence.MaxLength)
+        {
+            return false;
+        }
+
+        return PlainSentence.IsValid(text) || RuledOutRules.Shared.IsPlantReason(text);
     }
 
     private static List<CitedEvidence> RepairExplanations(

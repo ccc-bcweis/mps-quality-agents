@@ -14,7 +14,7 @@ public sealed record CategoryImplication(EvidenceNote Note, CategoryEvidenceRule
 /// <summary>
 /// Checks the structured category against the records the reply cites, using the metadata map in
 /// data/metadata/category-evidence.yaml. When cited records imply classes, the category must be one of them.
-/// Records the reply itself rules out (listed in counterEvidence, or rulesOut for that class) do not count.
+/// Records the reply itself rules out (ruledOutIds, counterEvidence, or rulesOut for that class) do not count.
 /// </summary>
 public static class CategoryGuard
 {
@@ -64,11 +64,16 @@ public static class CategoryGuard
         var records = string.Join("; ", implications.Select(item => Label(item.Note) + " (" + item.Rule.Description + ")").Distinct());
         return "Your previous answer set category to \"" + Name(claim.Category) + "\", but it cites " + records + ", which points to "
             + string.Join(" or ", implied.Select(name => "\"" + name + "\"")) + ". Set category to the class the cited records support. "
-            + "If such a record is not the cause, list it in counterEvidence and mark it rulesOut for that class in evidenceMatrix, or escalate.";
+            + "If such a record is not the cause, put its id in ruledOutIds with one short reason, or list it in counterEvidence and mark it rulesOut for that class in evidenceMatrix, or escalate.";
     }
 
     private static bool SetAside(ResolutionClaim claim, EvidenceNote note, RootCauseCategory implied)
     {
+        if (claim.RuledOutIds.Any(ruled => string.Equals(ruled.Id.ToString(), note.Id, StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
         var reference = note.ExternalRef;
         if (!string.IsNullOrWhiteSpace(reference) && claim.CounterEvidence.Any(text => text.Contains(reference, StringComparison.OrdinalIgnoreCase)))
         {

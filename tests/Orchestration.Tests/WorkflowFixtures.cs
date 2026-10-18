@@ -133,13 +133,14 @@ internal sealed class WorkflowRig
         InvestigationSessionStore? sessions = null,
         CheckpointManager? checkpoints = null,
         MemoryIncidents? incidents = null,
-        ScenarioTools? tools = null)
+        ScenarioTools? tools = null,
+        IResolutionAgent? resolution = null)
     {
         Tools = tools ?? new ScenarioTools(kind);
         Incidents = incidents ?? new MemoryIncidents();
         Sessions = sessions ?? new InvestigationSessionStore();
         Checkpoints = checkpoints ?? CheckpointManager.CreateInMemory();
-        Resolution = new CountingResolutionAgent(new ResolutionAgent(resolutionChat, PromptCatalog.Load()));
+        Resolution = new CountingResolutionAgent(resolution ?? new ResolutionAgent(resolutionChat, PromptCatalog.Load()));
         var bound = new ReadOnlyToolSession(Tools, Tools, Tools, Tools, Tools, Tools, Tools, Tools, Tools);
         var investigation = new InvestigationAgent(bound, investigationChat, PromptCatalog.Load(), WorkflowRig.Clock);
         Workflow = new MafInvestigationWorkflow(

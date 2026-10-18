@@ -14,8 +14,26 @@ public sealed class CauseGuardTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 16, 21, 0, 0, TimeSpan.Zero);
 
-    private static EvidencePack Pack(SignalShape shape, params SupplierNotice[] notices) =>
-        new([], [], [], [], [], [], notices, true, shape);
+    private static EvidencePack Pack(SignalShape shape, params SupplierNotice[] notices)
+    {
+        var ruledOut = new List<RuledOutRecord>();
+        foreach (var notice in notices)
+        {
+            var reason = RuledOut.Reason(notice);
+            if (reason is null)
+            {
+                continue;
+            }
+
+            ruledOut.Add(new RuledOutRecord(
+                EvidenceIds.Create(EvidenceSource.Erp, notice.NoticeId),
+                RootCauseCategory.SupplyChainMaterial,
+                reason,
+                "noticeMatchesPurchaseSpecification"));
+        }
+
+        return new([], [], [], [], [], [], notices, true, shape, null, null, ruledOut);
+    }
 
     private static ResolutionClaim Claim(string cause, string? shape) =>
         new(RootCauseCategory.EngineeringChange, cause, 0.9, [], [], [], [], null, null, shape);
@@ -55,13 +73,21 @@ public sealed class CauseGuardTests
         new("SN-SIH4-088", "Cinderwell", "GAS-SIH4", "SIH4-088", "Silane lot SIH4-088 matches the purchase specification.", Now);
 
     private static readonly EvidenceItem NoticeItem =
-        new(EvidenceId.New(), EvidenceSource.Erp, "Ruled out: Silane lot SIH4-088 matches the purchase specification.", "Supplier notice SN-SIH4-088.", Now, null, "SN-SIH4-088");
+        new(EvidenceId.New(), EvidenceSource.Erp, "Silane lot SIH4-088 matches the purchase specification.", "Supplier notice SN-SIH4-088.", Now, null, "SN-SIH4-088");
 
     private static readonly EvidenceItem RecipeEdit =
         new(EvidenceId.New(), EvidenceSource.Cmms, "Recipe edit", "An operator edited the RF power recipe setpoint on E-03. There is no engineering change order for that edit.", Now, "E-03", "WO-RCP-E03-RF");
 
-    private static EvidencePack PackWithItems(SignalShape shape) =>
-        new([NoticeItem, RecipeEdit], [], [], [], [], [], [InSpec], true, shape);
+    private static EvidencePack PackWithItems(SignalShape shape)
+    {
+        var reason = RuledOut.Reason(InSpec)!;
+        var ruledOut = new RuledOutRecord(
+            EvidenceIds.Create(EvidenceSource.Erp, InSpec.NoticeId),
+            RootCauseCategory.SupplyChainMaterial,
+            reason,
+            "noticeMatchesPurchaseSpecification");
+        return new([NoticeItem, RecipeEdit], [], [], [], [], [], [InSpec], true, shape, null, null, [ruledOut]);
+    }
 
     private static ResolutionClaim Claim(RootCauseCategory category, string cause, string shape, params EvidenceId[] cited) =>
         new(category, cause, 0.9, cited, [], [], [], null, null, shape);
@@ -78,6 +104,44 @@ public sealed class CauseGuardTests
     {
         var claim = Claim(RootCauseCategory.ProcessDrift, "WO-RCP-E03-RF: an operator edited the recipe setpoint on E-03 with no engineering change order; a step followed.", "step", RecipeEdit.Id, NoticeItem.Id);
         CauseGuard.Check(claim, PackWithItems(SignalShape.Step)).Should().Contain("SN-SIH4-088");
+    }
+
+    [Fact]
+    public void APackRuledOutIdInEvidenceIdsEscalatesEvenWhenTheItemIsNotNamed()
+    {
+        var noticeId = EvidenceIds.Create(EvidenceSource.Erp, InSpec.NoticeId);
+        var claim = Claim(RootCauseCategory.EquipmentCalibrationOrAlignment, "The pump bearing is past its service interval.", "step", noticeId);
+
+        CauseGuard.Check(claim, Pack(SignalShape.Step, InSpec)).Should().Contain("SN-SIH4-088");
+    }
+
+    [Fact]
+    public void ADecoyOnlyInTheAnswerRuledOutIdsPasses()
+    {
+        var noticeId = EvidenceIds.Create(EvidenceSource.Erp, InSpec.NoticeId);
+        var claim = new ResolutionClaim(
+            RootCauseCategory.ProcessDrift,
+            "Work order WO-RCP-E03-RF says an operator edited the recipe setpoint on E-03 with no engineering change order, and a step followed.",
+            0.9,
+            [RecipeEdit.Id],
+            [],
+            [],
+            [],
+            null,
+            null,
+            "step",
+            [new RuledOutClaim(noticeId, "The silane lot matches its specification.")]);
+
+        CauseGuard.Check(claim, PackWithItems(SignalShape.Step)).Should().BeNull();
+    }
+
+    [Fact]
+    public void ANoticeThePackDoesNotListIsNotReDerivedFromItsText()
+    {
+        var pack = new EvidencePack([], [], [], [], [], [], [InSpec], true, SignalShape.Step);
+        var claim = Claim(RootCauseCategory.SupplyChainMaterial, "Silane lot SIH4-088 is the cause.", "step");
+
+        CauseGuard.Check(claim, pack).Should().BeNull();
     }
 
     /// <summary>Live SC-8 (Oct 18): the answer dismissed the in-spec silane notice by id in its cause and was escalated.</summary>

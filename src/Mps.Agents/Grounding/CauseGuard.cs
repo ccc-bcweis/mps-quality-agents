@@ -2,6 +2,7 @@
 
 using Mps.Agents.Evidence;
 using Mps.Agents.Impact;
+using Mps.Domain.Evidence;
 using Mps.Domain.Hypotheses;
 using Mps.Domain.Identity;
 
@@ -23,7 +24,7 @@ public static class CauseGuard
         {
             if (CitedAsSupport(claim, pack, record) || NamedAsTheChosenClass(claim, record))
             {
-                return "The AI named " + record.Id + " as the cause, but that record says in its own words it is not the cause. A person should review it.";
+                return "The AI named " + record.Label + " as the cause, but that record says in its own words it is not the cause. A person should review it.";
             }
         }
 
@@ -76,20 +77,102 @@ public static class CauseGuard
                 + ". Set shape to \"" + measured.Id + "\", describe the signal only as " + measured.Description + " and re-rank the cause with that shape, or escalate if no record fits it." + avoid;
     }
 
-    /// <summary>A record that rules itself out: its id, the other ids it goes by, and the class it would imply.</summary>
-    private sealed record RuledOutRecord(string Id, IReadOnlyList<string> Names, RootCauseCategory Category);
+    /// <summary>A pack ruled-out record: its evidence id, the label a person would recognise, and the names it goes by.</summary>
+    private sealed record RuledOutHit(EvidenceId EvidenceId, string Label, IReadOnlyList<string> Names, RootCauseCategory Class);
 
-    private static IEnumerable<RuledOutRecord> RuledOutRecords(EvidencePack pack) =>
-        pack.Ecos.Where(eco => RuledOut.Reason(eco) is not null)
-            .Select(eco => new RuledOutRecord(eco.EcoId, [eco.EcoId], RootCauseCategory.EngineeringChange))
-            .Concat(pack.SupplierNotices.Where(notice => RuledOut.Reason(notice) is not null)
-                .Select(notice => new RuledOutRecord(notice.NoticeId, [notice.NoticeId, notice.LotId], RootCauseCategory.SupplyChainMaterial)))
-            .Concat(pack.WorkOrders.Where(order => RuledOut.Reason(order) is not null)
-                .Select(order => new RuledOutRecord(order.WorkOrderId, [order.WorkOrderId], RootCauseCategory.EquipmentCalibrationOrAlignment)));
-
-    /// <summary>The record is in the answer's supporting evidence ids (counterEvidence is where a ruled-out record belongs).</summary>
-    private static bool CitedAsSupport(ResolutionClaim claim, EvidencePack pack, RuledOutRecord record)
+    private static IEnumerable<RuledOutHit> RuledOutRecords(EvidencePack pack)
     {
+        foreach (var record in pack.RuledOut)
+        {
+            var names = Names(pack, record);
+            var label = names.Count > 0 ? names[0] : record.Id.ToString();
+            yield return new RuledOutHit(record.Id, label, names, record.Class);
+        }
+    }
+
+    private static List<string> Names(EvidencePack pack, RuledOutRecord record)
+    {
+        var names = new List<string>();
+        var item = pack.Items.FirstOrDefault(candidate => candidate.Id == record.Id);
+        Add(names, item?.ExternalRef);
+        foreach (var notice in pack.SupplierNotices)
+        {
+            if (!Linked(record.Id, item?.ExternalRef, EvidenceIds.Create(EvidenceSource.Erp, notice.NoticeId), notice.NoticeId))
+            {
+                continue;
+            }
+
+            Add(names, notice.NoticeId);
+            Add(names, notice.LotId);
+        }
+
+        foreach (var eco in pack.Ecos)
+        {
+            if (Linked(record.Id, item?.ExternalRef, EvidenceIds.Create(EvidenceSource.Plm, eco.EcoId), eco.EcoId))
+            {
+                Add(names, eco.EcoId);
+            }
+        }
+
+        foreach (var order in pack.WorkOrders)
+        {
+            if (Linked(record.Id, item?.ExternalRef, EvidenceIds.Create(EvidenceSource.Cmms, order.WorkOrderId), order.WorkOrderId))
+            {
+                Add(names, order.WorkOrderId);
+            }
+        }
+
+        foreach (var calibration in pack.Calibrations)
+        {
+            if (Linked(record.Id, item?.ExternalRef, EvidenceIds.Create(EvidenceSource.Cmms, calibration.CalibrationId), calibration.CalibrationId))
+            {
+                Add(names, calibration.CalibrationId);
+            }
+        }
+
+        foreach (var lot in pack.MaterialLots)
+        {
+            if (Linked(record.Id, item?.ExternalRef, EvidenceIds.Create(EvidenceSource.Erp, lot.LotId), lot.LotId))
+            {
+                Add(names, lot.LotId);
+            }
+        }
+
+        if (names.Count == 0)
+        {
+            Add(names, item?.Title);
+        }
+
+        return names;
+    }
+
+    private static bool Linked(EvidenceId id, string? externalRef, EvidenceId recordId, string businessId) =>
+        id == recordId || string.Equals(externalRef, businessId, StringComparison.OrdinalIgnoreCase);
+
+    private static void Add(List<string> names, string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return;
+        }
+
+        var trimmed = name.Trim();
+        if (names.Any(existing => string.Equals(existing, trimmed, StringComparison.OrdinalIgnoreCase)))
+        {
+            return;
+        }
+
+        names.Add(trimmed);
+    }
+
+    /// <summary>The record's evidence id is in the answer's supporting ids, or a cited item goes by one of its names.</summary>
+    private static bool CitedAsSupport(ResolutionClaim claim, EvidencePack pack, RuledOutHit record)
+    {
+        if (claim.EvidenceIds.Contains(record.EvidenceId))
+        {
+            return true;
+        }
+
         var cited = new HashSet<EvidenceId>(claim.EvidenceIds);
         return pack.Items.Any(item => cited.Contains(item.Id)
             && item.ExternalRef is { } reference
@@ -100,8 +183,8 @@ public static class CauseGuard
     /// The answer chose the class this record would imply and its cause names the record. Naming a ruled-out record
     /// while ranking another class is the answer dismissing a rival, which the prompt asks for, so it passes.
     /// </summary>
-    private static bool NamedAsTheChosenClass(ResolutionClaim claim, RuledOutRecord record) =>
-        claim.Category == record.Category
+    private static bool NamedAsTheChosenClass(ResolutionClaim claim, RuledOutHit record) =>
+        claim.Category == record.Class
         && claim.Cause is { } cause
-        && record.Names.Any(name => !string.IsNullOrWhiteSpace(name) && cause.Contains(name, StringComparison.OrdinalIgnoreCase));
+        && record.Names.Any(name => cause.Contains(name, StringComparison.OrdinalIgnoreCase));
 }

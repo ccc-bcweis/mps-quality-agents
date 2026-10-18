@@ -6,6 +6,7 @@ using Mps.Application.Persistence;
 using Mps.Domain.Capa;
 using Mps.Domain.Equipment;
 using Mps.Domain.Evidence;
+using Mps.Domain.Hypotheses;
 using Mps.Domain.Incidents;
 using Mps.Domain.Investigations;
 using Mps.Domain.Lifecycle;
@@ -73,6 +74,7 @@ public static class ContractMapper
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentNullException.ThrowIfNull(narrative);
         var notes = narrative.Notes.ToDictionary(note => note.EvidenceId);
+        var recordRuledOut = RecordRuledOutIds(snapshot, narrative);
         return new InvestigationResponse(
             snapshot.Id.Value,
             snapshot.IncidentId.Value,
@@ -103,7 +105,10 @@ public static class ContractMapper
                     controlHigh,
                     reading.Center,
                     LimitState.Of(reading.Value, reading.SpecLow, reading.SpecHigh, controlLow, controlHigh, reading.Center is not null),
-                    item.SuppliedBy);
+                    item.SuppliedBy)
+                {
+                    Status = EvidenceStatus(item, note, recordRuledOut),
+                };
             }).ToArray(),
             snapshot.Hypotheses.Select(item => new HypothesisResponse(
                 item.Id.Value,
@@ -112,7 +117,8 @@ public static class ContractMapper
                 item.Confidence,
                 item.EvidenceIds.Select(id => id.Value).ToArray(),
                 item.CounterEvidence,
-                item.Actions)).ToArray(),
+                item.Actions,
+                item.RuledOut.Select(entry => new RuledOutItemResponse(entry.Id.Value, entry.Reason, entry.Source, entry.Class)).ToArray())).ToArray(),
             snapshot.EscalationReason,
             snapshot.CorrelationId,
             narrative.Matrix.Select(entry => new EvidenceMatrixResponse(
@@ -129,7 +135,11 @@ public static class ContractMapper
             Round = snapshot.Round,
             MaxRounds = Mps.Application.Decisions.EvidenceRoundSettings.Shared.MaxRounds,
             RejectedAnswer = snapshot.Stage == InvestigationStage.Escalated && narrative.Rejected is { } rejected
-                ? new RejectedAnswerResponse(rejected.Cause, rejected.Category, rejected.EvidenceIds)
+                ? new RejectedAnswerResponse(
+                    rejected.Cause,
+                    rejected.Category,
+                    rejected.EvidenceIds,
+                    rejected.RuledOutIds.Select(item => new RejectedRuledOutResponse(item.EvidenceId, item.Reason)).ToArray())
                 : null,
         };
     }
@@ -234,6 +244,41 @@ public static class ContractMapper
             'C' => ToolFamily.Clean,
             _ => null,
         };
+    }
+
+    private static HashSet<Guid> RecordRuledOutIds(InvestigationSnapshot snapshot, InvestigationNarrative narrative)
+    {
+        var ids = new HashSet<Guid>();
+        foreach (var hypothesis in snapshot.Hypotheses)
+        {
+            foreach (var entry in hypothesis.RuledOut)
+            {
+                if (entry.Source == RuledOutSource.Record)
+                {
+                    ids.Add(entry.Id.Value);
+                }
+            }
+        }
+
+        foreach (var entry in narrative.RecordRuledOut)
+        {
+            ids.Add(entry.Id.Value);
+        }
+
+        return ids;
+    }
+
+    /// <summary>A signal or ticket is context even when a record rule also names it. Agent rulings do not change status.</summary>
+    private static string EvidenceStatus(EvidenceItem item, EvidenceNote? note, HashSet<Guid> recordRuledOut)
+    {
+        if (!string.IsNullOrWhiteSpace(note?.SignalId)
+            || item.Source is EvidenceSource.Spc or EvidenceSource.Telemetry or EvidenceSource.Ticketing
+            || (item.Source == EvidenceSource.ManualMeasurement && item.Reading?.Value is not null))
+        {
+            return EvidenceItemStatus.Context;
+        }
+
+        return recordRuledOut.Contains(item.Id.Value) ? EvidenceItemStatus.RuledOut : EvidenceItemStatus.Candidate;
     }
 
     /// <summary>The metrics contract's run mode: live when a real model answers, replay for offline saved answers.</summary>

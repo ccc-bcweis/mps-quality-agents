@@ -199,7 +199,9 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
 
         // Evidence a person added in an earlier round joins the pack before the gate, like any other record.
         session.RejectedAnswer = null;
+        session.GuardHit = null;
         var pack = gathered.Pack.Including(session.UserEvidence, WhyItMattersCatalog.Shared);
+        session.RecordRuledOut = RecordEntries(pack);
         session.ReplaceEvidence(pack.Items);
         session.ReplaceExplanations(pack.Explanations);
         session.ReplaceMatrix(EvidenceMatrixBuilder.FromPack(pack, null, WhyItMattersCatalog.Shared));
@@ -216,7 +218,8 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
         // contradict (data/metadata/category-evidence.yaml), gets one retry with feedback. Grounding and both guards run on
         // every answer; a second miss escalates.
         string? feedback = null;
-        ResolutionClaim? accepted;
+        ResolutionClaim? accepted = null;
+        ResolutionClaim? submitted = null;
         for (var attempt = 0; ; attempt++)
         {
             session.ResolutionCalls++;
@@ -234,6 +237,7 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
                 return false;
             }
 
+            submitted = resolution.Claim;
             var grounding = GroundingValidator.Validate(resolution.Claim, pack.Items);
             accepted = grounding.Claim;
             if (!grounding.Accepted || accepted is null || accepted.Category is null || accepted.Cause is null || accepted.Confidence is null)
@@ -243,6 +247,7 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
                     : string.Join(", ", grounding.Failures);
                 session.Stage = InvestigationStage.Escalated;
                 session.EscalationReason = "grounding: " + detail;
+                session.GuardHit = ListHit(resolution.Claim, pack, grounding.Failures);
                 session.RejectedAnswer = Rejected(resolution.Claim);
                 session.ClearHypotheses();
                 return false;
@@ -272,11 +277,16 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
 
             session.Stage = InvestigationStage.Escalated;
             session.EscalationReason = guarded ?? categoryMiss;
-            session.RejectedAnswer = Rejected(accepted);
+            var refused = accepted.RuledOutIds.Count > 0 ? accepted : submitted;
+            var listMiss = guarded is not null && !string.Equals(guarded, shapeMiss, StringComparison.Ordinal);
+            session.GuardHit = listMiss ? ListHit(refused, pack) : null;
+            session.RejectedAnswer = Rejected(accepted, refused);
             session.ClearHypotheses();
             return false;
         }
 
+        // A repaired claim drops ruledOutIds. The submitted claim still has them. A record entry wins over the agent.
+        var ruledOutClaim = accepted!.RuledOutIds.Count > 0 ? accepted : submitted!;
         session.ReplaceExplanations(MergeExplanations(pack.Explanations, accepted.Explanations));
         session.ReplaceMatrix(accepted.EvidenceMatrix);
         var hypothesis = new Hypothesis(
@@ -285,12 +295,13 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
             accepted.Cause,
             accepted.Confidence.Value,
             accepted.EvidenceIds,
-            WithRuledOut(Readable(accepted.CounterEvidence, pack.Items), RuledOut.All(pack)),
+            Readable(accepted.CounterEvidence, pack.Items),
             Mps.Agents.Resolution.RecommendedActions.Complete(
                 accepted.Category.Value,
                 accepted.Actions,
                 pack.Items.Where(item => accepted.EvidenceIds.Contains(item.Id)).ToArray(),
-                incident.ToolId.Value));
+                incident.ToolId.Value),
+            MergeRuledOut(pack, ruledOutClaim));
         session.ClearHypotheses();
         session.AddHypothesis(hypothesis);
         session.ProposedSummary = hypothesis.Actions.Count > 0 ? string.Join("; ", hypothesis.Actions) : ProposedSummary(accepted);
@@ -302,8 +313,22 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
     public Mps.Application.Evidence.RejectedAnswer? RejectedAnswerFor(InvestigationId investigationId) =>
         _sessions.Require(investigationId).RejectedAnswer;
 
-    private static Mps.Application.Evidence.RejectedAnswer Rejected(ResolutionClaim claim) =>
-        new(claim.Cause, claim.Category, claim.EvidenceIds.Select(id => id.Value).ToArray());
+    /// <summary>Pack records ruled out for the latest round, including a round that ended with no hypothesis.</summary>
+    public IReadOnlyList<RuledOutEntry> RecordRuledOutFor(InvestigationId investigationId) =>
+        _sessions.Require(investigationId).RecordRuledOut;
+
+    /// <summary>The id a guard refused and the list it was in, or null when the refusal did not name one.</summary>
+    public Mps.Application.Evidence.GuardListHit? GuardHitFor(InvestigationId investigationId) =>
+        _sessions.Require(investigationId).GuardHit;
+
+    private static Mps.Application.Evidence.RejectedAnswer Rejected(ResolutionClaim claim, ResolutionClaim? ruledOutFrom = null)
+    {
+        var source = claim.RuledOutIds.Count > 0 ? claim : ruledOutFrom ?? claim;
+        var ruledOut = source.RuledOutIds
+            .Select(item => new Mps.Application.Evidence.RejectedRuledOut(item.Id.Value, item.Reason))
+            .ToArray();
+        return new(claim.Cause, claim.Category, claim.EvidenceIds.Select(id => id.Value).ToArray(), ruledOut);
+    }
 
     internal void ApplyHumanDecision(string investigationIdText)
     {
@@ -419,20 +444,128 @@ public sealed class MafInvestigationWorkflow : IInvestigationWorkflow
 
     private readonly record struct ObservedRun(ExternalRequest? Request, CheckpointInfo? Checkpoint, string EventNames);
 
-    /// <summary>Adds every record the pack itself rules out, unless the claim already names it.</summary>
-    public static IReadOnlyList<string> WithRuledOut(IReadOnlyList<string> counters, IReadOnlyList<string> ruledOut)
+    /// <summary>
+    /// Pack records (source record, with class) then the answer's ruled-out ids (source agent).
+    /// The same id once: the record wins. An id in both cited and ruled-out lists is kept; the hypothesis rejects it.
+    /// </summary>
+    public static IReadOnlyList<RuledOutEntry> MergeRuledOut(EvidencePack pack, ResolutionClaim claim)
     {
-        var merged = counters.ToList();
-        foreach (var sentence in ruledOut)
+        ArgumentNullException.ThrowIfNull(pack);
+        ArgumentNullException.ThrowIfNull(claim);
+        var merged = RecordEntries(pack).ToList();
+        var seen = new HashSet<EvidenceId>(merged.Select(entry => entry.Id));
+        foreach (var item in claim.RuledOutIds)
         {
-            var id = sentence.Split(' ').FirstOrDefault(word => word.Contains('-', StringComparison.Ordinal))?.Trim('(', ')', '.');
-            if (id is null || !merged.Any(counter => counter.Contains(id, StringComparison.OrdinalIgnoreCase)))
+            if (!seen.Add(item.Id))
             {
-                merged.Add(sentence);
+                continue;
             }
+
+            merged.Add(new RuledOutEntry(item.Id, item.Reason, RuledOutSource.Agent, ClassFor(pack, item.Id)));
         }
 
         return merged;
+    }
+
+    /// <summary>
+    /// The id a guard or grounding check refused, and whether it was in evidenceIds or ruledOutIds.
+    /// Null when the refusal does not name one. Ids are not removed.
+    /// </summary>
+    public static Mps.Application.Evidence.GuardListHit? ListHit(
+        ResolutionClaim claim,
+        EvidencePack pack,
+        IReadOnlyList<string>? failures = null)
+    {
+        ArgumentNullException.ThrowIfNull(claim);
+        ArgumentNullException.ThrowIfNull(pack);
+        if (failures is not null)
+        {
+            foreach (var failure in failures)
+            {
+                if (TryListedId(failure, "ruled-out-and-cited:", out var cited))
+                {
+                    return new Mps.Application.Evidence.GuardListHit(cited, Mps.Application.Evidence.GuardListHit.EvidenceIds);
+                }
+
+                if (TryListedId(failure, "ruled-out-unknown-id:", out var unknown)
+                    || TryListedId(failure, "ruled-out-reason:", out unknown))
+                {
+                    return new Mps.Application.Evidence.GuardListHit(unknown, Mps.Application.Evidence.GuardListHit.RuledOutIds);
+                }
+            }
+        }
+
+        var recordIds = new HashSet<EvidenceId>(pack.RuledOut.Select(record => record.Id));
+        var claimed = new HashSet<EvidenceId>(claim.RuledOutIds.Select(item => item.Id));
+        foreach (var evidenceId in claim.EvidenceIds)
+        {
+            if (recordIds.Contains(evidenceId) || claimed.Contains(evidenceId))
+            {
+                return new Mps.Application.Evidence.GuardListHit(evidenceId.Value, Mps.Application.Evidence.GuardListHit.EvidenceIds);
+            }
+        }
+
+        var known = new HashSet<EvidenceId>(pack.Items.Select(item => item.Id));
+        foreach (var item in claim.RuledOutIds)
+        {
+            if (!known.Contains(item.Id))
+            {
+                return new Mps.Application.Evidence.GuardListHit(item.Id.Value, Mps.Application.Evidence.GuardListHit.RuledOutIds);
+            }
+        }
+
+        return null;
+    }
+
+    private static RuledOutEntry[] RecordEntries(EvidencePack pack)
+    {
+        var seen = new HashSet<EvidenceId>();
+        var entries = new List<RuledOutEntry>();
+        foreach (var record in pack.RuledOut)
+        {
+            if (!seen.Add(record.Id))
+            {
+                continue;
+            }
+
+            entries.Add(new RuledOutEntry(record.Id, record.Reason, RuledOutSource.Record, record.Class));
+        }
+
+        return entries.ToArray();
+    }
+
+    private static RootCauseCategory? ClassFor(EvidencePack pack, EvidenceId id)
+    {
+        foreach (var candidate in pack.Candidates)
+        {
+            if (candidate.Id == id)
+            {
+                return candidate.Class;
+            }
+        }
+
+        foreach (var record in pack.RuledOut)
+        {
+            if (record.Id == id)
+            {
+                return record.Class;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool TryListedId(string failure, string prefix, out Guid id)
+    {
+        if (failure.StartsWith(prefix, StringComparison.Ordinal)
+            && Guid.TryParse(failure[prefix.Length..], out id)
+            && id != Guid.Empty)
+        {
+            return true;
+        }
+
+        id = Guid.Empty;
+        return false;
     }
 
     /// <summary>The AI sometimes lists bare evidence ids as counter-evidence; show the record title instead.</summary>

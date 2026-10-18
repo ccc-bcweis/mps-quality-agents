@@ -9,6 +9,7 @@ import { AgentTimeline } from "../components/AgentTimeline";
 import { DecisionPanel } from "../components/DecisionPanel";
 import { EvidenceMatrix } from "../components/EvidenceMatrix";
 import { EvidencePack } from "../components/EvidencePack";
+import { EvidenceAgainst } from "../components/RuledOutRecords";
 import { Explain } from "../components/Explain";
 import { HistoryNote } from "../components/RecordList";
 import { RoundHistory } from "../components/RoundHistory";
@@ -19,6 +20,7 @@ import { InvestigationHistory } from "../history/InvestigationHistory";
 import { useSite } from "../context/SiteContext";
 import { toolInPlant } from "../sites/selection";
 import { placeLabel, plainFinding, plainNarrative } from "../investigation/format";
+import { collectRuledOut, rejectedRuledOutViews } from "../investigation/ruledOut";
 import { lifecycleForIncident, lifecycleForInvestigation } from "../lifecycle";
 import { FALLBACK_POLL_MS, onHubState, useHubConnected, useHubEvent } from "../live/fleetHub";
 import { parameterLabel } from "../labels";
@@ -278,7 +280,7 @@ function InvestigationDetail({ investigation, onChange }: { investigation: Inves
         <AgentTimeline investigation={investigation} />
       </section>
       <section className={`${panel} mb-3`}>
-        <EvidencePack items={investigation.evidence} />
+        <EvidencePack items={investigation.evidence} ruledOut={collectRuledOut(investigation.hypotheses)} />
       </section>
       <div className="grid gap-3 lg:grid-cols-2">
         <section className={panel}>
@@ -293,11 +295,7 @@ function InvestigationDetail({ investigation, onChange }: { investigation: Inves
                 <p>
                   <Explain text={plainFinding(hypothesis.cause)} spellOut={false} />
                 </p>
-                {hypothesis.counterEvidence.length > 0 ? (
-                  <p className="mt-1">
-                    <strong>Evidence against this:</strong> {hypothesis.counterEvidence.map((line) => plainNarrative(line)).join(" ")}
-                  </p>
-                ) : null}
+                <EvidenceAgainst counterEvidence={hypothesis.counterEvidence} items={investigation.evidence} ruledOut={hypothesis.ruledOut} />
               </li>
             ))}
           </ul>
@@ -319,6 +317,7 @@ function RejectedAnswerDetail({ investigation }: { investigation: Investigation 
   const cited = rejected.evidenceIds
     .map((id) => investigation.evidence.find((item) => item.id === id))
     .filter((item): item is NonNullable<typeof item> => item !== undefined);
+  const proposed = rejectedRuledOutViews(investigation.evidence, rejected.ruledOutIds);
   return (
     <details className="mt-2" data-rejected-answer="true">
       <summary className="cursor-pointer">What the AI proposed (not accepted)</summary>
@@ -342,6 +341,22 @@ function RejectedAnswerDetail({ investigation }: { investigation: Investigation 
             </ul>
           )}
         </dd>
+        {proposed.length === 0 ? null : (
+          <>
+            <dt className="text-mps-muted">Proposed as ruled out</dt>
+            <dd>
+              <ul>
+                {proposed.map((row) => (
+                  <li key={row.id}>
+                    {row.ref ? `${row.ref}: ` : ""}
+                    {row.title}
+                    {row.reason ? `. ${row.reason}` : ""}
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </>
+        )}
       </dl>
     </details>
   );

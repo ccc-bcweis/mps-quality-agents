@@ -28,6 +28,9 @@ const DOC_ID = "11111111-1111-4111-8111-111111111117";
 const H2_ID = "22222222-2222-4222-8222-222222222223";
 const H3_ID = "22222222-2222-4222-8222-222222222224";
 const H4_ID = "22222222-2222-4222-8222-222222222225";
+const NOTICE_ID = "11111111-1111-4111-8111-111111111118";
+const S2_NOTICE_ID = "c5555555-5555-4555-8555-555555555555";
+const S2_PM_ID = "c6666666-6666-4666-8666-666666666666";
 
 function chambers(names: string[]): Tool["chambers"] {
   return names.map((name, index) => ({ id: `C${index + 1}`, name }));
@@ -157,6 +160,7 @@ const s1Evidence: EvidenceItem[] = [
     controlHigh: 56,
     limitState: "outOfControl",
     sourceEventIds: ["01ARZ3NDEKTSV4RRFFQ69G5FAV"],
+    status: "context",
     ...etchB,
   },
   {
@@ -168,6 +172,7 @@ const s1Evidence: EvidenceItem[] = [
     observedAt: "2026-10-12T08:00:00Z",
     toolId: "E-02",
     externalRef: "ECO-4471",
+    status: "candidate",
     ...etchB,
   },
   {
@@ -179,6 +184,7 @@ const s1Evidence: EvidenceItem[] = [
     observedAt: "2026-10-14T13:40:00Z",
     toolId: "E-02",
     externalRef: "L-4419",
+    status: "candidate",
     ...etchB,
   },
   {
@@ -190,6 +196,7 @@ const s1Evidence: EvidenceItem[] = [
     observedAt: "2026-10-11T16:00:00Z",
     toolId: "E-02",
     externalRef: "PM-3381",
+    status: "candidate",
     ...etchB,
   },
   {
@@ -201,6 +208,7 @@ const s1Evidence: EvidenceItem[] = [
     observedAt: "2026-09-02T10:00:00Z",
     toolId: "E-02",
     externalRef: "CAL-ESC-02",
+    status: "candidate",
     ...etchB,
   },
   {
@@ -212,6 +220,7 @@ const s1Evidence: EvidenceItem[] = [
     observedAt: "2026-10-09T08:00:00Z",
     toolId: "E-02",
     externalRef: "NF3-220",
+    status: "candidate",
     ...etchB,
   },
   {
@@ -223,6 +232,19 @@ const s1Evidence: EvidenceItem[] = [
     observedAt: "2026-08-01T00:00:00Z",
     toolId: "E-02",
     externalRef: "SB-441",
+    status: "candidate",
+    ...etchB,
+  },
+  {
+    id: NOTICE_ID,
+    source: "qms",
+    title: "Silane lot SIH4-088 supplier notice",
+    excerpt: "Silane lot SIH4-088 matches the purchase specification.",
+    whyItMatters: "The notice says the lot matches the purchase specification, so it is not the cause.",
+    observedAt: "2026-10-10T09:00:00Z",
+    toolId: "E-02",
+    externalRef: "SN-SIH4-088",
+    status: "ruledOut",
     ...etchB,
   },
 ];
@@ -253,6 +275,20 @@ export const investigations: Investigation[] = [
         confidence: 0.74,
         evidenceIds: [S1_EVIDENCE_ID],
         counterEvidence: ["A preventive maintenance was performed the same week."],
+        ruledOut: [
+          {
+            evidenceId: NOTICE_ID,
+            reason: "Silane lot SIH4-088 matches the purchase specification.",
+            source: "record",
+            category: "supplyChainMaterial",
+          },
+          {
+            evidenceId: PM_ID,
+            reason: "The scheduled maintenance does not explain the oscillation.",
+            source: "agent",
+            category: "equipmentCalibrationOrAlignment",
+          },
+        ],
         actions: ["Containment: Hold the affected lots and roll back to edge ring revision B.", "Preventive: Engineering review of ECO-4471 and an ECO update before rev C returns."],
       },
       {
@@ -262,6 +298,7 @@ export const investigations: Investigation[] = [
         confidence: 0.11,
         evidenceIds: [CAL_ID],
         counterEvidence: ["Calibration record CAL-ESC-02 is current."],
+        ruledOut: [],
         actions: [],
       },
       {
@@ -271,6 +308,7 @@ export const investigations: Investigation[] = [
         confidence: 0.07,
         evidenceIds: [ERP_ID],
         counterEvidence: ["E-01 uses the same lot and is in control."],
+        ruledOut: [],
         actions: [],
       },
       {
@@ -280,6 +318,7 @@ export const investigations: Investigation[] = [
         confidence: 0.05,
         evidenceIds: [TEL_ID],
         counterEvidence: ["The pattern is an oscillation, not a ramp."],
+        ruledOut: [],
         actions: [],
       },
     ],
@@ -301,6 +340,7 @@ export const investigations: Investigation[] = [
         observedAt: "2026-10-08T12:00:00Z",
         toolId: "D-01",
         externalRef: "PLM-SH-C",
+        status: "candidate",
         ...depA,
       },
       {
@@ -312,6 +352,7 @@ export const investigations: Investigation[] = [
         observedAt: "2026-10-14T14:20:00Z",
         toolId: "D-01",
         externalRef: "MES-D01-B",
+        status: "candidate",
         ...depA,
       },
       {
@@ -328,6 +369,31 @@ export const investigations: Investigation[] = [
         unit: "Torr",
         specLow: 2,
         specHigh: 6,
+        status: "context",
+        ...depA,
+      },
+      {
+        id: S2_NOTICE_ID,
+        source: "qms",
+        title: "Silane lot SIH4-088 supplier notice",
+        excerpt: "Silane lot SIH4-088 matches the purchase specification.",
+        whyItMatters: "The notice says the lot matches the purchase specification, so it is not the cause.",
+        observedAt: "2026-10-10T09:00:00Z",
+        toolId: "D-01",
+        externalRef: "SN-SIH4-088",
+        status: "ruledOut",
+        ...depA,
+      },
+      {
+        id: S2_PM_ID,
+        source: "cmms",
+        title: "Scheduled pump maintenance",
+        excerpt: "A pump maintenance is on the calendar and has not been done yet.",
+        whyItMatters: "A future maintenance visit does not explain a pressure step that already happened.",
+        observedAt: "2026-10-20T08:00:00Z",
+        toolId: "D-01",
+        externalRef: "PM-D02-SCH",
+        status: "candidate",
         ...depA,
       },
     ],
@@ -336,6 +402,15 @@ export const investigations: Investigation[] = [
       { category: "engineeringChange", evidenceId: "c2222222-2222-4222-8222-222222222222", stance: "rulesOut" },
     ],
     hypotheses: [],
+    rejectedAnswer: {
+      cause: "The pressure step was blamed on a silane lot the notice itself does not support.",
+      category: "supplyChainMaterial",
+      evidenceIds: ["c1111111-1111-4111-8111-111111111111"],
+      ruledOutIds: [
+        { evidenceId: S2_NOTICE_ID, reason: "Silane lot SIH4-088 matches the purchase specification." },
+        { evidenceId: S2_PM_ID, reason: "The scheduled maintenance does not explain the pressure step." },
+      ],
+    },
   },
 ];
 

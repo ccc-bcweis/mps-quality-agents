@@ -1,7 +1,9 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
+using Mps.Agents.Evidence;
 using Mps.Agents.Explain;
 using Mps.Agents.Grounding;
 using Mps.Agents.Ranking;
@@ -21,6 +23,50 @@ public static class ResolutionJson
     {
         ArgumentNullException.ThrowIfNull(request);
         return JsonSerializer.Serialize(request, Options);
+    }
+
+    /// <summary>
+    /// Maps answer ids through <paramref name="resolve"/> before the claim is parsed. A handle that does not resolve
+    /// stays in the JSON as an id no pack contains, so grounding fails it instead of dropping it.
+    /// </summary>
+    public static string RewriteAnswerIds(string? text, Func<string, string?> resolve)
+    {
+        ArgumentNullException.ThrowIfNull(resolve);
+        if (!TrySlice(text, out var json))
+        {
+            return text ?? string.Empty;
+        }
+
+        JsonNode? node;
+        try
+        {
+            node = JsonNode.Parse(json);
+        }
+        catch (JsonException)
+        {
+            return text ?? string.Empty;
+        }
+
+        if (node is not JsonObject root)
+        {
+            return text ?? string.Empty;
+        }
+
+        RewriteIdArray(root, "evidenceIds", resolve);
+        if (root["ruledOutIds"] is JsonArray ruledOut)
+        {
+            foreach (var entry in ruledOut)
+            {
+                if (entry is JsonObject item)
+                {
+                    RewriteId(item, "evidenceId", resolve);
+                }
+            }
+        }
+
+        RewriteIdObjects(root, "whyItMatters", resolve);
+        RewriteIdObjects(root, "evidenceMatrix", resolve);
+        return root.ToJsonString();
     }
 
     public static bool TryReadRequest(string text, out ResolutionRequest? request)
@@ -62,6 +108,11 @@ public static class ResolutionJson
             ["shape"] = claim.Shape,
             ["confidence"] = claim.Confidence,
             ["evidenceIds"] = claim.EvidenceIds.Select(id => id.ToString()).ToArray(),
+            ["ruledOutIds"] = claim.RuledOutIds.Select(item => new Dictionary<string, object?>
+            {
+                ["evidenceId"] = item.Id.ToString(),
+                ["reason"] = item.Reason,
+            }).ToArray(),
             ["counterEvidence"] = claim.CounterEvidence,
             ["actions"] = claim.Actions,
             ["whyItMatters"] = claim.Explanations.Select(item => new Dictionary<string, object?>
@@ -165,7 +216,8 @@ public static class ResolutionJson
                 [],
                 explanations,
                 matrix,
-                root.TryGetProperty("shape", out var shapeElement) ? Str(shapeElement) : null);
+                root.TryGetProperty("shape", out var shapeElement) ? Str(shapeElement) : null,
+                ReadRuledOut(root));
             return true;
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException)
@@ -217,6 +269,112 @@ public static class ResolutionJson
 
         return ids;
     }
+
+    /// <summary>
+    /// Every entry is kept. A missing id or a value that is not a GUID becomes an id no pack contains, and a missing
+    /// reason stays blank, so grounding reports the failure instead of the parser dropping the row.
+    /// </summary>
+    private static List<RuledOutClaim> ReadRuledOut(JsonElement root)
+    {
+        var claims = new List<RuledOutClaim>();
+        if (!root.TryGetProperty("ruledOutIds", out var array))
+        {
+            return claims;
+        }
+
+        if (array.ValueKind != JsonValueKind.Array)
+        {
+            claims.Add(new RuledOutClaim(Unresolved("ruledOutIds"), string.Empty));
+            return claims;
+        }
+
+        foreach (var item in array.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.Object)
+            {
+                claims.Add(new RuledOutClaim(Unresolved(item.GetRawText()), string.Empty));
+                continue;
+            }
+
+            var idText = item.TryGetProperty("evidenceId", out var idElement) ? Str(idElement) : null;
+            var reason = item.TryGetProperty("reason", out var reasonElement) ? Str(reasonElement) : null;
+            var id = idText is not null && Guid.TryParse(idText, out var parsed) && parsed != Guid.Empty
+                ? new EvidenceId(parsed)
+                : Unresolved(idText ?? string.Empty);
+            claims.Add(new RuledOutClaim(id, string.IsNullOrWhiteSpace(reason) ? string.Empty : reason.Trim()));
+        }
+
+        return claims;
+    }
+
+    private static void RewriteIdObjects(JsonObject root, string name, Func<string, string?> resolve)
+    {
+        if (root[name] is not JsonArray array)
+        {
+            return;
+        }
+
+        foreach (var entry in array)
+        {
+            if (entry is JsonObject item)
+            {
+                RewriteId(item, "evidenceId", resolve);
+            }
+        }
+    }
+
+    private static void RewriteIdArray(JsonObject root, string name, Func<string, string?> resolve)
+    {
+        if (root[name] is not JsonArray array)
+        {
+            return;
+        }
+
+        for (var index = 0; index < array.Count; index++)
+        {
+            array[index] = JsonValue.Create(MapToken(TokenOf(array[index]), resolve));
+        }
+    }
+
+    private static void RewriteId(JsonObject item, string name, Func<string, string?> resolve)
+    {
+        if (!item.ContainsKey(name))
+        {
+            return;
+        }
+
+        item[name] = JsonValue.Create(MapToken(TokenOf(item[name]), resolve));
+    }
+
+    private static string MapToken(string token, Func<string, string?> resolve)
+    {
+        var resolved = resolve(token);
+        if (!string.IsNullOrEmpty(resolved) && Guid.TryParse(resolved, out var parsed) && parsed != Guid.Empty)
+        {
+            return parsed.ToString("D");
+        }
+
+        if (Guid.TryParse(token, out var kept) && kept != Guid.Empty)
+        {
+            return kept.ToString("D");
+        }
+
+        return Unresolved(token).ToString();
+    }
+
+    private static string TokenOf(JsonNode? node)
+    {
+        if (node is JsonValue value && value.TryGetValue<string>(out var text) && text is not null)
+        {
+            return text;
+        }
+
+        return node?.ToJsonString() ?? string.Empty;
+    }
+
+    /// <summary>Stable id for a handle or token that is not a pack id. Grounding then rejects it as unknown.</summary>
+    private static EvidenceId Unresolved(string token) =>
+        new(Uuid5.Create(EvidenceIds.Namespace, "unresolved-handle:" + token.Trim()));
 
     private static bool TryReadExplanations(JsonElement root, out List<CitedEvidence> explanations, out string? error)
     {

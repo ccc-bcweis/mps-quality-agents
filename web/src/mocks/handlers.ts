@@ -653,6 +653,7 @@ export const handlers = [
         externalRef: `USER-R${round}`,
         suppliedBy: by,
         whyItMatters: "A person on the line added this; the agents weighed it with the records.",
+        status: "candidate" as const,
       };
       const closed = clone(current);
       closed.stage = "superseded";

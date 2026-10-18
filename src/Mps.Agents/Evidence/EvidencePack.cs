@@ -4,6 +4,7 @@ using Mps.Agents.Explain;
 using Mps.Agents.Impact;
 using Mps.Domain.Enterprise;
 using Mps.Domain.Evidence;
+using Mps.Domain.Identity;
 
 namespace Mps.Agents.Evidence;
 
@@ -22,7 +23,9 @@ public sealed class EvidencePack
         IReadOnlyList<SupplierNotice> supplierNotices,
         bool calibrationLookupCompleted,
         SignalShape signalShape,
-        IReadOnlyList<CitedEvidence>? explanations = null)
+        IReadOnlyList<CitedEvidence>? explanations = null,
+        IReadOnlyList<Candidate>? candidates = null,
+        IReadOnlyList<RuledOutRecord>? ruledOut = null)
     {
         ArgumentNullException.ThrowIfNull(items);
         ArgumentNullException.ThrowIfNull(configClaims);
@@ -42,6 +45,21 @@ public sealed class EvidencePack
         CalibrationLookupCompleted = calibrationLookupCompleted;
         SignalShape = signalShape;
         Explanations = explanations?.ToArray() ?? [];
+        Candidates = candidates?.ToArray() ?? [];
+        RuledOut = ruledOut?.ToArray() ?? [];
+        if (Candidates.Count > 0 && RuledOut.Count > 0)
+        {
+            var candidateIds = new HashSet<EvidenceId>(Candidates.Select(candidate => candidate.Id));
+            foreach (var record in RuledOut)
+            {
+                if (candidateIds.Contains(record.Id))
+                {
+                    throw new ArgumentException(
+                        "A record id is in at most one of candidates and ruled out.",
+                        nameof(ruledOut));
+                }
+            }
+        }
     }
 
     public IReadOnlyList<EvidenceItem> Items { get; }
@@ -67,6 +85,10 @@ public sealed class EvidencePack
     /// </summary>
     public IReadOnlyList<CitedEvidence> Explanations { get; }
 
+    public IReadOnlyList<Candidate> Candidates { get; }
+
+    public IReadOnlyList<RuledOutRecord> RuledOut { get; }
+
     /// <summary>Appends bench readings and rebuilds whyItMatters for the whole pack.</summary>
     public EvidencePack Including(IReadOnlyList<EvidenceItem> extra, WhyItMattersCatalog catalog)
     {
@@ -78,6 +100,25 @@ public sealed class EvidencePack
         }
 
         var items = Items.Concat(extra).ToArray();
+        var (addedCandidates, addedRuledOut) = EvidenceLists.Partition([], [], [], [], [], extra);
+        var candidates = Candidates.ToList();
+        var ruledOut = RuledOut.ToList();
+        foreach (var candidate in addedCandidates)
+        {
+            if (candidates.All(existing => existing.Id != candidate.Id) && ruledOut.All(existing => existing.Id != candidate.Id))
+            {
+                candidates.Add(candidate);
+            }
+        }
+
+        foreach (var record in addedRuledOut)
+        {
+            if (candidates.All(existing => existing.Id != record.Id) && ruledOut.All(existing => existing.Id != record.Id))
+            {
+                ruledOut.Add(record);
+            }
+        }
+
         return new EvidencePack(
             items,
             ConfigClaims,
@@ -88,6 +129,8 @@ public sealed class EvidencePack
             SupplierNotices,
             CalibrationLookupCompleted,
             SignalShape,
-            CitedEvidenceFactory.ForItems(items, catalog));
+            CitedEvidenceFactory.ForItems(items, catalog),
+            candidates,
+            ruledOut);
     }
 }

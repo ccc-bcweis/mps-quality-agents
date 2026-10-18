@@ -14,11 +14,30 @@
     "payload": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["investigationId", "incidentId", "reason"],
+      "required": ["investigationId", "incidentId", "reason", "evidenceIds", "ruledOut"],
       "properties": {
         "investigationId": { "type": "string", "format": "uuid" },
         "incidentId": { "type": "string", "format": "uuid" },
-        "reason": { "type": "string", "minLength": 1 }
+        "reason": { "type": "string", "minLength": 1 },
+        "evidenceIds": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" }
+        },
+        "ruledOut": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "reason", "source"],
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "reason": { "type": "string", "minLength": 1 },
+              "source": { "enum": ["record", "agent"] }
+            }
+          }
+        },
+        "offendingId": { "type": "string", "format": "uuid" },
+        "list": { "enum": ["evidenceIds", "ruledOutIds"] }
       }
     }
   }
