@@ -8,6 +8,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
+using Mps.Api.Demo;
 using Mps.Simulator.Demo;
 using Mps.Simulator.Telemetry;
 
@@ -113,10 +114,30 @@ public sealed class PrintoutEndpointTests
 
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
         alerts.EnumerateArray().Should().NotContain(alert => alert.GetProperty("rule").GetString() == "manualMeasurement");
-        readings.EnumerateArray().Should().ContainSingle();
+        var reading = readings.EnumerateArray().Should().ContainSingle().Which;
+        reading.GetProperty("parameter").GetString().Should().Be("rfSourcePower");
+        reading.GetProperty("value").GetDouble().Should().Be(2140d);
+        reading.GetProperty("specMinimum").GetDouble().Should().Be(1000d);
+        reading.GetProperty("specMaximum").GetDouble().Should().Be(2000d);
+        reading.GetProperty("instrument").GetString().Should().Be("oscilloscope");
         runtime.Simulator.ActiveFaults.Should().ContainSingle();
         runtime.Simulator.ActiveFaults[0].Parameter.Should().Be("rfSourcePower");
         runtime.Simulator.ActiveFaults[0].Shape.Should().Be(FaultShape.Oscillation);
+    }
+
+    [Fact]
+    public void ScSixPrintoutComesFromTheScenarioCatalog()
+    {
+        var catalog = ScenarioManualSampleCatalog.Load(Path.Combine(Root(), "data", "scenarios", "catalog.yaml"));
+
+        var steps = catalog.For("SC-6");
+        steps.Should().ContainSingle();
+        steps[0].FileName.Should().Be("oscilloscope-e01.pdf");
+        steps[0].Timing.Should().Be(ScenarioManualSampleCatalog.TimingNow);
+        foreach (var id in new[] { "SC-1", "SC-2", "SC-3", "SC-4", "SC-5", "SC-7", "SC-8" })
+        {
+            catalog.For(id).Should().BeEmpty();
+        }
     }
 
     [Fact]

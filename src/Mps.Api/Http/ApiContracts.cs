@@ -222,6 +222,12 @@ public sealed class FaultBody
     public bool Confounders { get; set; }
 
     public double? DurationMinutes { get; set; }
+
+    /// <summary>Fault-catalog id whose enterprise records are registered under this fault's correlation.</summary>
+    public string? EvidenceFaultId { get; set; }
+
+    /// <summary>Enterprise records sent with the fault. They are registered under this fault's correlation.</summary>
+    public FaultEvidenceBody? Evidence { get; set; }
 }
 
 public sealed record ThroughputResponse(double WaferStartsPerHour, double WaferOutsPerHour, int Wip, double YieldPct, double UptimePct);
