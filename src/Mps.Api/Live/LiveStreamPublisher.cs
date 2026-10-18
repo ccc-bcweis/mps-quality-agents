@@ -14,8 +14,9 @@ namespace Mps.Api.Live;
 
 /// <summary>
 /// Pushes live telemetry to the console over the fleet hub so pages stop polling. Kept samples are collected per
-/// tool and sent at most once per <see cref="SimulationOptions.PushIntervalMilliseconds"/>: toolLive to the pages
-/// watching that tool, fleetLive to the pages watching its plant (or every plant). Only watched tools are collected.
+/// tool and sent at most once per <see cref="SimulationOptions.PushIntervalMilliseconds"/> as toolLive to the pages
+/// watching that tool, and at most once per <see cref="SimulationOptions.FleetPushIntervalMilliseconds"/> as fleetLive to
+/// the pages watching its plant (or every plant). Only watched tools are collected.
 /// Every page also gets the plant clock, reset progress, and a resync after a reset rebuilds the data.
 /// </summary>
 public sealed partial class LiveStreamPublisher : IHostedService, IDisposable
@@ -40,7 +41,12 @@ public sealed partial class LiveStreamPublisher : IHostedService, IDisposable
     private IDisposable? _manualSubscription;
     private DateTimeOffset _lastPush = DateTimeOffset.MinValue;
     private DateTimeOffset _lastClock = DateTimeOffset.MinValue;
+    private DateTimeOffset _lastFleetPush = DateTimeOffset.MinValue;
+
+    /// <summary>Tools with new readings since the last fleetLive message, waiting for the fleet interval.</summary>
+    private readonly Dictionary<string, PendingTool> _fleetPending = new(StringComparer.Ordinal);
     private bool _trailingScheduled;
+    private bool _fleetTrailingScheduled;
     private int _disposed;
 
     public LiveStreamPublisher(
@@ -163,6 +169,7 @@ public sealed partial class LiveStreamPublisher : IHostedService, IDisposable
         try
         {
             Dictionary<string, PendingTool> taken;
+            Dictionary<string, PendingTool>? fleet = null;
             var now = _time.GetUtcNow();
             bool clockDue;
             lock (_gate)
@@ -176,6 +183,28 @@ public sealed partial class LiveStreamPublisher : IHostedService, IDisposable
                 {
                     _lastClock = now;
                 }
+
+                foreach (var (toolId, pending) in taken)
+                {
+                    _fleetPending[toolId] = pending;
+                }
+
+                if (_fleetPending.Count > 0)
+                {
+                    if (now - _lastFleetPush >= FleetInterval)
+                    {
+                        fleet = new Dictionary<string, PendingTool>(_fleetPending, StringComparer.Ordinal);
+                        _fleetPending.Clear();
+                        _lastFleetPush = now;
+                        _fleetTrailingScheduled = false;
+                    }
+                    else if (!_fleetTrailingScheduled)
+                    {
+                        // The last readings before a pause still reach the fleet page once the interval has passed.
+                        _fleetTrailingScheduled = true;
+                        _ = TrailingAsync(FleetInterval - (now - _lastFleetPush), fleet: true);
+                    }
+                }
             }
 
             if (clockDue)
@@ -185,28 +214,27 @@ public sealed partial class LiveStreamPublisher : IHostedService, IDisposable
                     .ConfigureAwait(false);
             }
 
-            if (taken.Count == 0)
+            var tools = taken.Where(entry => _subscriptions.Watched(FleetHub.ToolGroup(entry.Key))).ToArray();
+            if (tools.Length == 0 && fleet is null)
             {
                 return;
             }
 
+            // One alert query per message, and none when no page needs one.
             var status = await AlertStatusAsync(cancellationToken).ConfigureAwait(false);
-            foreach (var (toolId, pending) in taken)
+            foreach (var (toolId, pending) in tools)
             {
-                var group = FleetHub.ToolGroup(toolId);
-                if (!_subscriptions.Watched(group))
-                {
-                    continue;
-                }
-
                 var delta = LiveResponses.ToolDelta(_plant, toolId, status, pending.Points, pending.Resync);
                 if (delta is not null)
                 {
-                    await _hub.Clients.Group(group).SendAsync("toolLive", delta, cancellationToken).ConfigureAwait(false);
+                    await _hub.Clients.Group(FleetHub.ToolGroup(toolId)).SendAsync("toolLive", delta, cancellationToken).ConfigureAwait(false);
                 }
             }
 
-            await SendFleetAsync(taken, status, cancellationToken).ConfigureAwait(false);
+            if (fleet is not null)
+            {
+                await SendFleetAsync(fleet, status, cancellationToken).ConfigureAwait(false);
+            }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -219,6 +247,8 @@ public sealed partial class LiveStreamPublisher : IHostedService, IDisposable
     }
 
     private TimeSpan Interval => TimeSpan.FromMilliseconds(_options.PushIntervalMilliseconds);
+
+    private TimeSpan FleetInterval => TimeSpan.FromMilliseconds(_options.FleetPushIntervalMilliseconds);
 
     private async Task SendFleetAsync(Dictionary<string, PendingTool> taken, IReadOnlyDictionary<string, string> status, CancellationToken cancellationToken)
     {
@@ -315,11 +345,19 @@ public sealed partial class LiveStreamPublisher : IHostedService, IDisposable
         return ToolAlertStatus.ByTool(await alerts.ListAsync(null, cancellationToken).ConfigureAwait(false));
     }
 
-    private async Task TrailingAsync(TimeSpan delay)
+    private async Task TrailingAsync(TimeSpan delay, bool fleet = false)
     {
         try
         {
             await Task.Delay(delay > TimeSpan.Zero ? delay : TimeSpan.Zero, _time).ConfigureAwait(false);
+            if (fleet)
+            {
+                lock (_gate)
+                {
+                    _fleetTrailingScheduled = false;
+                }
+            }
+
             if (Volatile.Read(ref _disposed) == 0)
             {
                 await FlushAsync(CancellationToken.None).ConfigureAwait(false);
@@ -338,6 +376,7 @@ public sealed partial class LiveStreamPublisher : IHostedService, IDisposable
             lock (_gate)
             {
                 _pending.Clear();
+                _fleetPending.Clear();
             }
         }
 

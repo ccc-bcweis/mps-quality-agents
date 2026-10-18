@@ -72,6 +72,44 @@ public sealed class LiveStreamTests
     }
 
     [Fact]
+    public async Task FleetTilesRefreshAtTheFleetIntervalWhileToolChartsKeepTheirOwn()
+    {
+        // The fleet message carries every changed tool's latest values (about 44 kB per plant), so it goes out at
+        // FleetPushIntervalMilliseconds; tool charts still get every push.
+        await using var factory = new ApiFactory().WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("Mps:Simulation:PrimeSeconds", "0");
+            builder.UseSetting("Mps:Simulation:PushIntervalMilliseconds", "1");
+            builder.UseSetting("Mps:Simulation:FleetPushIntervalMilliseconds", "60000");
+        });
+        var publisher = factory.Services.GetRequiredService<LiveStreamPublisher>();
+        await using var page = await ConnectAsync(factory);
+        var fleetCount = 0;
+        var toolCount = 0;
+        page.On<JsonElement>("fleetLive", _ => Interlocked.Increment(ref fleetCount));
+        page.On<JsonElement>("toolLive", _ => Interlocked.Increment(ref toolCount));
+        await page.InvokeAsync("SubscribeSite", "northwater");
+        await page.InvokeAsync("SubscribeTool", Tool);
+
+        for (var push = 0; push < 4; push++)
+        {
+            await PumpAsync(factory);
+            await Task.Delay(5);
+            await publisher.FlushAsync(CancellationToken.None);
+        }
+
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while ((Volatile.Read(ref toolCount) < 2 || Volatile.Read(ref fleetCount) < 1) && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(50);
+        }
+
+        await Task.Delay(300);
+        Volatile.Read(ref fleetCount).Should().Be(1, "one fleet message per fleet interval");
+        Volatile.Read(ref toolCount).Should().BeGreaterThanOrEqualTo(2, "tool charts keep the one-second push");
+    }
+
+    [Fact]
     public async Task NothingIsCollectedWhileNoPageWatchesATool()
     {
         await using var factory = Factory();
