@@ -6,6 +6,7 @@ import { CATEGORY_LABEL, INVESTIGATION_STAGE_LABEL, limitText, limits } from "..
 import type { DecisionRecord, HumanDecisionKind, Investigation } from "../api/types";
 import { ApprovalDialog, type DecisionMode } from "./ApprovalDialog";
 import { AddEvidenceBox, canAddRound, maxRoundsOf, roundOf } from "./AddEvidenceBox";
+import { EvidenceAgainst } from "./RuledOutRecords";
 import { Explain } from "./Explain";
 import { Term } from "./Term";
 import { btnDanger, btnInfo, btnOk, panel } from "./ui";
@@ -96,6 +97,7 @@ export function DecisionPanel({ investigation, onChange }: { investigation: Inve
           <p>
             <span className="text-mps-ai">{CATEGORY_LABEL[top.category]}</span> · <Explain text={plainFinding(top.cause)} spellOut={false} />
           </p>
+          <EvidenceAgainst counterEvidence={top.counterEvidence} items={investigation.evidence} ruledOut={top.ruledOut} />
           <div className="mt-3" data-testid="recommended-action">
             <h3 className="font-semibold">Recommended action</h3>
             {top.actions.length === 0 ? (
