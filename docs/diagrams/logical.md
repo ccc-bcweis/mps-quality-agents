@@ -55,7 +55,7 @@ flowchart LR
 
   subgraph Det["Rules, unit tested"]
     direction TB
-    SPC["Control-chart windows"]
+    SPC["SPC rules on the bus"]
     INTAKE["Normalize and dedupe"]
     LIFE["Lifecycle"]
     IMPACT["Scope and timing"]
@@ -183,7 +183,7 @@ flowchart LR
 
 ## Narrative
 
-Telemetry from the seeded fleet simulator (and live Fault Injector shapes) hits **SPC windows and Western Electric rules 1–4**. An alert above threshold **auto-creates a ticket**. Operator reports, QMS NCRs, and supplier notices join the same **intake** path: validate, dedupe against an open incident on the same tool/parameter, classify severity. The **lifecycle state machine** is the only legal way to move Alert → Ticket → Investigation → Recommendation/Escalation → Approval → CAPA.
+Telemetry from the seeded fleet simulator (and live Fault Injector shapes) is published as `telemetry.reading`. The SPC rule engine evaluates every enabled reading: spec window, Western Electric rules 1–4, and Nelson rising and falling runs. An alert-tier signal **auto-creates a ticket**. A watch does not. Operator reports, QMS NCRs, and supplier notices join the same **intake** path: validate, dedupe against an open incident on the same tool/parameter, classify severity. The **lifecycle state machine** is the only legal way to move Alert → Ticket → Investigation → Recommendation/Escalation → Approval → CAPA.
 
 The orchestrator then runs the **Investigation Agent** with a hard tool allowlist (read-only MES/QMS/PLM/ERP/CMMS/ticketing, telemetry window, SPC violations, hybrid document search, deterministic `Impact.Scope`). It cannot diagnose or write. Its output is a typed **Evidence Pack**. The **evidence gate** (code) either passes the pack to the **Resolution Agent** or returns Request-info / Escalate with named gaps. The Resolution Agent has **no tools**; it ranks a root-cause category (engineering change, calibration/alignment, supply-chain material, process drift) with citations and explicit `counterEvidence`. The **grounding validator** rejects unknown IDs and uncited claims.
 

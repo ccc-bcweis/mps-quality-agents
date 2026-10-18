@@ -17,6 +17,7 @@ Checked against the code on 2026-10-18: .NET 10 and the `aspnet:10.0` image, one
 | G5 (#74) | `print/as-is-vs-to-be-archD.pdf` | As-is and to-be side by side, matching stage bands, simulated benefits |
 | G7a-c | [`fab-floor.md`](fab-floor.md) | Floor plans for Northwater Fab, Ironwood Fab and Lumen Pilot Works, built from `data/fleet/sites.yaml`. Not the Azure sheet |
 | K7 | [`mps-sites.svg`](mps-sites.svg) | Opening-slide map. Northwater Fab, Ironwood Fab, and Lumen Pilot Works on an invented coast |
+| SPC | [`spc-alert-flow.md`](spc-alert-flow.md) | Reading to rule state to alert, ticket, and clear. Review mermaid only; not an ARCH D sheet |
 
 ## What to print
 

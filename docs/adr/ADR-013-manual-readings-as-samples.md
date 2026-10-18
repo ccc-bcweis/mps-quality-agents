@@ -1,5 +1,7 @@
 # ADR-013: Manual readings are samples, not a workflow
 
+> The publisher named in the defects below is gone. ADR-015 evaluates every reading on the bus, including a manual sample published as `telemetry.reading`.
+
 Status: accepted, 2026-10-16
 
 ## Context
