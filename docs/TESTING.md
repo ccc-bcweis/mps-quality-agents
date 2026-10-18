@@ -80,7 +80,8 @@ Every pull request and every push to `main` runs:
 
 | Workflow | Job | Steps |
 |---|---|---|
-| `ci.yml` | build | Restore, build with warnings as errors, `dotnet format --verify-no-changes`, `dotnet test` with coverage, the replay eval with gates, coverage report |
+| `ci.yml` | build | Restore, build with warnings as errors, `dotnet format --verify-no-changes`, `dotnet test` with coverage (all but `Category=Slow`), the replay eval with gates, coverage report |
+| `ci.yml` | slow tests | The four whole-plant simulation tests tagged `[Trait("Category", "Slow")]` (baseline quarter hour, reset isolation, replay, scenario bus chain), on their own runner in parallel with build |
 | `ci.yml` | web | `npm ci`, ESLint, Vitest, `tsc` and Vite build (the build must not contain `mockServiceWorker.js`), then knip (no unused files or exports; `web/knip.json`) |
 | `ci.yml` | bicep | Bicep build of `infra/` |
 | `ci.yml` | gitleaks | Secret scan |

@@ -49,6 +49,7 @@ public sealed class ScenarioBusChainTests
     }
 
     [Fact]
+    [Trait("Category", "Slow")]
     public async Task EachScenarioCommandLinksReadingsAlertRuleTicketAndInvestigation()
     {
         await using var factory = new ApiFactory().WithWebHostBuilder(builder =>

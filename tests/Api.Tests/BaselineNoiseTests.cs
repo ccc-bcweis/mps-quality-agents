@@ -14,6 +14,7 @@ namespace Mps.Api.Tests;
 public sealed class BaselineNoiseTests
 {
     [Fact]
+    [Trait("Category", "Slow")]
     public async Task AQuarterHourOfBaselineStaysInSpecWithOnlyRareLoneWatchPoints()
     {
         await using var factory = new ApiFactory();

@@ -17,6 +17,7 @@ public sealed class ReplayDataModeTests
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     [Fact]
+    [Trait("Category", "Slow")]
     public async Task ReplaySwapsTheConsoleViewAndLiveRestoresIt()
     {
         await using var factory = new ApiFactory();
