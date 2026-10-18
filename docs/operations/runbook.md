@@ -10,7 +10,7 @@ Who uses this: the person running the hosted demo in `rg-mps-demo`. Times are th
 2. Run `gh workflow run deploy.yml --ref main` (or Actions > deploy > Run workflow).
 3. The `azure-demo` environment needs a required reviewer. Approve the pending deployment.
 4. The job federates to Azure with OIDC (no stored secrets), pushes the image to ACR, and rolls a new Container Apps revision.
-5. **Every deploy wipes the demo data.** The app starts from seed 4242 with a healthy week of history.
+5. **Every deploy wipes the demo data.** The app starts from seed 4242 with one rolling window of healthy readings per sensor (`telemetryWindow` in data/metadata/simulation.yaml).
 
 ## Smoke check after deploy (5 minutes)
 

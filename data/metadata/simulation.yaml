@@ -12,3 +12,6 @@ noise:
 realTimeFaultPace: 6          # in real time a fault develops this many times faster per 1x of speed (period and ramp shortened)
 siteComparison:
   spreadRatio: 1.5            # a plant is flagged when its spread is more than this many times the reference plant's
+telemetryWindow:
+  readingsPerSensor: 600      # fixed rolling window per sensor, in memory and in the database; older readings roll off.
+                              # Charts, the Western Electric rules and the AI read at most the newest 600 readings.

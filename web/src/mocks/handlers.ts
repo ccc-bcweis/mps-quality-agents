@@ -587,7 +587,7 @@ export const handlers = [
       investigationCount: 0,
       approvalCount: 0,
       capaCount: 0,
-      telemetryCount: kind === "hard" ? 12000 : 8,
+      telemetryCount: kind === "hard" ? 0 : 8,
       eventCount: 1,
       resetEventId: "reset-event",
       kind,
