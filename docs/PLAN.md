@@ -3,6 +3,8 @@
 **Framing:** a StatusNeo proposal to a fictional customer, **Meridian Precision Systems (MPS)**, a semiconductor process-equipment maker (deposition, etch, strip, clean). This repo is built openly by AI coding agents under human architecture, review and CI gates.
 **Target:** done in 2-3 working days after the plan is approved. **AI budget:** ~$2/day hosted for ~1 week, plus $5-10 of dev/eval calls.
 
+**Superseded lines (18 Oct 2026, main `0a3375f`).** This file is the execution plan. A line marked *superseded* is not current behavior. Current behavior is the README and the docs it links. In short: `MODEL_MODE` is offline, openai, or azure, shown as a read-only model mode chip, with no Replay/Live answer toggle. Plant-data Live/Replay is a separate control. The harness status reads Live when nothing is running. Telemetry is 600 readings per sensor, not a week and not 90 days. The replay eval is 29 cases. The hosted app is already in `rg-mps-demo`, East US 2, one replica (0.25 vCPU, 0.5 GiB). The budget is `mpsdemo-monthly` at $40 a month. Deploy is manual `workflow_dispatch` only.
+
 ## Ownership and IP
 All intellectual property in this build (design, specification, plan, code, data, documents and presentation materials) is owned by **Bryan C. Weis / Common Consulting Company**. It is a fictional demonstration built with AI assistance. All companies, equipment and data in it are fictional and synthetic. It is released under the MIT License (see LICENSE). The license grants usage rights but doesn't transfer ownership.
 
@@ -14,7 +16,7 @@ All intellectual property in this build (design, specification, plan, code, data
 | `Mps.Application` | Use cases (RaiseAlert, OpenTicket, StartInvestigation, Approve/Reject, CreateCapa, AdvanceCapa), ApprovalToken | Domain, ports | reference agents or HTTP directly |
 | `Mps.Simulator` | Fleet specs, telemetry generator, fault catalog, ground-truth writer | Domain | expose ground truth via any agent-reachable API |
 | `Mps.Connectors` | Read adapters (MES/QMS/PLM/ERP/CMMS/ticketing), retrieval, QMS CAPA write adapter | Application ports | be registered as agent tools if they write |
-| `Mps.ModelGateway` | `IChatClient` routing (Azure/OpenAI/Replay/MockReasoner), cost ledger, daily cap | MEAI | contain business rules |
+| `Mps.ModelGateway` | `IChatClient` routing (Azure/OpenAI/Replay/MockReasoner) *(superseded: `MODEL_MODE` is offline, openai, or azure; saved answers are offline, not a Replay/Live toggle)*, cost ledger, daily cap | MEAI | contain business rules |
 | `Mps.Agents` | Agent definitions, versioned prompts, tool schemas (read-only) | Application ports, Gateway | write state |
 | `Mps.Orchestration` | MAF workflow behind `IInvestigationWorkflow`; LangGraph adapter stub | Agents, Domain | bypass gates |
 | `Mps.Api` | Minimal API, SignalR, auth, OTel | Application, Orchestration | hold logic |
@@ -42,7 +44,7 @@ Layering is enforced by a NetArchTest suite in CI (F1), so violations fail the b
 |---|---|---|
 | **P0 Foundation + design start** (starts immediately, does not wait on UI design) | F1-F6 in sequence by GB-F; DS1-DS2 in parallel by GB-D | build + CI green; `contracts-v1` tag; Bicep compiles; Bryan picks a logo and approves wireframes |
 | **P1 Parallel lanes** | GB-1..GB-4 build; GB-5 writes spec-derived tests *at the same time* | each lane PR: CI green, lane unit tests, T1/T2 tests relevant to lane passing, Bob approval |
-| **P2 Integrate + harden** | I1, E1-E2, T3, SEC1, Z1, Z2 (Azure only after Bryan's go) | S1-S4 pass replay + live; eval hard gates; ZAP no highs; mutation ≥60% Domain; hosted demo behind Entra |
+| **P2 Integrate + harden** | I1, E1-E2, T3, SEC1, Z1, Z2 (Azure only after Bryan's go) | S1-S4 pass replay + live *(superseded: eight scenarios SC-1 through SC-8; the answer engine is `MODEL_MODE`, not a Replay/Live toggle)*; eval hard gates; ZAP no highs; mutation ≥60% Domain; hosted demo behind Entra |
 | **P3 Package** | K1 deck, K2 docs, R1 rehearsal | clean-machine clone-and-run; Bryan sign-off on deck; rehearsal done |
 **Contract changes** after `contracts-v1` need a design-question issue + ADR + Bob approval; affected lanes rebase.
 
@@ -78,14 +80,14 @@ Layering is enforced by a NetArchTest suite in CI (F1), so violations fail the b
 ### 6.2 Security testing
 CodeQL (C#, JS) · gitleaks · Dependabot + dependency-review action · **OWASP ZAP baseline** (GitHub Action against the compose-started API/web in CI; fails on high) · **promptfoo red-team** (indirect injection via the poisoned document, direct injection via operator text, jailbreak, excessive agency: tries to make the agent create a CAPA) · **PyRIT** campaign (stretch) · approval-bypass integration tests.
 ### 6.3 Synthetic data generation
-1. **Seeded generator** (`tools/DataGen`, a single `--seed`): fleet (8 tools, 2 bays), recipes, lots/wafers, 90 days of history, normal noise models per parameter (AR(1) + measurement noise), PM/calibration schedules, suppliers and material lots, prior NCRs/CAPAs.
+1. **Seeded generator** (`tools/DataGen`, a single `--seed`): fleet (8 tools, 2 bays) *(superseded: the running fleet is 32 tools at three plants)*, recipes, lots/wafers, 90 days of history *(superseded: live telemetry is 600 readings per sensor, not 90 days)*, normal noise models per parameter (AR(1) + measurement noise), PM/calibration schedules, suppliers and material lots, prior NCRs/CAPAs.
 2. **Fault catalog** (`data/faults/*.yaml`): each entry has a category (engineering change, calibration/alignment, supply-chain material, process drift), signal signature (parameter, shape, magnitude, scope), the **evidence records it writes** (an ECO in PLM, an overdue calibration in CMMS, a new gas lot in ERP + supplier notice, RF-hours wear), optional **confounders** (a plausible but wrong event), and **evidence perturbations** (drop records → missing; conflicting revs → contradictory).
 3. **Ground truth** goes to `data/groundtruth/` (not mounted into the API container; access-checked by an architecture test). Eval and scoring only.
 4. **Documents:** templated SOPs, FMEA, service bulletins, troubleshooting guides, a supplier CoA, a decoy (conflicting), and an injection doc; generated from Markdown templates with fleet parameters filled in, then human-reviewed (Bob) for realism. Committed to the repo with the embeddings cache.
 5. **ROI financial dataset** (§6.5).
 6. **Eval derivation:** each eval case = (seed, fault catalog entry, perturbation) → generated incident + hidden expected behavior/category/citations. Growing the eval set = new combinations, not hand-written answers; SME review samples 20% for realism.
 ### 6.4 Eval set growth
-24 at launch → 60 (combinations × confounders) before pilot → 200+ from shadow-mode traces labeled through approve/reject → continuous regression from every human rejection. Judge-calibration check against human labels (≥85% agreement).
+24 at launch *(superseded: 29 replay cases on main, including SC8-01, all passing in CI)* → 60 (combinations × confounders) before pilot → 200+ from shadow-mode traces labeled through approve/reject → continuous regression from every human rejection. Judge-calibration check against human labels (≥85% agreement).
 ### 6.5 ROI / financial model (simulated, assumptions stated)
 Inputs (synthetic, per year, for a 3-plant MPS): revenue $1.2B; COPQ 8% of revenue split into scrap/rework, warranty/field, downtime and investigation labor; 1,400 quality incidents/yr; MTTR-Q baseline 9.5 days; time to root-cause hypothesis 4 days; repeat-defect rate 18%; CAPA cycle time 62 days; engineer loaded cost $95/h, ~22 h per investigation; tool downtime $12k/h for key tools.
 Projection levers (conservative / expected): investigation hours −30/−45%; time to hypothesis −50/−70%; repeat defects −15/−25%; CAPA cycle −20/−35%; downtime hours avoided via earlier SPC detection. Output: annual savings range, payback period, cost to run (AI cost per investigation × volume + platform), and sensitivity table. Lives in `data/roi/` as CSV + a generator, rendered on the demo harness return-on-investment panel and on the ROI slides in section 7. All values labeled "illustrative, synthetic".
@@ -126,7 +128,7 @@ Leave-behind, not this slide: `docs/diagrams/print/fab-floor-archD.pdf`, the Nor
 One plant per column. Role, tool families, and the invented place name. Call out Ironwood etch running hotter than Northwater, and SC-5 as the lot that shows up in both front-end fabs.
 
 - Screenshot: Sites list, then the etch compare. Console. The harness bar may stay in frame.
-- Until the Sites tab is on the build, do not fake a console crop. Use the site map from slide 1 and say the screen is the Sites API (`GET /api/sites`, one plant, and compare).
+- Until the Sites tab is on the build, do not fake a console crop. *(superseded: Sites is a console tab.)* Use the site map from slide 1 and say the screen is the Sites API (`GET /api/sites`, one plant, and compare).
 - Surface: console.
 
 ### Slide 3 — The problem
@@ -150,7 +152,7 @@ Plain-language operations (ADR-003) are a crop on this slide, not a separate sto
 
 ### Slide 5 — Live demo: scenario run
 
-The presenter picks a named scenario on the harness bar. Reset demo and the live / replay / mock line are visible. The console then opens on Alerts. The plant is on the ticket.
+The presenter picks a named scenario on the harness bar. Reset demo and the live / replay / mock line are visible. *(superseded: the answer engine is a read-only model mode chip. Plant-data Live/Replay remains. The status line reads Live when nothing is running.)* The console then opens on Alerts. The plant is on the ticket.
 
 - Screenshot: harness bar with the scenario picker, then the Alerts screen it opens.
 - Surface: harness, then console.
@@ -166,7 +168,7 @@ Four cause classes, one rank, and the signal that would rule the winner out. The
 
 An escalated investigation cannot be approved straight into a corrective and preventive action (ADR-005). Approve stays disabled. The two actions are request more evidence, or override with a written reason.
 
-- Screenshot: Approval, escalation gate panel, note field, both buttons.
+- Screenshot: Approval, escalation gate panel, note field, both buttons. *(superseded: the Decision section is on the Investigation page. There is no separate Approval tab. A refused model answer is "What the AI proposed (not accepted)" under the evidence gate.)*
 - Surface: console.
 
 ### Slide 8 — Live demo: corrective and preventive action
@@ -194,7 +196,7 @@ Logical sheet and physical sheet. Say the three plants are simulated, the Sites 
 
 ### Slide 11 — Security
 
-Invite-only sign-in. Agents have no write tools. The escalation gate is the control from slide 7. The spend cap trips the demo to replay. No secrets in the repo.
+Invite-only sign-in. Agents have no write tools. The escalation gate is the control from slide 7. The spend cap trips the demo to replay. *(superseded: over the cap, or after a 20-second timeout, the gateway serves saved answers and the model mode chip says so. There is no Replay/Live answer toggle.)* No secrets in the repo.
 
 - Screenshot: metrics panel, today's spend against the cap.
 - Surface: harness.
@@ -245,7 +247,7 @@ Labels: `lane:*`, `phase:*`, `type:test`, `design-question`, `stretch` (plus `ty
 | D4 | P1 | data-sim | GB-1 | Seed generator + mock enterprise APIs (MES/QMS/PLM/ERP/CMMS/ticketing) with fault injection | F2 | endpoints match OpenAPI; 500/timeout/409 injectable | 2.5 |
 | D5 | P1 | data-sim | GB-1 | Document corpus (12 docs incl. decoy + injection) + ingest + hybrid retrieval | F2 | retrieval tests pass; corpus generated from templates | 2 |
 | D6 | P1 | data-sim | GB-1 | ROI financial dataset: baseline COPQ, scrap, downtime, MTTR, CAPA cycle time + projected savings model | F2 | assumptions table in docs; numbers reproducible from seed; feeds deck + ROI screen | 1.5 |
-| A1 | P1 | agents | GB-2 | Model gateway: Azure/OpenAI/Replay/MockReasoner, cost ledger, daily spend cap | F2 | cap test; replay determinism; cost per call recorded | 2 |
+| A1 | P1 | agents | GB-2 | Model gateway: Azure/OpenAI/Replay/MockReasoner *(superseded: `MODEL_MODE` offline, openai, or azure)*, cost ledger, daily spend cap | F2 | cap test; replay determinism; cost per call recorded | 2 |
 | A2 | P1 | agents | GB-2 | Impact features + evidence gate + grounding validator | F2 | unit tests per category and per failure case | 2 |
 | A3 | P1 | agents | GB-2 | Investigation + Resolution agents, versioned prompts, tool bindings | A1, D4, D5 | scripted tool-call tests; schema-valid output | 2.5 |
 | A4 | P1 | agents | GB-2 | MAF workflow + checkpoint + human-in-the-loop resume; LangGraph adapter stub + mapping doc | A2, A3 | S1/S2 pass end to end in replay | 2 |
@@ -257,16 +259,16 @@ Labels: `lane:*`, `phase:*`, `type:test`, `design-question`, `stretch` (plus `ty
 | U1 | P1 | ui | GB-4 | App shell + brand theme + Fleet Overview + Tool Detail with SPC charts | F2, DS3 | matches DS3; Vitest passes | 3 |
 | U2 | P1 | ui | GB-4 | Alerts, Tickets, Investigation (evidence, hypotheses, trace) + lifecycle bar | F2, DS2 | works on MSW mocks then live API | 3 |
 | U3 | P1 | ui | GB-4 | Approval + CAPA screens (explicit confirm, reject path) | F2, DS2 | approval dialog test | 1.5 |
-| U4 | P1 | ui | GB-4 | Fault Injector + mode banners (LIVE/REPLAY) + spend meter + metrics + ROI screen | F2, D6 | inject -> alert visible within 10 s | 2 |
+| U4 | P1 | ui | GB-4 | Fault Injector + mode banners (LIVE/REPLAY) *(superseded: model mode chip; plant-data Live/Replay remains; status reads Live when idle)* + spend meter + metrics + ROI screen | F2, D6 | inject -> alert visible within 10 s | 2 |
 | T1 | P1 | qa | GB-5 | Contract tests from OpenAPI + spec (written from SPEC, not code) | F2 | runs in CI against each service; failures block merge | 2 |
 | T2 | P1 | qa | GB-5 | Spec-derived integration tests: approval enforcement, bad evidence, tool failures, injection | F2 | tests authored before lane code lands; red until lanes satisfy them | 2.5 |
 | T3 | P2 | qa | GB-5 | Mutation testing (Stryker.NET) on Domain + Application + coverage report published | I1 | mutation score >= 60% on Domain; HTML report as CI artifact | 1 |
 | I1 | P2 | integration | Bob | Integration: merge lanes; S1-S4 green in replay and live | A4, P4, U4, D3 | scripted smoke passes; Bob sign-off | 2 |
-| E1 | P2 | eval | GB-5 | Eval: 24 cases + promptfoo config + MEAI.Evaluation runner + report + CI gate | I1 | report table + confusion matrix; hard gates enforced | 2.5 |
+| E1 | P2 | eval | GB-5 | Eval: 24 cases *(superseded: 29 cases in `eval/cases`, run by `eval/Eval.Runner` on every CI run; promptfoo is not the CI runner)* + promptfoo config + MEAI.Evaluation runner + report + CI gate | I1 | report table + confusion matrix; hard gates enforced | 2.5 |
 | E2 | P2 | eval | GB-2 | Record replay set from live runs | I1 | local replay reproduces S1-S4 | 1 |
 | SEC1 | P2 | security | GB-5 | Security: OWASP ZAP baseline in CI + promptfoo red-team (injection/jailbreak) suite | I1 | ZAP no high findings; red-team pass rate reported | 1.5 |
 | Z1 | P2 | infra | GB-F | Deploy workflow: OIDC to Azure, container build/push, Bicep deploy (gated, manual trigger) | F6, I1 | deploy.yml ready; runs only after Bryan approves the Azure step | 1.5 |
-| Z2 | P2 | infra | Bob | Azure stand-up: RG, Entra invite-only app, spend cap + budget alert | Z1 | uninvited user blocked; cap trips to replay; Bryan approved | 1.5 |
+| Z2 | P2 | infra | Bob | Azure stand-up: RG, Entra invite-only app, spend cap + budget alert | Z1 | uninvited user blocked; cap trips to replay *(superseded: saved answers, and the chip says so)*; Bryan approved | 1.5 |
 | K1 | P3 | deck | Bob | PowerPoint deck: outline now, finish with screenshots after demo | I1 | Bryan sign-off | 0 |
 | K2 | P3 | docs | GB-F | README clone-and-run, mocked.md, langgraph-compat.md, ADRs, diagrams, AI-built statement | I1 | clean-machine run from README alone | 1.5 |
 | R1 | P3 | rehearsal | Bryan | Rehearsal + backup video | K1, Z2 | 60-min run-through done | 0 |
@@ -282,4 +284,7 @@ Labels: `lane:*`, `phase:*`, `type:test`, `design-question`, `stretch` (plus `ty
 Day 1: P0 (foundation + design), contracts frozen by midday; P1 lanes start. Day 2: P1 lanes finish; integration; eval; security; Azure stand-up after Bryan's go. Day 3: deck, docs, hardening, rehearsal. Cut order: stretch → supplier channel → AI Search (in-proc index) → CAPA stages beyond Open → S4 presets only.
 
 ## 10. Azure plan (not created yet)
+
+*(superseded: the demo is deployed. Resource group `rg-mps-demo`, East US 2, GitHub environment `azure-demo`, manual `workflow_dispatch`, fork-safe OIDC. One Container Apps replica, 0.25 vCPU and 0.5 GiB. Model `gpt-5.4-mini`. Gateway cap $2/day. Budget `mpsdemo-monthly` is $40 a month, with alerts at 80% of actual spend and 100% of the forecast, not a $10/week grain. October spend was about $3.36 as of 17 Oct 2026, 21:23 Eastern Time. Admins come from `ADMIN_EMAILS`. The paragraph below is the original plan.)*
+
 Resource group `rg-mps-demo` in Bryan's subscription (region with Azure OpenAI quota, e.g. East US 2), its own Entra app registration (invite-only, assignment required), managed identity for the apps, OIDC federated credential for GitHub Actions on `ccc-bcweis/mps-quality-agents` (main + environment `demo`, with required reviewer). Spend controls: gateway hard cap $2/day, AOAI TPM quota, budget alert at $10/week. Teardown: delete the RG after the review. **Open:** Azure OpenAI availability couldn't be checked (no Azure CLI session on the box); Bryan or Bob should run `az cognitiveservices account list` / check model quota before Z2.

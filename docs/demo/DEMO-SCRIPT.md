@@ -10,7 +10,7 @@ How to read this script:
 - **Say**: your narrative.
 - **They see**: what should appear on screen. If it doesn't appear, go to "If something breaks" at the end.
 
-Control names were checked against the code on `main` on 2026-10-17.
+Control names were checked against the code on `main` `0a3375f` on 2026-10-18.
 
 ---
 
@@ -20,15 +20,15 @@ Control names were checked against the code on `main` on 2026-10-17.
 |---|---|---|
 | 1 | Open the hosted app → **Log in** on the landing page | Navy and gold presenter bar on top, charcoal console below |
 | 2 | **Expand harness** (top right of the bar) | Controls row opens |
-| 3 | **Hard reset** → **Confirm hard reset** | Wait until the progress note finishes. Production line: every tool **Nominal**. Alerts, Tickets, Investigation and CAPA lists are empty. Speed is back at 1x. Tool charts show 7 days of healthy history |
-| 4 | **Speed** = **1x**, **Sample every** = **5 s** | 1x is real time: the plant clock matches the wall clock |
-| 5 | Plant data: **Live** (not **Replay**) | Live follows the running plant. Replay shows a recorded scenario |
-| 6 | AI engine chip (read-only): **Azure OpenAI**, **OpenAI** or **Offline (saved answers)** | Set at start by `MODEL_MODE`, not in the console. A live model costs a few cents a run; the gateway stops at $2 a day, or after repeated failures, and falls back to saved answers. The chip then says so |
+| 3 | **Hard reset** → **Confirm hard reset** | Wait until the progress note finishes (a few seconds). Production line: every tool **Nominal**. Alerts, Tickets, Investigation and CAPA lists are empty. Speed is back at 1x and **Sample every** is **15 s**. Each chart holds 600 healthy readings, not a week. The x axis is that wide already |
+| 4 | Harness status line | It reads **Live**, then the model chip, for example `Live · Azure OpenAI`. It does not name a scenario. The picker and the speed follow the server in every tab |
+| 5 | Plant data: **Live** (not **Replay**) | This is plant data only. Live follows the running plant. Replay shows a recorded scenario and a banner that the numbers are a recording. It does not change how the AI answers |
+| 6 | Model mode chip (read-only): **Azure OpenAI**, **OpenAI** or **Offline (saved answers)** | Set at start by `MODEL_MODE`. There is no Replay/Live toggle for the answer engine. A live call times out at 20 seconds with no retry, then the gateway fails over to saved answers and the chip says so. The gateway also stops at $2 a day |
 | 7 | **Metrics** (presenter bar) | Spend today well under the $2 cap. Cost per success reads **n/a** before any run |
 | 8 | Console header **Plant** = **All sites** | 32 tools across three plants |
 | 9 | **Join links** → **Create and copy link** (if guests need access) → **Close** | Paste the link in the meeting chat. **Copy** recopies an existing link |
 | 10 | Put `thermocouple-logger-e01.png` (from `data/samples/`) on the desktop | For the printout moment |
-| 11 | Scenario picker: leave on **SC-4 · Slow chamber seasoning drift** | First walkthrough |
+| 11 | Scenario picker: leave on **SC-4 · Slow chamber seasoning drift** | First walkthrough. The status line stays **Live** until **Run scenario**. The picker choice is not a running scenario |
 
 Do not open **What the AI should find** on the scenario card while sharing. It holds the answer.
 
@@ -62,8 +62,8 @@ Do not open **What the AI should find** on the scenario card while sharing. It h
    - **They see:** "Production line overview" and the **Open alerts (0)** button. Tiles are grouped by bay, and each tile shows a status of **Nominal**, **Watch** or **Alarm** (shown in capitals on the tile) with left-aligned sensor readings.
    - **Say:** "One status per tool: the worst alert still active on that tool. The tile, the Sites map, the tool page and the alerts list all read that one value, so they can never disagree."
 4. **Click:** any tile, for example **E-01**.
-   - **They see:** the tool page with the chamber schematic and charts covering the last 7 days.
-   - **Say:** "Two kinds of signal live here. Process readings, like gas flow or temperature, have control limits and SPC rules. Counters, like RF-hours or wafers run, only go up. We chart them but never alarm on them, because a rising count is normal."
+   - **They see:** the tool page with the chamber schematic and charts. The header names the recipe and the step of the newest reading. The x axis is a fixed 600 readings wide: new points enter on the right and old ones scroll off the left. Hover a point and it names the step and says "Limits for this recipe step". The band follows the recipe step, including an idle window for a parameter that step does not actively control. **Linked records** has one entry per investigation. A saved investigation replaces its Started placeholder, so the same round is not listed twice.
+   - **Say:** "Two kinds of signal live here. Process readings, like gas flow or temperature, have control limits and SPC rules. The limits come from the recipe step that was running, not from the average of the points. Counters, like RF-hours or wafers run, only go up. We chart them but never alarm on them, because a rising count is normal."
 
 ---
 
@@ -74,7 +74,7 @@ Do not open **What the AI should find** on the scenario card while sharing. It h
 1. **Click:** scenario picker → **SC-4 · Slow chamber seasoning drift** → **Run scenario**.
    - **Say:** "I've started the event. From here, nothing I do touches the outcome. The plant streams, and the rules decide."
 2. **Click:** **Speed** → **10x**, then **Tool** → E-01 (or the E-01 tile). The plant clock stays real time; 10x only makes the slow drift develop faster.
-   - **They see:** within about 15 seconds the E-01 tile turns **Watch** (a run of readings below the centre line). After about a minute more rules join and the tile goes to **Alarm**. By about 2 minutes the etch rate on chamber A crosses the lower control limit. At 1x the first alert takes about 4 minutes and the ramp about 20.
+   - **They see:** the etch-rate ramp takes about 2 minutes at 10x and about 20 minutes at 1x (`data/scenarios/catalog.yaml`). An alert can fire before the ramp finishes. The tile moves from **Nominal** to **Watch**, then **Alarm**, as the rules see the run. The chart band keeps the recipe-step limits. It does not re-center on the falling points. The status line reads `Live · Running SC-4`, then the model chip.
    - **Click:** **Speed** → **1x** once the alert is up.
 3. **Click:** **Alerts**.
    - **They see:** one row per active alert: status, tool, time, the rule in plain words, the ticket button (for example **TKT-1001**) and **Open**. No evidence on this list.
@@ -135,6 +135,12 @@ Continue from SC-3 (or SC-1 · Edge ring revision C on E-02 if you prefer an eng
    - **Say:** "The engineer's knowledge goes in as evidence with a name and a time on it, never as an instruction. Every round is kept. A ticket gets at most five rounds."
 2. **Override with justification:** a written reason of at least 20 characters, kept in the audit log.
 
+When a guard refuses the model's answer, the evidence gate says **escalate** and, under it, **What the AI proposed (not accepted)**. That block is the rejected answer. It is not the recommendation. A ruled-out record may be mentioned to dismiss it. Citing that record as support, or naming it as the cause of its own class, is what the guard refuses. SC-8 is the recipe-edit case: an operator changed the RF bias setpoint on E-03 with no engineering change order, and the class is process drift, not the supplier notice. The work order id is:
+
+```text
+WO-RCP-E03-RF
+```
+
 **Reject** on any round closes the ticket with no action. The audit log shows each added note ("User-provided evidence added by … to round 1; the agents ran again as round 2").
 
 ---
@@ -167,7 +173,7 @@ Also under **Tickets → Operator report**: pick a **Tool**. The **Parameter** l
 1. **Click:** **Return on investment** (presenter bar).
    - **Say:** "Illustrative figures, with the assumptions stated."
 2. **Click:** **Metrics**.
-   - **They see:** completion rate and grounding score, category accuracy (from 27 graded test cases that run on every build), cost per successful investigation (n/a until one succeeds), spend today against the $2 cap.
+   - **They see:** completion rate and grounding score, category accuracy from 29 graded replay cases that run on every build (all passed on the 2026-10-18 CI run: category accuracy, safe escalation, injection resistance, cause in the top 2, and citation precision all 100%), cost per successful investigation (n/a until one succeeds), spend today against the $2 cap.
 3. **Click:** **Rules & Process**.
    - **They see:** the thresholds and settings, each business rule's conditions and actions, and the **Process map**: readings → rules check → alert → ticket → investigation → decision → CAPA → containment clears the alarm → close, with its numbers filled from the settings.
    - **Say:** "Every number the system acts on is on this page, in plain words. Nothing is buried in code."
@@ -186,8 +192,9 @@ Also under **Tickets → Operator report**: pick a **Tool**. The **Parameter** l
 | Why does a counter never alarm? | A counter, like RF-hours, only rises. That's normal, so it's charted without control limits. |
 | What does a printout do? | It becomes one ordinary reading in the same series. It alarms only if it breaks a limit. |
 | Two tools alarm from one cause. Is that one alert? | Two: one per tool, each with its own ticket. The investigation links them through the shared cause. |
-| What does it cost? | Cents per investigation, with a hard $2-a-day cap in this environment. Over the cap it switches to saved answers, and the plant data is unchanged. |
-| Which model? | Azure OpenAI in Meridian's own subscription, through a gateway with cost limits, managed identity and no keys in code. |
+| What does it cost? | Cents per investigation, with a hard $2-a-day cap in this environment. Over the cap, or after a 20-second timeout, it uses saved answers and the chip says so. Plant data is unchanged. The Azure budget for the demo resource group is $40 a month (`mpsdemo-monthly`). October spend was about $3.36 as of 17 Oct 2026, 21:23 Eastern Time. |
+| Which model? | Azure OpenAI `gpt-5.4-mini` in the demo subscription, through a gateway with cost limits and managed identity. The chip shows Azure OpenAI. There is no Replay/Live toggle for the model. |
+| How fast is a scenario? | On the checked hosted run (deploy #14, 10x, sample every 5 seconds, 03:23–03:24 Eastern Time): SC-1 recommended ECO-4471 47 seconds after reset. SC-8 recommended process drift (confidence 0.96, no escalation) in about 31 seconds. The work order id is in the escalation section above. SC-1 recommended again on deploy #16 at 04:24 Eastern Time. |
 | What changes for production? | Each component swaps for its production service: Service Bus for the queue, Azure SQL for storage, Azure AI Search for retrieval, Front Door with WAF and private endpoints. The agents and workflow stay the same. |
 | How do we connect our systems? | Read-only connectors to MES, QMS, PLM, ERP and maintenance. One fab first, in 90 days, with eval and security gates before production. |
 | Is the data real? | No. Fictional plants and records, generated from a fixed seed, so every run is reproducible. |
@@ -198,12 +205,12 @@ Also under **Tickets → Operator report**: pick a **Tool**. The **Parameter** l
 
 | Symptom | Recovery |
 |---|---|
-| Nothing moves after **Run scenario** | Check **Speed** is 1x or higher and Plant data is **Live**. Wait 30 seconds. Then **Stop scenario**, **Soft reset**, and run again |
-| Need it faster | **Speed** → **2x**, **5x** or **10x**. The plant clock stays real time; only the fault develops faster. Set it back to **1x** before the next step |
-| Wrong scenario running | **Stop scenario**, pick the right one, **Run scenario** |
-| Leftover alerts or tickets from a rehearsal | **Hard reset** → **Confirm hard reset**; wait for it to finish (about 30 seconds) |
-| Investigation slow, or the live model errors | The gateway falls back to saved answers by itself after 2 failures (20 s timeout each) and the chip says so; re-run the scenario. Check the speed is 10x (at 1x the agents wait about 5 minutes for readings). Plant data is unchanged |
-| Spend meter near $2 | Same: switch to Replay |
+| Nothing moves after **Run scenario** | Check **Speed** is 1x or higher and Plant data is **Live**. The status line should say `Running` and the scenario id. Wait for the stream. Then **Stop scenario**, **Soft reset**, and run again |
+| Need it faster | **Speed** → **2x**, **5x** or **10x**, and optionally **Sample every** → **5 s**. The plant clock stays real time; the fault develops faster and the kept gap shortens. The checked smoke used 10x and 5 seconds. Set speed back to **1x** before the next step |
+| Wrong scenario running | **Stop scenario**, pick the right one, **Run scenario**. The status line follows the server, including in another tab |
+| Leftover alerts or tickets from a rehearsal | **Hard reset** → **Confirm hard reset**; it finishes in a few seconds and leaves 600 healthy readings per sensor |
+| Investigation slow, or the live model errors | The gateway fails over to saved answers after a 20-second timeout with no SDK retry, and after 2 failures it waits 60 seconds before trying the model again. The chip says so. Re-run the scenario. At 1x and a 15-second stride the agents wait about 5 minutes for 20 readings. Plant data is unchanged |
+| Spend meter near $2 | The gateway stops live calls and uses saved answers. The chip says the cap was reached. There is no answer-engine toggle to flip |
 | A tab looks empty | Header **Plant** → **All sites**; that list may have no records for the selected plant |
 | Printout read a field wrong | Edit the field before **Confirm reading** |
 | A guest can't get in | **Join links** → **Create and copy link** → send the new link |

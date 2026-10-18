@@ -10,20 +10,32 @@ Copyright (c) 2026 Bryan C. Weis and Common Consulting Company. MIT.
 
 ## Clock
 
-The plant runs in real time (`Mps:Simulation:RealTime` is true). The plant clock is the wall clock in UTC, and every reading is stamped with the time it was made. The seed and scenario records were written against 2026-09-01. On start, every date in them moves forward by whole days so that 2026-09-01 lands on today's UTC date. The gaps between records stay the same.
+The plant runs in real time (`Mps:Simulation:RealTime` is true in `src/Mps.Api/appsettings.json`). The plant clock is the wall clock in UTC, and every reading is stamped with the time it was made. A `clock` message goes out every `ClockIntervalSeconds` (5). It carries the simulated time, the speed, the stride, and `runningScenarioId`. The harness status, the scenario picker, and the speed controls follow that message. When `runningScenarioId` is empty the status line reads **Live**.
 
-**Speed** (1x, 2x, 5x, 10x) does not change the clock. It makes an injected fault develop faster and shortens the gap between kept readings (the sample gap divided by the speed, at least one second). At 1x a fault develops 6 times faster than it was written, so a two-hour ramp takes 20 minutes. At 10x it develops 60 times faster, so the same ramp takes 2 minutes.
+The seed and scenario records were written against 2026-09-01. On start, every date in them moves forward by whole days so that 2026-09-01 lands on today's UTC date. The gaps between records stay the same.
+
+**Speed** does not change the clock. The allowed speeds are 1, 2, 5, and 10. The allowed sample strides are 5, 15, 30, and 60 seconds (`PlantSimulation.Speeds` and `PlantSimulation.Strides`). The default stride is 15 seconds (`Mps:Simulation:SampleStrideSeconds`). The kept gap is the stride divided by the speed, and at least one second. Fault pace comes from `data/metadata/simulation.yaml`: `realTimeFaultPace` is 6, so at 1x a fault develops 6 times faster than it was written, and at 10x it develops 60 times faster. A two-hour written ramp is about 20 minutes at 1x and about 2 minutes at 10x. The same file sets the telemetry window at 600 readings per sensor and the recipe schedule (`stepSeconds` 120, `waferSeconds` 300, `wafersPerLot` 25). It does not list the speeds or the scenarios.
+
+The checked hosted smoke used 10x and a 5-second stride (deploy #14, 03:23–03:24 Eastern Time): SC-1 reached `recommendationReady` for ECO-4471 47 seconds after reset, and SC-8 reached `recommendationReady` for process drift (confidence 0.96, no escalation) in about 31 seconds. The SC-8 work order id is:
+
+```text
+WO-RCP-E03-RF
+```
+
+SC-1 was `recommendationReady` again on deploy #16 at 04:24 Eastern Time.
 
 ## Resets
 
 `POST /api/admin/reset` takes `kind`. The harness polls `GET /api/admin/reset/progress` while either reset runs.
 
-- Omitted or `hard` wipes transactional data and keeps metadata. It rebuilds the fleet, clears the telemetry window, restarts the plant clock at now with one window of healthy readings (`telemetryWindow` in data/metadata/simulation.yaml), and sets speed to 1x with a 15-second sample gap. Ticket numbers start again at TKT-1001. The response reports `simulatedOrigin`, the start of today in UTC.
+- Omitted or `hard` wipes transactional data and keeps metadata. It rebuilds the fleet, clears the telemetry window, and primes one window of healthy readings in memory (600 per sensor, `telemetryWindow.readingsPerSensor` in `data/metadata/simulation.yaml`). Those primed points do not go out on the bus. It restarts the plant clock at now and sets speed to 1x with a 15-second sample gap. It finishes in seconds. It does not seed a week of history. Ticket numbers start again at TKT-1001. The response reports `simulatedOrigin`, the start of today in UTC.
 - `soft` deletes nothing. It closes open tickets, investigations, and pending approvals with the status Closed by demo reset, clears live faults, and sends one healthy reading for every sensor. History stays browsable.
 
 The same seed produces the same scenario telemetry. Live model wording can still vary slightly. Every live call is pinned to temperature 0. The OpenAI seed parameter is set when the provider supports it (`Mps:Model:Seed`, falling back to `Mps:Demo:Seed`). Pinning reduces variation. It does not make every provider return the same sentences.
 
 ## Scripted scenarios
+
+The eight scenarios and the sentences below are `data/scenarios/catalog.yaml` (`whatWeSimulate`). The class for SC-8 is process drift: a recipe edit with no engineering change order.
 
 | Scenario | Class | What the presenter runs | Time to develop at 1x / 10x |
 |---|---|---|---|
@@ -42,7 +54,7 @@ A scenario starts at the moment it is run. Its records keep their spacing from t
 
 ## Plant-data replay
 
-Live is the running plant. Replay swaps the production line, the tool charts, and the alerts to a recorded scenario. Recordings are bus messages in `data/replay/<scenario>/messages.jsonl`, written by `tools/ReplayRecorder` or `POST /api/admin/replay/{scenarioId}`. Saved model answers stay in `data/replay/scripted/` and are not those files. `POST /api/demo/data-mode` with `live` puts the console back on the running plant and leaves the recording in place. The answer engine (saved answers or a live model) is separate: it is set at start by `MODEL_MODE` and shown in the console's status chip.
+Live is the running plant. Replay swaps the production line, the tool charts, and the alerts to a recorded scenario and shows a banner that the numbers are a recording. Recordings are bus messages in `data/replay/<scenario>/messages.jsonl`, written by `tools/ReplayRecorder` or `POST /api/admin/replay/{scenarioId}`. Saved model answers stay in `data/replay/scripted/` and are not those files. `POST /api/demo/data-mode` with `live` puts the console back on the running plant and leaves the recording in place. The answer engine is not this switch. It is set at start by `MODEL_MODE` and shown in the read-only model mode chip. There is no Replay/Live toggle for the model.
 
 ## Model replay
 

@@ -55,7 +55,9 @@ The assisted path drawn on the same lanes as the current process is the G6 sheet
 
 Four cause classes are checked on every incident: an engineering change, equipment out of spec, supply-chain material, and process drift. A resolution agent ranks one cause and names the signal that rules a class out. A grounding check rejects a claim that cites nothing in the pack. The engineer approves or rejects with a signed token. Only then does the action service write the corrective and preventive action. The agent draft is not a write.
 
-If the evidence is missing or contradictory, the path stops. The engineer owns the named gaps. No root cause is asserted, and the resolution agent is not called. That branch is drawn on the G4 sheet. The side-by-side sheet shows the path where the evidence is sufficient.
+If the evidence is missing or contradictory, the evidence gate stops the path before a cause is ranked. The engineer owns the named gaps. No root cause is asserted, and the resolution agent is not called. That branch is drawn on the G4 sheet. The side-by-side sheet shows the path where the evidence is sufficient.
+
+A later check can still refuse an answer the model did give, after the gate has passed. The cause guard allows a ruled-out record to be mentioned when the text is dismissing it. It escalates when that record is cited as support, or named as the cause of its own class. The refused answer is kept and shown under the evidence gate as "What the AI proposed (not accepted)". It is not the recommendation.
 
 On that sufficient path we count **2 human hand-offs**: the engineer opens the ticket, and the engineer approves. The other movement is rules and read-only calls.
 

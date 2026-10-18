@@ -2,6 +2,8 @@
 
 The console reads live data from the SignalR hub at `/hubs/fleet` instead of polling. It never makes up readings: a chart, tile or tool diagram with no data says **Waiting for readings…**.
 
+Each series keeps `windowPoints` readings (600, from `data/metadata/simulation.yaml`). The hub pushes only the new points. The chart's x axis stays that wide: new readings enter on the right and old ones scroll off the left. The harness status, the scenario picker, and the speed follow `runningScenarioId`, speed, and stride on the `clock` message. When nothing is running the status line reads **Live**.
+
 ## Subscriptions
 
 Every connection joins the `fleet` group. A page asks for more:
