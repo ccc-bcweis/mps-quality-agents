@@ -17,7 +17,7 @@ public sealed class AccessGate
         _next = next;
     }
 
-    public async Task InvokeAsync(HttpContext http, IConfiguration configuration, JoinLinkStore store)
+    public async Task InvokeAsync(HttpContext http, IConfiguration configuration, IJoinLinkStore store)
     {
         ArgumentNullException.ThrowIfNull(http);
         var path = http.Request.Path;
@@ -68,7 +68,7 @@ public sealed class AccessGate
         return caller.IsAdmin || AccessOptions.From(configuration).IsAdminEmail(CallerIdentity.Read(header).Email);
     }
 
-    public static async Task<bool> IsAllowedAsync(HttpContext http, IConfiguration configuration, JoinLinkStore store, CancellationToken cancellationToken)
+    public static async Task<bool> IsAllowedAsync(HttpContext http, IConfiguration configuration, IJoinLinkStore store, CancellationToken cancellationToken)
     {
         var header = http.Request.Headers[EasyAuthPrincipal.HeaderName].ToString();
         if (string.IsNullOrWhiteSpace(header))

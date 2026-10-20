@@ -11,9 +11,23 @@ namespace Mps.Api.Tests;
 
 public sealed class ApiFactory : WebApplicationFactory<Program>
 {
-    private readonly string _databasePath = Path.Combine(Path.GetTempPath(), "mps-api-" + Guid.NewGuid().ToString("N") + ".db");
+    private readonly string _databasePath;
+    private readonly string _replayDirectory;
+    private readonly bool _deleteDatabase;
 
-    private readonly string _replayDirectory = Path.Combine(Path.GetTempPath(), "mps-replay-" + Guid.NewGuid().ToString("N"));
+    public ApiFactory()
+        : this(null, true)
+    {
+    }
+
+    internal ApiFactory(string? databasePath, bool deleteDatabase = true)
+    {
+        _databasePath = string.IsNullOrWhiteSpace(databasePath)
+            ? Path.Combine(Path.GetTempPath(), "mps-api-" + Guid.NewGuid().ToString("N") + ".db")
+            : databasePath;
+        _deleteDatabase = deleteDatabase;
+        _replayDirectory = Path.Combine(Path.GetTempPath(), "mps-replay-" + Guid.NewGuid().ToString("N"));
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -46,9 +60,12 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        TryDelete(_databasePath);
-        TryDelete(_databasePath + "-wal");
-        TryDelete(_databasePath + "-shm");
+        if (_deleteDatabase)
+        {
+            TryDelete(_databasePath);
+            TryDelete(_databasePath + "-wal");
+            TryDelete(_databasePath + "-shm");
+        }
         try
         {
             if (Directory.Exists(_replayDirectory))

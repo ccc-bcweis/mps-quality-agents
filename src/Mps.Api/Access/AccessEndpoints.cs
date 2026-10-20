@@ -1,66 +1,153 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
+using System.Text.Json;
+
 using Mps.Api.Auth;
 
 namespace Mps.Api.Access;
 
 public sealed record CreateJoinLinkBody(double? Hours, int? MaxUses);
 
-public sealed record JoinLinkResponse(Guid Id, string Url, DateTimeOffset CreatedAt, DateTimeOffset ExpiresAt, int MaxUses, int Uses, bool Revoked, string Status);
+public sealed record RestoreJoinLinkBody(string? Token, double? Hours, int? MaxUses);
 
-public sealed record JoinMemberResponse(string? Email, string? DisplayName, DateTimeOffset JoinedAt);
+public sealed record RevokeMemberBody(string? MemberKey);
+
+public sealed record JoinLinkResponse(Guid Id, string Url, DateTimeOffset CreatedAt, DateTimeOffset ExpiresAt, int MaxUses, int Uses, bool Revoked, string Status, string Label);
+
+public sealed record JoinMemberResponse(
+    string? Email,
+    string? DisplayName,
+    DateTimeOffset JoinedAt,
+    string LinkLabel,
+    string Status,
+    string MemberKey,
+    string? TenantId,
+    string? ObjectId,
+    DateTimeOffset? RevokedAt);
 
 public sealed record JoinLinksResponse(IReadOnlyList<JoinLinkResponse> Links, IReadOnlyList<JoinMemberResponse> Members);
 
 public sealed record RedeemResponse(string Result, string Message);
 
 /// <summary>
-/// Join links: the admin makes, lists and revokes them; anyone signed in with a Microsoft account redeems one to join the demo.
+/// Join links: the admin makes, lists, revokes, restores and reactivates them. A signed-in caller redeems one to join.
 /// </summary>
 public static class AccessEndpoints
 {
     public static void MapAccess(this WebApplication app)
     {
         ArgumentNullException.ThrowIfNull(app);
-        app.MapGet("/api/admin/join-links", async (HttpContext http, IConfiguration configuration, JoinLinkStore store, CancellationToken cancellationToken) =>
+        app.MapGet("/api/admin/join-links", async (HttpContext http, IConfiguration configuration, IJoinLinkStore store, TimeProvider time, CancellationToken cancellationToken) =>
         {
             if (!AccessGate.IsAdmin(http, configuration))
             {
-                return Results.Problem(title: "Only the admin can manage join links.", statusCode: StatusCodes.Status403Forbidden);
+                return Forbidden();
             }
 
-            return Results.Ok(await ListAsync(http, store, cancellationToken).ConfigureAwait(false));
+            return Results.Ok(await ListAsync(http, store, time, cancellationToken).ConfigureAwait(false));
         });
-        app.MapPost("/api/admin/join-links", async (CreateJoinLinkBody? body, HttpContext http, IConfiguration configuration, JoinLinkStore store, CancellationToken cancellationToken) =>
+        app.MapPost("/api/admin/join-links", async (CreateJoinLinkBody? body, HttpContext http, IConfiguration configuration, IJoinLinkStore store, TimeProvider time, CancellationToken cancellationToken) =>
         {
             if (!AccessGate.IsAdmin(http, configuration))
             {
-                return Results.Problem(title: "Only the admin can manage join links.", statusCode: StatusCodes.Status403Forbidden);
+                return Forbidden();
             }
 
-            var hours = body?.Hours ?? 72d;
-            var uses = body?.MaxUses ?? 5;
-            if (!double.IsFinite(hours) || hours < 1d / 60d || hours > 24d * 30d || uses is < 1 or > 500)
+            if (!TryWindow(body?.Hours, body?.MaxUses, out var lifetime, out var uses))
             {
-                return Results.Problem(title: "Choose an expiry between 1 minute and 30 days and 1 to 500 uses.", statusCode: StatusCodes.Status400BadRequest);
+                return WindowProblem();
             }
 
-            var by = CallerIdentity.Read(http.Request.Headers[EasyAuthPrincipal.HeaderName].ToString()).Email ?? "admin";
-            var link = await store.CreateAsync(TimeSpan.FromHours(hours), uses, by, cancellationToken).ConfigureAwait(false);
-            return Results.Ok(ToResponse(http, link, DateTimeOffset.UtcNow));
+            var by = Caller(http);
+            var link = await store.CreateAsync(lifetime, uses, by, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(ToResponse(http, link, time.GetUtcNow()));
         });
-        app.MapDelete("/api/admin/join-links/{id:guid}", async (Guid id, HttpContext http, IConfiguration configuration, JoinLinkStore store, CancellationToken cancellationToken) =>
+        app.MapPost("/api/admin/join-links/restore", async (HttpContext http, IConfiguration configuration, IJoinLinkStore store, TimeProvider time, CancellationToken cancellationToken) =>
         {
             if (!AccessGate.IsAdmin(http, configuration))
             {
-                return Results.Problem(title: "Only the admin can manage join links.", statusCode: StatusCodes.Status403Forbidden);
+                return Forbidden();
             }
 
-            return await store.RevokeAsync(id, cancellationToken).ConfigureAwait(false)
+            RestoreJoinLinkBody? body;
+            try
+            {
+                body = await http.Request.ReadFromJsonAsync<RestoreJoinLinkBody>(cancellationToken).ConfigureAwait(false);
+            }
+            catch (JsonException)
+            {
+                return NotALink();
+            }
+
+            if (!JoinToken.TryParse(body?.Token, out var token))
+            {
+                return NotALink();
+            }
+
+            if (!TryWindow(body?.Hours, body?.MaxUses, out var lifetime, out var uses))
+            {
+                return WindowProblem();
+            }
+
+            var restored = await store.RestoreAsync(token, lifetime, uses, Caller(http), cancellationToken).ConfigureAwait(false);
+            if (restored.Outcome == RestoreOutcome.AlreadyActive)
+            {
+                return Results.Problem(title: "That join link is already active.", statusCode: StatusCodes.Status409Conflict);
+            }
+
+            return restored.Link is { } link
+                ? Results.Ok(ToResponse(http, link, time.GetUtcNow()))
+                : Results.Problem(title: "That join link was not found.", statusCode: StatusCodes.Status404NotFound);
+        });
+        app.MapPost("/api/admin/join-links/{id:guid}/reactivate", async (Guid id, HttpContext http, IConfiguration configuration, IJoinLinkStore store, CancellationToken cancellationToken) =>
+        {
+            if (!AccessGate.IsAdmin(http, configuration))
+            {
+                return Forbidden();
+            }
+
+            return await store.ReactivateLinkAsync(id, cancellationToken).ConfigureAwait(false)
                 ? Results.NoContent()
                 : Results.Problem(title: "That join link was not found.", statusCode: StatusCodes.Status404NotFound);
         });
-        app.MapPost("/api/join/{token}", async (string token, HttpContext http, JoinLinkStore store, CancellationToken cancellationToken) =>
+        app.MapDelete("/api/admin/join-links/{id:guid}", async (Guid id, HttpContext http, IConfiguration configuration, IJoinLinkStore store, CancellationToken cancellationToken) =>
+        {
+            if (!AccessGate.IsAdmin(http, configuration))
+            {
+                return Forbidden();
+            }
+
+            return await store.RevokeLinkAsync(id, cancellationToken).ConfigureAwait(false)
+                ? Results.NoContent()
+                : Results.Problem(title: "That join link was not found.", statusCode: StatusCodes.Status404NotFound);
+        });
+        app.MapPost("/api/admin/members/revoke", async (HttpContext http, IConfiguration configuration, IJoinLinkStore store, CancellationToken cancellationToken) =>
+        {
+            if (!AccessGate.IsAdmin(http, configuration))
+            {
+                return Forbidden();
+            }
+
+            RevokeMemberBody? body;
+            try
+            {
+                body = await http.Request.ReadFromJsonAsync<RevokeMemberBody>(cancellationToken).ConfigureAwait(false);
+            }
+            catch (JsonException)
+            {
+                return Results.Problem(title: "Choose a member to revoke.", statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            if (string.IsNullOrWhiteSpace(body?.MemberKey))
+            {
+                return Results.Problem(title: "Choose a member to revoke.", statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            return await store.RevokeMemberAsync(body.MemberKey, cancellationToken).ConfigureAwait(false)
+                ? Results.NoContent()
+                : Results.Problem(title: "That member was not found.", statusCode: StatusCodes.Status404NotFound);
+        });
+        app.MapPost("/api/join/{token}", async (string token, HttpContext http, IJoinLinkStore store, CancellationToken cancellationToken) =>
         {
             var identity = CallerIdentity.Read(http.Request.Headers[EasyAuthPrincipal.HeaderName].ToString());
             if (identity.MemberKey is null)
@@ -81,20 +168,64 @@ public static class AccessEndpoints
         });
     }
 
-    private static async Task<JoinLinksResponse> ListAsync(HttpContext http, JoinLinkStore store, CancellationToken cancellationToken)
+    private static async Task<JoinLinksResponse> ListAsync(HttpContext http, IJoinLinkStore store, TimeProvider time, CancellationToken cancellationToken)
     {
-        var now = DateTimeOffset.UtcNow;
-        var links = await store.ListAsync(cancellationToken).ConfigureAwait(false);
+        var now = time.GetUtcNow();
+        var links = await store.ListLinksAsync(cancellationToken).ConfigureAwait(false);
         var members = await store.ListMembersAsync(cancellationToken).ConfigureAwait(false);
         return new JoinLinksResponse(
             links.Select(link => ToResponse(http, link, now)).ToArray(),
-            members.Select(member => new JoinMemberResponse(member.Email, member.DisplayName, member.JoinedAt)).ToArray());
+            members.Select(member => new JoinMemberResponse(
+                member.Email,
+                member.DisplayName,
+                member.JoinedAt,
+                member.LinkLabel,
+                member.Status,
+                member.MemberKey,
+                member.TenantId,
+                member.ObjectId,
+                member.RevokedAt)).ToArray());
     }
 
     private static JoinLinkResponse ToResponse(HttpContext http, JoinLink link, DateTimeOffset now)
     {
-        var status = link.Revoked ? "revoked" : now >= link.ExpiresAt ? "expired" : link.Uses >= link.MaxUses ? "usedUp" : "active";
         var url = http.Request.Scheme + "://" + http.Request.Host + "/join/" + link.Token;
-        return new JoinLinkResponse(link.Id, url, link.CreatedAt, link.ExpiresAt, link.MaxUses, link.Uses, link.Revoked, status);
+        return new JoinLinkResponse(link.Id, url, link.CreatedAt, link.ExpiresAt, link.MaxUses, link.Uses, link.Revoked, link.StatusAt(now), link.Label);
+    }
+
+    private static string Caller(HttpContext http) =>
+        CallerIdentity.Read(http.Request.Headers[EasyAuthPrincipal.HeaderName].ToString()).Email ?? "admin";
+
+    private static IResult Forbidden() =>
+        Results.Problem(title: "Only the admin can manage join links.", statusCode: StatusCodes.Status403Forbidden);
+
+    private static IResult NotALink() =>
+        Results.Problem(title: "That is not a join link. Paste the link or the token.", statusCode: StatusCodes.Status400BadRequest);
+
+    private static IResult WindowProblem() =>
+        Results.Problem(title: "Choose an expiry between 1 minute and 30 days and 1 to 500 uses.", statusCode: StatusCodes.Status400BadRequest);
+
+    private static bool TryWindow(double? hours, int? maxUses, out TimeSpan lifetime, out int uses)
+    {
+        var chosen = hours ?? 72d;
+        uses = maxUses ?? 5;
+        if (!double.IsFinite(chosen) || chosen < (1d / 60d) || chosen > (24d * 30d) || uses is < 1 or > 500)
+        {
+            lifetime = default;
+            return false;
+        }
+
+        lifetime = TimeSpan.FromHours(chosen);
+        if (lifetime < TimeSpan.FromMinutes(1))
+        {
+            lifetime = TimeSpan.FromMinutes(1);
+        }
+
+        if (lifetime > TimeSpan.FromDays(30))
+        {
+            lifetime = TimeSpan.FromDays(30);
+        }
+
+        return true;
     }
 }

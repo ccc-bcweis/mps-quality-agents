@@ -15,7 +15,7 @@ Navy and gold band above the product. Not part of the Meridian Precision Systems
 | Return on investment | `/harness/roi` | Illustrative savings sketch. Every figure is synthetic. |
 | Metrics | `/harness/metrics` | How this demo run is scoring, and what it has spent. |
 | Audit log | `/harness/audit` | Every step with who did it and when: alerts, tickets, agent steps, decisions, CAPA stages, resets. |
-| Join links | Harness bar, admin only | Create, copy, list and revoke expiring, use-limited links. A guest who redeems one at `/join/:token` becomes a full user (ADR-011). |
+| Join links | `/admin/members`, from the harness bar, admin only | Create, copy, list, revoke, reactivate, and restore expiring, use-limited links. Revoke a member. A guest who redeems one at `/join/:token` becomes a full user (ADR-011). |
 
 ## Meridian Precision Systems console
 

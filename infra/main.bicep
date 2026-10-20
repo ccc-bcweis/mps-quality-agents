@@ -76,6 +76,9 @@ var registryName = '${namePrefix}acr'
 var environmentName = '${namePrefix}-cae'
 var appName = '${namePrefix}-api'
 var webName = '${namePrefix}-web'
+var storageAccountName = '${take(namePrefix, 11)}${uniqueString(resourceGroup().id)}'
+var linksTableName = 'JoinLinks'
+var membersTableName = 'Members'
 
 module identity 'modules/identity.bicep' = {
   name: 'identity'
@@ -141,6 +144,17 @@ module acr 'modules/acr.bicep' = {
   }
 }
 
+module storage 'modules/storage.bicep' = {
+  name: 'storage'
+  params: {
+    location: location
+    name: storageAccountName
+    principalId: identity.outputs.principalId
+    linksTableName: linksTableName
+    membersTableName: membersTableName
+  }
+}
+
 module apps 'modules/container-apps.bicep' = {
   name: 'container-apps'
   params: {
@@ -162,6 +176,9 @@ module apps 'modules/container-apps.bicep' = {
     approvalKeySecretUri: empty(approvalKeySecretName) ? '' : '${vault.outputs.uri}secrets/${approvalKeySecretName}'
     cpu: cpu
     memory: memory
+    tableEndpoint: storage.outputs.tableEndpoint
+    linksTableName: linksTableName
+    membersTableName: membersTableName
   }
 }
 
@@ -196,3 +213,4 @@ output openAiEndpoint string = openai.outputs.endpoint
 output webHostname string = deployStaticWeb ? web!.outputs.hostname : ''
 output sqlServer string = deploySql ? sql!.outputs.fullyQualifiedDomainName : ''
 output keyVaultUri string = vault.outputs.uri
+output tableEndpoint string = storage.outputs.tableEndpoint

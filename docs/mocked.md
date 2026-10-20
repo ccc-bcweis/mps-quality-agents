@@ -16,7 +16,7 @@ Every company, plant, tool, supplier, person and record in this demo is fictiona
 | Documents | A synthetic corpus of procedures, bulletins and one poisoned document for the injection test. | `data/docs` |
 | Search index | A deterministic hash embedding plus BM25 keyword search, built by `tools/Ingest`. No hosted embedding model. | `data/index`, `src/Mps.Connectors/Docs` |
 | Message bus | One in-process event bus. Production would use Service Bus or Event Hubs. | `src/Mps.Bus` |
-| Storage | SQLite inside the container. It is rebuilt from the seed on start, so every deploy wipes the demo data. | `src/Mps.Api/Persistence` |
+| Storage | SQLite inside the container for quality data. It is rebuilt from the seed on start, so every deploy wipes that data. Join links and members on the hosted app live in Table storage and stay. | `src/Mps.Api/Persistence`, `src/Mps.Api/Access` |
 | Identity, local | Sign-in mode `local` (the default): no login, the caller is the local admin. Meant for localhost; the app warns loudly if it is reachable from the network or runs outside Development. Hosted runs use Microsoft Entra (see Real). | `src/Mps.Api/Auth`, `src/Mps.Api/Access` |
 | Return on investment and KPI baselines | Illustrative figures with stated assumptions. | `data/roi`, `docs/roi-assumptions.md` |
 | Plant-data replay | Recorded bus messages for each scenario, swapped onto the console on demand. This is the plant-data Live/Replay control. It is not the model. The answer engine is the read-only model mode chip. | `data/replay/SC-*` |

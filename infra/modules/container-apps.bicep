@@ -54,6 +54,15 @@ param cpu string = '0.5'
 @description('API container memory. 1Gi pairs with cpu 0.5.')
 param memory string = '1Gi'
 
+@description('Table endpoint for join links and members. Empty keeps the local SQLite store.')
+param tableEndpoint string = ''
+
+@description('Table that holds join links.')
+param linksTableName string = 'JoinLinks'
+
+@description('Table that holds members.')
+param membersTableName string = 'Members'
+
 resource environment 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: envName
   location: location
@@ -178,6 +187,22 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'Mps__Auth__AdminEmails'
               value: adminEmails
+            }
+            {
+              name: 'Mps__Access__Store'
+              value: empty(tableEndpoint) ? 'Sqlite' : 'AzureTable'
+            }
+            {
+              name: 'Mps__Access__TableEndpoint'
+              value: tableEndpoint
+            }
+            {
+              name: 'Mps__Access__LinksTable'
+              value: linksTableName
+            }
+            {
+              name: 'Mps__Access__MembersTable'
+              value: membersTableName
             }
             {
               name: 'Mps__Model__Endpoint'

@@ -59,7 +59,7 @@ While a round is gathering, the server streams a Started placeholder that is not
 
 `Approval` is the signed decision on an investigation. A `CAPA` opens only after an approval, and never straight from an escalated investigation. `Fault` is an accepted injected fault. `MetricSamples` records one investigation's grounding, tool calls, latency, and cost.
 
-`eventlog` is the ordered story of a case. Telemetry events are not copied into it. `telemetry` keeps readings. `JoinLinks` and `DemoMembers` are the guest-join rows in the same file.
+`eventlog` is the ordered story of a case. Telemetry events are not copied into it. `telemetry` keeps readings. `JoinLinks` and `Members` are the guest-join rows. Outside Azure they sit in the same SQLite file, outside the quality schema, so a reset leaves them. On the hosted app they sit in Table storage and stay when the replica is replaced. A member row keeps the join link, the joined time in UTC, email, display name, tenant id, object id, status (`active` or `revoked`), and the revoked time. A link row keeps the token, expiry, use count, use limit, revoke flag, and who created it.
 
 Manual bench readings are kept in memory and enter the same series as the sensor. They are not a table. They also appear in that tool's linked records, with the tickets, alerts, and investigations.
 

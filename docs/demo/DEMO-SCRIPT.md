@@ -26,7 +26,7 @@ Control names were checked against the code on `main` `0a3375f` on 2026-10-18.
 | 6 | Model mode chip (read-only): **Azure OpenAI**, **OpenAI** or **Offline (saved answers)** | Set at start by `MODEL_MODE`. There is no Replay/Live toggle for the answer engine. A live call times out at 20 seconds with no retry, then the gateway fails over to saved answers and the chip says so. The gateway also stops at $2 a day |
 | 7 | **Metrics** (presenter bar) | Spend today well under the $2 cap. Cost per success reads **n/a** before any run |
 | 8 | Console header **Plant** = **All sites** | 32 tools across three plants |
-| 9 | **Join links** → **Create and copy link** (if guests need access) → **Close** | Paste the link in the meeting chat. **Copy** recopies an existing link |
+| 9 | **Join links** (admin) opens `/admin/members` → **Create link** (if guests need access) | Paste the link in the meeting chat. **Copy link** recopies an existing link |
 | 10 | Put `thermocouple-logger-e01.png` (from `data/samples/`) on the desktop | For the printout moment |
 | 11 | Scenario picker: leave on **SC-4 · Slow chamber seasoning drift** | First walkthrough. The status line stays **Live** until **Run scenario**. The picker choice is not a running scenario |
 
@@ -213,6 +213,6 @@ Also under **Tickets → Operator report**: pick a **Tool**. The **Parameter** l
 | Spend meter near $2 | The gateway stops live calls and uses saved answers. The chip says the cap was reached. There is no answer-engine toggle to flip |
 | A tab looks empty | Header **Plant** → **All sites**; that list may have no records for the selected plant |
 | Printout read a field wrong | Edit the field before **Confirm reading** |
-| A guest can't get in | **Join links** → **Create and copy link** → send the new link |
+| A guest can't get in | **Join links** opens `/admin/members` → **Create link** → send the new link. A link that was used up or revoked can be restored from that page |
 | Page looks stale | Browser refresh. State lives on the server, so nothing is lost |
 | Everything is wrong | **Hard reset**, then restart from section 3. Talk through the deck while it resets |

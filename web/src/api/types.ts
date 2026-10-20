@@ -422,11 +422,24 @@ export type JoinLink = {
   uses: number;
   revoked: boolean;
   status: "active" | "expired" | "usedUp" | "revoked";
+  label: string;
+};
+
+export type JoinMember = {
+  email?: string | null;
+  displayName?: string | null;
+  joinedAt: string;
+  linkLabel: string;
+  status: string;
+  memberKey: string;
+  tenantId?: string | null;
+  objectId?: string | null;
+  revokedAt?: string | null;
 };
 
 export type JoinLinks = {
   links: JoinLink[];
-  members: { email?: string | null; displayName?: string | null; joinedAt: string }[];
+  members: JoinMember[];
 };
 
 export type RedeemResult = { result: "joined" | "alreadyMember"; message: string };

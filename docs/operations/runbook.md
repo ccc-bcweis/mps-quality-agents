@@ -13,7 +13,7 @@ Deploys are manual. `.github/workflows/deploy.yml` is `workflow_dispatch` only. 
 3. Run it from Actions → **Deploy** → Run workflow (or `gh workflow run deploy.yml --ref main`). Leave the image tag blank to use the commit SHA.
 4. The `azure-demo` environment needs a required reviewer. Approve the pending deployment.
 5. The job federates to Azure with OIDC (no stored client secret). A fork or a clone without `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, and `RESOURCE_GROUP` writes a notice and skips. The federated credential trusts only this repo's `azure-demo` environment.
-6. **Every deploy wipes the live demo data.** SQLite lives in the container. The app starts from seed 4242 with one rolling window of 600 healthy readings per sensor (`telemetryWindow.readingsPerSensor` in `data/metadata/simulation.yaml`). It does not seed a week.
+6. **Every deploy wipes the live quality data.** SQLite lives in the container. The app starts from seed 4242 with one rolling window of 600 healthy readings per sensor (`telemetryWindow.readingsPerSensor` in `data/metadata/simulation.yaml`). It does not seed a week. Join links and members live in Table storage and stay across that deploy. Shared key access on the storage account is off. The app identity has Storage Table Data Contributor.
 
 The container is 0.5 vCPU and 1 GiB, one replica (`minReplicas` 1, `maxReplicas` 1). `cpu` and `memory` are set in `infra/main.bicepparam`. `.github/workflows/deploy.yml` does not pass cpu or memory, so a deploy keeps that pair. The previous 0.25 vCPU / 0.5 GiB pair restarted the replica: on 18 Oct 2026 the working set was 590-673 MiB and failed probes killed it. Bryan approved about $33 more per month for the larger always-on replica. The Azure budget alert stays $40 a month.
 
@@ -25,6 +25,12 @@ LOCATION
 ```
 
 **Admins.** The app will not start in Entra mode with an empty admin list. Nothing in the code names a built-in admin. The workflow resolves emails in this order: the Run workflow input `adminEmails`, else the `azure-demo` variable `ADMIN_EMAILS`, else the list already on the running app. If all three are empty it stops before it changes anything. A local `deploy/deploy.sh` run has one more fallback: the signed-in deployer. In GitHub Actions the deployer is a service principal, so that fallback does not exist there. Set `ADMIN_EMAILS` (or pass `adminEmails`) before the first Entra deploy.
+
+## Join links and members
+
+Admins open `/admin/members`. From there they create a link, copy it, revoke or reactivate it, and restore one by pasting the old link or its token and choosing a new expiry and use limit. They can also revoke a member. A revoked member is asked for a join link and can join again by redeeming a new or restored link.
+
+Outside Azure the same rows live in the local SQLite file (`Mps:Access:Store` is `Sqlite`). The hosted app sets `Mps__Access__Store` to `AzureTable`, `Mps__Access__TableEndpoint` to the table endpoint, and `Mps__Access__LinksTable` and `Mps__Access__MembersTable` to the table names. There is no account key. Quality data still rebuilds from seed 4242 on each deploy. The join rows do not.
 
 ## Smoke check after deploy (5 minutes)
 

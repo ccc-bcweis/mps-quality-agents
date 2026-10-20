@@ -74,7 +74,6 @@ public static class QualityHost
             });
         });
         builder.Services.AddDbContext<QualityDbContext>(options => options.UseSqlite(connectionString));
-        builder.Services.AddSingleton(new Mps.Api.Access.JoinLinkStore(connectionString));
         builder.Services.AddScoped<EfQualityStore>();
         builder.Services.AddScoped<IFleetCatalog, PlantFleetCatalog>();
         builder.Services.AddScoped<IAlertLog>(services => services.GetRequiredService<EfQualityStore>());
@@ -99,6 +98,8 @@ public static class QualityHost
         builder.Services.AddScoped<IMetricsLog, EfMetricsLog>();
         builder.Services.AddSingleton<IQmsCapaWriter, FakeQmsCapaWriter>();
         builder.Services.AddSingleton(TimeProvider.System);
+        builder.Services.AddSingleton<Mps.Api.Access.IJoinLinkStore>(services =>
+            Mps.Api.Access.AccessStoreFactory.Create(builder.Configuration, connectionString, services.GetRequiredService<TimeProvider>()));
         var simulation = SimulationOptions.From(builder.Configuration);
         if (simulation.RealTime)
         {

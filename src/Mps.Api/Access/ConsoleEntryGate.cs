@@ -20,7 +20,7 @@ public sealed class ConsoleEntryGate
         _next = next;
     }
 
-    public async Task InvokeAsync(HttpContext http, IConfiguration configuration, JoinLinkStore store)
+    public async Task InvokeAsync(HttpContext http, IConfiguration configuration, IJoinLinkStore store)
     {
         ArgumentNullException.ThrowIfNull(http);
         if (!IsConsoleNavigation(http.Request))

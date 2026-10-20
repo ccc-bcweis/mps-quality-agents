@@ -15,7 +15,7 @@ public static partial class QualityEndpoints
     /// <summary>Presenter controls: session, speed, reset, data mode and replay capture.</summary>
     private static void MapDemoControls(WebApplication app)
     {
-        app.MapGet("/api/admin/session", async (HttpContext http, IConfiguration configuration, Mps.Api.Access.JoinLinkStore store, CancellationToken cancellationToken) =>
+        app.MapGet("/api/admin/session", async (HttpContext http, IConfiguration configuration, Mps.Api.Access.IJoinLinkStore store, CancellationToken cancellationToken) =>
         {
             var caller = Caller(http, configuration);
             var member = !Mps.Api.Access.AccessGate.Hosted(configuration)

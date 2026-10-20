@@ -1,159 +1,203 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
-using System.Globalization;
-using System.Security.Cryptography;
-
-using Microsoft.Data.Sqlite;
-
 namespace Mps.Api.Access;
 
-public sealed record JoinLink(Guid Id, string Token, DateTimeOffset CreatedAt, DateTimeOffset ExpiresAt, int MaxUses, int Uses, bool Revoked, string CreatedBy)
-{
-    public bool IsUsable(DateTimeOffset now) => !Revoked && now < ExpiresAt && Uses < MaxUses;
-}
-
-public sealed record DemoMember(string MemberKey, string? Email, string? DisplayName, DateTimeOffset JoinedAt, Guid LinkId);
-
-public enum RedeemResult
-{
-    Joined,
-    AlreadyMember,
-    NotFound,
-    Expired,
-    UsedUp,
-    Revoked,
-}
-
 /// <summary>
-/// Join links and the members who redeemed them. Lives in the demo database but outside the quality schema, so a demo reset keeps it.
+/// Rules for join links and members. The directory is SQLite outside Azure and Azure Table storage in Azure.
 /// </summary>
-public sealed class JoinLinkStore : IDisposable
+public sealed class JoinLinkStore : IJoinLinkStore, IDisposable
 {
-    private readonly string _connectionString;
+    private readonly IAccessDirectory _directory;
     private readonly TimeProvider _time;
     private readonly SemaphoreSlim _gate = new(1, 1);
-    private bool _ready;
 
-    public JoinLinkStore(string connectionString, TimeProvider? time = null)
+    public JoinLinkStore(IAccessDirectory directory, TimeProvider? time = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
-        _connectionString = connectionString;
+        ArgumentNullException.ThrowIfNull(directory);
+        _directory = directory;
         _time = time ?? TimeProvider.System;
     }
 
     public async Task<JoinLink> CreateAsync(TimeSpan lifetime, int maxUses, string createdBy, CancellationToken cancellationToken)
     {
-        if (lifetime <= TimeSpan.Zero || lifetime > TimeSpan.FromDays(30))
-        {
-            throw new ArgumentOutOfRangeException(nameof(lifetime), "A link lasts between a minute and 30 days.");
-        }
-
-        if (maxUses is < 1 or > 500)
-        {
-            throw new ArgumentOutOfRangeException(nameof(maxUses), "A link allows 1 to 500 uses.");
-        }
-
+        RequireWindow(lifetime, maxUses);
+        ArgumentException.ThrowIfNullOrWhiteSpace(createdBy);
         var now = _time.GetUtcNow();
-        var link = new JoinLink(Guid.NewGuid(), NewToken(), now, now + lifetime, maxUses, 0, false, createdBy);
-        await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
-        await using var command = connection.CreateCommand();
-        command.CommandText = "INSERT INTO JoinLinks (Id, Token, CreatedAt, ExpiresAt, MaxUses, Uses, Revoked, CreatedBy) VALUES ($id, $token, $created, $expires, $max, 0, 0, $by)";
-        command.Parameters.AddWithValue("$id", link.Id.ToString("D"));
-        command.Parameters.AddWithValue("$token", link.Token);
-        command.Parameters.AddWithValue("$created", Stamp(link.CreatedAt));
-        command.Parameters.AddWithValue("$expires", Stamp(link.ExpiresAt));
-        command.Parameters.AddWithValue("$max", link.MaxUses);
-        command.Parameters.AddWithValue("$by", createdBy);
-        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        return link;
+        var link = new JoinLink(Guid.NewGuid(), JoinToken.New(), now, now + lifetime, maxUses, 0, false, createdBy);
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await _directory.InsertLinkAsync(link, cancellationToken).ConfigureAwait(false);
+            return link;
+        }
+        finally
+        {
+            _gate.Release();
+        }
     }
 
-    public async Task<IReadOnlyList<JoinLink>> ListAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<JoinLink>> ListLinksAsync(CancellationToken cancellationToken)
     {
-        await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
-        await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT Id, Token, CreatedAt, ExpiresAt, MaxUses, Uses, Revoked, CreatedBy FROM JoinLinks ORDER BY CreatedAt DESC";
-        var links = new List<JoinLink>();
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        var links = await _directory.ListLinksAsync(cancellationToken).ConfigureAwait(false);
+        return links.OrderByDescending(link => link.CreatedAt).ThenBy(link => link.Id).ToArray();
+    }
+
+    public async Task<bool> RevokeLinkAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            links.Add(ReadLink(reader));
+            var link = await _directory.FindLinkByIdAsync(id, cancellationToken).ConfigureAwait(false);
+            if (link is null)
+            {
+                return false;
+            }
+
+            if (!link.Revoked)
+            {
+                await _directory.UpdateLinkAsync(link with { Revoked = true }, cancellationToken).ConfigureAwait(false);
+            }
+
+            return true;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task<bool> ReactivateLinkAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var link = await _directory.FindLinkByIdAsync(id, cancellationToken).ConfigureAwait(false);
+            if (link is null)
+            {
+                return false;
+            }
+
+            if (link.Revoked)
+            {
+                await _directory.UpdateLinkAsync(link with { Revoked = false }, cancellationToken).ConfigureAwait(false);
+            }
+
+            return true;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task<RestoreLinkResult> RestoreAsync(string token, TimeSpan lifetime, int maxUses, string createdBy, CancellationToken cancellationToken)
+    {
+        RequireWindow(lifetime, maxUses);
+        ArgumentException.ThrowIfNullOrWhiteSpace(createdBy);
+        if (!JoinToken.IsToken(token))
+        {
+            throw new ArgumentException("That is not a join link. Paste the link or the token.", nameof(token));
         }
 
-        return links;
-    }
+        var normalized = token.ToLowerInvariant();
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var now = _time.GetUtcNow();
+            var existing = await _directory.FindLinkByTokenAsync(normalized, cancellationToken).ConfigureAwait(false);
+            if (existing is not null && existing.IsUsable(now))
+            {
+                return new RestoreLinkResult(RestoreOutcome.AlreadyActive, existing);
+            }
 
-    public async Task<bool> RevokeAsync(Guid id, CancellationToken cancellationToken)
-    {
-        await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
-        await using var command = connection.CreateCommand();
-        command.CommandText = "UPDATE JoinLinks SET Revoked = 1 WHERE Id = $id";
-        command.Parameters.AddWithValue("$id", id.ToString("D"));
-        return await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) > 0;
+            if (existing is null)
+            {
+                var created = new JoinLink(Guid.NewGuid(), normalized, now, now + lifetime, maxUses, 0, false, createdBy);
+                await _directory.InsertLinkAsync(created, cancellationToken).ConfigureAwait(false);
+                return new RestoreLinkResult(RestoreOutcome.Created, created);
+            }
+
+            var restored = existing with
+            {
+                ExpiresAt = now + lifetime,
+                MaxUses = maxUses,
+                Uses = 0,
+                Revoked = false,
+            };
+            await _directory.UpdateLinkAsync(restored, cancellationToken).ConfigureAwait(false);
+            return new RestoreLinkResult(RestoreOutcome.Restored, restored);
+        }
+        finally
+        {
+            _gate.Release();
+        }
     }
 
     public async Task<bool> IsMemberAsync(string memberKey, CancellationToken cancellationToken)
     {
-        await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
-        await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT COUNT(1) FROM DemoMembers WHERE MemberKey = $key";
-        command.Parameters.AddWithValue("$key", memberKey);
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false), CultureInfo.InvariantCulture);
-        return count > 0;
-    }
-
-    public async Task<IReadOnlyList<DemoMember>> ListMembersAsync(CancellationToken cancellationToken)
-    {
-        await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
-        await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT MemberKey, Email, DisplayName, JoinedAt, LinkId FROM DemoMembers ORDER BY JoinedAt DESC";
-        var members = new List<DemoMember>();
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        if (string.IsNullOrWhiteSpace(memberKey))
         {
-            members.Add(new DemoMember(
-                reader.GetString(0),
-                reader.IsDBNull(1) ? null : reader.GetString(1),
-                reader.IsDBNull(2) ? null : reader.GetString(2),
-                Parse(reader.GetString(3)),
-                Guid.Parse(reader.GetString(4))));
+            return false;
         }
 
-        return members;
+        var member = await _directory.FindMemberAsync(memberKey, cancellationToken).ConfigureAwait(false);
+        return member is { IsActive: true };
     }
 
-    /// <summary>Spends one use of the link and adds the caller as a member. Members who redeem again do not spend a use.</summary>
+    public async Task<IReadOnlyList<AccessMember>> ListMembersAsync(CancellationToken cancellationToken)
+    {
+        var members = await _directory.ListMembersAsync(cancellationToken).ConfigureAwait(false);
+        return members.OrderByDescending(member => member.JoinedAt).ThenBy(member => member.MemberKey, StringComparer.Ordinal).ToArray();
+    }
+
+    public async Task<bool> RevokeMemberAsync(string memberKey, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(memberKey);
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var member = await _directory.FindMemberAsync(memberKey, cancellationToken).ConfigureAwait(false);
+            if (member is null)
+            {
+                return false;
+            }
+
+            if (!member.IsActive)
+            {
+                return true;
+            }
+
+            var revoked = member with { Status = AccessMember.RevokedStatus, RevokedAt = _time.GetUtcNow() };
+            await _directory.UpsertMemberAsync(revoked, cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public async Task<RedeemResult> RedeemAsync(string token, CallerIdentity caller, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(caller);
         var key = caller.MemberKey;
-        if (string.IsNullOrWhiteSpace(token) || key is null)
+        if (string.IsNullOrWhiteSpace(token) || key is null || !JoinToken.IsToken(token.Trim()))
         {
             return RedeemResult.NotFound;
         }
 
+        var normalized = token.Trim().ToLowerInvariant();
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            await using var connection = await OpenAsync(cancellationToken).ConfigureAwait(false);
-            JoinLink? link = null;
-            await using (var find = connection.CreateCommand())
-            {
-                find.CommandText = "SELECT Id, Token, CreatedAt, ExpiresAt, MaxUses, Uses, Revoked, CreatedBy FROM JoinLinks WHERE Token = $token";
-                find.Parameters.AddWithValue("$token", token.Trim());
-                await using var reader = await find.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                {
-                    link = ReadLink(reader);
-                }
-            }
-
+            var link = await _directory.FindLinkByTokenAsync(normalized, cancellationToken).ConfigureAwait(false);
             if (link is null)
             {
                 return RedeemResult.NotFound;
             }
 
-            if (await IsMemberAsync(key, cancellationToken).ConfigureAwait(false))
+            var member = await _directory.FindMemberAsync(key, cancellationToken).ConfigureAwait(false);
+            if (member is { IsActive: true })
             {
                 return RedeemResult.AlreadyMember;
             }
@@ -174,31 +218,17 @@ public sealed class JoinLinkStore : IDisposable
                 return RedeemResult.UsedUp;
             }
 
-            await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-            await using (var spend = connection.CreateCommand())
-            {
-                spend.Transaction = transaction;
-                spend.CommandText = "UPDATE JoinLinks SET Uses = Uses + 1 WHERE Id = $id AND Uses < MaxUses AND Revoked = 0";
-                spend.Parameters.AddWithValue("$id", link.Id.ToString("D"));
-                if (await spend.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) == 0)
-                {
-                    return RedeemResult.UsedUp;
-                }
-            }
-
-            await using (var add = connection.CreateCommand())
-            {
-                add.Transaction = transaction;
-                add.CommandText = "INSERT OR IGNORE INTO DemoMembers (MemberKey, Email, DisplayName, JoinedAt, LinkId) VALUES ($key, $email, $name, $at, $link)";
-                add.Parameters.AddWithValue("$key", key);
-                add.Parameters.AddWithValue("$email", (object?)caller.Email ?? DBNull.Value);
-                add.Parameters.AddWithValue("$name", (object?)caller.DisplayName ?? DBNull.Value);
-                add.Parameters.AddWithValue("$at", Stamp(now));
-                add.Parameters.AddWithValue("$link", link.Id.ToString("D"));
-                await add.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            }
-
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            var saved = new AccessMember(
+                key,
+                caller.Email,
+                caller.DisplayName,
+                now,
+                link.Id,
+                caller.TenantId,
+                caller.ObjectId,
+                AccessMember.ActiveStatus,
+                null);
+            await _directory.SaveRedeemAsync(link with { Uses = link.Uses + 1 }, saved, cancellationToken).ConfigureAwait(false);
             return RedeemResult.Joined;
         }
         finally
@@ -207,40 +237,25 @@ public sealed class JoinLinkStore : IDisposable
         }
     }
 
-    public void Dispose() => _gate.Dispose();
-
-    private async Task<SqliteConnection> OpenAsync(CancellationToken cancellationToken)
+    public void Dispose()
     {
-        var connection = new SqliteConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-        if (!_ready)
+        _gate.Dispose();
+        if (_directory is IDisposable disposable)
         {
-            await using var create = connection.CreateCommand();
-            create.CommandText = """
-                CREATE TABLE IF NOT EXISTS JoinLinks (Id TEXT PRIMARY KEY, Token TEXT NOT NULL UNIQUE, CreatedAt TEXT NOT NULL, ExpiresAt TEXT NOT NULL, MaxUses INTEGER NOT NULL, Uses INTEGER NOT NULL, Revoked INTEGER NOT NULL, CreatedBy TEXT NOT NULL);
-                CREATE TABLE IF NOT EXISTS DemoMembers (MemberKey TEXT PRIMARY KEY, Email TEXT NULL, DisplayName TEXT NULL, JoinedAt TEXT NOT NULL, LinkId TEXT NOT NULL);
-                """;
-            await create.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            _ready = true;
+            disposable.Dispose();
         }
-
-        return connection;
     }
 
-    private static JoinLink ReadLink(SqliteDataReader reader) =>
-        new(
-            Guid.Parse(reader.GetString(0)),
-            reader.GetString(1),
-            Parse(reader.GetString(2)),
-            Parse(reader.GetString(3)),
-            reader.GetInt32(4),
-            reader.GetInt32(5),
-            reader.GetInt32(6) != 0,
-            reader.GetString(7));
+    internal static void RequireWindow(TimeSpan lifetime, int maxUses)
+    {
+        if (lifetime < TimeSpan.FromMinutes(1) || lifetime > TimeSpan.FromDays(30))
+        {
+            throw new ArgumentOutOfRangeException(nameof(lifetime), "A link lasts between 1 minute and 30 days.");
+        }
 
-    private static string NewToken() => Convert.ToHexString(RandomNumberGenerator.GetBytes(24)).ToLowerInvariant();
-
-    private static string Stamp(DateTimeOffset value) => value.UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
-
-    private static DateTimeOffset Parse(string value) => DateTimeOffset.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
+        if (maxUses is < 1 or > 500)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxUses), "A link allows 1 to 500 uses.");
+        }
+    }
 }
