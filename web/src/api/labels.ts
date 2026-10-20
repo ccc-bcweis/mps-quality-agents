@@ -27,6 +27,23 @@ export function approvalSentence(name: string, at: string): string {
   return `Approved by ${who} at ${clock}`;
 }
 
+/** Join links and members. America/New_York, 24-hour clock, with an ET label. */
+export function formatEastern(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("month")} ${part("day")}, ${part("year")}, ${part("hour")}:${part("minute")} ET`;
+}
+
 export function formatStamp(iso: string, timeZone?: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;

@@ -105,6 +105,15 @@ export const api = {
   createJoinLink: (hours: number, maxUses: number) =>
     apiSend<JoinLink>("/api/admin/join-links", { method: "POST", body: JSON.stringify({ hours, maxUses }) }),
   revokeJoinLink: (id: string) => apiSend<void>(`/api/admin/join-links/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  reactivateJoinLink: (id: string) =>
+    apiSend<void>(`/api/admin/join-links/${encodeURIComponent(id)}/reactivate`, { method: "POST" }),
+  restoreJoinLink: (token: string, hours: number, maxUses: number) =>
+    apiSend<JoinLink>("/api/admin/join-links/restore", {
+      method: "POST",
+      body: JSON.stringify({ token, hours, maxUses }),
+    }),
+  revokeMember: (memberKey: string) =>
+    apiSend<void>("/api/admin/members/revoke", { method: "POST", body: JSON.stringify({ memberKey }) }),
   redeemJoin: (token: string) => apiSend<RedeemResult>(`/api/join/${encodeURIComponent(token)}`, { method: "POST" }),
   getAuditLog: () => apiSend<AuditLog>("/api/audit"),
   resetDemo: (kind: ResetKind) =>

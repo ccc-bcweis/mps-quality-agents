@@ -11,6 +11,7 @@ import { FleetPage } from "./pages/FleetPage";
 import { GlossaryPage } from "./pages/GlossaryPage";
 import { InjectorPage } from "./pages/InjectorPage";
 import { InvestigationPage } from "./pages/InvestigationPage";
+import { MembersPage } from "./pages/MembersPage";
 import { MetricsPage } from "./pages/MetricsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { RoiPage } from "./pages/RoiPage";
@@ -50,6 +51,7 @@ export function AppRoutes() {
           <Route path="/capas/:capaId" element={<CapaPage />} />
           <Route path="/rules" element={<RulesProcessPage />} />
           <Route path="/glossary" element={<GlossaryPage />} />
+          <Route path="/admin/members" element={<MembersPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Route>

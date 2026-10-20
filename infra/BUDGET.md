@@ -14,6 +14,7 @@ Other cost choices in the template:
 - Log Analytics retention is 30 days on the PerGB2018 SKU.
 - Application Insights is workspace-based. Its connection string is a deployment-time secret reference, not a value in git.
 - Key Vault is standard, RBAC, 7-day soft delete. The managed identity has Key Vault Secrets User.
+- One StorageV2 account, Standard_LRS, holds the join-link and member tables. Shared key access is off. The managed identity has Storage Table Data Contributor. The cost is small next to the always-on replica. Public network access stays on so the container app can reach the table endpoint.
 - `deployStaticWeb` defaults to false. The console is in the API image. Turning the parameter on creates a Standard Static Web App in `eastus2`, which is a fixed cost the demo does not need.
 
 Names derived from `namePrefix` (`mpsdemo` in the parameters file) must be globally unique at deploy time, including the registry (`mpsdemoacr`), the Key Vault, and the Azure OpenAI custom subdomain. Change the prefix before deploy if a name is taken. Do not put secrets in the parameters file. The API runs exactly one replica (`minReplicas` 1, `maxReplicas` 1, 0.5 vCPU, 1 GiB) so demo state lives in one SQLite file and is not lost to scale-to-zero. Bryan approved about $33 more per month for that always-on size. On 18 Oct 2026 the replica's working set was 590-673 MiB against the 0.5 GiB limit, and failed probes restarted it. The Azure budget alert stays $40 a month.

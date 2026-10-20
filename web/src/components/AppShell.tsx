@@ -186,7 +186,7 @@ export function ConsoleFrame() {
         data-scroll="content"
         className={`mx-auto min-h-0 w-full flex-1 overflow-y-auto px-4 py-4 ${mainWidth(location.pathname)}`}
       >
-        <Outlet />
+        <Outlet context={{ session }} />
       </main>
       <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-mps-line px-4 py-3 text-mps-micro text-mps-muted">
         <span>

@@ -47,6 +47,7 @@ public sealed class SpaHostTests : IDisposable
 
         var root = await client.GetAsync(new Uri("/", UriKind.Relative));
         var screen = await client.GetAsync(new Uri("/fleet", UriKind.Relative));
+        var members = await client.GetAsync(new Uri("/admin/members", UriKind.Relative));
         var asset = await client.GetAsync(new Uri("/assets/app.js", UriKind.Relative));
         var missingAsset = await client.GetAsync(new Uri("/assets/missing.js", UriKind.Relative));
         var missingApi = await client.GetAsync(new Uri("/api/not-a-route", UriKind.Relative));
@@ -57,6 +58,8 @@ public sealed class SpaHostTests : IDisposable
         root.Content.Headers.ContentType?.MediaType.Should().Be("text/html");
         screen.StatusCode.Should().Be(HttpStatusCode.OK);
         (await screen.Content.ReadAsStringAsync()).Should().Contain("data-mps-spa=\"console\"");
+        members.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await members.Content.ReadAsStringAsync()).Should().Contain("data-mps-spa=\"console\"");
         asset.StatusCode.Should().Be(HttpStatusCode.OK);
         (await asset.Content.ReadAsStringAsync()).Should().Contain("mps-console");
         missingAsset.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -102,6 +105,8 @@ public sealed class SpaHostTests : IDisposable
 
         var console = await member.GetAsync(new Uri("/", UriKind.Relative));
         var denied = await outsider.GetAsync(new Uri("/tools/E-02", UriKind.Relative));
+        var membersDenied = await outsider.GetAsync(new Uri("/admin/members", UriKind.Relative));
+        var membersAllowed = await member.GetAsync(new Uri("/admin/members", UriKind.Relative));
         var join = await outsider.GetAsync(new Uri("/join/some-token", UriKind.Relative));
         var deniedApi = await outsider.GetAsync(new Uri("/api/tools", UriKind.Relative));
 
@@ -110,6 +115,10 @@ public sealed class SpaHostTests : IDisposable
         console.Headers.CacheControl!.NoStore.Should().BeTrue("a signed-out browser must not reopen a cached console");
         denied.StatusCode.Should().Be(HttpStatusCode.Redirect);
         denied.Headers.Location!.OriginalString.Should().Be("/landing.html?noAccess=1");
+        membersDenied.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        membersDenied.Headers.Location!.OriginalString.Should().Be("/landing.html?noAccess=1");
+        membersAllowed.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await membersAllowed.Content.ReadAsStringAsync()).Should().Contain("data-mps-spa=\"console\"");
         join.StatusCode.Should().Be(HttpStatusCode.OK, "a join link opens for a signed-in guest");
         deniedApi.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
