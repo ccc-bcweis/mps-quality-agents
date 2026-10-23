@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
+// @vitest-environment happy-dom
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
@@ -86,13 +87,29 @@ describe("tickets", () => {
 
   it("confirms an oscilloscope printout as a manual sample", async () => {
     const user = userEvent.setup();
-    renderConsole("/tickets");
-    expect(await screen.findByRole("heading", { name: "Upload telemetry" })).toBeInTheDocument();
-    const file = new File([new Uint8Array([37, 80, 68, 70])], "oscilloscope-e01.pdf", { type: "application/pdf" });
-    await user.upload(screen.getByLabelText("Printout"), file);
+    const uploaded = { name: "", byteLength: 0 };
+    const listen = async ({ request }: { request: Request }) => {
+      if (request.method !== "POST" || !request.url.endsWith("/api/printouts/inspect")) return;
+      const form = await request.clone().formData();
+      const file = form.get("file");
+      if (!(file instanceof File)) return;
+      uploaded.name = file.name;
+      uploaded.byteLength = file.size;
+    };
+    server.events.on("request:start", listen);
+    try {
+      renderConsole("/tickets");
+      expect(await screen.findByRole("heading", { name: "Upload telemetry" })).toBeInTheDocument();
+      const file = new File([new Uint8Array([37, 80, 68, 70])], "oscilloscope-e01.pdf", { type: "application/pdf" });
+      await user.upload(screen.getByLabelText("Printout"), file);
 
-    expect(await screen.findByDisplayValue("2140", undefined, { timeout: 8000 })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Confirm reading" }));
-    expect(await screen.findByText(/added to Source RF power on E-01 as a manual sample\. It is outside the spec/)).toBeInTheDocument();
+      expect(await screen.findByDisplayValue("2140", undefined, { timeout: 8000 })).toBeInTheDocument();
+      expect(uploaded.name).toBe("oscilloscope-e01.pdf");
+      expect(uploaded.byteLength).toBeGreaterThan(0);
+      await user.click(screen.getByRole("button", { name: "Confirm reading" }));
+      expect(await screen.findByText(/added to Source RF power on E-01 as a manual sample\. It is outside the spec/)).toBeInTheDocument();
+    } finally {
+      server.events.removeListener("request:start", listen);
+    }
   });
 });

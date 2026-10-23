@@ -17,7 +17,9 @@ class ResizeObserverStub {
 
 globalThis.ResizeObserver = ResizeObserverStub;
 
-beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: "error" });
+});
 beforeEach(() => {
   // The server catalog (labels, limits, rule sentences), as served by /api/metadata/catalog. ConsoleCatalogTests keeps it equal.
   setCatalog(catalogFixture);
