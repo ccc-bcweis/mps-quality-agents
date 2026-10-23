@@ -61,6 +61,62 @@ public sealed class PlainEquipmentTests
     public void ANonFiniteReadingIsRejected()
     {
         var act = () => EvidenceReading.Place("E-02", "B", double.NaN);
-        act.Should().Throw<DomainRuleException>();
+        act.Should().Throw<DomainRuleException>().WithMessage("Evidence value must be finite.");
+
+        var infinite = () => EvidenceReading.Place("E-02", "B", double.NegativeInfinity);
+        infinite.Should().Throw<DomainRuleException>().WithMessage("Evidence value must be finite.");
+    }
+
+    [Theory]
+    [InlineData(null, null)]
+    [InlineData("", null)]
+    [InlineData("   ", null)]
+    [InlineData("E-2", "Etch tool E-2")]
+    [InlineData(" E-02 ", "Etch tool E-02")]
+    [InlineData("E-001", "Etch tool E-001")]
+    [InlineData("C-12", "Clean tool C-12")]
+    [InlineData("E-0001", null)]
+    [InlineData("E1", null)]
+    [InlineData("E-", null)]
+    [InlineData("EE-01", null)]
+    [InlineData("X-01", null)]
+    [InlineData("e-02", null)]
+    [InlineData("E-0A", null)]
+    public void ToolNamesAcceptAFamilyLetterAndOneToThreeDigits(string? toolId, string? name)
+    {
+        PlainEquipment.ToolName(toolId).Should().Be(name);
+    }
+
+    [Theory]
+    [InlineData(null, null)]
+    [InlineData("", null)]
+    [InlineData(" ", null)]
+    [InlineData("A", "Chamber A")]
+    [InlineData("D", "Chamber D")]
+    [InlineData("E", null)]
+    [InlineData("a", null)]
+    [InlineData("chamber a", null)]
+    [InlineData("chamber A", "Chamber A")]
+    [InlineData("CHAMBER D", "Chamber D")]
+    [InlineData("Chamber E", null)]
+    [InlineData("Chamber ", null)]
+    [InlineData("1-A", "Chamber A")]
+    [InlineData("12-D", "Chamber D")]
+    [InlineData("1-E", null)]
+    [InlineData("XAB", null)]
+    [InlineData("-A", null)]
+    [InlineData("AB", null)]
+    [InlineData("C1", "Chamber A")]
+    [InlineData("C2", "Chamber B")]
+    [InlineData("C3", "Chamber C")]
+    [InlineData("C4", "Chamber D")]
+    [InlineData("C5", null)]
+    [InlineData("C0", null)]
+    [InlineData("c1", null)]
+    [InlineData("D-01-A", "Chamber A")]
+    [InlineData("D-01-E", null)]
+    public void ChamberNamesUseTheLetterOrTheCleanToolIndex(string? chamberId, string? name)
+    {
+        PlainEquipment.ChamberName(chamberId).Should().Be(name);
     }
 }

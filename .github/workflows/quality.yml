@@ -64,9 +64,10 @@ jobs:
       - name: Mutate Domain
         run: dotnet tool run dotnet-stryker -- --config-file stryker-config.json --skip-version-check --output StrykerOutput/domain
 
+      # Targets tests/Application.Tests with filter FullyQualifiedName~Mps.Application.Tests.
+      # Measured locally on 2026-10-23: 48.45% (1643 killed, 962 survived, 1 timeout,
+      # 787 NoCoverage). The break stays at 0 until that score is comfortably above it.
       - name: Mutate Application
-        # Application is interfaces plus an excluded anchor, so this run can produce
-        # zero mutants. The break stays at 0 until the project has behavior to kill.
         run: dotnet tool run dotnet-stryker -- --config-file stryker-application.json --skip-version-check --output StrykerOutput/application
 
       - name: Upload mutation reports
