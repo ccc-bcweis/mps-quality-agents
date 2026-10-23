@@ -140,6 +140,7 @@ public sealed class CapaInvariantTests
     [Fact]
     public void CapaAdvancesOneStageAtATime()
     {
+        CapaPairs.AssertAll();
         var incidentId = IncidentId.New();
         const string summary = "Clean the chamber.";
         var capa = CapaAction.Open(CapaId.New(), incidentId, summary, TokenFor(incidentId, summary), Now, Key);
@@ -250,6 +251,7 @@ public sealed class IncidentInvariantTests
     [Fact]
     public void IllegalIncidentTransitionIsRejected()
     {
+        LifecyclePairs.AssertAll();
         var incident = OpenIncident();
 
         var act = () => incident.Advance(IncidentStage.Approved);
@@ -260,6 +262,7 @@ public sealed class IncidentInvariantTests
     [Fact]
     public void IncidentCanReachApprovalThroughTheLegalPath()
     {
+        LifecyclePairs.AssertAll();
         var incident = OpenIncident();
 
         incident.Advance(IncidentStage.Investigating);
