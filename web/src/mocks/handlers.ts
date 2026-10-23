@@ -236,21 +236,20 @@ function newestFirst<T>(rows: T[], time: (row: T) => string): T[] {
 
 const FAMILIES = new Set(["deposition", "etch", "strip", "clean"]);
 
-async function uploadName(request: Request): Promise<string> {
-  // Read the raw body. request.formData() can hang under jsdom on Node 22,
-  // and the multipart header already carries the filename.
-  // Under jsdom on Node 22 the multipart body stream never ends, so give up after a short wait.
-  const body = await Promise.race([
-    request.arrayBuffer(),
-    new Promise<null>((resolve) => setTimeout(() => resolve(null), 750)),
-  ]);
-  if (body === null) return "oscilloscope-e01.pdf";
-  const text = new TextDecoder("latin1").decode(body);
-  // jsdom's fetch stringifies FormData, so the unit test cannot carry a filename.
-  // That test uploads the oscilloscope sample. A browser sends the real name.
-  if (text === "[object FormData]") return "oscilloscope-e01.pdf";
-  const named = /filename="([^"]+)"/i.exec(text) ?? /filename=([^;\r\n]+)/i.exec(text);
-  return (named?.[1] ?? "").trim().toLowerCase();
+/** Name and bytes from the multipart `file` part. Missing or empty is refused, the same as the API. */
+async function uploadedPrintout(request: Request): Promise<{ name: string; bytes: Uint8Array } | null> {
+  let form: FormData;
+  try {
+    form = await request.formData();
+  } catch {
+    return null;
+  }
+  const file = form.get("file");
+  if (!(file instanceof File)) return null;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const name = file.name.trim().toLowerCase();
+  if (name.length === 0 || bytes.byteLength === 0) return null;
+  return { name, bytes };
 }
 
 function catalogParameterFor(toolId: string, parameter: string): string {
@@ -516,8 +515,9 @@ export const handlers = [
   }),
 
   http.post("/api/printouts/inspect", async ({ request }) => {
-    const name = await uploadName(request);
-    const reading = inspectionForFile(name);
+    const upload = await uploadedPrintout(request);
+    if (!upload) return problem("A printout file is required.", 400);
+    const reading = inspectionForFile(upload.name);
     if (!reading) return problem("The printout could not be read.", 400);
     return HttpResponse.json(reading);
   }),
