@@ -26,7 +26,7 @@ COPY eval/results/ eval/results/
 RUN dotnet restore src/Mps.Api/Mps.Api.csproj
 RUN dotnet publish src/Mps.Api/Mps.Api.csproj --configuration Release --no-restore --output /app/publish /p:UseAppHost=false
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:11.0 AS final
 WORKDIR /app
 COPY --from=api /app/publish .
 COPY --from=web /src/web/dist ./wwwroot
