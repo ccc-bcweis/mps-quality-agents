@@ -17,7 +17,7 @@ ENV VITE_USE_MSW=$VITE_USE_MSW
 ENV VITE_API_BASE=$VITE_API_BASE
 RUN npm run build
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS api
+FROM mcr.microsoft.com/dotnet/sdk:11.0 AS api
 WORKDIR /src
 COPY Directory.Build.props Directory.Packages.props global.json nuget.config ./
 COPY src/ src/
