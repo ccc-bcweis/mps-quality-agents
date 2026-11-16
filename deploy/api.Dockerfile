@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Bryan C. Weis and Common Consulting Company
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0 AS build
 WORKDIR /src
 COPY Directory.Build.props Directory.Packages.props global.json nuget.config MPS.sln ./
 COPY src/ src/
